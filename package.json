@@ -1,0 +1,40 @@
+{
+  "name": "ideaspaces",
+  "version": "1.0.0",
+  "description": "交互式知识管理平台",
+  "type": "module",
+  "scripts": {
+    "dev": "vuepress dev docs",
+    "build": "vuepress build docs",
+    "local": "concurrently \"npm run dev\" \"npm run server\"",
+    "server": "cd local-server && npm start",
+    "build:sandbox": "docker build -t ideaspaces-sandbox:gpu . -f local-server/Dockerfile.sandbox",
+    "cdn:refresh": "node scripts/cdn-refresh.js",
+    "sync:issues": "node scripts/sync-issues.js"
+  },
+  "keywords": [
+    "knowledge-base",
+    "vuepress",
+    "education",
+    "markdown"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@vuepress/bundler-vite": "2.0.0-rc.19",
+    "@vuepress/plugin-prismjs": "2.0.0-rc.66",
+    "@vuepress/plugin-register-components": "2.0.0-rc.66",
+    "@vuepress/theme-default": "2.0.0-rc.66",
+    "concurrently": "^9.1.2",
+    "markdown-it": "^14.1.0",
+    "sass-embedded": "^1.86.0",
+    "vuepress": "2.0.0-rc.19"
+  },
+  "dependencies": {
+    "mermaid": "^11.13.0",
+    "vue": "^3.5.13"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

@@ -1,0 +1,58 @@
+# ============================================
+# IdeaSpaces Python Sandbox Image
+# 支持 GPU 加速的 Python 执行环境
+# ============================================
+
+FROM nvidia/cuda:11.8-cudnn8-runtime-ubuntu22.04
+
+# 设置环境变量
+ENV DEBIAN_FRONTEND=noninteractive
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1
+
+# 安装 Python 3.11
+RUN apt-get update && apt-get install -y \
+    software-properties-common \
+    curl \
+    && add-apt-repository ppa:deadsnakes/ppa \
+    && apt-get update && apt-get install -y \
+    python3.11 \
+    python3.11-venv \
+    python3.11-dev \
+    python3-pip \
+    && rm -rf /var/lib/apt/lists/* \
+    && ln -sf /usr/bin/python3.11 /usr/bin/python3 \
+    && ln -sf /usr/bin/python3 /usr/bin/python
+
+# 升级 pip
+RUN python3 -m pip install --no-cache-dir --upgrade pip setuptools wheel
+
+# 安装常用科学计算库
+RUN pip install --no-cache-dir \
+    numpy \
+    pandas \
+    matplotlib \
+    scipy \
+    scikit-learn \
+    requests \
+    beautifulsoup4 \
+    lxml \
+    pillow \
+    opencv-python-headless
+
+# 安装深度学习框架 (GPU 版本)
+RUN pip install --no-cache-dir \
+    torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+
+# 安装 TensorFlow (GPU 版本)
+# 注意: TensorFlow 2.x 对 CUDA 11.8 支持有限，可能需要额外配置
+RUN pip install --no-cache-dir tensorflow || echo "TensorFlow installation skipped"
+
+# 安装 JAX (GPU 版本)
+RUN pip install --no-cache-dir "jax[cuda11_local]" -f https://storage.googleapis.com/jax-releases/jax_cuda_releases.html || echo "JAX installation skipped"
+
+# 创建工作目录
+WORKDIR /workspace
+
+# 设置默认命令
+CMD ["python3"]

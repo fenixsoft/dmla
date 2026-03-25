@@ -1,0 +1,16 @@
+{
+  "name": "ideaspaces-local-server",
+  "version": "1.0.0",
+  "description": "IdeaSpaces 本地服务 - Python 沙箱执行",
+  "type": "module",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dockerode": "^4.0.2",
+    "express": "^4.21.2"
+  }
+}

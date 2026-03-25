@@ -1,0 +1,62 @@
+{
+  "version": "2.0.0",
+  "configurations": [
+    {
+      "name": "VuePress 开发服务器",
+      "type": "node-terminal",
+      "request": "launch",
+      "command": "npm run dev",
+      "cwd": "${workspaceFolder}",
+      "serverReadyAction": {
+        "pattern": "on http://localhost:([0-9]+)",
+        "uriFormat": "http://localhost:%s",
+        "action": "openExternally"
+      }
+    },
+    {
+      "name": "本地沙箱服务",
+      "type": "node-terminal",
+      "request": "launch",
+      "command": "npm run server",
+      "cwd": "${workspaceFolder}",
+      "serverReadyAction": {
+        "pattern": "API: http://localhost:([0-9]+)",
+        "uriFormat": "http://localhost:%s/api/health",
+        "action": "openExternally"
+      }
+    },
+    {
+      "name": "完整本地模式",
+      "type": "node-terminal",
+      "request": "launch",
+      "command": "npm run local",
+      "cwd": "${workspaceFolder}",
+      "serverReadyAction": {
+        "pattern": "on http://localhost:([0-9]+)",
+        "uriFormat": "http://localhost:%s",
+        "action": "openExternally"
+      }
+    },
+    {
+      "name": "构建生产版本",
+      "type": "node-terminal",
+      "request": "launch",
+      "command": "npm run build",
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "name": "构建 Docker 沙箱镜像",
+      "type": "node-terminal",
+      "request": "launch",
+      "command": "npm run build:sandbox",
+      "cwd": "${workspaceFolder}"
+    }
+  ],
+  "compounds": [
+    {
+      "name": "调试：前端 + 后端",
+      "configurations": ["VuePress 开发服务器", "本地沙箱服务"],
+      "stopAll": true
+    }
+  ]
+}
