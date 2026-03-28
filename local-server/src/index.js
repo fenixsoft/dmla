@@ -6,7 +6,7 @@ import express from 'express'
 import cors from 'cors'
 import sandboxRouter from './routes/sandbox.js'
 
-const app = express()
+export const app = express()
 const PORT = process.env.PORT || 3001
 
 // 中间件
@@ -30,11 +30,13 @@ app.use((err, req, res, next) => {
   })
 })
 
-// 启动服务器
-app.listen(PORT, () => {
-  console.log(`🚀 IdeaSpaces 本地服务已启动`)
-  console.log(`   API: http://localhost:${PORT}`)
-  console.log(`   健康检查: http://localhost:${PORT}/api/health`)
-})
+// 仅在直接运行时启动服务器（测试时不启动）
+if (import.meta.url === `file://${process.argv[1]}`) {
+  app.listen(PORT, () => {
+    console.log(`🚀 IdeaSpaces 本地服务已启动`)
+    console.log(`   API: http://localhost:${PORT}`)
+    console.log(`   健康检查: http://localhost:${PORT}/api/health`)
+  })
+}
 
 export default app

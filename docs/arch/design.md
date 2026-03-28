@@ -479,64 +479,105 @@ observer.observe(document.querySelector('.comments-section'));
 
 ### 5.2 Docker 镜像设计
 
-```dockerfile
-# ============================================
-# IdeaSpaces Python Sandbox Image
-# 支持 GPU 加速的 Python 执行环境
-# ============================================
+提供两种镜像版本：GPU 版本和 CPU 版本。
 
+**GPU 版本 (Dockerfile.sandbox)**:
+```dockerfile
+# 基于 NVIDIA CUDA 11.8
 FROM nvidia/cuda:11.8-cudnn8-runtime-ubuntu22.04
 
-# 设置环境变量
-ENV DEBIAN_FRONTEND=noninteractive
-ENV PYTHONUNBUFFERED=1
+# 安装 Python 3.11 和科学计算库
+# 包括: numpy, pandas, matplotlib, scipy, scikit-learn
+# 以及 PyTorch GPU 版本
 
-# 安装 Python 3.11
-RUN apt-get update && apt-get install -y \
-    software-properties-common \
-    && add-apt-repository ppa:deadsnakes/ppa \
-    && apt-get update && apt-get install -y \
-    python3.11 \
-    python3.11-venv \
-    python3.11-dev \
-    python3-pip \
-    && rm -rf /var/lib/apt/lists/* \
-    && ln -sf /usr/bin/python3.11 /usr/bin/python3 \
-    && ln -sf /usr/bin/python3 /usr/bin/python
-
-# 升级 pip
-RUN python3 -m pip install --upgrade pip
-
-# 安装常用科学计算库
-RUN pip install --no-cache-dir \
-    numpy \
-    pandas \
-    matplotlib \
-    scipy \
-    scikit-learn \
-    requests \
-    beautifulsoup4 \
-    lxml
-
-# 安装深度学习框架 (GPU 版本)
-RUN pip install --no-cache-dir \
-    torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
-
-# 安装 TensorFlow (GPU 版本)
-RUN pip install --no-cache-dir tensorflow
-
-# 安装 JAX (GPU 版本)
-RUN pip install --no-cache-dir "jax[cuda11_local]" -f https://storage.googleapis.com/jax-releases/jax_cuda_releases.html
-
-# 创建工作目录
-WORKDIR /workspace
-
-# 创建非 root 用户 (可选)
-# RUN useradd -m sandbox && chown -R sandbox:sandbox /workspace
-# USER sandbox
+# 构建命令: npm run build:sandbox
 ```
 
+**CPU 版本 (Dockerfile.sandbox.cpu)**:
+```dockerfile
+# 基于 Python 3.11 slim 镜像
+FROM python:3.11-slim
+
+# 安装科学计算库
+# 包括: numpy, pandas, matplotlib, scipy, scikit-learn
+# 以及 PyTorch CPU 版本
+
+# 构建命令: npm run build:sandbox:cpu
+```
+
+**构建命令**:
+```bash
+# 构建 GPU 版本
+npm run build:sandbox
+
+# 构建 CPU 版本
+npm run build:sandbox:cpu
+
+# 构建所有版本
+npm run build:sandbox:all
+```
+
+**预装库列表**:
+- numpy - 数值计算
+- pandas - 数据处理
+- matplotlib - 数据可视化
+- scipy - 科学计算
+- scikit-learn - 机器学习
+- torch - 深度学习 (PyTorch)
+- pillow - 图像处理
+- opencv-python-headless - 计算机视觉
+- ipykernel - IPython Kernel（支持富输出）
+- jupyter_client - Jupyter 客户端（Kernel 通信）
+
 ### 5.3 容器执行架构
+
+#### 5.3.1 IPython Kernel 架构
+
+沙箱采用 IPython Kernel 方案执行代码，支持 Jupyter 消息协议的富输出格式。
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  IPython Kernel 执行架构                                         │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  前端 RunnableCode.vue                                          │
+│  ┌─────────────────────────────────────────────────────────┐   │
+│  │  outputs: [                                              │   │
+│  │    { type: 'stream', name: 'stdout', text: '...' },     │   │
+│  │    { type: 'display_data', data: { 'image/png': '...' } }│   │
+│  │    { type: 'error', ename: 'NameError', traceback: [...] }│   │
+│  │  ]                                                       │   │
+│  └─────────────────────────────────────────────────────────┘   │
+│                           │ HTTP (JSON)                         │
+│                           ▼                                     │
+│  后端 Express (Node.js)                                          │
+│  ┌─────────────────────────────────────────────────────────┐   │
+│  │  POST /api/sandbox/run                                  │   │
+│  │  → 调用 Docker 容器执行 kernel_runner.py                  │   │
+│  └─────────────────────────────────────────────────────────┘   │
+│                           │ Docker API                          │
+│                           ▼                                     │
+│  Docker 容器内                                                   │
+│  ┌─────────────────────────────────────────────────────────┐   │
+│  │  kernel_runner.py                                        │   │
+│  │  1. 启动 IPython Kernel                                   │   │
+│  │  2. 发送 execute_request                                  │   │
+│  │  3. 收集 IOPub 消息 (stream, display_data, error)        │   │
+│  │  4. 输出 JSON 到 stdout                                   │   │
+│  └─────────────────────────────────────────────────────────┘   │
+│                           │ ZeroMQ (localhost)                  │
+│                           ▼                                     │
+│  IPython Kernel (独立进程)                                       │
+│  ┌─────────────────────────────────────────────────────────┐   │
+│  │  - matplotlib inline 后端                                 │   │
+│  │  - plt.show() → display_data 消息                        │   │
+│  │  - 支持所有 Jupyter 富输出                                │   │
+│  └─────────────────────────────────────────────────────────┘   │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+#### 5.3.2 执行流程
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -555,13 +596,13 @@ WORKDIR /workspace
 │           │                                                     │
 │           ▼                                                     │
 │  ┌─────────────────────────────────────────────────────────┐   │
-│  │  Sandbox Manager                                        │   │
+│  │  Sandbox Manager (sandbox.js)                           │   │
 │  │                                                         │   │
 │  │  1. 检测 GPU 可用性                                      │   │
 │  │  2. 选择镜像 (GPU/CPU)                                   │   │
 │  │  3. 创建容器                                             │   │
-│  │  4. 执行代码                                             │   │
-│  │  5. 收集输出                                             │   │
+│  │  4. 执行 kernel_runner.py                                │   │
+│  │  5. 解析 JSON 输出                                       │   │
 │  │  6. 销毁容器                                             │   │
 │  └─────────────────────────────────────────────────────────┘   │
 │           │                                                     │
@@ -570,28 +611,32 @@ WORKDIR /workspace
 │  │  Docker Container                                       │   │
 │  │                                                         │   │
 │  │  ┌─────────────────────────────────────────────────┐   │   │
-│  │  │  python:3.11 + CUDA 11.8                        │   │   │
+│  │  │  IPython Kernel + Python 3.11                   │   │   │
 │  │  │                                                 │   │   │
 │  │  │  预装库:                                        │   │   │
 │  │  │  • numpy, pandas, matplotlib                    │   │   │
 │  │  │  • scikit-learn, scipy                          │   │   │
-│  │  │  • torch, tensorflow, jax (GPU)                 │   │   │
+│  │  │  • torch, ipykernel, jupyter_client             │   │   │
 │  │  │                                                 │   │   │
 │  │  │  资源配置:                                       │   │   │
 │  │  │  • 内存: 4GB                                    │   │   │
 │  │  │  • 超时: 60秒                                   │   │   │
-│  │  │  • GPU: 全部可用 GPU                            │   │   │
+│  │  │  • GPU: 全部可用 GPU (GPU镜像)                  │   │   │
 │  │  └─────────────────────────────────────────────────┘   │   │
 │  └─────────────────────────────────────────────────────────┘   │
 │           │                                                     │
 │           ▼                                                     │
 │  ┌─────────────────────────────────────────────────────────┐   │
-│  │  Response                                               │   │
+│  │  Response (结构化输出)                                   │   │
 │  │                                                         │   │
 │  │  {                                                      │   │
 │  │    "success": true,                                     │   │
-│  │    "output": "程序输出...",                             │   │
-│  │    "error": null,                                       │   │
+│  │    "outputs": [                                         │   │
+│  │      { "type": "stream", "name": "stdout",              │   │
+│  │        "text": "Hello, World!\n" },                     │   │
+│  │      { "type": "display_data",                          │   │
+│  │        "data": { "image/png": "base64..." } }           │   │
+│  │    ],                                                   │   │
 │  │    "executionTime": 1.23,                              │   │
 │  │    "gpuUsed": true                                      │   │
 │  │  }                                                      │   │
@@ -599,6 +644,15 @@ WORKDIR /workspace
 │                                                                 │
 └─────────────────────────────────────────────────────────────────┘
 ```
+
+#### 5.3.3 Kernel 生命周期
+
+| 策略 | 说明 |
+|------|------|
+| 生命周期 | 每次请求启动新 Kernel，执行完成后立即关闭 |
+| 隔离性 | 完全隔离，无状态污染 |
+| 超时控制 | 60 秒执行超时，自动终止 Kernel |
+| 内存限制 | 容器内存限制 4GB |
 
 ### 5.4 Markdown 语法扩展
 
@@ -676,18 +730,47 @@ Content-Type: application/json
 ```json
 {
   "code": "print('Hello, World!')",
-  "useGPU": false
+  "useGpu": false
 }
 ```
 
-**成功响应**
+**成功响应（结构化输出）**
 
 ```json
 {
   "success": true,
-  "output": "Hello, World!\n",
-  "error": null,
+  "outputs": [
+    {
+      "type": "stream",
+      "name": "stdout",
+      "text": "Hello, World!\n"
+    }
+  ],
   "executionTime": 0.156,
+  "gpuUsed": false
+}
+```
+
+**图片输出响应**
+
+```json
+{
+  "success": true,
+  "outputs": [
+    {
+      "type": "display_data",
+      "data": {
+        "image/png": "iVBORw0KGgo..."
+      },
+      "metadata": {
+        "image/png": {
+          "width": 640,
+          "height": 480
+        }
+      }
+    }
+  ],
+  "executionTime": 1.234,
   "gpuUsed": false
 }
 ```
@@ -696,13 +779,38 @@ Content-Type: application/json
 
 ```json
 {
-  "success": false,
-  "output": "",
-  "error": "SyntaxError: invalid syntax",
+  "success": true,
+  "outputs": [
+    {
+      "type": "error",
+      "ename": "ZeroDivisionError",
+      "evalue": "division by zero",
+      "traceback": [
+        "ZeroDivisionError: division by zero",
+        "  File \"<string>\", line 1, in <module>"
+      ]
+    }
+  ],
   "executionTime": 0.023,
   "gpuUsed": false
 }
 ```
+
+### 5.7 输出类型说明
+
+| 类型 | 字段 | 说明 |
+|------|------|------|
+| stream | name, text | 标准输出流（stdout/stderr） |
+| display_data | data, metadata | 富输出（图片、HTML等） |
+| execute_result | data, metadata, execution_count | 表达式执行结果 |
+| error | ename, evalue, traceback | 错误信息 |
+
+**支持的 MIME 类型**:
+- `image/png` - PNG 图片
+- `image/jpeg` - JPEG 图片
+- `text/plain` - 纯文本
+- `text/html` - HTML 内容
+- `application/json` - JSON 数据
 
 ---
 

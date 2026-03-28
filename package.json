@@ -9,6 +9,8 @@
     "local": "concurrently \"npm run dev\" \"npm run server\"",
     "server": "cd local-server && npm start",
     "build:sandbox": "docker build -t ideaspaces-sandbox:gpu . -f local-server/Dockerfile.sandbox",
+    "build:sandbox:cpu": "docker build -t ideaspaces-sandbox:latest . -f local-server/Dockerfile.sandbox.cpu",
+    "build:sandbox:all": "npm run build:sandbox && npm run build:sandbox:cpu",
     "cdn:refresh": "node scripts/cdn-refresh.js",
     "sync:issues": "node scripts/sync-issues.js"
   },

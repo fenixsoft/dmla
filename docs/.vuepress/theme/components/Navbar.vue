@@ -23,6 +23,14 @@
       <!-- 占位符 -->
       <div class="navbar-spacer"></div>
 
+      <!-- 设置按钮 -->
+      <button class="settings-btn" @click="showSettings = true" title="沙箱设置">
+        <svg class="settings-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="3"></circle>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+        </svg>
+      </button>
+
       <!-- GitHub 按钮 -->
       <a
         :href="repoUrl"
@@ -36,16 +44,23 @@
         <span>GitHub</span>
       </a>
     </div>
+
+    <!-- 设置弹窗 -->
+    <Settings :visible="showSettings" @close="showSettings = false" @save="onSettingsSave" />
   </header>
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { ref, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { useThemeData } from '@vuepress/theme-default/lib/client/composables/index.js'
+import Settings from './Settings.vue'
 
 const route = useRoute()
 const themeData = useThemeData()
+
+// 设置弹窗状态
+const showSettings = ref(false)
 
 // 从主题配置中读取导航栏项目
 const navbarItems = computed(() => {
@@ -61,6 +76,11 @@ function isActive(link) {
     return route.path === '/'
   }
   return route.path.startsWith(link)
+}
+
+// 设置保存回调
+function onSettingsSave(config) {
+  console.log('沙箱设置已保存:', config)
 }
 </script>
 
@@ -158,6 +178,32 @@ function isActive(link) {
 .github-icon {
   width: 16px;
   height: 16px;
+  color: #71717A;
+}
+
+.settings-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 1.5px solid #E4E4E7;
+  border-radius: 8px;
+  background: #fff;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-right: 8px;
+}
+
+.settings-btn:hover {
+  background: #FAFAFA;
+  border-color: #D4D4D8;
+}
+
+.settings-icon {
+  width: 18px;
+  height: 18px;
   color: #71717A;
 }
 </style>

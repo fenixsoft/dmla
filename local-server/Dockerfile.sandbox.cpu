@@ -1,0 +1,47 @@
+# ============================================
+# IdeaSpaces Python Sandbox Image (CPU Version)
+# 适用于无 GPU 环境的 Python 执行环境
+# ============================================
+
+FROM python:3.11-slim
+
+# 设置环境变量
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1
+
+# 替换为阿里云镜像源
+RUN sed -i 's|http://deb.debian.org|http://mirrors.aliyun.com|g' /etc/apt/sources.list.d/debian.sources \
+    && apt-get update && apt-get install -y \
+    curl \
+    libgl1 \
+    libglib2.0-0 \
+    && rm -rf /var/lib/apt/lists/*
+
+# 升级 pip - 使用清华 PyPI 镜像
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel -i https://pypi.tuna.tsinghua.edu.cn/simple
+
+# 安装科学计算库 - 使用清华镜像
+RUN pip install --no-cache-dir -i https://pypi.tuna.tsinghua.edu.cn/simple \
+    numpy \
+    pandas \
+    matplotlib \
+    scipy \
+    scikit-learn \
+    requests \
+    pillow \
+    opencv-python-headless \
+    ipykernel \
+    jupyter_client
+
+# 安装 PyTorch (CPU 版本) - 使用清华镜像
+RUN pip install --no-cache-dir -i https://pypi.tuna.tsinghua.edu.cn/simple \
+    torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
+
+# 创建工作目录
+WORKDIR /workspace
+
+# 复制 Kernel 执行器
+COPY local-server/src/kernel_runner.py /workspace/kernel_runner.py
+
+# 设置默认命令
+CMD ["python3"]

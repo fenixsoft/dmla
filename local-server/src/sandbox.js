@@ -16,45 +16,63 @@ const SANDBOX_CONFIG = {
 
 /**
  * 检查 GPU 是否可用
+ * 通过运行 nvidia-smi 命令检测 GPU 状态
  */
 export async function checkGPUAvailable() {
+  let container = null
+
   try {
-    // 尝试运行 nvidia-smi
-    const result = await runCommand('nvidia/cuda:11.8-base', ['nvidia-smi', '-L'])
-    return result.includes('GPU')
+    // 创建容器运行 nvidia-smi 命令
+    container = await docker.createContainer({
+      Image: 'nvidia/cuda:11.8-base',
+      Cmd: ['nvidia-smi', '-L'],
+      HostConfig: {
+        DeviceRequests: [{
+          Driver: 'nvidia',
+          Count: -1,  // 使用所有 GPU
+          Capabilities: [['gpu']]
+        }]
+      }
+    })
+
+    // 启动容器
+    await container.start()
+
+    // 等待执行完成
+    await container.wait()
+
+    // 获取输出日志
+    const logs = await container.logs({
+      stdout: true,
+      stderr: true
+    })
+
+    // 解析输出
+    const output = parseDockerLogs(logs)
+
+    // 检查输出是否包含 GPU 信息
+    return output.includes('GPU')
   } catch {
+    // GPU 不可用或 Docker/nvidia-smi 执行失败
     return false
+  } finally {
+    // 清理容器
+    if (container) {
+      try {
+        await container.remove({ force: true })
+      } catch {
+        // 忽略清理错误
+      }
+    }
   }
 }
 
 /**
- * 运行命令并获取输出
- */
-async function runCommand(image, cmd) {
-  return new Promise((resolve, reject) => {
-    docker.run(image, cmd, (err, data, container) => {
-      if (err) {
-        reject(err)
-        return
-      }
-
-      container.remove()
-
-      if (data.StatusCode !== 0) {
-        reject(new Error(`Command failed with status ${data.StatusCode}`))
-        return
-      }
-
-      resolve(data)
-    })
-  })
-}
-
-/**
  * 执行 Python 代码
+ * 使用 IPython Kernel 执行代码，支持富输出（图片、文本、错误等）
  * @param {string} code - Python 代码
  * @param {boolean} useGpu - 是否使用 GPU
- * @returns {Promise<{success: boolean, output: string, error: string|null, executionTime: number}>}
+ * @returns {Promise<{success: boolean, outputs: Array, executionTime: number, gpuUsed: boolean}>}
  */
 export async function runPythonCode(code, useGpu = false) {
   const startTime = Date.now()
@@ -62,16 +80,17 @@ export async function runPythonCode(code, useGpu = false) {
   // 选择镜像
   const image = useGpu ? SANDBOX_CONFIG.imageGpu : SANDBOX_CONFIG.imageCpu
 
-  // 创建容器配置
+  // 创建容器配置 - 使用 kernel_runner.py 执行代码
   const containerConfig = {
     Image: image,
-    Cmd: ['python3', '-c', code],
+    Cmd: ['python3', '/workspace/kernel_runner.py', '--code', code, '--timeout', String(Math.floor(SANDBOX_CONFIG.timeout / 1000))],
     HostConfig: {
       Memory: SANDBOX_CONFIG.memory,
       AutoRemove: false  // 手动移除以获取日志
     },
     Env: [
       'PYTHONUNBUFFERED=1'
+      // matplotlib 使用 IPython Kernel 的 inline 后端，自动发送 display_data
     ]
   }
 
@@ -95,7 +114,7 @@ export async function runPythonCode(code, useGpu = false) {
     const timeoutPromise = new Promise((_, reject) => {
       timeoutId = setTimeout(() => {
         reject(new Error('Execution timeout'))
-      }, SANDBOX_CONFIG.timeout)
+      }, SANDBOX_CONFIG.timeout + 10000)  // 额外 10 秒用于清理
     })
 
     // 启动容器
@@ -117,14 +136,32 @@ export async function runPythonCode(code, useGpu = false) {
     })
 
     // 解析输出
-    const output = parseDockerLogs(logs)
-    const executionTime = (Date.now() - startTime) / 1000
+    const rawOutput = parseDockerLogs(logs)
+
+    // 解析 JSON 输出
+    let parsedResult
+    try {
+      parsedResult = JSON.parse(rawOutput)
+    } catch (parseError) {
+      // 如果 JSON 解析失败，返回原始输出作为错误
+      const executionTime = (Date.now() - startTime) / 1000
+      return {
+        success: false,
+        outputs: [{
+          type: 'error',
+          ename: 'OutputParseError',
+          evalue: 'Failed to parse kernel output',
+          traceback: [rawOutput]
+        }],
+        executionTime,
+        gpuUsed: useGpu
+      }
+    }
 
     return {
-      success: result.StatusCode === 0,
-      output: output.trim(),
-      error: result.StatusCode !== 0 ? output.trim() : null,
-      executionTime,
+      success: parsedResult.success,
+      outputs: parsedResult.outputs || [],
+      executionTime: parsedResult.executionTime || (Date.now() - startTime) / 1000,
       gpuUsed: useGpu
     }
 
@@ -136,8 +173,12 @@ export async function runPythonCode(code, useGpu = false) {
 
     return {
       success: false,
-      output: '',
-      error: error.message || 'Unknown error',
+      outputs: [{
+        type: 'error',
+        ename: error.name || 'ExecutionError',
+        evalue: error.message || 'Unknown error',
+        traceback: [error.message || 'Unknown error']
+      }],
       executionTime,
       gpuUsed: useGpu
     }

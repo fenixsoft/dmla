@@ -1,14 +1,20 @@
-# 4. Python 实践：NumPy 数组操作
+# 数据处理实践
 
-NumPy（Numerical Python）是 Python 科学计算的基石，提供了高效的多维数组对象和丰富的数学函数。本章将深入讲解 NumPy 的核心操作，帮助读者掌握向量化编程的技巧。
+NumPy（Numerical Python）是 Python 科学计算的最主流工具库，提供了高效的多维数组对象和丰富的数学函数。本章将通过一系列实操案例来讲解 NumPy 的常用操作，帮助读者通过动手，加深前面对向量、矩阵、张量的理解，同时也为后续机器学习算法、模型训练准备编程基础。
 
-## 4.1 NumPy 数组创建与基本属性
+## NumPy 数组
 
 ### 从列表创建数组
 
-NumPy 的核心是 `ndarray`（N-dimensional array）对象，即多维数组。最简单的创建方式是从 Python 列表转换：
+NumPy 的核心是 `ndarray`（N-Dimensional Array）对象，即多维数组。它的设计意图是解决 Python 原生列表在科学计算中的性能瓶颈——原生列表存储的是对象指针，运算时需要逐个遍历，效率低下。`ndarray` 通过**同质数据类型**和**连续内存布局**的设计，使批量数值运算能够达到接近 C 语言的执行效率，同时保持 Python 的简洁语法。`ndarray` 的核心设计要点包括：
+- **同质性**：数组中所有元素必须是相同的数据类型（如全为 `float64` 或全为 `int32`），这使得每个元素占用固定大小的内存，支持通过偏移量直接定位元素
+- **多维索引**：支持任意维度的数组结构，通过 `shape` 属性描述各维度大小，`ndim` 表示维度数
+- **向量化运算**：对整个数组进行数学运算时，无需编写显式循环，底层自动应用 SIMD 指令加速
+- **视图机制**：切片操作返回原数组的视图而非副本，避免不必要的数据拷贝
 
-```python runnable gpu
+最简单的创建方式是从 Python 列表转换：
+
+```python runnable
 import numpy as np
 
 # 一维数组
@@ -33,79 +39,183 @@ print(f"三维数组形状: {arr3d.shape}")  # (2, 2, 2)
 
 ### 特殊数组创建
 
-NumPy 提供了多种创建特殊数组的函数：
+除从列表创建数组外，NumPy 提供了多种创建特殊数组的函数，以下是常用的几种：
 
-```python
+#### 1. `np.zeros()` - 全零数组
+
+创建一个所有元素都为 0 的数组，常用于预分配结果数组或初始化权重。
+
+```python runnable
 import numpy as np
 
-# 全零数组
 zeros = np.zeros((3, 4))  # 3×4 全零矩阵
 print(f"zeros:\n{zeros}")
+```
 
-# 全一数组
+#### 2. `np.ones()` - 全一数组
+
+创建一个所有元素都为 1 的数组，常用于广播乘法和统计计算。
+
+```python runnable
+import numpy as np
+
 ones = np.ones((2, 3))  # 2×3 全一矩阵
 print(f"ones:\n{ones}")
+```
 
-# 单位矩阵
+#### 3. `np.eye()` - 单位矩阵
+
+创建主对角线为 1、其余为 0 的单位矩阵，是矩阵运算中的乘法单位元。
+
+```python runnable
+import numpy as np
+
 eye = np.eye(4)  # 4×4 单位矩阵
 print(f"单位矩阵:\n{eye}")
+```
 
-# 空矩阵（未初始化，内容随机）
-empty = np.empty((2, 2))
+#### 4. `np.empty()` - 空数组
+
+创建未初始化的数组，分配内存但不填充值，速度最快。适用于立即被完全覆盖的场景。
+
+```python runnable
+import numpy as np
+
+empty = np.empty((2, 2))  # 内容未初始化，值是随机的
 print(f"空矩阵:\n{empty}")
+```
 
-# 等差序列
+#### 5. `np.arange()` - 等差序列
+
+创建指定范围内的等差序列（类似 Python 的 `range()`），适用于整数索引。
+
+```python runnable
+import numpy as np
+
 arange_arr = np.arange(0, 10, 2)  # [0, 2, 4, 6, 8]
 print(f"arange: {arange_arr}")
+```
 
-# 等间隔序列
+#### 6. `np.linspace()` - 等间隔序列
+
+在指定区间内创建均匀分布的数值，包含端点，适用于连续采样。
+
+```python runnable
+import numpy as np
+
 linspace_arr = np.linspace(0, 1, 5)  # [0, 0.25, 0.5, 0.75, 1]
 print(f"linspace: {linspace_arr}")
+```
 
-# 对角矩阵
+#### 7. `np.diag()` - 对角矩阵
+
+从向量创建对角矩阵，或提取矩阵的对角线元素。
+
+```python runnable
+import numpy as np
+
 diag = np.diag([1, 2, 3])  # 对角元素为 1, 2, 3
 print(f"对角矩阵:\n{diag}")
 ```
 
 ### 随机数组生成
 
-机器学习中经常需要生成随机数据：
+机器学习中经常需要生成随机数据，NumPy 提供了丰富的随机数生成函数，以下是常用的几种：
 
-```python
+#### 1. `np.random.rand()` - [0, 1) 均匀分布
+
+生成指定形状的随机数组，元素服从 [0, 1) 区间的均匀分布，常用于初始化权重和生成随机样本。
+
+```python runnable
 import numpy as np
 
 # 设置随机种子（保证可重复性）
 np.random.seed(42)
 
-# [0, 1) 均匀分布
 rand_arr = np.random.rand(2, 3)  # 2×3 随机矩阵
 print(f"均匀分布:\n{rand_arr}")
+```
 
-# 标准正态分布
+#### 2. `np.random.randn()` - 标准正态分布
+
+生成服从标准正态分布（均值 0，方差 1）的随机数组，常用于生成高斯噪声和权重初始化。
+
+```python runnable
+import numpy as np
+
+np.random.seed(42)
+
 randn_arr = np.random.randn(2, 3)  # 均值0，方差1
 print(f"正态分布:\n{randn_arr}")
+```
 
-# 指定范围整数
+#### 3. `np.random.randint()` - 指定范围整数
+
+生成指定范围内的随机整数，适用于生成离散随机索引和分类标签。
+
+```python runnable
+import numpy as np
+
+np.random.seed(42)
+
 randint_arr = np.random.randint(0, 10, (2, 3))  # [0, 10) 范围整数
 print(f"随机整数:\n{randint_arr}")
+```
 
-# 正态分布（指定参数）
+#### 4. `np.random.normal()` - 正态分布（指定参数）
+
+生成服从指定均值和标准差的正态分布随机数，灵活性更高，适用于自定义分布的参数初始化。
+
+```python runnable
+import numpy as np
+
+np.random.seed(42)
+
 normal_arr = np.random.normal(loc=0, scale=1, size=(2, 3))
 print(f"指定正态分布:\n{normal_arr}")
+```
 
-# 随机打乱
+#### 5. `np.random.shuffle()` - 随机打乱
+
+原地随机打乱数组元素顺序，常用于数据集的随机重排，直接修改原数组不返回新数组。
+
+```python runnable
+import numpy as np
+
+np.random.seed(42)
+
 arr = np.array([1, 2, 3, 4, 5])
 np.random.shuffle(arr)
 print(f"打乱后: {arr}")
+```
 
-# 随机选择
+#### 6. `np.random.choice()` - 随机选择
+
+从给定数组中随机抽取元素，可控制是否放回抽样，适用于数据采样和批量抽取。
+
+```python runnable
+import numpy as np
+
+np.random.seed(42)
+
 choices = np.random.choice([1, 2, 3, 4, 5], size=3, replace=False)
 print(f"随机选择: {choices}")
 ```
 
 ### 数组的基本属性
 
-```python
+每个 NumPy 数组都有一些描述其结构和内存占用的基本属性。理解这些属性有助于我们准确把握数据的组织方式：
+
+- **形状（shape）**：一个元组，表示数组在每个维度上的大小。例如 `(2, 2, 3)` 表示这是一个三维数组，第一维有 2 个元素，第二维有 2 个元素，第三维有 3 个元素。
+- **维度数（ndim）**：数组的轴（维度）数量，数值上等同于 `len(shape)`。
+- **数据类型（dtype）**：数组中元素的数据类型，如 `int64`、`float32` 等。NumPy 数组要求所有元素类型一致，这是其高效计算的基础。
+- **元素总数（size）**：数组中所有元素的总个数，等于 `shape` 各分量的乘积。
+- **元素字节大小（itemsize）**：单个元素占用的内存字节数，取决于 `dtype`。
+- **总字节大小（nbytes）**：整个数组占用的内存字节数，等于 `size × itemsize`。
+
+```python runnable
+import numpy as np
+
 arr = np.array([
     [[1, 2, 3], [4, 5, 6]],
     [[7, 8, 9], [10, 11, 12]]
@@ -122,9 +232,21 @@ print(f"总字节大小: {arr.nbytes}")      # 96
 
 ### 数组的数据类型转换
 
-NumPy 支持多种数据类型，可以显式指定或转换：
+NumPy 提供了丰富的数据类型支持，合理选择数据类型能够在保证精度的同时优化内存占用和计算性能。数据类型的选择是数值计算中重要的权衡考量。
 
-```python
+**数据类型指定方式：**
+
+- **创建时指定**：通过 `dtype` 参数在创建数组时显式声明类型，如 `np.float32`、`np.int64` 等
+- **后期转换**：使用 `astype()` 方法将数组转换为其他类型，注意这可能产生数据截断或精度损失
+
+**常见数据类型分类：**
+
+- **整数类型**：`int8`、`int16`、`int32`、`int64`，分别占用 1、2、4、8 字节，数值范围依次增大
+- **无符号整数**：`uint8` 到 `uint64`，仅表示非负数，相同字节下正数范围更大
+- **浮点类型**：`float32`（单精度）和 `float64`（双精度），后者精度更高但内存占用翻倍
+- **布尔类型**：`bool`，仅存储 True/False，是内存效率最高的类型
+
+```python runnable
 import numpy as np
 
 # 创建时指定类型
@@ -145,13 +267,18 @@ print(f"float32: {np.array([1.0], dtype=np.float32).dtype}")
 print(f"float64: {np.array([1.0], dtype=np.float64).dtype}")
 ```
 
-## 4.2 索引与切片
+## 索引与切片
 
 ### 一维数组索引
 
-一维数组的索引与 Python 列表相同：
+索引和切片是访问数组元素的基础操作。NumPy 数组支持 Python 列表的索引语法，并进行了扩展以支持多维数组。
 
-```python
+- **正向索引**：从 0 开始计数，如 `arr[0]` 访问第一个元素
+- **反向索引**：从 -1 开始表示最后一个元素，如 `arr[-1]`
+- **切片**：使用 `[start:end:step]` 语法，可指定起始位置、结束位置和步长
+- **反转数组**：使用 `[::-1]` 快速反转数组顺序
+
+```python runnable
 import numpy as np
 
 arr = np.array([10, 20, 30, 40, 50])
@@ -166,9 +293,14 @@ print(f"arr[::-1]: {arr[::-1]}")  # 反转
 
 ### 多维数组索引
 
-多维数组使用逗号分隔各维度的索引：
+多维数组使用逗号分隔各维度的索引，语法为 `arr[row, col]`。这种索引方式比嵌套列表的 `arr[row][col]` 更高效，且支持同时访问多个维度。
 
-```python
+- **完整索引**：`arr[i, j]` 获取第 i 行第 j 列的单个元素
+- **行切片**：`arr[i]` 获取第 i 行的所有元素（省略后续维度）
+- **列切片**：`arr[:, j]` 使用 `:` 表示获取第 j 列的所有行
+- **子矩阵**：`arr[row_start:row_end, col_start:col_end]` 获取二维切片
+
+```python runnable
 import numpy as np
 
 arr = np.array([
@@ -188,9 +320,13 @@ print(f"arr[0:2, 1:3]:\n{arr[0:2, 1:3]}")  # 子矩阵
 
 ### 切片操作
 
-切片返回的是**视图（View）**而非副本，修改视图会影响原数组：
+切片是获取数组子集的重要操作。与 Python 列表不同，NumPy 的切片返回的是**视图（View）**而非副本，这意味着切片和原数组共享内存，修改视图会影响原数组。切片有如下特性：
 
-```python
+- **视图机制**：切片不复制数据，只是创建新的引用视图，内存效率高
+- **数据共享**：通过视图修改数据会直接反映到原数组
+- **显式复制**：如需独立副本，需调用 `.copy()` 方法
+
+```python runnable
 import numpy as np
 
 arr = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
@@ -215,9 +351,13 @@ print(f"使用 copy() 后原数组不变:\n{arr}")
 
 ### 布尔索引
 
-布尔索引用于根据条件筛选元素：
+布尔索引是一种强大的条件筛选机制，通过布尔掩码选择满足特定条件的元素。这种索引方式避免了显式循环，是向量化编程的重要组成部分。布尔索引支持以下几种使用方式：
 
-```python
+- **创建掩码**：通过条件表达式（如 `arr > 5`）生成布尔数组
+- **应用索引**：将布尔数组作为索引，返回所有为 `True` 位置的元素
+- **复合条件**：使用 `&`（与）、`|`（或）、`~`（非）组合多个条件，注意需用括号包裹
+
+```python runnable
 import numpy as np
 
 arr = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
@@ -242,9 +382,14 @@ print(f"大于5的元素: {matrix[matrix > 5]}")
 
 ### 花式索引（Fancy Indexing）
 
-花式索引使用整数数组作为索引：
+花式索引使用整数数组作为索引，可以灵活地选择任意位置的元素。与切片不同，花式索引总是返回数据的副本，而非视图。花式索引有以下几种常见的索引方式：
 
-```python
+- **一维索引**：使用索引数组选择特定位置的元素，如 `arr[[0, 2, 4]]` 选择第 0、2、4 个元素
+- **负索引**：支持使用负数索引，如 `arr[[0, -1]]` 选择首尾元素
+- **多维索引**：通过两个索引数组同时指定行和列，选择交叉位置的元素
+- **np.ix_**：用于创建笛卡尔积索引，选择指定行列构成的子矩阵
+
+```python runnable
 import numpy as np
 
 arr = np.array([10, 20, 30, 40, 50])
@@ -277,13 +422,11 @@ print(f"选择特定行列:\n{matrix[np.ix_([0, 2], [0, 2])]}")
 #  [7 9]]
 ```
 
-## 4.3 广播机制详解
+## 广播机制
 
-### 广播的概念
+**广播（Broadcasting）** 是 NumPy 处理不同形状数组运算的核心机制。，[矩阵的运算](03-matrices.md#矩阵的运算)曾提到过，矩阵运算是由明确前提约束的，如两个矩阵必须具有相同的维度（相同的行数和列数）才能够进行加法运算，两个矩阵必须满足第一个矩阵的列数必须等于第二个矩阵的行数（内维匹配）才能进行乘法运算。当两个参与运算的数组数组形状不同时，NumPy 会自动扩展较小数组的维度，使其能够与较大数组进行逐元素运算，而无需显式复制数据，这为编程提供了很大便利。
 
-**广播（Broadcasting）** 是 NumPy 处理不同形状数组运算的强大机制。当两个数组形状不同时，NumPy 会自动扩展较小的数组，使其能够与较大的数组进行运算。
-
-```python
+```python runnable
 import numpy as np
 
 # 标量与数组
@@ -303,42 +446,53 @@ print(f"广播结果:\n{result}")
 
 ### 广播的规则
 
-广播遵循三条规则：
+广播机制遵循一套严格的规则来决定两个数组是否可以进行运算。理解这些规则有助于预判运算结果形状，避免广播错误。
 
-1. **维度对齐**：如果两个数组的维度不同，在较小数组的形状前面补 1
+**广播三规则：**
+
+1. **维度对齐**：如果两个数组维度数不同，在较小数组的形状前面补 1，直到维度数相同
 2. **兼容检查**：如果两个数组在某个维度上大小相同，或其中一个为 1，则它们在该维度上兼容
-3. **扩展**：在所有维度都兼容时，大小为 1 的维度会被扩展
+3. **扩展执行**：在所有维度都兼容时，大小为 1 的维度会被"拉伸"复制以匹配另一个数组
 
-```python
+![广播三规则详解](./images/broadcasting_rules.png)
+
+*图: 广播三规则的示意*
+
+```python runnable
 import numpy as np
 
-def explain_broadcast(shape1, shape2):
-    """解释广播过程"""
-    arr1 = np.zeros(shape1)
-    arr2 = np.ones(shape2)
+# 示例：与图片一致的数据
+A = np.array([[1, 2, 3, 4],
+              [5, 6, 7, 8],
+              [9, 10, 11, 12]])   # 形状 (3, 4)
 
-    try:
-        result = arr1 + arr2
-        print(f"形状 {shape1} + 形状 {shape2} -> 形状 {result.shape}")
-        print(f"广播后形状: {np.broadcast_shapes(shape1, shape2)}")
-        return True
-    except ValueError as e:
-        print(f"形状 {shape1} + 形状 {shape2} -> 错误: {e}")
-        return False
+B = np.array([10, 20, 30, 40])      # 形状 (4,)
 
-# 示例
-explain_broadcast((3, 4), (4,))       # 可广播
-explain_broadcast((3, 4), (3, 1))     # 可广播
-explain_broadcast((3, 4), (1, 4))     # 可广播
-explain_broadcast((3, 4), (3,))       # 可广播
-explain_broadcast((3, 4), (2, 4))     # 不可广播
+print(f"数组 A:\n{A}")
+print(f"A 的形状: {A.shape}")
+print(f"\n数组 B: {B}")
+print(f"B 的形状: {B.shape}")
+
+# 广播加法
+result = A + B
+print(f"\n广播过程:")
+print(f"  Step 1: B 从 (4,) -> (1, 4) [前面补1]")
+print(f"  Step 2: (3,4) vs (1,4) 兼容 [dim0: 3vs1, dim1: 4vs4]")
+print(f"  Step 3: (1,4) -> (3,4) [拉伸复制]")
+print(f"\nA + B 结果:\n{result}")
+print(f"结果形状: {result.shape}")
+
+# 验证广播形状
+print(f"\n广播后的形状: {np.broadcast_shapes(A.shape, B.shape)}")
 ```
 
-### 广播的常见场景
+### 广播的应用
 
-**1. 数据标准化**
+广播在实际数据处理和科学计算中有广泛应用。以下是几个典型场景：
 
-```python
+**数据标准化**：在机器学习中，经常需要对特征进行标准化处理。广播使得形状为 `(样本数, 特征数)` 的数据可以直接与形状为 `(特征数,)` 的均值和标准差进行运算。
+
+```python runnable
 import numpy as np
 
 # 模拟数据集：100个样本，50个特征
@@ -357,9 +511,9 @@ print(f"标准化后形状: {normalized.shape}")
 print(f"标准化后均值: {normalized.mean(axis=0)[:5]}")  # 接近0
 ```
 
-**2. 外积**
+**外积运算**：两个向量的外积可以通过广播实现。将一维向量重塑为列向量和行向量，通过广播机制生成二维外积矩阵。
 
-```python
+```python runnable
 import numpy as np
 
 a = np.array([1, 2, 3])    # (3,)
@@ -374,9 +528,9 @@ outer2 = np.outer(a, b)
 print(f"外积 (np.outer):\n{outer2}")
 ```
 
-**3. 距离矩阵**
+**距离矩阵计算**：广播可以高效计算两组点之间的距离矩阵。通过引入新维度，利用广播自动扩展的特性计算所有点对之间的差值。
 
-```python
+```python runnable
 import numpy as np
 
 # 两点集之间的距离
@@ -395,7 +549,13 @@ print(f"距离矩阵形状: {distances.shape}")
 
 ### 避免隐式广播的陷阱
 
-```python
+广播虽然灵活强大，但也可能带来意外的错误。当数组形状看似"差不多"但不满足广播规则时，会产生难以发现的问题，譬如：
+
+- **维度错位**：意图是按行或按列运算，但数组维度对齐方式与预期不符
+- **形状不匹配**：缺少必要的维度扩展，导致广播失败
+- **解决方案**：使用 `np.newaxis` 显式增加维度，明确指定广播方向
+
+```python runnable
 import numpy as np
 
 # 陷阱示例：意外的广播
@@ -411,15 +571,15 @@ except ValueError as e:
     print(f"正确结果:\n{result}")
 ```
 
-## 4.4 向量化运算 vs 循环
+## 向量化运算与传统循环
 
 ### 向量化的概念
 
-**向量化（Vectorization）** 是指用数组运算替代显式循环。NumPy 的底层是 C 语言实现，利用了 SIMD（单指令多数据）指令，可以带来数量级的性能提升。
+**向量化（Vectorization）**是指用数组运算替代显式 Python 循环的编程方式。NumPy 的底层由 C 语言实现，配合内部专门为向量化优化设计的数据结构，能够利用 CPU 的 SIMD（单指令多数据）指令并行处理数据，带来数量级的性能提升（向量化运算通常比 Python 循环快 10-100 倍）。向量化运算还让程序代码变得更加简洁，能用一行数组表达式替代原本要许多行传统循环代码才能完成的工作，这种代码编写方式虽然有悖于程序员的思维，却十分契合数学研究者的思维方式，因为这样的程序算法更接近于数学表达式的原貌。
 
-### 性能对比实验
+下面的实验对比了 Python 传统循环和 NumPy 向量化运算在处理一千万个元素时的性能差异。
 
-```python
+```python runnable
 import numpy as np
 import time
 
@@ -447,219 +607,97 @@ print(f"性能提升: {loop_time/vec_time:.1f} 倍")
 print(f"结果一致: {np.allclose(result_loop, result_vec)}")
 ```
 
-### 常用向量化函数
+### 向量化编程技巧
 
-```python
-import numpy as np
+NumPy 提供了丰富的向量化函数库，涵盖数学运算、统计计算等多种场景。这些函数都能对整个数组进行逐元素或聚合运算。包括有：
 
-arr = np.random.rand(1000, 1000)
+- **数学函数**：`np.exp`、`np.log`、`np.sqrt` 等，对数组每个元素进行计算
+- **三角函数**：`np.sin`、`np.cos`、`np.tan` 等，支持弧度制运算
+- **聚合函数**：`np.sum`、`np.mean`、`np.std` 等，对整个数组或指定轴进行汇总
+- **统计函数**：`np.median`、`np.percentile`、`np.unique` 等，用于统计分析
 
-# 数学函数（逐元素）
-np.exp(arr)      # 指数
-np.log(arr)      # 对数
-np.sqrt(arr)     # 平方根
-np.abs(arr)      # 绝对值
-np.power(arr, 2) # 幂次
+此外，掌握向量化技巧是编写高效 NumPy 代码的关键。以下是几种常见的向量化模式，用于替代低效的 Python 循环。
 
-# 三角函数
-np.sin(arr)
-np.cos(arr)
-np.tan(arr)
+- **避免 Python 循环**：对于逐元素的数学运算，应直接使用数组表达式，而非编写循环逐个处理元素。
 
-# 聚合函数
-np.sum(arr)      # 总和
-np.mean(arr)     # 均值
-np.std(arr)      # 标准差
-np.var(arr)      # 方差
-np.max(arr)      # 最大值
-np.min(arr)      # 最小值
-np.argmax(arr)   # 最大值索引
-np.argmin(arr)   # 最小值索引
+    ```python runnable
+    import numpy as np
 
-# 沿指定轴聚合
-np.sum(arr, axis=0)   # 沿列求和
-np.mean(arr, axis=1)  # 沿行求均值
+    # 不好的做法
+    def sigmoid_loop(arr):
+        result = np.zeros_like(arr)
+        for i in range(len(arr)):
+            result[i] = 1 / (1 + np.exp(-arr[i]))
+        return result
 
-# 统计函数
-np.median(arr)
-np.percentile(arr, 50)
-np.unique(arr)
-np.bincount(arr.astype(int))
-```
+    # 好的做法
+    def sigmoid_vectorized(arr):
+        return 1 / (1 + np.exp(-arr))
 
-### 向量化技巧
+    arr = np.random.randn(100000)
 
-**1. 避免 Python 循环**
+    import time
+    start = time.time()
+    result1 = sigmoid_loop(arr)
+    loop_time = time.time() - start
 
-```python
-import numpy as np
+    start = time.time()
+    result2 = sigmoid_vectorized(arr)
+    vec_time = time.time() - start
 
-# 不好的做法
-def sigmoid_loop(arr):
+    print(f"循环耗时: {loop_time:.4f} 秒")
+    print(f"向量化耗时: {vec_time:.4f} 秒")
+    print(f"性能提升: {loop_time/vec_time:.1f} 倍")
+    print(f"结果一致: {np.allclose(result1, result2)}")
+    ```
+
+- **使用 np.where 替代条件循环**：`np.where` 可以实现逐元素的条件选择，是 `if-else` 逻辑的向量化版本。
+
+    ```python runnable
+    import numpy as np
+
+    arr = np.random.randn(1000)
+
+    # 不好的做法
     result = np.zeros_like(arr)
     for i in range(len(arr)):
-        result[i] = 1 / (1 + np.exp(-arr[i]))
-    return result
+        if arr[i] > 0:
+            result[i] = arr[i]
+        else:
+            result[i] = 0
 
-# 好的做法
-def sigmoid_vectorized(arr):
-    return 1 / (1 + np.exp(-arr))
+    # 好的做法
+    result_vec = np.where(arr > 0, arr, 0)
+    # 或者
+    result_relu = np.maximum(arr, 0)  # ReLU
 
-arr = np.random.randn(1000000)
-%timeit sigmoid_loop(arr)       # 慢
-%timeit sigmoid_vectorized(arr) # 快很多
-```
+    print(f"结果一致: {np.allclose(result, result_vec)}")
+    ```
 
-**2. 使用 np.where 替代条件循环**
+- **使用 np.einsum 进行复杂运算**：`einsum`（爱因斯坦求和约定）提供了一种灵活的矩阵运算表达方式，特别适用于复杂的张量运算。它通过一个简洁的字符串表达式来指定输入数组的维度索引和输出维度的映射关系，从而统一表达矩阵乘法、转置、迹、对角线提取等多种操作。
 
-```python
-import numpy as np
+    ```python runnable
+    import numpy as np
 
-arr = np.random.randn(1000)
+    # 矩阵乘法
+    A = np.random.rand(100, 50)
+    B = np.random.rand(50, 80)
 
-# 不好的做法
-result = np.zeros_like(arr)
-for i in range(len(arr)):
-    if arr[i] > 0:
-        result[i] = arr[i]
-    else:
-        result[i] = 0
+    # 常规方法
+    C1 = A @ B
 
-# 好的做法
-result = np.where(arr > 0, arr, 0)
-# 或者
-result = np.maximum(arr, 0)  # ReLU
-```
+    # einsum 方法（更灵活）
+    C2 = np.einsum('ij,jk->ik', A, B)
 
-**3. 使用 np.einsum 进行复杂运算**
+    print(f"结果一致: {np.allclose(C1, C2)}")
 
-```python
-import numpy as np
-
-# 矩阵乘法
-A = np.random.rand(100, 50)
-B = np.random.rand(50, 80)
-
-# 常规方法
-C1 = A @ B
-
-# einsum 方法（更灵活）
-C2 = np.einsum('ij,jk->ik', A, B)
-
-print(f"结果一致: {np.allclose(C1, C2)}")
-
-# 更复杂的例子：批量矩阵乘法
-batch_A = np.random.rand(10, 100, 50)
-batch_B = np.random.rand(10, 50, 80)
-batch_C = np.einsum('bij,bjk->bik', batch_A, batch_B)
-print(f"批量矩阵乘法形状: {batch_C.shape}")
-```
-
-## 4.5 矩阵运算实践
-
-### 矩阵乘法实现
-
-```python
-import numpy as np
-
-# 矩阵乘法的多种实现
-A = np.random.rand(100, 50)
-B = np.random.rand(50, 80)
-
-# 方法一：@ 运算符（推荐）
-C1 = A @ B
-
-# 方法二：np.matmul
-C2 = np.matmul(A, B)
-
-# 方法三：np.dot
-C3 = np.dot(A, B)
-
-# 方法四：np.einsum
-C4 = np.einsum('ij,jk->ik', A, B)
-
-print(f"所有方法结果一致: {np.allclose(C1, C2) and np.allclose(C2, C3) and np.allclose(C3, C4)}")
-```
-
-### 矩阵分解
-
-NumPy 提供了常用的矩阵分解方法：
-
-```python
-import numpy as np
-
-# 创建对称正定矩阵
-A = np.random.rand(5, 5)
-A = A @ A.T + np.eye(5) * 0.1  # 确保正定
-
-# 1. 特征值分解
-eigenvalues, eigenvectors = np.linalg.eig(A)
-print("特征值分解:")
-print(f"特征值: {eigenvalues.round(4)}")
-print(f"特征向量形状: {eigenvectors.shape}")
-
-# 验证: A = V D V^-1
-reconstructed = eigenvectors @ np.diag(eigenvalues) @ np.linalg.inv(eigenvectors)
-print(f"重构误差: {np.linalg.norm(A - reconstructed):.6f}")
-
-# 2. 奇异值分解（SVD）
-U, S, Vt = np.linalg.svd(A)
-print("\n奇异值分解:")
-print(f"U 形状: {U.shape}")
-print(f"奇异值: {S.round(4)}")
-print(f"Vt 形状: {Vt.shape}")
-
-# 验证: A = U S Vt
-reconstructed = U @ np.diag(S) @ Vt
-print(f"重构误差: {np.linalg.norm(A - reconstructed):.6f}")
-
-# 低秩近似
-k = 3  # 保留前3个奇异值
-A_approx = U[:, :k] @ np.diag(S[:k]) @ Vt[:k, :]
-print(f"\n低秩近似误差 (k={k}): {np.linalg.norm(A - A_approx):.6f}")
-```
-
-### 线性方程组求解
-
-```python
-import numpy as np
-
-# 求解 Ax = b
-A = np.array([
-    [3, 1, -1],
-    [2, 4, 1],
-    [-1, 2, 5]
-])
-b = np.array([4, 1, 1])
-
-# 方法一：np.linalg.solve
-x = np.linalg.solve(A, b)
-print(f"解: {x}")
-print(f"验证 Ax = b: {np.allclose(A @ x, b)}")
-
-# 方法二：使用逆矩阵（不推荐，数值不稳定）
-x2 = np.linalg.inv(A) @ b
-print(f"逆矩阵法: {x2}")
-
-# 方法三：最小二乘法（超定方程组）
-A_over = np.random.rand(5, 3)
-b_over = np.random.rand(5)
-x_lstsq, residuals, rank, s = np.linalg.lstsq(A_over, b_over, rcond=None)
-print(f"最小二乘解: {x_lstsq}")
-```
-
----
+    # 更复杂的例子：批量矩阵乘法
+    batch_A = np.random.rand(10, 100, 50)
+    batch_B = np.random.rand(10, 50, 80)
+    batch_C = np.einsum('bij,bjk->bik', batch_A, batch_B)
+    print(f"批量矩阵乘法形状: {batch_C.shape}")
+    ```
 
 ## 本章小结
 
-本章深入讲解了 NumPy 的核心操作：
-
-1. **数组创建**：从列表转换、特殊数组、随机数组
-2. **索引与切片**：基本索引、布尔索引、花式索引
-3. **广播机制**：自动扩展不同形状数组进行运算
-4. **向量化运算**：比循环快几个数量级，是高效代码的关键
-5. **矩阵运算**：乘法、分解、方程求解
-
-NumPy 是机器学习的基础工具，熟练掌握这些操作将大大提高编程效率。
-
-下一章将展示线性代数在实际机器学习场景中的应用。
+NumPy 的价值不仅在于提供了丰富的数值计算函数，更在于它建立了一套面向数组的高效计算范式。通过向量化运算替代循环，代码简洁度与执行效率得以兼得；通过广播机制处理不同形状的数据，复杂的数学表达可以用直观的代数形式呈现。这些设计使得原本需要多层嵌套循环和繁琐索引的操作，能够用接近数学语言的简洁代码完成。对于机器学习而言，NumPy 是连接理论推导与实际实现的桥梁——无论是数据预处理、特征工程，还是模型训练中的矩阵运算，都建立在本书介绍的这些基础操作之上。掌握 NumPy 的思维方式，意味着能够以计算效率最优的方式表达数学问题，这是数据科学工作者不可或缺的核心能力。

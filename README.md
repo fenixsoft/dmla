@@ -6,7 +6,7 @@
 
 - 📝 **Markdown 写作** - 使用 Markdown 格式撰写文章，支持代码高亮、流程图
 - 💬 **GitHub 评论** - 基于 GitHub Issues 的评论系统，无需自建后端
-- 🐍 **代码沙箱** - 本地部署支持 Python 代码在线执行，支持 GPU 加速
+- 🐍 **代码沙箱** - 本地部署支持 Python 代码在线执行，支持 GPU 加速和 matplotlib 图片输出
 - 🚀 **自动部署** - GitHub Actions 自动构建部署到 GitHub Pages
 - 🌐 **CDN 加速** - 支持腾讯云 CDN 自动刷新
 
@@ -42,8 +42,11 @@ npm run dev
 ### 本地模式 (带沙箱)
 
 ```bash
-# 首次运行需构建沙箱镜像
+# 构建 GPU 版本沙箱镜像 (需要 NVIDIA GPU)
 npm run build:sandbox
+
+# 或构建 CPU 版本 (无 GPU 环境)
+npm run build:sandbox:cpu
 
 # 启动完整服务
 npm run local
@@ -51,6 +54,8 @@ npm run local
 
 - 网站页面: http://localhost:8080
 - API 服务: http://localhost:3001
+
+**沙箱设置**: 点击导航栏右侧的齿轮图标可配置沙箱服务地址，支持连接远程沙箱服务。
 
 ## 📁 项目结构
 
@@ -106,9 +111,19 @@ graph TD
 
 ### 可运行代码块 (本地模式)
 
+支持文本输出和 matplotlib 图片显示：
+
 ````markdown
 ```python runnable
 print("点击 Run 按钮执行此代码")
+```
+````
+
+````markdown
+```python runnable
+import matplotlib.pyplot as plt
+plt.plot([1, 2, 3, 4])
+plt.show()  # 图片会自动显示在输出区域
 ```
 ````
 
@@ -155,8 +170,10 @@ issue:
 |------|------|
 | `npm run dev` | 启动开发服务器 |
 | `npm run build` | 构建生产版本 |
-| `npm run local` | 启动本地完整服务 |
-| `npm run build:sandbox` | 构建 Docker 沙箱镜像 |
+| `npm run local` | 启动本地完整服务 (VuePress + API) |
+| `npm run build:sandbox` | 构建 GPU 版本 Docker 沙箱镜像 |
+| `npm run build:sandbox:cpu` | 构建 CPU 版本 Docker 沙箱镜像 |
+| `npm run build:sandbox:all` | 构建所有版本沙箱镜像 |
 
 ## 📄 许可证
 

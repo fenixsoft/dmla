@@ -3,6 +3,7 @@ import { getDirname, path } from 'vuepress/utils'
 import mermaidPlugin from './plugins/mermaid/index.js'
 import runnableCodePlugin from './plugins/runnable-code/index.js'
 import mathPlugin from './plugins/math/index.js'
+import emphasisFixPlugin from './plugins/emphasis-fix/index.js'
 import ideaspacesTheme from './theme/index.js'
 
 const __dirname = getDirname(import.meta.url)
@@ -65,6 +66,8 @@ export default {
 
   // 插件配置
   plugins: [
+    // 修复中文括号后粗体标记问题
+    emphasisFixPlugin,
     // Mermaid 流程图
     mermaidPlugin,
     // 可运行代码块

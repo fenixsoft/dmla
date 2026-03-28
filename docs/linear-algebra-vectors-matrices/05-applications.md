@@ -1,8 +1,59 @@
-# 5. 应用场景：数据表示与特征向量
+# 线性代数应用场景
 
 线性代数不仅是理论工具，更是解决实际问题的关键。本章将展示线性代数在图像处理、文本分析、特征提取和推荐系统中的具体应用，帮助读者理解数学原理如何指导工程实践。
 
-## 5.1 图像数据的矩阵表示
+## 文本数据向量化
+
+计算机无法理解原始文本，它需要数值形式来表达语义信息。文本向量化的核心思想是将文本（如词语、句子、文章）映射为多维向量空间中的点，在映射过程中，让每个维度对应某种语义特征或统计属性。通过向量化，原本抽象的语言信息被转化为可计算的数学对象。这不仅使得文本能够被机器学习模型处理，更重要的是，语义相近的文本在向量空间中也彼此靠近，从而实现相似度比较、聚类分析、检索匹配等关键任务。线性代数为此提供了完整的数学框架——向量运算刻画语义关系，矩阵操作支持批量高效处理，它们是现在动辄百亿、千亿参数语言模型训练时，能处理数以 PB 计语料的关键前提。
+
+### 老式NLP的代表：词袋模型
+
+词袋模型（Bag of Words）在 1954 年由泽里格·哈里斯（Zellig Harris）提出，这是一种地将文本转化为供机器学习算法处理的数据的算法，通过统计词频来捕捉文档的语义内容，使计算机能够"理解"文本的核心主题和关键词分布。
+
+词袋模型的核心思想是忽略文档中词语的顺序和语法结构，将文档视为词汇的"袋子"——只关注哪些词出现、出现多少次。它先构建一个包含所有文档词汇的词汇表，然后将每篇文档表示为一个固定长度的向量，向量的每个维度对应词汇表中的一个词，数值代表该词在文档中的出现频率。尽管只通过词频来理解文本主题肯定不够准确，但是这种将文档转化数值矩阵的方法足够简单，可作为入门学习或者文本分类、聚类、相似度计算等的前置任务。
+
+### 现代NLP的起源：词向量
+
+区别于词袋模型、词频-逆文档频率（TF-IDF）这类从词频统计出发来理解语义的技术。2003年，图灵奖得主约书亚·本吉奥（Yoshua Bengio）在文章《A Neural Probabilistic Language Model》中提出**词向量（Word Embedding）**可以说是现代 NLP 技术的起源。基于词频统计的技术，任意两个词的 [One-Hot 向量](https://zh.wikipedia.org/wiki/%E7%8B%AC%E7%83%AD)都是正交的，不同词之间没有任何关联，自然就无法捕捉"国王"与"女王"、"北京"与"中国"这样的语义关联关系。
+
+词向量通过从大规模语料中学习，将语义信息压缩到几百维的稠密向量中，使得相似语义的词（如"开心"和"快乐"）在向量空间中距离更近，甚至能呈现有意义的线性关系（譬如："国王"的向量 - "男人"的向量 + "女人"的向量 ≈ "女王"向量），这种分布式表示大幅提升了特征表达效率，也成为迁移学习的基础。这一技术为后续神经网络语言模型铺平了道路，从 Word2Vec、GloVe 到 ELMo、BERT，再到以 GPT 为代表的大语言模型，词嵌入技术不断演进——从静态词向量到上下文相关的动态表示，理解词向量就是理解现代 NLP 的第一步。
+
+今天，"词向量"和"词嵌入"这两个术语常被混用，按原教旨主义来说，"词嵌入"（Word Embedding）强调的是过程，将离散的词语映射到连续向量空间的一种算法，而"词向量"（Word Vector）强调的是结果，即运行词嵌入算法后得到的向量表示。在后面
+
+
+```python
+import numpy as np
+
+# 模拟词向量（实际应用中使用预训练模型）
+word_vectors = {
+    "机器学习": np.array([0.8, 0.2, 0.1]),
+    "深度学习": np.array([0.9, 0.1, 0.2]),
+    "人工智能": np.array([0.7, 0.3, 0.3]),
+    "自然语言处理": np.array([0.3, 0.8, 0.4]),
+    "计算机视觉": np.array([0.4, 0.3, 0.9]),
+    "足球": np.array([0.1, 0.1, 0.1]),
+    "篮球": np.array([0.1, 0.2, 0.1])
+}
+
+def cosine_similarity(v1, v2):
+    """计算余弦相似度"""
+    return np.dot(v1, v2) / (np.linalg.norm(v1) * np.linalg.norm(v2))
+
+# 计算词之间的相似度
+print("词向量相似度:")
+print(f"机器学习 vs 深度学习: {cosine_similarity(word_vectors['机器学习'], word_vectors['深度学习']):.3f}")
+print(f"机器学习 vs 自然语言处理: {cosine_similarity(word_vectors['机器学习'], word_vectors['自然语言处理']):.3f}")
+print(f"机器学习 vs 足球: {cosine_similarity(word_vectors['机器学习'], word_vectors['足球']):.3f}")
+
+# 词向量运算：类比关系
+# "国王" - "男人" + "女人" ≈ "女王"
+print("\n词向量类比（简化示例）:")
+result = word_vectors['机器学习'] - word_vectors['深度学习'] + word_vectors['自然语言处理']
+print(f"机器学习 - 深度学习 + 自然语言处理 ≈ {result.round(2)}")
+```
+
+
+## 图像数据的矩阵表示
 
 ### 灰度图像与矩阵
 
@@ -167,96 +218,6 @@ for k in ks:
     error = np.linalg.norm(image - compressed, 'fro')
     compression_ratio = k * (200 + 200 + 1) / (200 * 200)
     print(f"k={k}: 压缩率={compression_ratio:.2%}, 重构误差={error:.4f}")
-```
-
-## 5.2 文本数据的向量化
-
-文本数据需要转换为向量才能被机器学习模型处理。
-
-### 词袋模型（Bag of Words）
-
-词袋模型将文本表示为词汇表中各词出现次数的向量：
-
-```python
-from sklearn.feature_extraction.text import CountVectorizer
-
-# 文档集合
-documents = [
-    "机器学习是人工智能的核心",
-    "深度学习是机器学习的子领域",
-    "自然语言处理处理文本数据",
-    "计算机视觉处理图像数据"
-]
-
-# 创建词袋模型
-vectorizer = CountVectorizer()
-X = vectorizer.fit_transform(documents)
-
-print(f"词汇表: {vectorizer.get_feature_names_out()}")
-print(f"文档向量矩阵形状: {X.shape}")
-print(f"文档向量矩阵:\n{X.toarray()}")
-
-# 每个文档对应一个向量
-for i, doc in enumerate(documents):
-    print(f"\n文档{i+1}: '{doc}'")
-    print(f"向量: {X[i].toarray()}")
-```
-
-### TF-IDF
-
-**TF-IDF（词频-逆文档频率）** 考虑了词在文档中的重要性：
-
-```python
-from sklearn.feature_extraction.text import TfidfVectorizer
-
-# 使用 TF-IDF
-tfidf = TfidfVectorizer()
-X_tfidf = tfidf.fit_transform(documents)
-
-print("TF-IDF 矩阵:")
-print(X_tfidf.toarray().round(3))
-
-# 查看每个词的 IDF 值
-feature_names = tfidf.get_feature_names_out()
-idf_values = tfidf.idf_
-print("\n各词的 IDF 值:")
-for word, idf in sorted(zip(feature_names, idf_values), key=lambda x: x[1], reverse=True):
-    print(f"  {word}: {idf:.3f}")
-```
-
-### 词向量简介
-
-词向量（Word Embedding）将单词映射为低维稠密向量，语义相近的词在向量空间中距离较近。
-
-```python
-import numpy as np
-
-# 模拟词向量（实际应用中使用预训练模型）
-word_vectors = {
-    "机器学习": np.array([0.8, 0.2, 0.1]),
-    "深度学习": np.array([0.9, 0.1, 0.2]),
-    "人工智能": np.array([0.7, 0.3, 0.3]),
-    "自然语言处理": np.array([0.3, 0.8, 0.4]),
-    "计算机视觉": np.array([0.4, 0.3, 0.9]),
-    "足球": np.array([0.1, 0.1, 0.1]),
-    "篮球": np.array([0.1, 0.2, 0.1])
-}
-
-def cosine_similarity(v1, v2):
-    """计算余弦相似度"""
-    return np.dot(v1, v2) / (np.linalg.norm(v1) * np.linalg.norm(v2))
-
-# 计算词之间的相似度
-print("词向量相似度:")
-print(f"机器学习 vs 深度学习: {cosine_similarity(word_vectors['机器学习'], word_vectors['深度学习']):.3f}")
-print(f"机器学习 vs 自然语言处理: {cosine_similarity(word_vectors['机器学习'], word_vectors['自然语言处理']):.3f}")
-print(f"机器学习 vs 足球: {cosine_similarity(word_vectors['机器学习'], word_vectors['足球']):.3f}")
-
-# 词向量运算：类比关系
-# "国王" - "男人" + "女人" ≈ "女王"
-print("\n词向量类比（简化示例）:")
-result = word_vectors['机器学习'] - word_vectors['深度学习'] + word_vectors['自然语言处理']
-print(f"机器学习 - 深度学习 + 自然语言处理 ≈ {result.round(2)}")
 ```
 
 ## 5.3 特征向量在机器学习中的意义
@@ -524,6 +485,89 @@ for k in [1, 2, 3, 5]:
     error = np.linalg.norm(matrix - approx, 'fro')
     print(f"秩 {k}: 重构误差 = {error:.4f}")
 ```
+
+## 矩阵运算实践
+
+矩阵分解是将矩阵表示为若干简单矩阵乘积的方法，在降维、特征提取、数值计算等领域有重要应用。NumPy 的 `np.linalg` 模块提供了常用的分解方法。
+
+**分解类型：**
+
+- **特征值分解（Eigendecomposition）**：将方阵分解为特征值和特征向量，适用于对称矩阵分析
+- **奇异值分解（SVD）**：将任意矩阵分解为三个矩阵的乘积，是数据压缩和降维的基础
+- **低秩近似**：通过保留前 k 个奇异值，用低秩矩阵近似原矩阵，实现数据压缩
+
+```python runnable
+import numpy as np
+
+# 创建对称正定矩阵
+A = np.random.rand(5, 5)
+A = A @ A.T + np.eye(5) * 0.1  # 确保正定
+
+# 1. 特征值分解
+eigenvalues, eigenvectors = np.linalg.eig(A)
+print("特征值分解:")
+print(f"特征值: {eigenvalues.round(4)}")
+print(f"特征向量形状: {eigenvectors.shape}")
+
+# 验证: A = V D V^-1
+reconstructed = eigenvectors @ np.diag(eigenvalues) @ np.linalg.inv(eigenvectors)
+print(f"重构误差: {np.linalg.norm(A - reconstructed):.6f}")
+
+# 2. 奇异值分解（SVD）
+U, S, Vt = np.linalg.svd(A)
+print("\n奇异值分解:")
+print(f"U 形状: {U.shape}")
+print(f"奇异值: {S.round(4)}")
+print(f"Vt 形状: {Vt.shape}")
+
+# 验证: A = U S Vt
+reconstructed = U @ np.diag(S) @ Vt
+print(f"重构误差: {np.linalg.norm(A - reconstructed):.6f}")
+
+# 低秩近似
+k = 3  # 保留前3个奇异值
+A_approx = U[:, :k] @ np.diag(S[:k]) @ Vt[:k, :]
+print(f"\n低秩近似误差 (k={k}): {np.linalg.norm(A - A_approx):.6f}")
+```
+
+### 线性方程组求解
+
+求解线性方程组 `Ax = b` 是科学计算的基本问题。NumPy 提供了多种求解方法，适用于不同场景。
+
+**求解方法：**
+
+- **`np.linalg.solve`**：直接求解方阵方程组，数值稳定，是首选方法
+- **逆矩阵法**：通过 `np.linalg.inv(A) @ b` 求解，计算逆矩阵成本高且数值不稳定，不推荐
+- **`np.linalg.lstsq`**：最小二乘法，用于超定方程组（方程数多于未知数），寻找最优近似解
+
+```python runnable
+import numpy as np
+
+# 求解 Ax = b
+A = np.array([
+    [3, 1, -1],
+    [2, 4, 1],
+    [-1, 2, 5]
+])
+b = np.array([4, 1, 1])
+
+# 方法一：np.linalg.solve
+x = np.linalg.solve(A, b)
+print(f"解: {x}")
+print(f"验证 Ax = b: {np.allclose(A @ x, b)}")
+
+# 方法二：使用逆矩阵（不推荐，数值不稳定）
+x2 = np.linalg.inv(A) @ b
+print(f"逆矩阵法: {x2}")
+
+# 方法三：最小二乘法（超定方程组）
+A_over = np.random.rand(5, 3)
+b_over = np.random.rand(5)
+x_lstsq, residuals, rank, s = np.linalg.lstsq(A_over, b_over, rcond=None)
+print(f"最小二乘解: {x_lstsq}")
+```
+
+
 
 ---
 

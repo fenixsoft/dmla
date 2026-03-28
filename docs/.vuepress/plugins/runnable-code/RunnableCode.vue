@@ -2,31 +2,31 @@
   <div class="runnable-code-block" :class="{ 'has-gpu': hasGpu }">
     <!-- 代码区域 -->
     <div class="code-area">
+      <!-- 浮动工具栏 - 右上角 -->
+      <div class="floating-toolbar">
+        <button
+          class="run-btn"
+          :disabled="isRunning || !sandboxAvailable"
+          @click="runCode(false)"
+        >
+          {{ isRunning ? 'Running...' : 'Run' }}
+        </button>
+
+        <button
+          v-if="hasGpu"
+          class="run-btn gpu-btn"
+          :disabled="isRunning || !sandboxAvailable"
+          @click="runCode(true)"
+        >
+          {{ isRunning ? 'Running...' : 'GPU' }}
+        </button>
+
+        <span v-if="!sandboxAvailable" class="sandbox-notice">
+          ⚠️
+        </span>
+      </div>
+
       <pre><code :class="`language-${language}`">{{ code }}</code></pre>
-    </div>
-
-    <!-- 工具栏 -->
-    <div class="toolbar">
-      <button
-        class="run-btn"
-        :disabled="isRunning || !sandboxAvailable"
-        @click="runCode(false)"
-      >
-        {{ isRunning ? 'Running...' : '▶ Run' }}
-      </button>
-
-      <button
-        v-if="hasGpu"
-        class="run-btn gpu-btn"
-        :disabled="isRunning || !sandboxAvailable"
-        @click="runCode(true)"
-      >
-        {{ isRunning ? 'Running...' : '▶ Run on GPU' }}
-      </button>
-
-      <span v-if="!sandboxAvailable" class="sandbox-notice">
-        (沙箱服务未连接)
-      </span>
     </div>
 
     <!-- 输出区域 -->
@@ -35,14 +35,72 @@
       :class="{
         loading: isRunning,
         error: hasError,
-        success: !hasError && output
+        success: !hasError && outputs.length > 0
       }"
     >
       <template v-if="isRunning">
         执行中...
       </template>
-      <template v-else-if="output">
-        {{ output }}
+      <template v-else-if="outputs.length > 0">
+        <!-- 渲染每个输出项 -->
+        <template v-for="(output, idx) in outputs" :key="idx">
+          <!-- 文本流输出 -->
+          <pre
+            v-if="output.type === 'stream'"
+            :class="['output-stream', output.name]"
+          >{{ output.text }}</pre>
+
+          <!-- 图片输出 -->
+          <img
+            v-else-if="output.type === 'display_data' && output.data && output.data['image/png']"
+            :src="'data:image/png;base64,' + output.data['image/png']"
+            class="output-image"
+            @click="openImageModal(output.data['image/png'])"
+          />
+
+          <!-- HTML 表格输出（pandas DataFrame 等） -->
+          <div
+            v-else-if="output.type === 'display_data' && output.data && output.data['text/html']"
+            class="output-html"
+            v-html="output.data['text/html']"
+          />
+
+          <!-- JSON 输出 -->
+          <pre
+            v-else-if="output.type === 'display_data' && output.data && output.data['application/json']"
+            class="output-json"
+          >{{ JSON.stringify(output.data['application/json'], null, 2) }}</pre>
+
+          <!-- 执行结果 -->
+          <template v-else-if="output.type === 'execute_result'">
+            <!-- HTML 表格输出（pandas DataFrame 等） -->
+            <div
+              v-if="output.data && output.data['text/html']"
+              class="output-html"
+              v-html="output.data['text/html']"
+            />
+            <!-- 图片输出 -->
+            <img
+              v-else-if="output.data && output.data['image/png']"
+              :src="'data:image/png;base64,' + output.data['image/png']"
+              class="output-image"
+              @click="openImageModal(output.data['image/png'])"
+            />
+            <!-- 默认文本输出 -->
+            <pre v-else class="output-result">{{ formatExecuteResult(output) }}</pre>
+          </template>
+
+          <!-- 错误输出 -->
+          <div
+            v-else-if="output.type === 'error'"
+            class="output-error"
+          >
+            <div class="error-header">{{ output.ename }}: {{ output.evalue }}</div>
+            <pre v-if="output.traceback && output.traceback.length" class="error-traceback">{{ formatTraceback(output.traceback) }}</pre>
+          </div>
+        </template>
+
+        <!-- 执行时间 -->
         <div v-if="executionTime" class="execution-time">
           --- 执行时间: {{ executionTime.toFixed(3) }}s ---
         </div>
@@ -51,11 +109,27 @@
         点击 Run 按钮执行代码
       </template>
     </div>
+
+    <!-- 图片放大模态框 -->
+    <div
+      v-if="showImageModal"
+      class="image-modal"
+      @click="closeImageModal"
+      @keydown.esc="closeImageModal"
+    >
+      <img
+        :src="'data:image/png;base64,' + modalImageData"
+        class="modal-image"
+        @click.stop
+      />
+      <div class="modal-close">×</div>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { getSandboxEndpoint } from './sandbox-config.js'
 
 const props = defineProps({
   code: {
@@ -72,26 +146,35 @@ const props = defineProps({
   },
   apiEndpoint: {
     type: String,
-    default: 'http://localhost:3001/api/sandbox/run'
+    default: ''  // 留空则使用配置的端点
   }
+})
+
+// 获取 API 端点
+const resolvedEndpoint = computed(() => {
+  return props.apiEndpoint || getSandboxEndpoint() + '/api/sandbox/run'
 })
 
 // 状态
 const isRunning = ref(false)
-const output = ref('')
+const outputs = ref([])
 const hasError = ref(false)
 const executionTime = ref(null)
 const sandboxAvailable = ref(true)
 
+// 图片模态框状态
+const showImageModal = ref(false)
+const modalImageData = ref('')
+
 // 运行代码
 async function runCode(useGpu = false) {
   isRunning.value = true
-  output.value = ''
+  outputs.value = []
   hasError.value = false
   executionTime.value = null
 
   try {
-    const response = await fetch(props.apiEndpoint, {
+    const response = await fetch(resolvedEndpoint.value, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -106,38 +189,83 @@ async function runCode(useGpu = false) {
 
     const result = await response.json()
 
-    output.value = result.output || '(无输出)'
-    hasError.value = !result.success
-
-    if (result.error && !result.success) {
-      output.value = result.error
-    }
-
+    outputs.value = result.outputs || []
+    hasError.value = !result.success || outputs.value.some(o => o.type === 'error')
     executionTime.value = result.executionTime
 
   } catch (error) {
     hasError.value = true
+    outputs.value = [{
+      type: 'error',
+      ename: 'ConnectionError',
+      evalue: error.message.includes('Failed to fetch') || error.message.includes('NetworkError')
+        ? '无法连接到沙箱服务'
+        : error.message,
+      traceback: error.message.includes('Failed to fetch') || error.message.includes('NetworkError')
+        ? ['请确保沙箱服务正在运行，或在设置中检查沙箱地址配置']
+        : [error.message]
+    }]
+
     if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
-      output.value = '⚠️ 无法连接到沙箱服务\n\n请确保本地服务正在运行:\nnpm run local'
       sandboxAvailable.value = false
-    } else {
-      output.value = `❌ 错误: ${error.message}`
     }
   } finally {
     isRunning.value = false
   }
 }
 
+// 格式化执行结果
+function formatExecuteResult(output) {
+  if (output.data && output.data['text/plain']) {
+    return output.data['text/plain']
+  }
+  return JSON.stringify(output.data, null, 2)
+}
+
+// 格式化 traceback
+function formatTraceback(traceback) {
+  if (Array.isArray(traceback)) {
+    return traceback.join('\n')
+  }
+  return String(traceback)
+}
+
+// 打开图片模态框
+function openImageModal(base64Data) {
+  modalImageData.value = base64Data
+  showImageModal.value = true
+  document.addEventListener('keydown', handleEscKey)
+}
+
+// 关闭图片模态框
+function closeImageModal() {
+  showImageModal.value = false
+  modalImageData.value = ''
+  document.removeEventListener('keydown', handleEscKey)
+}
+
+// 处理 ESC 键关闭模态框
+function handleEscKey(event) {
+  if (event.key === 'Escape') {
+    closeImageModal()
+  }
+}
+
 // 检查沙箱可用性
 onMounted(async () => {
   try {
-    const response = await fetch(props.apiEndpoint.replace('/run', '/health'), {
+    const response = await fetch(resolvedEndpoint.value.replace('/run', '/health'), {
       method: 'GET'
     })
     sandboxAvailable.value = response.ok
   } catch {
     sandboxAvailable.value = false
   }
+})
+
+// 清理事件监听器
+onUnmounted(() => {
+  document.removeEventListener('keydown', handleEscKey)
 })
 </script>
 
@@ -167,37 +295,42 @@ onMounted(async () => {
   line-height: 1.5;
 }
 
-.toolbar {
+/* 浮动工具栏 - 右上角 */
+.floating-toolbar {
+  position: absolute;
+  top: 8px;
+  right: 12px;
   display: flex;
-  gap: 8px;
+  gap: 6px;
   align-items: center;
-  padding: 8px 16px;
-  background: var(--c-bg-light, #f3f4f5);
-  border-top: 1px solid var(--c-border, #eaecef);
+  z-index: 10;
 }
 
 .run-btn {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 6px 12px;
-  font-size: 13px;
+  justify-content: center;
+  padding: 4px 10px;
+  font-size: 12px;
   font-weight: 500;
   color: #fff;
   background: #3eaf7c;
   border: none;
   border-radius: 4px;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: all 0.2s;
+  opacity: 0.9;
 }
 
 .run-btn:hover:not(:disabled) {
   background: #4abf8a;
+  opacity: 1;
 }
 
 .run-btn:disabled {
-  background: #ccc;
+  background: #666;
   cursor: not-allowed;
+  opacity: 0.6;
 }
 
 .gpu-btn {
@@ -210,8 +343,7 @@ onMounted(async () => {
 
 .sandbox-notice {
   font-size: 12px;
-  color: #999;
-  margin-left: 8px;
+  color: #f48771;
 }
 
 .output-area {
@@ -221,9 +353,7 @@ onMounted(async () => {
   font-family: 'Fira Code', 'Consolas', 'Monaco', monospace;
   font-size: 13px;
   line-height: 1.5;
-  white-space: pre-wrap;
-  word-break: break-all;
-  max-height: 300px;
+  max-height: 400px;
   overflow-y: auto;
 }
 
@@ -239,11 +369,169 @@ onMounted(async () => {
   color: #4ec9b0;
 }
 
+/* 文本流输出 */
+.output-stream {
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  white-space: pre-wrap;
+  word-break: break-all;
+  font-family: inherit;
+  font-size: inherit;
+}
+
+.output-stream.stderr {
+  color: #f48771;
+}
+
+/* 图片输出 */
+.output-image {
+  max-width: 100%;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  margin: 0.5rem 0;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.output-image:hover {
+  transform: scale(1.02);
+}
+
+/* 执行结果 */
+.output-result {
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  white-space: pre-wrap;
+  word-break: break-all;
+  font-family: inherit;
+  font-size: inherit;
+}
+
+/* 错误输出 */
+.output-error {
+  margin: 0.5rem 0;
+  padding: 0.5rem;
+  background: rgba(244, 135, 113, 0.1);
+  border-left: 3px solid #f48771;
+  border-radius: 0 4px 4px 0;
+}
+
+.error-header {
+  color: #f48771;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.error-traceback {
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  white-space: pre-wrap;
+  word-break: break-all;
+  font-family: inherit;
+  font-size: 12px;
+  color: #888;
+}
+
 .execution-time {
   margin-top: 8px;
   padding-top: 8px;
   border-top: 1px solid #333;
   color: #888;
   font-size: 12px;
+}
+
+/* HTML 表格输出（pandas DataFrame 等） */
+.output-html {
+  margin: 0.5rem 0;
+  overflow-x: auto;
+}
+
+.output-html :deep(table) {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 12px;
+}
+
+.output-html :deep(th),
+.output-html :deep(td) {
+  border: 1px solid #444;
+  padding: 6px 12px;
+  text-align: left;
+}
+
+.output-html :deep(th) {
+  background: #2d2d2d;
+  font-weight: 600;
+  color: #fff;
+}
+
+.output-html :deep(td) {
+  color: #d4d4d4;
+}
+
+.output-html :deep(tr:nth-child(even) td) {
+  background: #252525;
+}
+
+.output-html :deep(tr:hover td) {
+  background: #333;
+}
+
+/* JSON 输出 */
+.output-json {
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  white-space: pre-wrap;
+  word-break: break-all;
+  font-family: inherit;
+  font-size: inherit;
+}
+
+/* 图片模态框 */
+.image-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  cursor: pointer;
+}
+
+.modal-image {
+  max-width: 95vw;
+  max-height: 95vh;
+  object-fit: contain;
+  border-radius: 8px;
+  box-shadow: 0 0 40px rgba(0, 0, 0, 0.5);
+}
+
+.modal-close {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  width: 40px;
+  height: 40px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  color: white;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.modal-close:hover {
+  background: rgba(255, 255, 255, 0.3);
 }
 </style>
