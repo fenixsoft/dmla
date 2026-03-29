@@ -17,7 +17,7 @@ export default {
   description: '交互式知识管理平台',
 
   // 部署配置 - GitHub Pages 子目录
-  base: '/ideaspaces/',
+  // base: '/ideaspaces/',
 
   // 使用自定义主题
   theme: ideaspacesTheme({
@@ -26,7 +26,6 @@ export default {
       { text: '首页', link: '/' },
       { text: '机器学习数学基础', link: '/linear-algebra-vectors-matrices/' },
       { text: 'Python', link: '/python/' },
-      { text: '设计文档', link: '/arch/design' }
     ],
 
     // 侧边栏 - 使用简单的链接列表，让 VuePress 自动添加页面标题
@@ -54,15 +53,6 @@ export default {
           children: [
             { text: 'Python 知识库', link: '/python/' },
             { text: '装饰器详解', link: '/python/decorators' }
-          ]
-        }
-      ],
-      '/arch/': [
-        {
-          text: '设计文档',
-          collapsible: true,
-          children: [
-            { text: '系统设计文档', link: '/arch/design' }
           ]
         }
       ]
