@@ -53,32 +53,15 @@
 
     <!-- 评论内容 -->
     <template v-else>
-      <!-- 登录提示 -->
-      <div v-if="!isLoggedIn" class="login-prompt">
-        <button class="login-btn" @click="loginWithGitHub">
+      <!-- 评论提示 -->
+      <div class="comment-hint">
+        <p>评论功能通过 GitHub Issues 实现</p>
+        <a :href="issueUrl" target="_blank" rel="noopener" class="comment-link">
           <svg class="github-icon" viewBox="0 0 24 24" fill="currentColor">
             <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
           </svg>
-          使用 GitHub 登录参与讨论
-        </button>
-      </div>
-
-      <!-- 评论表单 (已登录) -->
-      <div v-else class="comment-form">
-        <textarea
-          v-model="newComment"
-          placeholder="写下你的想法... (支持 Markdown)"
-          :disabled="submitting"
-        ></textarea>
-        <div class="actions">
-          <button
-            class="submit-btn"
-            @click="submitComment"
-            :disabled="!newComment.trim() || submitting"
-          >
-            {{ submitting ? '发表中...' : '发表评论' }}
-          </button>
-        </div>
+          在 GitHub 上发表评论
+        </a>
       </div>
 
       <!-- 评论列表 -->
@@ -104,7 +87,7 @@
         </div>
 
         <div v-if="comments.length === 0" class="no-comments">
-          暂无评论，成为第一个评论者吧！
+          暂无评论，<a :href="issueUrl" target="_blank" rel="noopener">成为第一个评论者</a>！
         </div>
       </div>
     </template>
@@ -161,8 +144,7 @@ const repoIssuesUrl = computed(() => {
 })
 
 const isLoggedIn = computed(() => {
-  if (typeof window === 'undefined') return false
-  return !!localStorage.getItem('gh_token')
+  return false // 静态站点不支持 OAuth 登录
 })
 
 // 缓存管理
@@ -272,20 +254,12 @@ async function fetchComments() {
 
 // OAuth 登录
 function loginWithGitHub() {
-  if (!props.clientId) {
-    if (issueUrl.value) {
-      window.open(issueUrl.value, '_blank')
-    }
-    return
+  // 静态站点无法安全存储 OAuth token，直接跳转到 GitHub Issue 评论
+  if (issueUrl.value) {
+    window.open(issueUrl.value, '_blank')
+  } else if (repoIssuesUrl.value) {
+    window.open(repoIssuesUrl.value, '_blank')
   }
-
-  const redirectUri = encodeURIComponent(window.location.href)
-  const state = Math.random().toString(36).substring(7)
-
-  localStorage.setItem('oauth_state', state)
-
-  const authUrl = `https://github.com/login/oauth/authorize?client_id=${props.clientId}&redirect_uri=${redirectUri}&scope=public_repo&state=${state}`
-  window.location.href = authUrl
 }
 
 // 发表评论
@@ -515,28 +489,34 @@ onUnmounted(() => {
   }
 }
 
-.login-prompt {
+.comment-hint {
   display: flex;
   align-items: center;
-  justify-content: center;
-  padding: 32px 0;
-  background: #FAFAFA;
+  justify-content: space-between;
+  padding: 16px 20px;
+  background: #F8FAFC;
   border-radius: 12px;
+  margin-bottom: 1.5rem;
+
+  p {
+    margin: 0;
+    color: #64748B;
+    font-size: 14px;
+  }
 }
 
-.login-btn {
+.comment-link {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 12px 24px;
+  padding: 10px 16px;
   font-size: 14px;
   font-weight: 500;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   color: #fff;
   background: #24292E;
-  border: none;
   border-radius: 8px;
-  cursor: pointer;
+  text-decoration: none;
   transition: background 0.2s ease;
 
   &:hover {
@@ -544,54 +524,9 @@ onUnmounted(() => {
   }
 }
 
-.comment-form {
-  margin-bottom: 1.5rem;
-
-  textarea {
-    width: 100%;
-    min-height: 100px;
-    padding: 12px;
-    font-size: 14px;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-    border: 1px solid #E4E4E7;
-    border-radius: 8px;
-    resize: vertical;
-    background: #FFFFFF;
-    color: #18181B;
-
-    &:focus {
-      outline: none;
-      border-color: #2563EB;
-    }
-  }
-
-  .actions {
-    display: flex;
-    justify-content: flex-end;
-    margin-top: 8px;
-  }
-
-  .submit-btn {
-    padding: 8px 16px;
-    font-size: 14px;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-    font-weight: 500;
-    color: #fff;
-    background: #2563EB;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: background 0.2s ease;
-
-    &:hover:not(:disabled) {
-      background: #3B82F6;
-    }
-
-    &:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-    }
-  }
+.github-icon {
+  width: 16px;
+  height: 16px;
 }
 
 .comments-list {
