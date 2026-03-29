@@ -85,7 +85,8 @@ export default {
       try {
         return `<div class="katex-display">${katex.renderToString(content, {
           throwOnError: false,
-          displayMode: true
+          displayMode: true,
+          strict: "ignore"
         })}</div>`
       } catch (e) {
         console.warn('KaTeX block render error:', e.message)
@@ -148,7 +149,8 @@ export default {
       try {
         return katex.renderToString(content, {
           throwOnError: false,
-          displayMode: false
+          displayMode: false,
+          strict: "ignore"
         })
       } catch (e) {
         console.warn('KaTeX inline render error:', e.message)

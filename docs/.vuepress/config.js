@@ -4,6 +4,7 @@ import mermaidPlugin from './plugins/mermaid/index.js'
 import runnableCodePlugin from './plugins/runnable-code/index.js'
 import mathPlugin from './plugins/math/index.js'
 import emphasisFixPlugin from './plugins/emphasis-fix/index.js'
+import wordCountPlugin from './plugins/word-count/index.js'
 import ideaspacesTheme from './theme/index.js'
 
 const __dirname = getDirname(import.meta.url)
@@ -73,7 +74,9 @@ export default {
     // 可运行代码块
     runnableCodePlugin,
     // LaTeX 数学公式
-    mathPlugin
+    mathPlugin,
+    // 字数统计
+    wordCountPlugin
   ],
 
   // 打包器配置

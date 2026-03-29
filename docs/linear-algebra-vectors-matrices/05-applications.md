@@ -6,20 +6,19 @@
 
 计算机无法理解原始文本，它需要数值形式来表达语义信息。文本向量化的核心思想是将文本（如词语、句子、文章）映射为多维向量空间中的点，在映射过程中，让每个维度对应某种语义特征或统计属性。通过向量化，原本抽象的语言信息被转化为可计算的数学对象。这不仅使得文本能够被机器学习模型处理，更重要的是，语义相近的文本在向量空间中也彼此靠近，从而实现相似度比较、聚类分析、检索匹配等关键任务。线性代数为此提供了完整的数学框架——向量运算刻画语义关系，矩阵操作支持批量高效处理，它们是现在动辄百亿、千亿参数语言模型训练时，能处理数以 PB 计语料的关键前提。
 
-### 老式NLP的代表：词袋模型
+### 老式 NLP 的代表：词袋模型
 
-词袋模型（Bag of Words）在 1954 年由泽里格·哈里斯（Zellig Harris）提出，这是一种地将文本转化为供机器学习算法处理的数据的算法，通过统计词频来捕捉文档的语义内容，使计算机能够"理解"文本的核心主题和关键词分布。
+词袋模型（Bag of Words）在 1954 年由泽里格·哈里斯（Zellig Harris）提出，这是一种将文本转化为供机器学习算法处理的数据的算法，通过统计词频来捕捉文档的语义内容，使计算机能够"理解"文本的核心主题和关键词分布。
 
 词袋模型的核心思想是忽略文档中词语的顺序和语法结构，将文档视为词汇的"袋子"——只关注哪些词出现、出现多少次。它先构建一个包含所有文档词汇的词汇表，然后将每篇文档表示为一个固定长度的向量，向量的每个维度对应词汇表中的一个词，数值代表该词在文档中的出现频率。尽管只通过词频来理解文本主题肯定不够准确，但是这种将文档转化数值矩阵的方法足够简单，可作为入门学习或者文本分类、聚类、相似度计算等的前置任务。
 
-### 现代NLP的起源：词向量
+### 现代 NLP 的起源：词向量
 
-区别于词袋模型、词频-逆文档频率（TF-IDF）这类从词频统计出发来理解语义的技术。2003年，图灵奖得主约书亚·本吉奥（Yoshua Bengio）在文章《A Neural Probabilistic Language Model》中提出**词向量（Word Embedding）**可以说是现代 NLP 技术的起源。基于词频统计的技术，任意两个词的 [One-Hot 向量](https://zh.wikipedia.org/wiki/%E7%8B%AC%E7%83%AD)都是正交的，不同词之间没有任何关联，自然就无法捕捉"国王"与"女王"、"北京"与"中国"这样的语义关联关系。
+区别于词袋模型、词频-逆文档频率（TF-IDF）这类从词频统计出发来理解语义的技术。2003 年，图灵奖得主约书亚·本吉奥（Yoshua Bengio）在文章《A Neural Probabilistic Language Model》中提出**词向量（Word Embedding）**可以说是现代 NLP 技术的起源。基于词频统计的技术，任意两个词的 [One-Hot 向量](https://zh.wikipedia.org/wiki/%E7%8B%AC%E7%83%AD) 都是正交的，不同词之间没有任何关联，自然就无法捕捉"国王"与"女王"、"北京"与"中国"这样的语义关联关系。
 
 词向量通过从大规模语料中学习，将语义信息压缩到几百维的稠密向量中，使得相似语义的词（如"开心"和"快乐"）在向量空间中距离更近，甚至能呈现有意义的线性关系（譬如："国王"的向量 - "男人"的向量 + "女人"的向量 ≈ "女王"向量），这种分布式表示大幅提升了特征表达效率，也成为迁移学习的基础。这一技术为后续神经网络语言模型铺平了道路，从 Word2Vec、GloVe 到 ELMo、BERT，再到以 GPT 为代表的大语言模型，词嵌入技术不断演进——从静态词向量到上下文相关的动态表示，理解词向量就是理解现代 NLP 的第一步。
 
 今天，"词向量"和"词嵌入"这两个术语常被混用，按原教旨主义来说，"词嵌入"（Word Embedding）强调的是过程，将离散的词语映射到连续向量空间的一种算法，而"词向量"（Word Vector）强调的是结果，即运行词嵌入算法后得到的向量表示。在后面
-
 
 ```python
 import numpy as np
@@ -40,18 +39,17 @@ def cosine_similarity(v1, v2):
     return np.dot(v1, v2) / (np.linalg.norm(v1) * np.linalg.norm(v2))
 
 # 计算词之间的相似度
-print("词向量相似度:")
-print(f"机器学习 vs 深度学习: {cosine_similarity(word_vectors['机器学习'], word_vectors['深度学习']):.3f}")
-print(f"机器学习 vs 自然语言处理: {cosine_similarity(word_vectors['机器学习'], word_vectors['自然语言处理']):.3f}")
-print(f"机器学习 vs 足球: {cosine_similarity(word_vectors['机器学习'], word_vectors['足球']):.3f}")
+print("词向量相似度：")
+print(f"机器学习 vs 深度学习：{cosine_similarity(word_vectors['机器学习'], word_vectors['深度学习']):.3f}")
+print(f"机器学习 vs 自然语言处理：{cosine_similarity(word_vectors['机器学习'], word_vectors['自然语言处理']):.3f}")
+print(f"机器学习 vs 足球：{cosine_similarity(word_vectors['机器学习'], word_vectors['足球']):.3f}")
 
 # 词向量运算：类比关系
 # "国王" - "男人" + "女人" ≈ "女王"
-print("\n词向量类比（简化示例）:")
+print("\n 词向量类比（简化示例）:")
 result = word_vectors['机器学习'] - word_vectors['深度学习'] + word_vectors['自然语言处理']
 print(f"机器学习 - 深度学习 + 自然语言处理 ≈ {result.round(2)}")
 ```
-
 
 ## 图像数据的矩阵表示
 
@@ -74,8 +72,8 @@ image_matrix = np.array([
     [250, 200, 150, 100, 50, 0]
 ], dtype=np.uint8)
 
-print(f"图像矩阵形状: {image_matrix.shape}")  # (6, 6)
-print(f"像素值范围: [{image_matrix.min()}, {image_matrix.max()}]")
+print(f"图像矩阵形状：{image_matrix.shape}")  # (6, 6)
+print(f"像素值范围：[{image_matrix.min()}, {image_matrix.max()}]")
 
 # 显示图像
 plt.imshow(image_matrix, cmap='gray')
@@ -94,24 +92,24 @@ print("图像已保存")
 import numpy as np
 from PIL import Image
 
-# 创建一个简单的彩色图像（3×3像素）
-# 形状：(高, 宽, 通道)
+# 创建一个简单的彩色图像（3×3 像素）
+# 形状：（高，宽，通道）
 color_image = np.array([
-    [[255, 0, 0], [0, 255, 0], [0, 0, 255]],      # 红, 绿, 蓝
-    [[255, 255, 0], [255, 0, 255], [0, 255, 255]], # 黄, 品红, 青
-    [[255, 255, 255], [128, 128, 128], [0, 0, 0]]  # 白, 灰, 黑
+    [[255, 0, 0], [0, 255, 0], [0, 0, 255]],      # 红，绿，蓝
+    [[255, 255, 0], [255, 0, 255], [0, 255, 255]], # 黄，品红，青
+    [[255, 255, 255], [128, 128, 128], [0, 0, 0]]  # 白，灰，黑
 ], dtype=np.uint8)
 
-print(f"彩色图像形状: {color_image.shape}")  # (3, 3, 3)
+print(f"彩色图像形状：{color_image.shape}")  # (3, 3, 3)
 
 # 分离各通道
 R = color_image[:, :, 0]
 G = color_image[:, :, 1]
 B = color_image[:, :, 2]
 
-print(f"红色通道:\n{R}")
-print(f"绿色通道:\n{G}")
-print(f"蓝色通道:\n{B}")
+print(f"红色通道：\n{R}")
+print(f"绿色通道：\n{G}")
+print(f"蓝色通道：\n{B}")
 ```
 
 ### 图像的矩阵操作
@@ -144,8 +142,8 @@ rotated_180 = np.rot90(image, 2)
 # 6. 转置（对角翻转）
 transposed = image.T
 
-print(f"原图形状: {image.shape}")
-print(f"裁剪后形状: {cropped.shape}")
+print(f"原图形状：{image.shape}")
+print(f"裁剪后形状：{cropped.shape}")
 ```
 
 ### 卷积操作的矩阵视角
@@ -174,17 +172,16 @@ edge_kernel = np.array([
 
 # 卷积操作
 result = convolve2d(image, edge_kernel, mode='valid')
-print("卷积结果:\n", result)
+print("卷积结果：\n", result)
 
 # 模糊卷积核
 blur_kernel = np.array([
-    [1, 1, 1],
     [1, 1, 1],
     [1, 1, 1]
 ]) / 9
 
 blurred = convolve2d(image, blur_kernel, mode='valid')
-print("\n模糊结果:\n", blurred.round(2))
+print("\n 模糊结果：\n", blurred.round(2))
 ```
 
 ### 图像压缩与奇异值分解
@@ -202,8 +199,8 @@ image = np.random.rand(200, 200)
 # SVD 分解
 U, S, Vt = np.linalg.svd(image)
 
-print(f"原始图像形状: {image.shape}")
-print(f"奇异值数量: {len(S)}")
+print(f"原始图像形状：{image.shape}")
+print(f"奇异值数量：{len(S)}")
 
 # 使用前 k 个奇异值重构图像
 def compress_image(U, S, Vt, k):
@@ -212,7 +209,7 @@ def compress_image(U, S, Vt, k):
 
 # 不同压缩率
 ks = [5, 20, 50, 100]
-print("\n压缩率分析:")
+print("\n 压缩率分析：")
 for k in ks:
     compressed = compress_image(U, S, Vt, k)
     error = np.linalg.norm(image - compressed, 'fro')
@@ -245,11 +242,11 @@ A = np.array([
 eigenvalues, eigenvectors = np.linalg.eig(A)
 
 print("矩阵 A:\n", A)
-print("\n特征值:", eigenvalues)
+print("\n 特征值：", eigenvalues)
 print("特征向量（每列一个）:\n", eigenvectors)
 
-# 验证: A @ v = λ * v
-print("\n验证特征向量:")
+# 验证：A @ v = λ * v
+print("\n 验证特征向量：")
 for i in range(len(eigenvalues)):
     v = eigenvectors[:, i]
     lambda_v = eigenvalues[i]
@@ -274,15 +271,15 @@ mean = [0, 0]
 cov = [[3, 2], [2, 2]]  # 协方差矩阵
 data = np.random.multivariate_normal(mean, cov, n_samples)
 
-print(f"原始数据形状: {data.shape}")
+print(f"原始数据形状：{data.shape}")
 
 # 方法一：使用 sklearn
 pca = PCA(n_components=2)
 pca.fit(data)
 
-print(f"\n主成分方向（特征向量）:\n{pca.components_}")
-print(f"解释方差比例: {pca.explained_variance_ratio_}")
-print(f"特征值: {pca.explained_variance_}")
+print(f"\n 主成分方向（特征向量）:\n{pca.components_}")
+print(f"解释方差比例：{pca.explained_variance_ratio_}")
+print(f"特征值：{pca.explained_variance_}")
 
 # 方法二：手动实现 PCA
 # 1. 中心化
@@ -299,14 +296,14 @@ idx = eigenvalues.argsort()[::-1]
 eigenvalues = eigenvalues[idx]
 eigenvectors = eigenvectors[:, idx]
 
-print(f"\n手动计算结果:")
-print(f"特征值: {eigenvalues}")
-print(f"特征向量:\n{eigenvectors}")
+print(f"\n 手动计算结果：")
+print(f"特征值：{eigenvalues}")
+print(f"特征向量：\n{eigenvectors}")
 
 # 降维到一维
 pca_1d = PCA(n_components=1)
 data_1d = pca_1d.fit_transform(data)
-print(f"\n降维后形状: {data_1d.shape}")
+print(f"\n 降维后形状：{data_1d.shape}")
 
 # 可视化
 plt.figure(figsize=(12, 5))
@@ -350,20 +347,20 @@ import matplotlib.pyplot as plt
 # 加载人脸数据集（如果网络不可用，可用随机数据模拟）
 try:
     faces = fetch_olivetti_faces(shuffle=True, random_state=42)
-    X = faces.data  # (400, 4096) - 400张64x64的人脸图像
+    X = faces.data  # (400, 4096) - 400 张 64x64 的人脸图像
 except:
     # 模拟数据
     X = np.random.rand(100, 4096)
 
-print(f"人脸数据形状: {X.shape}")  # (样本数, 像素数)
+print(f"人脸数据形状：{X.shape}")  # （样本数，像素数）
 
 # PCA 降维
 n_components = 50
 pca = PCA(n_components=n_components, whiten=True)
 X_pca = pca.fit_transform(X)
 
-print(f"降维后形状: {X_pca.shape}")
-print(f"累计解释方差: {sum(pca.explained_variance_ratio_):.2%}")
+print(f"降维后形状：{X_pca.shape}")
+print(f"累计解释方差：{sum(pca.explained_variance_ratio_):.2%}")
 
 # 可视化前几个"特征脸"
 fig, axes = plt.subplots(2, 5, figsize=(12, 5))
@@ -389,18 +386,18 @@ print("特征脸图已保存")
 import numpy as np
 
 # 用户-物品评分矩阵
-# 行：用户，列：物品，值：评分（0表示未评分）
+# 行：用户，列：物品，值：评分（0 表示未评分）
 ratings = np.array([
-    [5, 3, 0, 1, 0, 0],  # 用户1
-    [4, 0, 0, 1, 0, 2],  # 用户2
-    [1, 1, 0, 5, 4, 0],  # 用户3
-    [0, 0, 0, 4, 0, 5],  # 用户4
-    [0, 1, 5, 4, 0, 0],  # 用户5
+    [5, 3, 0, 1, 0, 0],  # 用户 1
+    [4, 0, 0, 1, 0, 2],  # 用户 2
+    [1, 1, 0, 5, 4, 0],  # 用户 3
+    [0, 0, 0, 4, 0, 5],  # 用户 4
+    [0, 1, 5, 4, 0, 0],  # 用户 5
 ])
 
-print("用户-物品评分矩阵:")
+print("用户-物品评分矩阵：")
 print(ratings)
-print(f"矩阵形状: {ratings.shape}")
+print(f"矩阵形状：{ratings.shape}")
 
 # 用户相似度（余弦相似度）
 def cosine_similarity_matrix(matrix):
@@ -413,7 +410,7 @@ def cosine_similarity_matrix(matrix):
     return normalized @ normalized.T
 
 user_sim = cosine_similarity_matrix(ratings)
-print("\n用户相似度矩阵:")
+print("\n 用户相似度矩阵：")
 print(user_sim.round(3))
 ```
 
@@ -434,23 +431,23 @@ ratings_filled[ratings_filled == 0] = ratings[ratings > 0].mean()
 k = 2  # 隐因子数量
 U, sigma, Vt = svds(ratings_filled, k=k)
 
-print(f"U (用户矩阵) 形状: {U.shape}")
-print(f"sigma (奇异值) 形状: {sigma.shape}")
-print(f"Vt (物品矩阵) 形状: {Vt.shape}")
+print(f"U （用户矩阵） 形状：{U.shape}")
+print(f"sigma （奇异值） 形状：{sigma.shape}")
+print(f"Vt （物品矩阵） 形状：{Vt.shape}")
 
 # 重构评分矩阵
 predicted_ratings = U @ np.diag(sigma) @ Vt
 
-print("\n预测评分矩阵:")
+print("\n 预测评分矩阵：")
 print(predicted_ratings.round(2))
 
-# 推荐给用户1的物品
+# 推荐给用户 1 的物品
 user1_predicted = predicted_ratings[0]
 user1_actual = ratings[0]
-# 找出用户1未评分但预测评分高的物品
+# 找出用户 1 未评分但预测评分高的物品
 recommend_items = np.where(user1_actual == 0)[0]
 recommended = sorted(recommend_items, key=lambda x: user1_predicted[x], reverse=True)
-print(f"\n推荐给用户1的物品: {recommended}")
+print(f"\n 推荐给用户 1 的物品：{recommended}")
 ```
 
 ### 低秩近似
@@ -466,12 +463,12 @@ U_true = np.random.randn(10, 3)
 V_true = np.random.randn(3, 5)
 matrix = U_true @ V_true + 0.1 * np.random.randn(10, 5)
 
-print(f"原始矩阵形状: {matrix.shape}")
+print(f"原始矩阵形状：{matrix.shape}")
 
 # SVD 分解
 U, S, Vt = np.linalg.svd(matrix, full_matrices=False)
 
-print(f"\n奇异值: {S.round(3)}")
+print(f"\n 奇异值：{S.round(3)}")
 
 # 低秩近似
 def low_rank_approximation(U, S, Vt, k):
@@ -479,7 +476,7 @@ def low_rank_approximation(U, S, Vt, k):
     return U[:, :k] @ np.diag(S[:k]) @ Vt[:k, :]
 
 # 不同秩的近似
-print("\n低秩近似误差:")
+print("\n 低秩近似误差：")
 for k in [1, 2, 3, 5]:
     approx = low_rank_approximation(U, S, Vt, k)
     error = np.linalg.norm(matrix - approx, 'fro')
@@ -505,29 +502,29 @@ A = A @ A.T + np.eye(5) * 0.1  # 确保正定
 
 # 1. 特征值分解
 eigenvalues, eigenvectors = np.linalg.eig(A)
-print("特征值分解:")
-print(f"特征值: {eigenvalues.round(4)}")
-print(f"特征向量形状: {eigenvectors.shape}")
+print("特征值分解：")
+print(f"特征值：{eigenvalues.round(4)}")
+print(f"特征向量形状：{eigenvectors.shape}")
 
-# 验证: A = V D V^-1
+# 验证：A = V D V^-1
 reconstructed = eigenvectors @ np.diag(eigenvalues) @ np.linalg.inv(eigenvectors)
-print(f"重构误差: {np.linalg.norm(A - reconstructed):.6f}")
+print(f"重构误差：{np.linalg.norm(A - reconstructed):.6f}")
 
 # 2. 奇异值分解（SVD）
 U, S, Vt = np.linalg.svd(A)
-print("\n奇异值分解:")
-print(f"U 形状: {U.shape}")
-print(f"奇异值: {S.round(4)}")
-print(f"Vt 形状: {Vt.shape}")
+print("\n 奇异值分解：")
+print(f"U 形状：{U.shape}")
+print(f"奇异值：{S.round(4)}")
+print(f"Vt 形状：{Vt.shape}")
 
-# 验证: A = U S Vt
+# 验证：A = U S Vt
 reconstructed = U @ np.diag(S) @ Vt
-print(f"重构误差: {np.linalg.norm(A - reconstructed):.6f}")
+print(f"重构误差：{np.linalg.norm(A - reconstructed):.6f}")
 
 # 低秩近似
-k = 3  # 保留前3个奇异值
+k = 3  # 保留前 3 个奇异值
 A_approx = U[:, :k] @ np.diag(S[:k]) @ Vt[:k, :]
-print(f"\n低秩近似误差 (k={k}): {np.linalg.norm(A - A_approx):.6f}")
+print(f"\n 低秩近似误差 (k={k}): {np.linalg.norm(A - A_approx):.6f}")
 ```
 
 ### 线性方程组求解
@@ -553,21 +550,19 @@ b = np.array([4, 1, 1])
 
 # 方法一：np.linalg.solve
 x = np.linalg.solve(A, b)
-print(f"解: {x}")
+print(f"解：{x}")
 print(f"验证 Ax = b: {np.allclose(A @ x, b)}")
 
 # 方法二：使用逆矩阵（不推荐，数值不稳定）
 x2 = np.linalg.inv(A) @ b
-print(f"逆矩阵法: {x2}")
+print(f"逆矩阵法：{x2}")
 
 # 方法三：最小二乘法（超定方程组）
 A_over = np.random.rand(5, 3)
 b_over = np.random.rand(5)
 x_lstsq, residuals, rank, s = np.linalg.lstsq(A_over, b_over, rcond=None)
-print(f"最小二乘解: {x_lstsq}")
+print(f"最小二乘解：{x_lstsq}")
 ```
-
-
 
 ---
 

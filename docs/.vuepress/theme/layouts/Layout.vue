@@ -1,14 +1,15 @@
 <template>
   <DefaultLayout>
-    <!-- 自定义导航栏 -->
-    <template #navbar>
-      <Navbar />
-    </template>
+    <!-- 使用默认导航栏 -->
     <!-- 自定义页面顶部：显示 tags -->
     <template #page-content-top>
       <div v-if="pageTags.length" class="page-tags">
         <span v-for="tag in pageTags" :key="tag" class="tag">{{ tag }}</span>
       </div>
+    </template>
+    <!-- 自定义页面底部：文章元信息 -->
+    <template #page-content-bottom>
+      <ArticleFooter />
     </template>
   </DefaultLayout>
 </template>
@@ -17,7 +18,7 @@
 import { computed } from 'vue'
 import { usePageFrontmatter } from '@vuepress/client'
 import DefaultLayout from '@vuepress/theme-default/lib/client/layouts/Layout.vue'
-import Navbar from '../components/Navbar.vue'
+import ArticleFooter from '../components/ArticleFooter.vue'
 
 const frontmatter = usePageFrontmatter()
 const pageTags = computed(() => frontmatter.value?.tags || [])

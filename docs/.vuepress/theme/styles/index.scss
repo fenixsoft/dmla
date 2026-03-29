@@ -335,12 +335,9 @@ body {
 }
 
 // ==================== 页脚样式 ====================
+// 隐藏默认的 VPPageMeta，使用自定义的 ArticleFooter 替代
 .vp-page-meta {
-  margin-top: 2rem;
-  padding-top: 1rem;
-  border-top: 1px solid var(--vp-c-border);
-  color: var(--vp-c-text-mute);
-  font-size: 0.875rem;
+  display: none;
 }
 
 // ==================== 响应式样式 ====================
