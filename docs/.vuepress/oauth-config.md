@@ -3,8 +3,8 @@
 ## OAuth App 信息
 
 - **Application name**: IdeaSpaces Comments
-- **Homepage URL**: https://fenixsoft.github.io
-- **Authorization callback URL**: https://fenixsoft.github.io
+- **Homepage URL**: https://fenixsoft.github.io/ideaspaces/
+- **Authorization callback URL**: https://fenixsoft.github.io/ideaspaces/
 
 ## 凭证
 

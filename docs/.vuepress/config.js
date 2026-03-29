@@ -16,8 +16,8 @@ export default {
   title: 'IdeaSpaces',
   description: '交互式知识管理平台',
 
-  // 部署配置 - GitHub Pages 根路径
-  base: '/',
+  // 部署配置 - GitHub Pages 子目录
+  base: '/ideaspaces/',
 
   // 使用自定义主题
   theme: ideaspacesTheme({
