@@ -32,12 +32,15 @@ const props = defineProps({
   },
   proxy: {
     type: String,
-    default: 'https://cros.icyfenix.cn/?code={code}'
+    default: 'https://cros.icyfenix.cn/'
   }
 })
 
 // 生成 Gitalk 实例（只在客户端执行）
 const initGitalk = () => {
+  // 确保 title 不为空，使用 pathname 作为后备
+  const pageTitle = document.title || location.pathname
+
   const gitalk = new Gitalk({
     clientID: props.clientId,
     // 不传 clientSecret，使用 proxy 代理
@@ -45,7 +48,7 @@ const initGitalk = () => {
     owner: props.owner,
     admin: props.admin,
     id: location.pathname, // 页面的唯一标识，最长50字符
-    title: document.title,
+    title: pageTitle,
     body: location.href,
     labels: ['Gitalk', 'Comment'],
     distractionFreeMode: false,

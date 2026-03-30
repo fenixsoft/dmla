@@ -19,7 +19,7 @@ a_{m1} & a_{m2} & \cdots & a_{mn}
 
 矩阵 $\mathbf{A}$ 的第 $i$ 行第 $j$ 列元素记为 $a_{ij}$ 或 $(\mathbf{A})_{ij}$。在 NumPy 中，矩阵可以用二维数组表示，譬如，一个 $2 \times 3$ 的矩阵有 2 行 3 列：
 
-```python
+```python runnable
 import numpy as np
 
 # 创建 2×3 矩阵
@@ -170,7 +170,7 @@ $$\begin{pmatrix} a & b \\ c & d \end{pmatrix} \begin{pmatrix} x \\ y \end{pmatr
 
 在 NumPy 中，张量就是多维数组（ndarray），维度可以是任意正整数：
 
-```python
+```python runnable
 import numpy as np
 
 # 0 阶张量（标量）
