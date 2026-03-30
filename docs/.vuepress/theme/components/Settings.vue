@@ -1,49 +1,52 @@
 <template>
-  <Teleport to="body">
-    <div v-if="visible" class="settings-overlay" @click.self="close">
-      <div class="settings-modal">
-        <div class="settings-header">
-          <h3>沙箱设置</h3>
-          <button class="close-btn" @click="close">&times;</button>
-        </div>
-
-        <div class="settings-body">
-          <div class="form-group">
-            <label for="sandbox-endpoint">沙箱服务地址</label>
-            <input
-              id="sandbox-endpoint"
-              v-model="endpoint"
-              type="url"
-              placeholder="http://localhost:3001"
-              @input="resetStatus"
-            />
-            <p class="help-text">用于执行教程中的 Python 代码</p>
+  <ClientOnly>
+    <Teleport to="body">
+      <div v-if="visible" class="settings-overlay" @click.self="close">
+        <div class="settings-modal">
+          <div class="settings-header">
+            <h3>沙箱设置</h3>
+            <button class="close-btn" @click="close">&times;</button>
           </div>
 
-          <div class="connection-status">
-            <span class="status-label">连接状态:</span>
-            <span class="status-value" :class="statusClass">
-              <span class="status-dot"></span>
-              {{ statusText }}
-            </span>
-          </div>
-        </div>
+          <div class="settings-body">
+            <div class="form-group">
+              <label for="sandbox-endpoint">沙箱服务地址</label>
+              <input
+                id="sandbox-endpoint"
+                v-model="endpoint"
+                type="url"
+                placeholder="http://localhost:3001"
+                @input="resetStatus"
+              />
+              <p class="help-text">用于执行教程中的 Python 代码</p>
+            </div>
 
-        <div class="settings-footer">
-          <button class="btn btn-secondary" @click="testConnection">
-            {{ testing ? '检测中...' : '测试连接' }}
-          </button>
-          <button class="btn btn-primary" @click="save">
-            保存设置
-          </button>
+            <div class="connection-status">
+              <span class="status-label">连接状态:</span>
+              <span class="status-value" :class="statusClass">
+                <span class="status-dot"></span>
+                {{ statusText }}
+              </span>
+            </div>
+          </div>
+
+          <div class="settings-footer">
+            <button class="btn btn-secondary" @click="testConnection">
+              {{ testing ? '检测中...' : '测试连接' }}
+            </button>
+            <button class="btn btn-primary" @click="save">
+              保存设置
+            </button>
+          </div>
         </div>
       </div>
-    </div>
-  </Teleport>
+    </Teleport>
+  </ClientOnly>
 </template>
 
 <script setup>
 import { ref, computed, watch } from 'vue'
+import { ClientOnly } from 'vuepress/client'
 
 const props = defineProps({
   visible: {
