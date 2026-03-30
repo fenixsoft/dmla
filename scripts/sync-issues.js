@@ -200,11 +200,14 @@ async function createIssue(title, labels, pathname) {
 }
 
 /**
- * 搜索已存在的 Issue（使用 Gitalk 的标签组合方式）
+ * 搜索已存在的 Issue
+ * 方案一：使用 Gitalk 的标签组合方式（pathname 标签）
+ * 方案二：按标题搜索（防止因标签变化找不到）
  * @param {string[]} labels - 基础标签
  * @param {string} pathname - 文章路径（作为 Gitalk id 标签）
+ * @param {string} title - 文章标题（作为备选搜索条件）
  */
-async function findIssue(labels, pathname) {
+async function findIssue(labels, pathname, title) {
   const token = process.env.GITHUB_TOKEN
   const repo = process.env.GITHUB_REPOSITORY
 
@@ -212,20 +215,46 @@ async function findIssue(labels, pathname) {
 
   const [owner, repoName] = repo.split('/')
 
-  // Gitalk 查找 issue 的方式：labels.concat(id).join(',')
+  // 方案一：按 Gitalk 标签组合查找
   const allLabels = labels.concat(pathname).join(',')
-  const query = encodeURIComponent(`repo:${owner}/${repoName} is:issue ${allLabels}`)
-  const response = await fetch(`https://api.github.com/search/issues?q=${query}`, {
+  const queryByLabels = encodeURIComponent(`repo:${owner}/${repoName} is:issue ${allLabels}`)
+  const responseByLabels = await fetch(`https://api.github.com/search/issues?q=${queryByLabels}`, {
     headers: {
       'Authorization': `token ${token}`,
       'Accept': 'application/vnd.github.v3+json'
     }
   })
 
-  if (!response.ok) return null
+  if (responseByLabels.ok) {
+    const data = await responseByLabels.json()
+    if (data.items.length > 0) {
+      return data.items[0]
+    }
+  }
 
-  const data = await response.json()
-  return data.items[0]
+  // 方案二：按标题查找（防止因 pathname 变化导致找不到）
+  // 注意：标题可能带 "| IdeaSpaces" 后缀，使用模糊匹配
+  const queryByTitle = encodeURIComponent(`repo:${owner}/${repoName} is:issue "${title}" in:title`)
+  const responseByTitle = await fetch(`https://api.github.com/search/issues?q=${queryByTitle}`, {
+    headers: {
+      'Authorization': `token ${token}`,
+      'Accept': 'application/vnd.github.v3+json'
+    }
+  })
+
+  if (responseByTitle.ok) {
+    const data = await responseByTitle.json()
+    // 找标题完全匹配或包含目标标题的 issue
+    for (const item of data.items) {
+      // 匹配标题完全一致，或去掉 "| IdeaSpaces" 后缀后一致
+      const cleanTitle = item.title.replace(/\s*\|\s*IdeaSpaces\s*$/, '').trim()
+      if (cleanTitle === title || item.title === title) {
+        return item
+      }
+    }
+  }
+
+  return null
 }
 
 /**
@@ -262,8 +291,8 @@ async function main() {
     }
 
     try {
-      // 搜索现有 Issue（使用 Gitalk 的标签组合方式）
-      const existingIssue = await findIssue(ISSUE_LABELS, pathname)
+      // 搜索现有 Issue（先按标签，再按标题）
+      const existingIssue = await findIssue(ISSUE_LABELS, pathname, issueTitle)
 
       if (existingIssue) {
         console.log(`✓ ${frontmatter.title} -> Issue #${existingIssue.number} (已存在，回写编号)`)

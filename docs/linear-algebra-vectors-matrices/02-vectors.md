@@ -1,5 +1,7 @@
 ---
 title: "向量基础"
+issue:
+  number: 18
 ---
 
 # 向量基础

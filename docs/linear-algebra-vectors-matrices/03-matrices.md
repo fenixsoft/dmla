@@ -1,5 +1,7 @@
 ---
 title: "矩阵基础"
+issue:
+  number: 19
 ---
 
 # 矩阵基础
