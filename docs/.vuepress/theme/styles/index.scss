@@ -119,7 +119,7 @@ body {
 
 .theme-default-content {
   // 优化后的 padding：减少两端空白和顶部空白
-  padding: 32px 64px;
+  padding: 0 !important;
 
   // 文章标题 - 与 pencil 设计稿一致
   h1 {
@@ -321,9 +321,9 @@ body {
 
 // ==================== 页面导航样式 ====================
 .vp-page-nav {
-  margin-top: 3rem;
-  padding-top: 1.5rem;
-  border-top: 1px solid var(--vp-c-border);
+
+  padding: 0 !important;
+  border-top: 0 !important;
 
   a {
     color: var(--vp-c-text-mute);

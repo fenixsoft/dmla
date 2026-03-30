@@ -4,13 +4,13 @@
  */
 
 import { readFileSync, readdirSync, statSync, writeFileSync } from 'fs'
-import { join, relative } from 'path'
-import { execSync } from 'child_process'
+import { join } from 'path'
 
 // 配置
 const DOCS_DIR = './docs'
-const ISSUE_LABELS = ['comments', 'article']
-const ISSUE_PREFIX = '[Comments] '
+// 使用 Gitalk 的标签格式，确保 Gitalk 能通过标签找到 issue
+// Gitalk 查找逻辑：labels.concat(id)，即 ['Gitalk', 'Comment', pathname]
+const ISSUE_LABELS = ['Gitalk', 'Comment']
 
 /**
  * 解析 Markdown frontmatter
@@ -139,9 +139,25 @@ function getMarkdownFiles(dir, files = []) {
 }
 
 /**
- * 创建 GitHub Issue
+ * 将文件路径转换为 Gitalk 使用的 pathname (id)
+ * 例如: ./docs/python/decorators.md -> /python/decorators.html
  */
-async function createIssue(title, labels) {
+function filePathToPathname(filePath) {
+  // 移除 ./docs 前缀和 .md 后缀，添加 .html
+  const relativePath = filePath
+    .replace(/^\.\//, '')
+    .replace(/^docs\//, '')
+    .replace(/\.md$/, '.html')
+  return '/' + relativePath
+}
+
+/**
+ * 创建 GitHub Issue
+ * @param {string} title - Issue 标题
+ * @param {string[]} labels - 基础标签
+ * @param {string} pathname - 文章路径（作为 Gitalk id 标签）
+ */
+async function createIssue(title, labels, pathname) {
   const token = process.env.GITHUB_TOKEN
   const repo = process.env.GITHUB_REPOSITORY
 
@@ -152,9 +168,13 @@ async function createIssue(title, labels) {
 
   const [owner, repoName] = repo.split('/')
 
+  // Gitalk 查找 issue 的方式是 labels.concat(id)
+  // 所以我们需要把 pathname 作为 id 标签加入
+  const allLabels = labels.concat(pathname)
+
   const body = `# 讨论
 
-这是文章 "${title.replace(ISSUE_PREFIX, '')}" 的评论区。
+这是文章 "${title}" 的评论区。
 
 欢迎在这里留言讨论！`
 
@@ -168,7 +188,7 @@ async function createIssue(title, labels) {
     body: JSON.stringify({
       title,
       body,
-      labels
+      labels: allLabels
     })
   })
 
@@ -180,9 +200,11 @@ async function createIssue(title, labels) {
 }
 
 /**
- * 搜索已存在的 Issue
+ * 搜索已存在的 Issue（使用 Gitalk 的标签组合方式）
+ * @param {string[]} labels - 基础标签
+ * @param {string} pathname - 文章路径（作为 Gitalk id 标签）
  */
-async function findIssue(title) {
+async function findIssue(labels, pathname) {
   const token = process.env.GITHUB_TOKEN
   const repo = process.env.GITHUB_REPOSITORY
 
@@ -190,7 +212,9 @@ async function findIssue(title) {
 
   const [owner, repoName] = repo.split('/')
 
-  const query = encodeURIComponent(`${title} repo:${owner}/${repoName} is:issue label:comments`)
+  // Gitalk 查找 issue 的方式：labels.concat(id).join(',')
+  const allLabels = labels.concat(pathname).join(',')
+  const query = encodeURIComponent(`repo:${owner}/${repoName} is:issue ${allLabels}`)
   const response = await fetch(`https://api.github.com/search/issues?q=${query}`, {
     headers: {
       'Authorization': `token ${token}`,
@@ -225,10 +249,11 @@ async function main() {
     // 跳过没有标题的文件
     if (!frontmatter.title) continue
 
-    // 确定 Issue 标题
-    const issueTitle = frontmatter.issue?.title
-      ? `${ISSUE_PREFIX}${frontmatter.issue.title}`
-      : `${ISSUE_PREFIX}${frontmatter.title}`
+    // 计算文章 pathname（Gitalk 用这个作为 id 标签）
+    const pathname = filePathToPathname(file)
+
+    // 确定 Issue 标题（直接使用文章标题，不加前缀）
+    const issueTitle = frontmatter.issue?.title || frontmatter.title
 
     // 检查是否已有 Issue 编号
     if (frontmatter.issue?.number) {
@@ -237,8 +262,8 @@ async function main() {
     }
 
     try {
-      // 搜索现有 Issue
-      const existingIssue = await findIssue(issueTitle)
+      // 搜索现有 Issue（使用 Gitalk 的标签组合方式）
+      const existingIssue = await findIssue(ISSUE_LABELS, pathname)
 
       if (existingIssue) {
         console.log(`✓ ${frontmatter.title} -> Issue #${existingIssue.number} (已存在，回写编号)`)
@@ -250,11 +275,12 @@ async function main() {
         continue
       }
 
-      // 创建新 Issue
-      const newIssue = await createIssue(issueTitle, ISSUE_LABELS)
+      // 创建新 Issue（使用 Gitalk 的标签格式）
+      const newIssue = await createIssue(issueTitle, ISSUE_LABELS, pathname)
 
       if (newIssue) {
         console.log(`✓ ${frontmatter.title} -> Issue #${newIssue.number} (已创建)`)
+        console.log(`  标签: ${ISSUE_LABELS.join(', ')}, ${pathname}`)
 
         // 回写编号到 frontmatter
         const updated = updateFrontmatterWithIssueNumber(file, newIssue.number)

@@ -101,6 +101,7 @@ onMounted(async () => {
   display: flex;
   flex-direction: column;
   gap: 4px;
+  padding-left: 6px;
 }
 
 .meta-item {
@@ -142,6 +143,7 @@ onMounted(async () => {
   display: flex;
   align-items: center;
   gap: 12px;
+  padding-right: 6px;
 }
 
 .star-button {

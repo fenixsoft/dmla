@@ -21,6 +21,9 @@ export default {
 
   // 使用自定义主题
   theme: ideaspacesTheme({
+    // 禁用颜色模式切换按钮
+    colorModeSwitch: false,
+
     // 导航栏
     navbar: [
       { text: '首页', link: '/' },
