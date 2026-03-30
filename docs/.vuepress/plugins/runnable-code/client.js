@@ -126,7 +126,7 @@ if (typeof document !== 'undefined' && !document.getElementById(styleId)) {
   line-height: 1.5;
   white-space: pre-wrap;
   word-break: break-all;
-  max-height: 300px;
+  max-height: 500px;
   overflow-y: auto;
 }
 

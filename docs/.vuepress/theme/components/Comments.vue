@@ -85,8 +85,8 @@ const props = defineProps({
 
 // 初始化 Gitalk（只在客户端执行）
 const initGitalk = () => {
-  // 确保 title 不为空，使用 pathname 作为后备
-  const pageTitle = document.title || location.pathname
+  // 使用 frontmatter 标题（不带站点名后缀），与 sync-issues.js 保持一致
+  const pageTitle = frontmatter.value?.title || frontmatter.value?.issue?.title || location.pathname
   const pageUrl = location.href
 
   // 从 frontmatter 获取 issue number（如果存在）

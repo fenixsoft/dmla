@@ -39,13 +39,12 @@ export default {
           collapsible: true,
           children: [
             { text: '概述', link: '/linear-algebra-vectors-matrices/' },
-            { text: '1. 引言', link: '/linear-algebra-vectors-matrices/01-introduction' },
-            { text: '2. 向量基础', link: '/linear-algebra-vectors-matrices/02-vectors' },
-            { text: '3. 矩阵基础', link: '/linear-algebra-vectors-matrices/03-matrices' },
-            { text: '4. NumPy 实践', link: '/linear-algebra-vectors-matrices/04-numpy' },
-            { text: '5. 应用场景', link: '/linear-algebra-vectors-matrices/05-applications' },
-            { text: '6. 总结与练习', link: '/linear-algebra-vectors-matrices/06-summary' },
-            { text: '实验与练习', link: '/linear-algebra-vectors-matrices/experiments' }
+            { text: '引言', link: '/linear-algebra-vectors-matrices/01-introduction' },
+            { text: '向量基础', link: '/linear-algebra-vectors-matrices/02-vectors' },
+            { text: '矩阵基础', link: '/linear-algebra-vectors-matrices/03-matrices' },
+            { text: '数据处理实践', link: '/linear-algebra-vectors-matrices/04-numpy' },
+            { text: '应用场景', link: '/linear-algebra-vectors-matrices/05-applications' },
+            { text: '总结与练习', link: '/linear-algebra-vectors-matrices/06-summary' },
           ]
         }
       ],
