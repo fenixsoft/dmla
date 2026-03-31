@@ -14,7 +14,7 @@ export default {
   // 站点配置
   lang: 'zh-CN',
   title: 'IdeaSpaces',
-  description: '交互式知识管理平台',
+  description: '思维实验室',
 
   // 部署配置 - GitHub Pages 子目录
   // base: '/ideaspaces/',
@@ -27,8 +27,7 @@ export default {
     // 导航栏
     navbar: [
       { text: '首页', link: '/' },
-      { text: '机器学习数学基础', link: '/linear-algebra-vectors-matrices/' },
-      { text: 'Python', link: '/python/' },
+      { text: '机器学习数学基础', link: '/linear-algebra-vectors-matrices/introduction' },
     ],
 
     // 侧边栏 - 使用简单的链接列表，让 VuePress 自动添加页面标题
@@ -38,25 +37,14 @@ export default {
           text: '向量与矩阵运算基础',
           collapsible: true,
           children: [
-            { text: '概述', link: '/linear-algebra-vectors-matrices/' },
-            { text: '引言', link: '/linear-algebra-vectors-matrices/01-introduction' },
-            { text: '向量基础', link: '/linear-algebra-vectors-matrices/02-vectors' },
-            { text: '矩阵基础', link: '/linear-algebra-vectors-matrices/03-matrices' },
-            { text: '数据处理实践', link: '/linear-algebra-vectors-matrices/04-numpy' },
-            { text: '应用场景', link: '/linear-algebra-vectors-matrices/05-applications' },
+            { text: '引言', link: '/linear-algebra-vectors-matrices/introduction' },
+            { text: '向量基础', link: '/linear-algebra-vectors-matrices/vectors' },
+            { text: '矩阵基础', link: '/linear-algebra-vectors-matrices/matrices' },
+            { text: '数据处理实践', link: '/linear-algebra-vectors-matrices/numpy' },
+            { text: '应用场景', link: '/linear-algebra-vectors-matrices/applications' },
           ]
         }
       ],
-      '/python/': [
-        {
-          text: 'Python 教程',
-          collapsible: true,
-          children: [
-            { text: 'Python 知识库', link: '/python/' },
-            { text: '装饰器详解', link: '/python/decorators' }
-          ]
-        }
-      ]
     }
   }),
 

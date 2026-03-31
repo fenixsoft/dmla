@@ -38,6 +38,7 @@ function onSettingsSave(config) {
   justify-content: center;
   width: 28px;
   height: 28px;
+  margin-left: 12px;
   padding: 0;
   border: none;
   border-radius: 4px;
