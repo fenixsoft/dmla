@@ -1,0 +1,52 @@
+name: calculus-series
+title: "微积分基础——机器学习优化的数学语言"
+status: published
+publishedDate: 2026-04-01
+path: docs/calculus/
+created: 2026-04-01
+updated: 2026-04-01
+type: series
+
+series:
+  articles:
+    - name: introduction
+      title: "引言：微积分——变化与累积的语言"
+      status: verified
+      targetLength: 4500
+    - name: derivative
+      title: "基础概念：极限、导数与微分"
+      status: verified
+      targetLength: 7500
+    - name: gradient
+      title: "进阶概念：多元函数与优化基础"
+      status: verified
+      targetLength: 7500
+    - name: numpy-practice
+      title: "NumPy实践：微积分计算"
+      status: verified
+      targetLength: 8000
+    - name: applications
+      title: "应用场景：微积分在机器学习中的实践"
+      status: verified
+      targetLength: 8000
+  totalArticles: 5
+
+audience:
+  level: intermediate
+  background:
+    - 基础编程能力
+    - NumPy 使用经验
+    - 线性代数基础（向量、矩阵运算）
+
+config:
+  needExperiments: true
+  categories:
+    - mathematics
+    - machine-learning
+    - calculus
+
+reviewHistory: []
+
+flags:
+  needsUserConfirmation: false
+  confirmationReason: null

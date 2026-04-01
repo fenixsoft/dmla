@@ -1,6 +1,7 @@
 ---
 title: "向量基础"
 tag: "向量"
+date: "2025-03-28"
 issue:
   number: 18
 ---

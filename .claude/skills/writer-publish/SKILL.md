@@ -25,6 +25,10 @@ metadata:
 - 找到 `status: verified` 的文章
 - 如果有多个，使用 AskUserQuestion 让用户选择
 
+**区分单篇文章和系列文章**：
+- 单篇文章：`articles/{name}/` 目录
+- 系列文章：`articles/{series-name}/` 目录，`.article.yaml` 中 `type: series`
+
 ### 2. 验证文章状态
 
 读取 `.article.yaml` 确认状态：
@@ -56,7 +60,9 @@ metadata:
 
 ### 5. 创建发布目录
 
-根据文章名称创建发布目录：
+根据文章类型创建发布目录：
+
+**单篇文章**：
 ```
 docs/{article-name}/
 ├── README.md          # 文章入口（包含 frontmatter 和概述）
@@ -66,8 +72,18 @@ docs/{article-name}/
 └── experiments.md     # 实验与练习
 ```
 
+**系列文章**：
+```
+docs/{series-name}/
+├── README.md              # 系列入口（包含 frontmatter 和概述）
+├── 01-{name}.md           # 文章1
+├── 02-{name}.md           # 文章2
+├── ...
+└── assets/                # 图片资源（统一目录）
+```
+
 **关键规则**：
-- **保留章节结构**：不合并文件，每章独立文件
+- **保留章节/文章结构**：不合并文件，每章/每篇独立文件
 - **入口文件**：创建 `README.md` 作为文章首页，包含 frontmatter 和章节导航
 - **文件命名**：沿用 draft 中的章节文件名
 
@@ -106,10 +122,11 @@ series:
 本文是「{系列名称}」系列的第 {order} 篇文章。
 ```
 
-### 7. 复制章节文件
+### 7. 复制文章文件
 
-将章节文件复制到发布目录：
+根据文章类型复制文件：
 
+**单篇文章（章节模式）**：
 ```bash
 # 复制所有章节
 cp articles/{name}/draft/chapters/*.md docs/{article-name}/
@@ -121,7 +138,19 @@ cp articles/{name}/draft/experiments.md docs/{article-name}/experiments.md
 cp -r articles/{name}/draft/assets docs/{article-name}/ 2>/dev/null || true
 ```
 
-**注意**：章节文件中的相对路径链接需要调整（如图片路径）。
+**系列文章**：
+```bash
+# 复制所有文章
+cp articles/{series-name}/draft/*.md docs/{series-name}/
+
+# 复制资源文件
+cp -r articles/{series-name}/assets docs/{series-name}/ 2>/dev/null || true
+
+# 复制代码示例（可选）
+cp -r articles/{series-name}/code docs/{series-name}/ 2>/dev/null || true
+```
+
+**注意**：文件中的相对路径链接需要调整（如图片路径）。
 
 ### 8. 更新 VuePress 配置
 
@@ -236,10 +265,12 @@ docs/linear-algebra-vectors-matrices/
 
 ## Guardrails
 
+- 工作目录必须在 `articles/` 下，而不是 `docs/_work/`
 - 必须有用户确认才能发布
-- **保留章节结构**：不合并为单文件
+- **保留章节/文章结构**：不合并为单文件
 - 发布前检查所有必要文件存在
 - 保留归档目录便于回溯
 - **必须更新 VuePress 配置**：确保文章出现在侧边栏
 - 如果有未确认问题，警告用户但允许继续
 - 章节文件中的相对路径需要调整（如 `../assets/` → `./assets/`）
+- 系列文章需要复制 `assets/` 和 `code/` 目录（如果存在），资源统一存放

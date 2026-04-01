@@ -1,4 +1,5 @@
 import { viteBundler } from '@vuepress/bundler-vite'
+import { gitPlugin } from '@vuepress/plugin-git'
 import { getDirname, path } from 'vuepress/utils'
 import mermaidPlugin from './plugins/mermaid/index.js'
 import runnableCodePlugin from './plugins/runnable-code/index.js'
@@ -27,21 +28,36 @@ export default {
     // 导航栏
     navbar: [
       { text: '首页', link: '/' },
-      { text: '机器学习数学基础', link: '/linear-algebra-vectors-matrices/introduction' },
+      { text: '线性代数', link: '/linear/introduction' },
+      { text: '微积分', link: '/calculus/' },
     ],
 
     // 侧边栏 - 使用简单的链接列表，让 VuePress 自动添加页面标题
     sidebar: {
-      '/linear-algebra-vectors-matrices/': [
+      '/linear/': [
         {
           text: '向量与矩阵运算基础',
           collapsible: true,
           children: [
-            { text: '引言', link: '/linear-algebra-vectors-matrices/introduction' },
-            { text: '向量基础', link: '/linear-algebra-vectors-matrices/vectors' },
-            { text: '矩阵基础', link: '/linear-algebra-vectors-matrices/matrices' },
-            { text: '数据处理实践', link: '/linear-algebra-vectors-matrices/numpy' },
-            { text: '应用场景', link: '/linear-algebra-vectors-matrices/applications' },
+            { text: '引言', link: '/linear/introduction' },
+            { text: '向量基础', link: '/linear/vectors' },
+            { text: '矩阵基础', link: '/linear/matrices' },
+            { text: '数据处理实践', link: '/linear/numpy' },
+            { text: '应用场景', link: '/linear/applications' },
+          ]
+        }
+      ],
+      '/calculus/': [
+        {
+          text: '微积分基础',
+          collapsible: true,
+          children: [
+            { text: '概述', link: '/calculus/' },
+            { text: '引言：微积分是变化与累积的语言', link: '/calculus/01-introduction' },
+            { text: '基础概念：极限、导数与微分', link: '/calculus/02-derivative' },
+            { text: '进阶概念：多元函数与优化基础', link: '/calculus/03-gradient' },
+            { text: 'NumPy实践：微积分计算', link: '/calculus/04-numpy-practice' },
+            { text: '应用场景：微积分在机器学习中的实践', link: '/calculus/05-applications' },
           ]
         }
       ],
@@ -50,6 +66,8 @@ export default {
 
   // 插件配置
   plugins: [
+    // Git 信息（更新时间）
+    gitPlugin(),
     // 修复中文括号后粗体标记问题
     emphasisFixPlugin,
     // Mermaid 流程图
