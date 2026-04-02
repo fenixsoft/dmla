@@ -58,7 +58,7 @@ const wordCountPlugin = (options = {}) => {
   return {
     name: 'vuepress-plugin-word-count',
 
-    // VuePress 2: 使用 onInitialized 钩子收集所有页面字数
+    // VuePress 2: 使用 onInitialized 钩子收集所有页面字数并写入临时文件
     async onInitialized(app) {
       // 第一遍：收集所有页面的字数
       for (const page of app.pages) {
@@ -88,10 +88,7 @@ const wordCountPlugin = (options = {}) => {
           globalWords: { ...globalWords }  // 复制一份，确保每个页面都有完整数据
         }
       }
-    },
 
-    // 提供客户端配置文件，将 globalWords 注入到 Vue 应用
-    clientConfigFile(app) {
       // 构建 wordCountData 结构 {path: {title, wordCount}}
       const wordCountData = {}
       for (const page of app.pages) {
@@ -101,14 +98,13 @@ const wordCountPlugin = (options = {}) => {
         }
       }
 
-      // 写入数据文件
-      app.writeTemp(
+      // 在 onInitialized 中写入临时文件（异步操作必须在此完成）
+      await app.writeTemp(
         'word-count/data.js',
         `export const wordCountData = ${JSON.stringify(wordCountData)}`
       )
 
-      // 写入客户端配置文件，通过 provide 注入数据
-      app.writeTemp(
+      await app.writeTemp(
         'word-count/client.js',
         `import { defineClientConfig } from 'vuepress/client'
 import { wordCountData } from './data.js'
@@ -119,7 +115,10 @@ export default defineClientConfig({
   }
 })`
       )
+    },
 
+    // clientConfigFile 只返回文件路径（文件已在 onInitialized 中写入）
+    clientConfigFile(app) {
       return app.dir.temp('word-count/client.js')
     }
   }
