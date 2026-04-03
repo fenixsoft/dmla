@@ -1,3 +1,7 @@
+---
+externalLinkIcon: false
+---
+
 # 关于作者
 
 <font size=5><b>周志明</b></font>
@@ -42,10 +46,10 @@
 <br/>
 
 :::not-print
-<swiper :autoPlay='false'  :showIndicator='true' >
-<slide><img src="./assets/icyfenix.jpg" /></slide>
-<slide><img src="./assets/icyfenix2.jpg" /></slide>
-<slide><img src="./assets/icyfenix3.jpg" /></slide>
-<slide><img src="./assets/icyfenix4.jpg" /></slide>
-</swiper>
+<Swiper :autoPlay='false'  :showIndicator='true' >
+<Slide><img src="./assets/icyfenix.jpg" /></Slide>
+<Slide><img src="./assets/icyfenix2.jpg" /></Slide>
+<Slide><img src="./assets/icyfenix3.jpg" /></Slide>
+<Slide><img src="./assets/icyfenix4.jpg" /></Slide>
+</Swiper>
 :::

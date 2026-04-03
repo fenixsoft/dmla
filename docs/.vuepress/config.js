@@ -1,6 +1,7 @@
 import { viteBundler } from '@vuepress/bundler-vite'
 import { gitPlugin } from '@vuepress/plugin-git'
 import { getDirname, path } from 'vuepress/utils'
+import { registerComponentsPlugin } from '@vuepress/plugin-register-components'
 import mermaidPlugin from './plugins/mermaid/index.js'
 import runnableCodePlugin from './plugins/runnable-code/index.js'
 import mathPlugin from './plugins/math/index.js'
@@ -41,6 +42,14 @@ export default {
         link: 'SUMMARY'
       },
       {
+        text: '前言',
+        collapsible: false,
+        children: [
+          { text: '关于作者', link: '/introduction/about-me' },
+          { text: '关于本项目' },
+        ]
+      },
+      {
         text: '机器学习的数学基础',
         collapsible: false,
         children: [
@@ -63,7 +72,6 @@ export default {
               { text: '极限、导数与微分', link: '/calculus/derivative' },
               { text: '多元函数与复合基础', link: '/calculus/gradient' },
               { text: '微积分计算实践', link: '/calculus/numpy' },
-              { text: '应用场景', link: '/calculus/applications' },
             ]
           }
         ]
@@ -73,6 +81,10 @@ export default {
 
   // 插件配置
   plugins: [
+    // 自动注册 components 目录下的组件
+    registerComponentsPlugin({
+      componentsDir: path.resolve(__dirname, './components'),
+    }),
     // 搜索功能
     searchProPlugin({
       // 禁用索引热度排序
