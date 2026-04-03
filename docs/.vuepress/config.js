@@ -59,11 +59,11 @@ export default {
             text: '微积分',
             collapsible: false,
             children: [
-              { text: '引言：变化与累积', link: '/calculus/01-introduction' },
-              { text: '极限、导数与微分', link: '/calculus/02-derivative' },
-              { text: '多元函数与复合基础', link: '/calculus/03-gradient' },
-              { text: '微积分计算实践', link: '/calculus/04-numpy-practice' },
-              { text: '应用场景', link: '/calculus/05-applications' },
+              { text: '引言：变化与累积', link: '/calculus/introduction' },
+              { text: '极限、导数与微分', link: '/calculus/derivative' },
+              { text: '多元函数与复合基础', link: '/calculus/gradient' },
+              { text: '微积分计算实践', link: '/calculus/numpy-practice' },
+              { text: '应用场景', link: '/calculus/applications' },
             ]
           }
         ]
