@@ -7,6 +7,7 @@
     <div v-if="showIndicator" class="wh_indicator">
       <div
         v-for="(tag, $index) in slidesLength"
+        :key="$index"
         :class="{ wh_show_bgcolor: index - 1 === $index }"
         class="wh_indicator_item"
         @click="slideTo($index)"
@@ -56,16 +57,19 @@ export default {
   },
   mounted() {
     this.className = `wh_swiper_${Math.floor(Math.random() * 1000)}`
-    setTimeout(() => {
-      this.starDom()
-      if (this.slidesLength > 1) {
-        this.dom.transform = `translate3d(${this._width * -1}px, 0px, 0px)`
-        this.dom['-webkit-transform'] = `translate3d(${this._width * -1}px, 0px, 0px)`
-        if (this.autoPlay) {
-          this.setTime()
+    // 使用 nextTick 确保 DOM 更新完成，然后再延迟一点确保样式计算完成
+    this.$nextTick(() => {
+      setTimeout(() => {
+        this.starDom()
+        if (this.slidesLength > 1) {
+          this.dom.transform = `translate3d(${this._width * -1}px, 0px, 0px)`
+          this.dom['-webkit-transform'] = `translate3d(${this._width * -1}px, 0px, 0px)`
+          if (this.autoPlay) {
+            this.setTime()
+          }
         }
-      }
-    }, 50)
+      }, 100)
+    })
 
     window.addEventListener('resize', this.handleResize)
   },
@@ -197,7 +201,7 @@ export default {
 }
 </script>
 
-<style scoped>
+<style>
 .wh_content {
   position: relative;
   z-index: 1;
