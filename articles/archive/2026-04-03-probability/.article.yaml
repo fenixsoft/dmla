@@ -1,0 +1,29 @@
+name: probability
+title: "统计与概率论——AI转型数学准备的第三支柱"
+status: published
+publishedDate: "2026-04-03"
+path: docs/probability/
+created: "2026-04-03"
+updated: "2026-04-03"
+
+audience:
+  level: intermediate
+  background:
+    - 线性代数（向量、矩阵、特征值）
+    - 微积分（导数、梯度、优化）
+    - Python编程基础
+    - NumPy基础操作
+
+config:
+  needExperiments: true
+  targetLength: 21000
+  categories:
+    - 数学基础
+    - 机器学习
+    - AI转型
+
+reviewHistory: []
+
+flags:
+  needsUserConfirmation: false
+  confirmationReason: null

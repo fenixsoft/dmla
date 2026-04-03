@@ -77,8 +77,20 @@ export default {
             children: [
               { text: '引言：变化与累积', link: '/calculus/introduction' },
               { text: '极限、导数与微分', link: '/calculus/derivative' },
-              { text: '多元函数与复合基础', link: '/calculus/gradient' },
+              { text: '多元函数与复合函数', link: '/calculus/gradient' },
               { text: '微积分计算实践', link: '/calculus/numpy' },
+            ]
+          },
+          {
+            text: '统计与概率',
+            collapsible: false,
+            children: [
+              { text: '引言：世界是不确定的', link: '/probability/introduction' },
+              { text: '概率基础', link: '/probability/probability-basics' },
+              { text: '统计推断', link: '/probability/statistical-inference' },
+              { text: '模型评估', link: '/probability/model-evaluation' },
+              { text: 'NumPy 实践', link: '/probability/numpy-practice' },
+              { text: '应用场景', link: '/probability/applications' },
             ]
           }
         ]

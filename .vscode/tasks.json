@@ -80,6 +80,20 @@
       }
     },
     {
+      "label": "停止所有服务",
+      "type": "shell",
+      "command": "bash",
+      "args": [
+        "-c",
+        "pkill -f 'node.*vuepress' 2>/dev/null; pkill -f 'node.*local-server' 2>/dev/null; pkill -f 'node.*vite' 2>/dev/null; lsof -ti:8080 | xargs -r kill -9 2>/dev/null; lsof -ti:3001 | xargs -r kill -9 2>/dev/null; echo '已停止所有服务并释放端口'"
+      ],
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "silent",
+        "panel": "shared"
+      }
+    },
+    {
       "label": "安装依赖",
       "type": "shell",
       "command": "npm install",

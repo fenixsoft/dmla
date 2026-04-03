@@ -45,11 +45,9 @@ externalLinkIcon: false
 
 <br/>
 
-:::not-print
 <Swiper :autoPlay='false'  :showIndicator='true' >
 <Slide><img src="./assets/icyfenix.jpg" /></Slide>
 <Slide><img src="./assets/icyfenix2.jpg" /></Slide>
 <Slide><img src="./assets/icyfenix3.jpg" /></Slide>
 <Slide><img src="./assets/icyfenix4.jpg" /></Slide>
 </Swiper>
-:::

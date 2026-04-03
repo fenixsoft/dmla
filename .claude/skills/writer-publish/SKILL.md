@@ -5,7 +5,7 @@ license: MIT
 compatibility: None
 metadata:
   author: ideaspaces
-  version: "2.0"
+  version: "2.1"
 ---
 
 验收文章并发布到文档目录。
@@ -49,7 +49,7 @@ metadata:
 
 ### 4. 用户验收
 
-显示文章概要让用户确认：
+显示文章概想让用户确认：
 - 文章标题
 - 字数统计
 - 章节列表
@@ -66,8 +66,8 @@ metadata:
 ```
 docs/{article-name}/
 ├── README.md          # 文章入口（包含 frontmatter 和概述）
-├── 01-introduction.md # 章节1
-├── 02-chapter.md      # 章节2
+├── introduction.md    # 章节1（去掉编号前缀）
+├── chapter.md         # 章节2（去掉编号前缀）
 ├── ...
 └── experiments.md     # 实验与练习
 ```
@@ -76,8 +76,8 @@ docs/{article-name}/
 ```
 docs/{series-name}/
 ├── README.md              # 系列入口（包含 frontmatter 和概述）
-├── 01-{name}.md           # 文章1
-├── 02-{name}.md           # 文章2
+├── {name}.md              # 文章1（去掉编号前缀）
+├── {name}.md              # 文章2（去掉编号前缀）
 ├── ...
 └── assets/                # 图片资源（统一目录）
 ```
@@ -85,7 +85,7 @@ docs/{series-name}/
 **关键规则**：
 - **保留章节/文章结构**：不合并文件，每章/每篇独立文件
 - **入口文件**：创建 `README.md` 作为文章首页，包含 frontmatter 和章节导航
-- **文件命名**：沿用 draft 中的章节文件名
+- **文件命名**：**去掉编号前缀**，如 `01-introduction.md` → `introduction.md`
 
 ### 6. 创建文章入口
 
@@ -107,9 +107,9 @@ series:
 
 ## 目录
 
-- [1. 引言](./01-introduction.md)
-- [2. {章节名称}](./02-{name}.md)
-- [3. {章节名称}](./03-{name}.md)
+- [1. 引言](./introduction.md)
+- [2. {章节名称}](./{name}.md)
+- [3. {章节名称}](./{name}.md)
 - ...
 - [实验与练习](./experiments.md)
 
@@ -124,12 +124,18 @@ series:
 
 ### 7. 复制文章文件
 
-根据文章类型复制文件：
+根据文章类型复制文件，**同时去掉文件名中的编号前缀**：
 
 **单篇文章（章节模式）**：
 ```bash
-# 复制所有章节
-cp articles/{name}/draft/chapters/*.md docs/{article-name}/
+# 复制章节文件，去掉编号前缀
+# 例如: 01-introduction.md → introduction.md
+for file in articles/{name}/draft/chapters/*.md; do
+  filename=$(basename "$file")
+  # 去掉编号前缀（如 01-、02- 等）
+  newname=$(echo "$filename" | sed 's/^[0-9]*-//')
+  cp "$file" "docs/{article-name}/$newname"
+done
 
 # 复制实验文件
 cp articles/{name}/draft/experiments.md docs/{article-name}/experiments.md
@@ -140,8 +146,12 @@ cp -r articles/{name}/draft/assets docs/{article-name}/ 2>/dev/null || true
 
 **系列文章**：
 ```bash
-# 复制所有文章
-cp articles/{series-name}/draft/*.md docs/{series-name}/
+# 复制文章文件，去掉编号前缀
+for file in articles/{series-name}/draft/*.md; do
+  filename=$(basename "$file")
+  newname=$(echo "$filename" | sed 's/^[0-9]*-//')
+  cp "$file" "docs/{series-name}/$newname"
+done
 
 # 复制资源文件
 cp -r articles/{series-name}/assets docs/{series-name}/ 2>/dev/null || true
@@ -149,6 +159,12 @@ cp -r articles/{series-name}/assets docs/{series-name}/ 2>/dev/null || true
 # 复制代码示例（可选）
 cp -r articles/{series-name}/code docs/{series-name}/ 2>/dev/null || true
 ```
+
+**去掉编号前缀的规则**：
+- `01-introduction.md` → `introduction.md`
+- `02-probability-basics.md` → `probability-basics.md`
+- `99-summary.md` → `summary.md`
+- 使用正则表达式 `s/^[0-9]*-//` 匹配并删除开头的数字和连字符
 
 **注意**：文件中的相对路径链接需要调整（如图片路径）。
 
@@ -166,8 +182,8 @@ sidebar: {
       collapsible: true,
       children: [
         { text: '概述', link: '/{article-name}/' },
-        { text: '1. 引言', link: '/{article-name}/01-introduction' },
-        { text: '2. {章节名}', link: '/{article-name}/02-{name}' },
+        { text: '1. 引言', link: '/{article-name}/introduction' },
+        { text: '2. {章节名}', link: '/{article-name}/{name}' },
         // ... 其他章节 ...
         { text: '实验与练习', link: '/{article-name}/experiments' }
       ]
@@ -214,12 +230,12 @@ path: docs/{article-name}/
 ```
 docs/linear-algebra-vectors-matrices/
 ├── README.md                    # 文章入口（概述 + 目录）
-├── 01-introduction.md           # 第1章：引言
-├── 02-vectors.md                # 第2章：向量基础
-├── 03-matrices.md               # 第3章：矩阵基础
-├── 04-numpy.md                  # 第4章：NumPy 实践
-├── 05-applications.md           # 第5章：应用场景
-├── 06-summary.md                # 第6章：总结
+├── introduction.md              # 第1章：引言（无编号前缀）
+├── vectors.md                   # 第2章：向量基础
+├── matrices.md                  # 第3章：矩阵基础
+├── numpy.md                     # 第4章：NumPy 实践
+├── applications.md              # 第5章：应用场景
+├── summary.md                   # 第6章：总结
 ├── experiments.md               # 实验与练习
 └── assets/                      # 图片等资源
     ├── vector_2d.png
@@ -239,12 +255,12 @@ docs/linear-algebra-vectors-matrices/
 
 **发布位置**: docs/linear-algebra-vectors-matrices/
 ├── README.md (入口)
-├── 01-introduction.md
-├── 02-vectors.md
-├── 03-matrices.md
-├── 04-numpy.md
-├── 05-applications.md
-├── 06-summary.md
+├── introduction.md
+├── vectors.md
+├── matrices.md
+├── numpy.md
+├── applications.md
+├── summary.md
 ├── experiments.md
 └── assets/
 
@@ -268,6 +284,7 @@ docs/linear-algebra-vectors-matrices/
 - 工作目录必须在 `articles/` 下，而不是 `docs/_work/`
 - 必须有用户确认才能发布
 - **保留章节/文章结构**：不合并为单文件
+- **去掉编号前缀**：`01-introduction.md` → `introduction.md`
 - 发布前检查所有必要文件存在
 - 保留归档目录便于回溯
 - **必须更新 VuePress 配置**：确保文章出现在侧边栏

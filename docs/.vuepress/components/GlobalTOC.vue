@@ -177,6 +177,13 @@ export default defineComponent({
         return findWordCount(item.link) || 0
       }
 
+      // 递归处理有 children 的项目
+      if (item.children && Array.isArray(item.children)) {
+        return item.children.reduce((sum, child) => {
+          return sum + getWordCountNum(child)
+        }, 0)
+      }
+
       return 0
     }
 
@@ -296,7 +303,6 @@ li > span {
 .level2 {
   font-size: 14px;
   line-height: 30px;
-  color: #666;
 }
 
 a {

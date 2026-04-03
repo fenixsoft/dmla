@@ -7,6 +7,7 @@
       "request": "launch",
       "command": "npm run dev",
       "cwd": "${workspaceFolder}",
+      "postDebugTask": "停止所有服务",
       "serverReadyAction": {
         "pattern": "on http://localhost:([0-9]+)",
         "uriFormat": "http://localhost:%s",
@@ -19,6 +20,7 @@
       "request": "launch",
       "command": "npm run server",
       "cwd": "${workspaceFolder}",
+      "postDebugTask": "停止所有服务",
       "serverReadyAction": {
         "pattern": "API: http://localhost:([0-9]+)",
         "uriFormat": "http://localhost:%s/api/health",
@@ -31,6 +33,7 @@
       "request": "launch",
       "command": "npm run local",
       "cwd": "${workspaceFolder}",
+      "postDebugTask": "停止所有服务",
       "serverReadyAction": {
         "pattern": "on http://localhost:([0-9]+)",
         "uriFormat": "http://localhost:%s",
