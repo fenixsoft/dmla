@@ -217,7 +217,7 @@ export default {
 
 .wh_indicator {
   position: absolute;
-  bottom: 8px;
+  bottom: 28px;
   width: 100%;
   text-align: center;
   background: transparent;
