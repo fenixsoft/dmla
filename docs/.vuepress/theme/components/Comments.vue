@@ -12,6 +12,8 @@ import { useRoute } from 'vue-router'
 const route = useRoute()
 const giscusContainer = ref(null)
 let giscusScript = null
+let intersectionObserver = null
+let isLoaded = false
 
 // Giscus 配置
 const giscusConfig = {
@@ -31,7 +33,9 @@ const giscusConfig = {
 
 // 加载 Giscus
 const loadGiscus = () => {
-  if (!giscusContainer.value) return
+  if (!giscusContainer.value || isLoaded) return
+
+  isLoaded = true
 
   // 清空容器
   giscusContainer.value.innerHTML = ''
@@ -55,6 +59,11 @@ const loadGiscus = () => {
   giscusScript.async = true
 
   giscusContainer.value.appendChild(giscusScript)
+
+  // 停止观察器（不再需要监听）
+  if (intersectionObserver) {
+    intersectionObserver.disconnect()
+  }
 }
 
 // 更新 Giscus 主题（响应系统主题变化）
@@ -68,8 +77,38 @@ const updateTheme = (theme) => {
   }
 }
 
+// 设置 IntersectionObserver 实现滚动懒加载
+const setupLazyLoad = () => {
+  if (!giscusContainer.value) return
+
+  // 如果浏览器不支持 IntersectionObserver，直接加载
+  if (!('IntersectionObserver' in window)) {
+    loadGiscus()
+    return
+  }
+
+  intersectionObserver = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        // 当评论区进入视口（或即将进入，提前 200px）时加载
+        if (entry.isIntersecting) {
+          loadGiscus()
+        }
+      })
+    },
+    {
+      root: null,
+      rootMargin: '200px', // 提前 200px 开始加载，提升用户体验
+      threshold: 0
+    }
+  )
+
+  intersectionObserver.observe(giscusContainer.value)
+}
+
 onMounted(() => {
-  loadGiscus()
+  // 使用 IntersectionObserver 实现滚动懒加载
+  setupLazyLoad()
 
   // 监听系统主题变化
   const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
@@ -80,18 +119,22 @@ onMounted(() => {
 
 // 路由变化时更新评论
 watch(() => route.path, (newPath) => {
+  // 如果还没加载，等待滚动触发
+  if (!isLoaded) return
+
   const iframe = giscusContainer.value?.querySelector('iframe.giscus-frame')
   if (iframe) {
     iframe.contentWindow.postMessage(
       { giscus: { setConfig: { term: newPath } } },
       'https://giscus.app'
     )
-  } else {
-    loadGiscus()
   }
 })
 
 onBeforeUnmount(() => {
+  if (intersectionObserver) {
+    intersectionObserver.disconnect()
+  }
   if (giscusScript && giscusScript.parentNode) {
     giscusScript.parentNode.removeChild(giscusScript)
   }

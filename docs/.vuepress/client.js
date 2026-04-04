@@ -1,6 +1,5 @@
 import { defineClientConfig } from 'vuepress/client'
 import './styles/custom.css'
-import GlobalTOC from './components/GlobalTOC.vue'
 
 // Sidebar 配置（从 config.js 同步）
 const sidebarConfig = [
@@ -36,8 +35,9 @@ const sidebarConfig = [
 
 export default defineClientConfig({
   enhance({ app }) {
-    // 注册全局组件
-    app.component('GlobalTOC', GlobalTOC)
+    // 注意：GlobalTOC 已由 VuePress 自动注册（位于 components 目录）
+    // 不要重复注册，否则会产生警告
+
     // 注入 sidebar 配置到全局属性
     app.provide('sidebarConfig', sidebarConfig)
   }
