@@ -3,6 +3,10 @@
  * 基于GitHub主题定制，与网站风格一致
  */
 
+/* var(--color-accent-muted,var(--color-box-border-info)) */
+/* var(--color-canvas-default,var(--color-bg-primary)) --color-bg-primary*/
+
+
 /* 亮色模式 */
 @media (prefers-color-scheme: light) {
   main {
@@ -28,6 +32,8 @@
     --color-canvas-default: #FFFFFF;
     --color-canvas-subtle: #FAFAFA;
     --color-border-default: #E4E4E7;
+    --color-accent-muted: #E4E4E7;
+    --color-box-border-info: #E4E4E7;
     --color-border-muted: #E4E4E7;
     --color-accent-fg: #2563EB;
     --color-accent-emphasis: #2563EB;
@@ -68,7 +74,7 @@
 /* 自定义样式 - 所有模式下通用 */
 
 /* 隐藏 "– 由 giscus 提供支持" 文字 */
-.gsc-powered-by {
+.gsc-left-header .text-sm {
   display: none !important;
 }
 
@@ -79,6 +85,10 @@ main a {
 
 main a:hover {
   text-decoration: none !important;
+}
+
+.link-secondary {
+    text-decoration-line: none;
 }
 
 /* 按钮圆角与 Star 按钮一致 */
