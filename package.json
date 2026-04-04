@@ -38,17 +38,16 @@
     "vuepress-plugin-search-pro": "^2.0.0-rc.59"
   },
   "dependencies": {
-    "gitalk": "^1.8.0",
     "katex": "^0.16.42",
     "mermaid": "^11.13.0",
-    "vue": "^3.5.13",
-    "vuepress-plugin-comment": "^0.7.3"
+    "vue": "^3.5.13"
   },
   "engines": {
     "node": ">=18.0.0"
   },
   "overrides": {
     "vuepress": "2.0.0-rc.19",
-    "@vuepress/helper": "2.0.0-rc.66"
+    "@vuepress/helper": "2.0.0-rc.66",
+    "@vueuse/core": "^12.0.0"
   }
 }

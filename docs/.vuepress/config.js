@@ -7,7 +7,6 @@ import runnableCodePlugin from './plugins/runnable-code/index.js'
 import mathPlugin from './plugins/math/index.js'
 import emphasisFixPlugin from './plugins/emphasis-fix/index.js'
 import wordCountPlugin from './plugins/word-count/index.js'
-import commentsPlugin from './plugins/comments/index.js'
 import ideaspacesTheme from './theme/index.js'
 import { searchProPlugin } from 'vuepress-plugin-search-pro'
 import { searchVersionFixPlugin } from './plugins/search-version-fix/index.js'
@@ -125,16 +124,19 @@ export default {
     mathPlugin,
     // 字数统计
     wordCountPlugin,
-    // GitHub Issues 评论系统
-    commentsPlugin({
-      repo: 'fenixsoft/ideaspaces',
-      clientId: process.env.GITHUB_CLIENT_ID || ''
-    })
+    // 评论系统由 Comments.vue 组件直接集成 Giscus
   ],
 
   // 打包器配置 - 抑制 Sass if-function 弃用警告
   bundler: viteBundler({
     viteOptions: {
+      resolve: {
+        alias: {
+          // 强制所有 VueUse 导入指向根目录，避免重复加载
+          '@vueuse/core': path.resolve(__dirname, '../../node_modules/@vueuse/core/index.mjs'),
+          '@vueuse/shared': path.resolve(__dirname, '../../node_modules/@vueuse/shared/index.mjs')
+        }
+      },
       css: {
         preprocessorOptions: {
           scss: {
