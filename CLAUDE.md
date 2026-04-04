@@ -87,9 +87,6 @@ npm run build
 
 # 刷新腾讯云 CDN（需配置环境变量）
 npm run cdn:refresh
-
-# 同步 GitHub Issues
-npm run sync:issues
 ```
 
 ### Docker 沙箱

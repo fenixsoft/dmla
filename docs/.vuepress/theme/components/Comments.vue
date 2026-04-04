@@ -1,12 +1,13 @@
 <template>
-  <div class="comments-section">
+  <!-- 首页和目录页不显示评论 -->
+  <div v-if="shouldShowComments" class="comments-section">
     <!-- Giscus 评论容器 -->
     <div class="giscus-container" ref="giscusContainer"></div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, watch, onBeforeUnmount } from 'vue'
+import { ref, onMounted, watch, onBeforeUnmount, computed } from 'vue'
 import { useRoute } from 'vue-router'
 
 const route = useRoute()
@@ -14,6 +15,14 @@ const giscusContainer = ref(null)
 let giscusScript = null
 let intersectionObserver = null
 let isLoaded = false
+
+// 不需要评论的页面路径
+const excludedPaths = ['/', '/contents.html', '/contents/']
+
+// 是否应该显示评论
+const shouldShowComments = computed(() => {
+  return !excludedPaths.includes(route.path)
+})
 
 // Giscus 配置
 const giscusConfig = {

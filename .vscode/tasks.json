@@ -70,16 +70,6 @@
       }
     },
     {
-      "label": "GitHub: 同步 Issues",
-      "type": "npm",
-      "script": "sync:issues",
-      "problemMatcher": [],
-      "presentation": {
-        "reveal": "always",
-        "panel": "shared"
-      }
-    },
-    {
       "label": "停止所有服务",
       "type": "shell",
       "command": "bash",

@@ -13,5 +13,10 @@ export default defineClientConfig({
     setupDarkMode()
     setupHeaders()
     setupSidebarItems()
+
+    // 禁止浏览器翻译（网站本身就是中文）
+    if (typeof document !== 'undefined') {
+      document.documentElement.setAttribute('translate', 'no')
+    }
   }
 })

@@ -1,5 +1,4 @@
 ---
-home: true
 title: 首页
 heroImage: /logo.png
 heroText: IdeaSpaces
@@ -20,6 +19,8 @@ features:
     details: 本地部署支持 Python 代码在线执行，支持 GPU 加速
 footer: MIT Licensed | Copyright © 2024
 ---
+
+<HomeHero />
 
 ## 快速开始
 

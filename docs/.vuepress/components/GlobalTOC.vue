@@ -113,8 +113,8 @@ export default defineComponent({
 
       return items
         .filter(item => {
-          // 过滤掉目录页本身（link 指向 SUMMARY）
-          if (item.link && (item.link === 'SUMMARY' || item.link.includes('SUMMARY'))) {
+          // 过滤掉目录页本身（link 指向 contents）
+          if (item.link && (item.link === 'contents' || item.link.includes('contents'))) {
             return false
           }
           return true

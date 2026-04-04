@@ -19,6 +19,11 @@ export default {
   title: 'IdeaSpaces',
   description: '思维实验室',
 
+  // 禁止浏览器翻译（网站本身就是中文）
+  head: [
+    ['meta', { name: 'google', content: 'notranslate' }],
+  ],
+
   // 部署配置 - GitHub Pages 子目录
   // base: '/ideaspaces/',
 
@@ -35,8 +40,8 @@ export default {
 
     // 导航栏
     navbar: [
-      { text: '目录', link: '/SUMMARY' },
-      { text: 'GitHub', link: 'https://github.com/fenixsoft/ideaspaces' },
+      { text: '首页', link: '/' },
+      { text: '讨论区', link: '/boards' },
     ],
 
     // 侧边栏 - 统一显示所有菜单，默认全部展开
@@ -44,7 +49,7 @@ export default {
       {
         text: '目录',
         collapsible: false,
-        link: 'SUMMARY'
+        link: 'contents'
       },
       {
         text: '前言',

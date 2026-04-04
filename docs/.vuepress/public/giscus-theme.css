@@ -3,10 +3,6 @@
  * 基于GitHub主题定制，与网站风格一致
  */
 
-/* var(--color-accent-muted,var(--color-box-border-info)) */
-/* var(--color-canvas-default,var(--color-bg-primary)) --color-bg-primary*/
-
-
 /* 亮色模式 */
 @media (prefers-color-scheme: light) {
   main {
@@ -37,6 +33,9 @@
     --color-border-muted: #E4E4E7;
     --color-accent-fg: #2563EB;
     --color-accent-emphasis: #2563EB;
+    --color-btn-primary-disabled-bg: #F3F3F3;
+    --color-btn-primary-disabled-border: #AAAAAA;
+    --color-btn-primary-disabled-text: #999999;
   }
 }
 
@@ -73,6 +72,10 @@
 
 /* 自定义样式 - 所有模式下通用 */
 
+.gsc-comments-count, .gsc-comments-count-separator {
+    font-weight: normal;
+}
+
 /* 隐藏 "– 由 giscus 提供支持" 文字 */
 .gsc-left-header .text-sm {
   display: none !important;
@@ -96,4 +99,24 @@ main .btn,
 main [role="button"],
 main button {
   border-radius: 8px !important;
+}
+
+.octicon {
+    display: inline-block;
+    overflow: visible;
+    fill: currentColor;
+    padding-bottom: 3px;
+    vertical-align: text-bottom;
+}
+
+.gsc-comments {
+    display: flex;
+    flex-direction: column;
+    gap: 0.7rem;
+}
+
+#__next .m-2 {
+    margin: 0rem;
+    background-color: #fff;
+    text-align: center;
 }

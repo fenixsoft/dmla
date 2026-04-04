@@ -10,11 +10,11 @@
         <span v-for="tag in pageTags" :key="tag" class="tag">{{ tag }}</span>
       </div>
     </template>
-    <!-- 自定义页面底部：文章元信息 -->
+    <!-- 自定义页面底部：文章元信息（首页和目录页不显示） -->
     <template #page-content-bottom>
-      <ArticleFooter />
+      <ArticleFooter v-if="shouldShowFooter" />
     </template>
-    <!-- 页面最底部：评论（在翻页导航之后） -->
+    <!-- 页面最底部：评论（首页和目录页不显示） -->
     <template #page-bottom>
       <Comments />
     </template>
@@ -23,14 +23,19 @@
 
 <script setup>
 import { computed } from 'vue'
-import { usePageFrontmatter } from '@vuepress/client'
+import { usePageFrontmatter, useRoute } from '@vuepress/client'
 import DefaultLayout from '@vuepress/theme-default/lib/client/layouts/Layout.vue'
 import ArticleFooter from '../components/ArticleFooter.vue'
 import NavbarSettings from '../components/NavbarSettings.vue'
 import Comments from '../components/Comments.vue'
 
 const frontmatter = usePageFrontmatter()
+const route = useRoute()
 const pageTags = computed(() => frontmatter.value?.tags || [])
+
+// 不需要 ArticleFooter 的页面路径（首页、目录页、讨论区）
+const excludedFooterPaths = ['/', '/contents.html', '/contents/', '/boards.html', '/boards/']
+const shouldShowFooter = computed(() => !excludedFooterPaths.includes(route.path))
 </script>
 
 <style>
