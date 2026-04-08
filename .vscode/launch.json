@@ -55,6 +55,13 @@
       "cwd": "${workspaceFolder}"
     },
     {
+      "name": "生成共享代码",
+      "type": "node-terminal",
+      "request": "launch",
+      "command": "npm run extract:shared",
+      "cwd": "${workspaceFolder}"
+    },
+    {
       "name": "停止已运行服务",
       "type": "node-terminal",
       "request": "launch",

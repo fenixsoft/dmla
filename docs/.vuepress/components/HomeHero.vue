@@ -81,13 +81,14 @@ const features = computed(() => frontmatter.value.features ?? [])
 .home-hero-image {
   display: block;
   max-width: 100%;
-  max-height: 280px;
+  max-height: 300px;
   margin: 3rem auto 1.5rem;
+  box-shadow: none;
 }
 
 .home-hero-title {
   font-size: 3rem;
-  margin: 1.8rem auto;
+  /* margin: 1.8rem auto; */
 }
 
 .home-hero-tagline {

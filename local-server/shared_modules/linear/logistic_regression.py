@@ -13,7 +13,7 @@ class LogisticRegression:
         self.n_iterations = n_iterations  # 迭代次数，梯度下降的最大迭代轮数
         self.coef_ = None                 # 特征系数（权重），训练后保存
         self.intercept_ = None            # 截距项，训练后保存
-        self.loss_history = []            # 损失历史记录，用于可视化收敛过程，后续可视化
+        self.loss_history = []            # 损失历史记录，用于可视化收敛过程，供后续可视化使用
     
     def sigmoid(self, z):
         """Sigmoid 函数"""

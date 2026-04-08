@@ -18,6 +18,10 @@ import time
 import traceback
 from typing import Optional
 
+# 强制重建 matplotlib 字体缓存，确保中文字体正确识别
+import matplotlib.font_manager as fm
+fm._load_fontmanager(try_read_cache=False)
+
 # 超时时间（秒）
 DEFAULT_TIMEOUT = 60
 

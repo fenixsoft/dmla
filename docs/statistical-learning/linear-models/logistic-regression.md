@@ -184,7 +184,7 @@ class LogisticRegression:
         self.n_iterations = n_iterations  # 迭代次数，梯度下降的最大迭代轮数
         self.coef_ = None                 # 特征系数（权重），训练后保存
         self.intercept_ = None            # 截距项，训练后保存
-        self.loss_history = []            # 损失历史记录，用于可视化收敛过程，后续可视化
+        self.loss_history = []            # 损失历史记录，用于可视化收敛过程，供后续可视化使用
     
     def sigmoid(self, z):
         """Sigmoid 函数"""
@@ -288,7 +288,7 @@ plt.show()
 plt.close()
 ```
 
-## 多分类扩展：Softmax 回归
+## 多项逻辑回归
 
 逻辑回归的理论基础是伯努利分布，只能解决二分类问题。当类别超过两类时（如邮件分为"正常、垃圾、可疑"三类），我们需要同时输出多个概率，且这些概率之和必须为 1（这是概率分布的基本约束）。一个朴素的想法是既然每个类别都需要一个概率，那就为每个类别单独训练一个 Sigmoid 模型？但这会导致概率之和不为 1，且多个模型之间缺乏协调。因此我们需要一个统一的扩展框架，一次性输出所有类别的概率分布，这种扩展称为**多项逻辑回归**（或称 Softmax 回归）。
 
@@ -320,10 +320,14 @@ $$P(y=1) = \frac{e^{z}}{e^{z} + e^{0}} = \frac{e^{z}}{1 + e^{z}} = \sigma(z)$$
 
 ```python runnable
 import numpy as np
+import matplotlib.pyplot as plt
 from shared.linear.logistic_regression import LogisticRegression
 
+# 设置中文字体（Docker 镜像中已预装 WenQuanYi Micro Hei）
+plt.rcParams['font.sans-serif'] = ['WenQuanYi Micro Hei', 'Noto Sans CJK SC', 'DejaVu Sans']
+plt.rcParams['axes.unicode_minus'] = False
+
 # 模拟客户数据
-np.random.seed(42)
 n_customers = 500
 
 # 特征：使用月数、活跃度评分、投诉次数
@@ -342,31 +346,59 @@ y = (churn_prob_true > np.random.uniform(0, 1, n_customers)).astype(int)
 model = LogisticRegression(learning_rate=0.01, n_iterations=2000)
 model.fit(X, y)
 
-print("=== 客户流失预测模型 ===")
-print(f"月数系数: {model.coef_[0]:.4f} (负值表示长期客户更稳定)")
-print(f"活跃度系数: {model.coef_[1]:.4f} (负值表示活跃度降低流失风险)")
-print(f"投诉系数: {model.coef_[2]:.4f} (正值表示投诉增加流失风险)")
-print(f"截距: {model.intercept_:.4f}")
-print(f"模型准确率: {model.score(X, y):.3f}")
+# 创建可视化图表
+fig, axes = plt.subplots(1, 3, figsize=(14, 4))
 
-# 预测高危客户
+# 图1：特征系数条形图
+features = ['使用月数', '活跃度评分', '投诉次数']
+colors = ['#2ecc71' if c < 0 else '#e74c3c' for c in model.coef_]
+axes[0].barh(features, model.coef_, color=colors)
+axes[0].axvline(x=0, color='black', linewidth=0.5)
+axes[0].set_xlabel('系数值')
+axes[0].set_title('特征对流失的影响\n(绿色=降低风险，红色=增加风险)')
+for i, v in enumerate(model.coef_):
+    axes[0].text(v + 0.02 if v > 0 else v - 0.08, i, f'{v:.3f}', va='center', fontsize=10)
+
+# 图2：模型性能与客户分布
+accuracy = model.score(X, y)
+churn_rate = y.sum() / len(y)
+axes[1].bar(['模型准确率', '实际流失率'], [accuracy, churn_rate], color=['#3498db', '#9b59b6'])
+axes[1].set_ylim(0, 1)
+axes[1].set_ylabel('比例')
+axes[1].set_title('模型预测表现')
+for i, v in enumerate([accuracy, churn_rate]):
+    axes[1].text(i, v + 0.05, f'{v:.1%}', ha='center', fontsize=12, fontweight='bold')
+
+# 图3：新客户流失概率预测
 new_customer = np.array([[12, 30, 3]])  # 12个月，活跃度30，投诉3次
 churn_prob = model.predict_proba(new_customer)[0]
-print(f"\n新客户流失概率: {churn_prob:.2%}")
-if churn_prob > 0.5:
-    print("建议：该客户流失风险较高，建议主动关怀")
-else:
-    print("建议：该客户相对稳定，维持正常服务即可")
+stay_prob = 1 - churn_prob
+
+# 使用饼图显示概率
+probs = [stay_prob, churn_prob]
+labels = ['留存概率', '流失概率']
+colors_pie = ['#2ecc71', '#e74c3c']
+wedges, texts, autotexts = axes[2].pie(probs, labels=labels, colors=colors_pie,
+                                        autopct='%1.1f%%', startangle=90,
+                                        explode=(0, 0.1 if churn_prob > 0.5 else 0))
+axes[2].set_title(f'新客户预测\n(12个月, 活跃度30, 投诉3次)')
+
+# 在图3下方添加建议文字
+risk_level = "高危客户" if churn_prob > 0.5 else "稳定客户 ✓"
+fig.text(0.72, 0.02, f'建议: {risk_level}', ha='center', fontsize=11,
+         color='#e74c3c' if churn_prob > 0.5 else '#2ecc71', fontweight='bold')
+
+plt.tight_layout()
+plt.subplots_adjust(bottom=0.12)
+plt.show()
+
+print(f"截距: {model.intercept_:.4f}")
 ```
 
 
-## 小结
+## 本章小结
 
-本章从逻辑回归的历史渊源出发，建立了一个完整的知识链条：**问题 → 变换 → 损失 → 优化**。分类问题与线性回归的数学冲突（输出无界、损失不合理）催生了 Sigmoid 变换的需求；Sigmoid 函数将线性输出映射为概率，同时与对数几率建立了数学联系；最大似然估计导出了交叉熵损失，其梯度公式 $(p_i - y_i)X_i$ 简洁优雅，完美契合分类任务的学习逻辑；梯度下降实现了高效优化，Softmax 函数将二分类扩展到多分类场景。
-
-逻辑回归的真正价值不在于它能直接解决哪些复杂问题，而是它建立了一套**概率视角的分类范式**：用线性模型学习对数几率，用非线性变换转换为概率，用概率阈值做出判断。这套范式贯穿了整个统计学习领域，从经典的 logistic 模型到现代神经网络（其输出层本质上就是 Softmax 回归），无一不是这一范式的变体与延伸。理解逻辑回归，就是理解了这个范式的起点。
-
-下一章，我们将讨论如何处理线性模型的"过度学习"问题——正则化与广义线性模型，探索如何在保持模型简洁性的同时，提升其表达能力与稳健性。
+逻辑回归用回归思想解决分类问题，核心设计是"线性决策 + Sigmoid 翻译"，所以它仍然归类在线性模型之中，继承了线性模型的优点，可解释性强、小样本稳健，但也存在线性决策边界、特征交互缺失、对不平衡数据敏感等局限。下一章，我们将讨论如何处理线性模型的"过度学习"问题——正则化与广义线性模型，探索如何在保持模型简洁性的同时，提升其表达能力与稳健性。
 
 ## 练习题
 
@@ -374,7 +406,7 @@ else:
     <details>
     <summary>参考答案</summary>
     
-    ```python
+    ```python runnable
     import numpy as np
     
     # 数据准备
@@ -406,28 +438,9 @@ else:
     accuracy = np.mean(y_pred == y)
     print(f"训练准确率: {accuracy:.2f}")
     ```
-    
-    结果分析：决策边界大致为 $-x_1 + x_2 + 某常数 = 0$，即 $x_2 \approx x_1 - 某常数$。观察数据，类别 1 的样本 $(3,4)$ 和 $(4,5)$ 都满足 $x_2 > x_1$，类别 0 的样本 $(1,2)$ 和 $(2,3)$ 也满足 $x_2 > x_1$，但后者数值较小。真正的决策边界可能更复杂，需要更多样本才能稳定估计。
     </details>
 
-2. 解释为什么交叉熵损失的梯度 $\nabla_\beta J = \frac{1}{n}X^T(\hat{p} - y)$ 不会出现梯度消失问题，而平方损失会。
-    <details>
-    <summary>参考答案</summary>
-    
-    **交叉熵损失的梯度分析**：
-    
-    梯度公式中，$(\hat{p} - y)$ 表示预测偏差。当预测错误时（如 $y=1$ 但 $\hat{p}=0.1$），偏差为 $0.1 - 1 = -0.9$，梯度有明显的值。当预测正确时（如 $y=1$ 且 $\hat{p}=0.95$），偏差为 $-0.05$，梯度接近 0，参数稳定。无论 $\hat{p}$ 在哪个位置，只要预测不准确，梯度就有驱动力。
-    
-    **平方损失的梯度分析**：
-    
-    平方损失对 $\hat{p}$ 的梯度为 $2(\hat{p} - y)$，但通过 Sigmoid 传递时，还需乘以 $\hat{p}(1-\hat{p})$。当 $\hat{p}$ 接近 0 或 1 时，$\hat{p}(1-\hat{p})$ 接近 0，梯度消失。此时即使预测错误（如 $y=1$ 但 $\hat{p}=0.01$），梯度也会被"压制"，学习速度极慢。
-    
-    **本质区别**：
-    
-    交叉熵损失通过最大似然推导，天然适应了 Sigmoid 的数学性质，消除了 $\hat{p}(1-\hat{p})$ 因子。平方损失强行套用线性回归的框架，忽略了 Sigmoid 引入的非线性，导致梯度消失。这再次印证了：损失函数的设计必须与模型结构匹配。
-    </details>
-
-3. 在 Sigmoid 函数中，为什么需要对输入 $z$ 进行截断（如 `np.clip(z, -500, 500)`）？不截断会发生什么问题？
+1. 在 Sigmoid 函数中，为什么需要对输入 $z$ 进行截断（如 `np.clip(z, -500, 500)`）？不截断会发生什么问题？
     <details>
     <summary>参考答案</summary>
     
@@ -446,7 +459,7 @@ else:
     使用 `np.where(z >= 0, 1/(1+np.exp(-z)), np.exp(z)/(1+np.exp(z)))`，根据 $z$ 的正负选择不同的计算公式，可以完全避免溢出。这是数值稳定性的标准技巧。
     </details>
 
-4. 解释 Softmax 函数中"减去最大值"（`z_shifted = z - np.max(z)`）的数值稳定性原理，并说明为什么这不影响概率计算结果。
+1. 解释 Softmax 函数中"减去最大值"（`z_shifted = z - np.max(z)`）的数值稳定性原理，并说明为什么这不影响概率计算结果。
     <details>
     <summary>参考答案</summary>
     
@@ -475,7 +488,7 @@ else:
     Softmax 的结果只取决于 $z$ 的相对大小，而非绝对大小。同时加减一个常数，概率分布不变。减去最大值是一个"零成本"的数值技巧，既保证稳定性，又不改变数学结果。
     </details>
 
-5. 在客户流失预测场景中，假设数据集有 1000 个客户，其中 950 个未流失（标签 0），50 个已流失（标签 1）。逻辑回归训练后可能将所有客户都预测为"未流失"。解释为什么会发生这种情况，并提出三种解决方法。
+1. 在客户流失预测场景中，假设数据集有 1000 个客户，其中 950 个未流失（标签 0），50 个已流失（标签 1）。逻辑回归训练后可能将所有客户都预测为"未流失"。解释为什么会发生这种情况，并提出三种解决方法。
     <details>
     <summary>参考答案</summary>
     
