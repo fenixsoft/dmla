@@ -31,6 +31,11 @@ npm-debug.log*
 # Docker
 *.dockerignore
 
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
 # Test coverage
 coverage/
 
