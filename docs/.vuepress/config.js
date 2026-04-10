@@ -116,36 +116,36 @@ export default {
             text: '贝叶斯方法',
             collapsible: false,
             children: [
-              { text: '朴素贝叶斯', link: '/statistical-learning/bayesian-methods/01-naive-bayes' },
-              { text: '贝叶斯网络', link: '/statistical-learning/bayesian-methods/02-bayesian-network' },
-              { text: 'EM算法', link: '/statistical-learning/bayesian-methods/03-em-algorithm' },
+              { text: '朴素贝叶斯', link: '/statistical-learning/bayesian-methods/naive-bayes' },
+              { text: '贝叶斯网络', link: '/statistical-learning/bayesian-methods/bayesian-network' },
+              { text: 'EM算法', link: '/statistical-learning/bayesian-methods/em-algorithm' },
             ]
           },
           {
             text: '支持向量机',
             collapsible: false,
             children: [
-              { text: 'SVM基础', link: '/statistical-learning/support-vector-machines/01-svm-max-margin' },
-              { text: '核方法', link: '/statistical-learning/support-vector-machines/02-kernel-methods' },
-              { text: 'SVM进阶', link: '/statistical-learning/support-vector-machines/03-svm-advanced' },
+              { text: 'SVM基础', link: '/statistical-learning/support-vector-machines/svm-max-margin' },
+              { text: '核方法', link: '/statistical-learning/support-vector-machines/kernel-methods' },
+              { text: 'SVM进阶', link: '/statistical-learning/support-vector-machines/svm-advanced' },
             ]
           },
           {
             text: '决策树与集成',
             collapsible: false,
             children: [
-              { text: '决策树', link: '/statistical-learning/decision-tree-ensemble/01-decision-tree' },
-              { text: '随机森林', link: '/statistical-learning/decision-tree-ensemble/02-random-forest' },
-              { text: 'Boosting', link: '/statistical-learning/decision-tree-ensemble/03-boosting' },
+              { text: '决策树', link: '/statistical-learning/decision-tree-ensemble/decision-tree' },
+              { text: '随机森林', link: '/statistical-learning/decision-tree-ensemble/random-forest' },
+              { text: 'Boosting', link: '/statistical-learning/decision-tree-ensemble/boosting' },
             ]
           },
           {
             text: '无监督学习',
             collapsible: false,
             children: [
-              { text: '聚类', link: '/statistical-learning/unsupervised-learning/01-clustering' },
-              { text: '降维', link: '/statistical-learning/unsupervised-learning/02-dimensionality-reduction' },
-              { text: '进阶', link: '/statistical-learning/unsupervised-learning/03-unsupervised-advanced' },
+              { text: '聚类', link: '/statistical-learning/unsupervised-learning/clustering' },
+              { text: '降维', link: '/statistical-learning/unsupervised-learning/dimensionality-reduction' },
+              { text: '进阶', link: '/statistical-learning/unsupervised-learning/unsupervised-advanced' },
             ]
           },
         ]

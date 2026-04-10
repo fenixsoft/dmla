@@ -2,7 +2,7 @@
  * Mermaid 客户端配置
  * 动态加载 Mermaid 库并初始化
  */
-import { defineClientConfig } from 'vuepress/client'
+import { defineClientConfig, usePageData } from 'vuepress/client'
 import { onMounted, watch, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
@@ -29,6 +29,9 @@ async function renderMermaid() {
       flowchart: {
         useMaxWidth: true,
         htmlLabels: true
+      },
+      themeVariables: {
+        fontSize: '12px'
       }
     })
     mermaidLoaded = true
@@ -91,6 +94,9 @@ export default defineClientConfig({
           flowchart: {
             useMaxWidth: true,
             htmlLabels: true
+          },
+          themeVariables: {
+            fontSize: '12px'
           }
         })
         mermaidLoaded = true
@@ -105,6 +111,7 @@ export default defineClientConfig({
     // 使用 Vue Router 监听路由变化
     const router = useRouter()
     const isInitialized = ref(false)
+    const pageData = usePageData()
 
     // 组件挂载时渲染
     onMounted(() => {
@@ -125,6 +132,16 @@ export default defineClientConfig({
         }
       },
       { immediate: false }
+    )
+
+    // 监听页面数据变化（热更新会触发此变化），重新渲染 mermaid 图表
+    watch(
+      () => pageData.value,
+      () => {
+        setTimeout(renderMermaid, 100)
+        setTimeout(renderMermaid, 300)
+      },
+      { deep: true }
     )
   }
 })
