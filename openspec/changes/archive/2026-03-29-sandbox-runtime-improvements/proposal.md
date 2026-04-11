@@ -9,7 +9,7 @@
 ### Bug 修复
 - **修复 `checkGPUAvailable()` 函数**：当前返回对象而非字符串，导致 GPU 检测逻辑失效
 - **修复 `runCommand()` 函数**：未正确获取容器输出，导致健康检查返回错误数据
-- **添加 CPU 镜像支持**：当前只有 GPU 版本镜像，缺少 `ideaspaces-sandbox:latest` (CPU 版本)
+- **添加 CPU 镜像支持**：当前只有 GPU 版本镜像，缺少 `dmla-sandbox:latest` (CPU 版本)
 
 ### 新增功能
 - **前端设置界面**：在导航栏添加设置按钮，支持配置沙箱服务地址

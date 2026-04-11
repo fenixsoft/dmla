@@ -7,7 +7,7 @@ import runnableCodePlugin from './plugins/runnable-code/index.js'
 import mathPlugin from './plugins/math/index.js'
 import emphasisFixPlugin from './plugins/emphasis-fix/index.js'
 import wordCountPlugin from './plugins/word-count/index.js'
-import ideaspacesTheme from './theme/index.js'
+import dmlaTheme from './theme/index.js'
 import { searchProPlugin } from 'vuepress-plugin-search-pro'
 import { searchVersionFixPlugin } from './plugins/search-version-fix/index.js'
 
@@ -26,10 +26,10 @@ export default {
   ],
 
   // 部署配置 - GitHub Pages 子目录
-  // base: '/ideaspaces/',
+  // base: '/dmla/',
 
   // 使用自定义主题
-  theme: ideaspacesTheme({
+  theme: dmlaTheme({
     logo: '/logo_min_size.png',
 
     // 禁用颜色模式切换按钮

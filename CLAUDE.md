@@ -96,10 +96,10 @@ npm run cdn:refresh
 npm run build:sandbox
 
 # 构建 CPU 版本（无 GPU 支持）
-docker build -t ideaspaces-sandbox:latest . -f local-server/Dockerfile.sandbox --build-arg GPU=false
+docker build -t dmla-sandbox:latest . -f local-server/Dockerfile.sandbox --build-arg GPU=false
 
 # 测试沙箱镜像
-docker run --rm ideaspaces-sandbox:gpu python3 -c "print('Hello')"
+docker run --rm dmla-sandbox:gpu python3 -c "print('Hello')"
 ```
 
 ### 共享模块（可复用 Python 类）

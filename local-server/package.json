@@ -1,7 +1,7 @@
 {
-  "name": "ideaspaces-local-server",
+  "name": "dmla-local-server",
   "version": "1.0.0",
-  "description": "IdeaSpaces 本地服务 - Python 沙箱执行",
+  "description": "Design Machine Learning Applications 本地服务 - Python 沙箱执行",
   "type": "module",
   "main": "src/index.js",
   "scripts": {

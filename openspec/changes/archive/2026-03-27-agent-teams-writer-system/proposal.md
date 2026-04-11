@@ -8,7 +8,7 @@
 
 ### 当前状态
 
-- 项目 IdeaSpaces 是一个知识管理平台，支持 Markdown 文章发布
+- 项目 DMLA (Design Machine Learning Applications) 是一个知识管理平台，支持 Markdown 文章发布
 - 已有 Docker 沙箱支持 Python 代码执行和验证
 - 用户计划撰写数百篇技术文章，每篇数百至数千字
 

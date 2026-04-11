@@ -19,8 +19,8 @@ const docker = new Docker()
 
 // 沙箱配置
 const SANDBOX_CONFIG = {
-  imageCpu: 'ideaspaces-sandbox:latest',
-  imageGpu: 'ideaspaces-sandbox:gpu',
+  imageCpu: 'dmla-sandbox:latest',
+  imageGpu: 'dmla-sandbox:gpu',
   timeout: 60000,           // 60 秒超时
   memory: 4 * 1024 * 1024 * 1024  // 4GB 内存
 }

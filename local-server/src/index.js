@@ -1,5 +1,5 @@
 /**
- * IdeaSpaces 本地服务
+ * Design Machine Learning Applications 本地服务
  * 提供 Python 代码沙箱执行 API
  */
 import express from 'express'
@@ -33,7 +33,7 @@ app.use((err, req, res, next) => {
 // 仅在直接运行时启动服务器（测试时不启动）
 if (import.meta.url === `file://${process.argv[1]}`) {
   app.listen(PORT, () => {
-    console.log(`🚀 IdeaSpaces 本地服务已启动`)
+    console.log(`🚀 DMLA 本地服务已启动`)
     console.log(`   API: http://localhost:${PORT}`)
     console.log(`   健康检查: http://localhost:${PORT}/api/health`)
   })

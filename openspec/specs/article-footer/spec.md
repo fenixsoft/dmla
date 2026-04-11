@@ -44,7 +44,7 @@
 1. Star 按钮：深色背景 (#24292E)，白色文字，点击跳转到 GitHub Star 页面
 2. Star 数徽章：显示当前仓库的实时 Star 数量
 
-仓库地址为 `https://github.com/fenixsoft/ideaspaces`。
+仓库地址为 `https://github.com/fenixsoft/dmla`。
 
 #### Scenario: GitHub buttons 加载成功
 - **WHEN** github-buttons npm 包正常加载

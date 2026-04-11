@@ -3,4 +3,6 @@
 
 from .bayesian_network import SimpleBayesianNetwork
 
-__all__ = ['SimpleBayesianNetwork']
+from .simple_bayesian_network import SimpleBayesianNetwork
+from .multinomial_naive_bayes import MultinomialNaiveBayes
+__all__ = ['SimpleBayesianNetwork', 'SimpleBayesianNetwork', 'MultinomialNaiveBayes']

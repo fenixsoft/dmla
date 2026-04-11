@@ -49,7 +49,7 @@
 ### 1.2 项目结构
 
 ```
-ideaspaces/
+dmla/
 ├── docs/                              # Markdown 文章
 │   ├── README.md                      # 首页
 │   ├── arch/                          # 架构设计文档
@@ -329,7 +329,7 @@ WORKDIR /workspace
 
 ```javascript
 const container = await docker.createContainer({
-  Image: 'ideaspaces-sandbox:gpu',
+  Image: 'dmla-sandbox:gpu',
   Cmd: ['python3', '-c', code],
   HostConfig: {
     // GPU 透传
@@ -499,7 +499,7 @@ async function refreshCDN() {
     "build": "vuepress build docs",
     "local": "concurrently \"npm run dev\" \"npm run server\"",
     "server": "cd local-server && npm start",
-    "build:sandbox": "docker build -t ideaspaces-sandbox:gpu . -f local-server/Dockerfile.sandbox",
+    "build:sandbox": "docker build -t dmla-sandbox:gpu . -f local-server/Dockerfile.sandbox",
     "cdn:refresh": "node scripts/cdn-refresh.js"
   }
 }

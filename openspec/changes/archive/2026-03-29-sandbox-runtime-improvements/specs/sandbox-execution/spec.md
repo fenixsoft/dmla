@@ -8,12 +8,12 @@
 
 #### Scenario: GPU 环境执行代码
 - **WHEN** GPU 可用且用户选择 GPU 执行
-- **THEN** 系统使用 `ideaspaces-sandbox:gpu` 镜像执行代码
+- **THEN** 系统使用 `dmla-sandbox:gpu` 镜像执行代码
 - **AND** 返回结果中 `gpuUsed` 为 `true`
 
 #### Scenario: CPU 环境执行代码
 - **WHEN** GPU 不可用或用户选择 CPU 执行
-- **THEN** 系统使用 `ideaspaces-sandbox:latest` 镜像执行代码
+- **THEN** 系统使用 `dmla-sandbox:latest` 镜像执行代码
 - **AND** 返回结果中 `gpuUsed` 为 `false`
 
 #### Scenario: 镜像不存在时的错误提示

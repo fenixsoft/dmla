@@ -32,7 +32,7 @@ footer: MIT Licensed | Copyright © 2024
 
 ```bash
 # 克隆仓库
-git clone https://github.com/fenixsoft/ideaspaces.git
+git clone https://github.com/fenixsoft/dmla.git
 
 # 安装依赖
 npm install

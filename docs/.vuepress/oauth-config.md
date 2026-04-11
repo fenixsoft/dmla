@@ -2,10 +2,10 @@
 
 ## OAuth App 信息
 
-- **Application name**: IdeaSpaces Comments
+- **Application name**: DMLA Comments
 - **Homepage URL**: https://ai.icyfenix.cn
 - **Authorization callback URL**:
-  - https://fenixsoft.github.io/ideaspaces/
+  - https://fenixsoft.github.io/dmla/
   - https://ai.icyfenix.cn
   - http://localhost:8080
   - http://localhost:8081

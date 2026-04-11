@@ -14,7 +14,7 @@
 
 - [x] 3.1 创建 `docs/.vuepress/components/GithubButton.vue` 组件
 - [x] 3.2 实现 github-buttons 动态加载逻辑（mounted 钩子 import）
-- [x] 3.3 配置仓库地址为 `https://github.com/fenixsoft/ideaspaces`
+- [x] 3.3 配置仓库地址为 `https://github.com/fenixsoft/dmla`
 - [x] 3.4 实现加载失败的 fallback 为静态链接
 
 ## 4. 文章底部组件实现

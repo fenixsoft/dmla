@@ -3,7 +3,7 @@
     <!-- GitHub 链接 -->
     <a
       class="github-link"
-      href="https://github.com/fenixsoft/ideaspaces"
+      href="https://github.com/fenixsoft/dmla"
       target="_blank"
       rel="noopener noreferrer"
       title="GitHub 仓库"

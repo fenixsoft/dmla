@@ -29,7 +29,7 @@
     <div class="github-star">
       <a
         class="star-button"
-        href="https://github.com/fenixsoft/ideaspaces"
+        href="https://github.com/fenixsoft/dmla"
         target="_blank"
         rel="noopener noreferrer"
       >
@@ -74,7 +74,7 @@ const starCount = ref('--')
 
 onMounted(async () => {
   try {
-    const response = await fetch('https://api.github.com/repos/fenixsoft/ideaspaces')
+    const response = await fetch('https://api.github.com/repos/fenixsoft/dmla')
     if (response.ok) {
       const data = await response.json()
       starCount.value = data.stargazers_count.toLocaleString()

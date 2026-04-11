@@ -25,8 +25,8 @@
 │                           ▼                                     │
 │  Docker 容器                                                    │
 │  ┌─────────────────────────────────────────────────────────┐   │
-│  │  ideaspaces-sandbox:gpu (GPU 版本)                       │   │
-│  │  ideaspaces-sandbox:latest (CPU 版本) ← 缺失!            │   │
+│  │  dmla-sandbox:gpu (GPU 版本)                       │   │
+│  │  dmla-sandbox:latest (CPU 版本) ← 缺失!            │   │
 │  └─────────────────────────────────────────────────────────┘   │
 │                                                                 │
 └─────────────────────────────────────────────────────────────────┘
@@ -110,10 +110,10 @@ FROM ${GPU:-true} == "true" ? gpu-base : cpu-base
 **构建命令**:
 ```bash
 # GPU 版本
-docker build -t ideaspaces-sandbox:gpu . -f Dockerfile.sandbox
+docker build -t dmla-sandbox:gpu . -f Dockerfile.sandbox
 
 # CPU 版本
-docker build -t ideaspaces-sandbox:latest . -f Dockerfile.sandbox --build-arg GPU=false
+docker build -t dmla-sandbox:latest . -f Dockerfile.sandbox --build-arg GPU=false
 ```
 
 ### 3. GPU 检测修复方案
@@ -235,7 +235,7 @@ Settings.vue (新组件)
 ### 回滚策略
 
 - 后端代码通过 Git 回滚
-- Docker 镜像保留旧版本标签 `ideaspaces-sandbox:gpu-v1`
+- Docker 镜像保留旧版本标签 `dmla-sandbox:gpu-v1`
 - 前端重新部署上一版本
 
 ## Open Questions

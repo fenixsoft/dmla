@@ -1,6 +1,6 @@
 ## Context
 
-IdeaSpaces 设计文档（docs/arch/design.md）定义了完整的 GitHub Issues 评论系统架构，包括：
+DMLA 设计文档（docs/arch/design.md）定义了完整的 GitHub Issues 评论系统架构，包括：
 - 多层缓存（内存 30s → localStorage 5min → GitHub API）
 - ETag 条件请求优化 API 限流
 - IntersectionObserver 懒加载
@@ -54,7 +54,7 @@ IdeaSpaces 设计文档（docs/arch/design.md）定义了完整的 GitHub Issues
 **配置**:
 ```javascript
 commentsPlugin({
-  repo: 'fenixsoft/ideaspaces',
+  repo: 'fenixsoft/dmla',
   clientId: process.env.GITHUB_CLIENT_ID || ''
 })
 ```

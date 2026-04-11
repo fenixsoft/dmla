@@ -1,4 +1,4 @@
-# IdeaSpaces
+# DMLA (Design Machine Learning Applications)
 
 TBD
 

@@ -32,7 +32,7 @@
 
 为了书写和运算方便，线性假设一般采用[矩阵向量积](../../maths/linear/matrices.md#矩阵向量积)形式来表示，设 $X$ 为设计矩阵（包含所有样本的特征），$\beta$ 为参数向量，$\epsilon$ 为误差向量：$y = X\beta + \epsilon$，其中：$X = \begin{bmatrix} 1 & x_{11} & \cdots & x_{1 d} \\ 1 & x_{21} & \cdots & x_{2 d} \\ \vdots & \vdots & \ddots & \vdots \\ 1 & x_{n1} & \cdots & x_{nd} \end{bmatrix} \in \mathbb{R}^{n \times (d+1)}$（第一列为全 1，对应截距项，如例子中的基准价格 30 万），$\beta = \begin{bmatrix} \beta_0 \\ \beta_1 \\ \vdots \\ \beta_d \end{bmatrix} \in \mathbb{R}^{d+1}$，$\epsilon_i \sim N(0, \sigma^2)$
 
-### 最小二乘准则
+## 最小二乘准则
 
 在房价预测的例子里，我们寻找一条直线穿过数据点使得整体误差最小，为避免过高和过低的预测值正负相互抵消，直接选择了各误差项的平方和作为整体误差的定义。不知读到此处是否有人产生过一丝疑惑，要处理正负抵消的方式很多，譬如取绝对值之和，即 $\sum|y_i - \hat{y}_i|$，这也能避免抵消问题，为何一定是取平方和？
 
@@ -67,7 +67,7 @@ $$L(\beta) = e^T e = (y - X\beta)^T(y - X\beta) = ||y - X\beta||^2$$
 
 [投影定理](https://en.wikipedia.org/wiki/Hilbert_projection_theorem)（Projection Theorem）给出了更精确表述：**残差向量 $y - X\beta$ 与 $X$ 的所有列向量正交时，$\beta$ 为最优解**。正交的数学表达是[点积为零](../../maths/linear/vectors.md#内积与投影)，即 $X^T(y - X\beta) = 0$，这正是我们接下来推导闭式解的起点。
 
-### 线性回归闭式解
+## 线性回归闭式解
 
 投影定理告诉我们，线性回归达到最优解的条件是 $X^T(y - X\beta) = 0$。解这个方程，求得：$\hat{\beta} = (X^TX)^{-1}X^Ty$，这就是著名的 **OLS 闭式解公式**。拆开来看它的含义：
 

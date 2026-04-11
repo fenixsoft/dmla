@@ -26,7 +26,7 @@ const shouldShowComments = computed(() => {
 
 // Giscus 配置
 const giscusConfig = {
-  repo: 'fenixsoft/ideaspaces',
+  repo: 'fenixsoft/dmla',
   repoId: 'R_kgDORvEFhQ',
   category: 'Comments',
   categoryId: 'DIC_kwDORvEFhc4C5_39',

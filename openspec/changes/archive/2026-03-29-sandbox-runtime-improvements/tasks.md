@@ -4,7 +4,7 @@
 
 - [x] 1.1 修复 `checkGPUAvailable()` 函数 - 返回布尔值而非对象
 - [x] 1.2 修复 `runCommand()` 函数 - 正确获取容器输出日志 (已移除该函数，功能整合到 checkGPUAvailable)
-- [x] 1.3 添加 CPU 镜像 `ideaspaces-sandbox:latest` 支持 (代码逻辑已存在)
+- [x] 1.3 添加 CPU 镜像 `dmla-sandbox:latest` 支持 (代码逻辑已存在)
 - [x] 1.4 更新 `runPythonCode()` 函数支持 CPU/GPU 镜像选择 (已实现)
 
 ## 2. Dockerfile 简化与构建

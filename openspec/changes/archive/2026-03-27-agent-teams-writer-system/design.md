@@ -528,7 +528,7 @@ description: 执行文章写作任务。启动 Agent Team 协调 Author、Review
 license: MIT
 compatibility: Requires Claude Code Agent Teams feature enabled.
 metadata:
-  author: ideaspaces
+  author: dmla
   version: "1.0"
 ---
 ```

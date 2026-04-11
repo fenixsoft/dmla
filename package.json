@@ -1,7 +1,7 @@
 {
-  "name": "ideaspaces",
+  "name": "dmla",
   "version": "1.0.0",
-  "description": "交互式知识管理平台",
+  "description": "Design Machine Learning Applications - 交互式知识管理平台",
   "type": "module",
   "scripts": {
     "dev": "vuepress dev docs",
@@ -9,8 +9,8 @@
     "local": "concurrently \"npm run dev\" \"npm run server\"",
     "server": "cd local-server && npm start",
     "extract:shared": "node scripts/extract-shared-modules.js",
-    "build:sandbox": "npm run extract:shared && docker build -t ideaspaces-sandbox:gpu . -f local-server/Dockerfile.sandbox",
-    "build:sandbox:cpu": "npm run extract:shared && docker build -t ideaspaces-sandbox:latest . -f local-server/Dockerfile.sandbox.cpu",
+    "build:sandbox": "npm run extract:shared && docker build -t dmla-sandbox:gpu . -f local-server/Dockerfile.sandbox",
+    "build:sandbox:cpu": "npm run extract:shared && docker build -t dmla-sandbox:latest . -f local-server/Dockerfile.sandbox.cpu",
     "build:sandbox:all": "npm run build:sandbox && npm run build:sandbox:cpu",
     "cdn:refresh": "node scripts/cdn-refresh.js"
   },
