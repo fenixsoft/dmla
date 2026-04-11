@@ -169,26 +169,22 @@
   content: '▼ ';
 }
 
-/* 展开后的 summary 与内容间距 */
+/* 展开后的 details 保持 inline，不换行 */
 .theme-default-content div ol:last-of-type li:has(details) details[open] {
-  /* display: block; */
+  display: inline;
   width: 100%;
 }
 
+/* summary 与内容间距 */
 .theme-default-content div ol:last-of-type li:has(details) details[open] summary {
   margin-bottom: 0.5em;
 }
 
-/* 答案内容 - 确保段落间距一致 */
+/* 答案内容 - 段落保持 inline，不换行 */
 .theme-default-content div ol:last-of-type li:has(details) details[open] p {
-  margin-top: 0.5rem;
-  margin-bottom: 0.5rem;
+  display: inline;
+  margin: 0;
   line-height: 1.6;
-}
-
-/* 第一个段落紧跟 summary，不需要 margin-top */
-.theme-default-content div ol:last-of-type li:has(details) details[open] p:first-of-type {
-  margin-top: 0;
 }
 .runnable-code-block .output-area {
   padding: 12px 16px;
