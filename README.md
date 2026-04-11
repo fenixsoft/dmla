@@ -1,7 +1,7 @@
-# DMLA (Design Machine Learning Applications)
+# DMLA (Designing Machine Learning Applications)
 
 TBD
 
 ## 📄 许可证
 
-MIT License
+CC-BY 4.0 License
