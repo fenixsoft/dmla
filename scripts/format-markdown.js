@@ -4,9 +4,10 @@
  *
  * 功能：
  * 1. 中英文之间添加空格（汉字与半角字母数字）
- * 2. 全角双引号替换为半角引号
- * 3. 加粗格式统一（**中文（English）** → **中文**（English））
- * 4. 清理中文标点周围的空格
+ * 2. 中文与运算符符号之间添加空格（= + - * / > < 等）
+ * 3. 全角双引号替换为半角引号
+ * 4. 加粗格式统一（**中文（English）** → **中文**（English））
+ * 5. 清理中文标点周围的空格
  *
  * 用法：
  *   npm run format:md        # 检查模式（默认）
@@ -50,7 +51,8 @@ function protectExcludedRegions(content) {
     mathInline: [],
     codeBlock: [],
     codeInline: [],
-    frontmatter: []
+    frontmatter: [],
+    linkUrl: []
   };
 
   let protectedContent = content;
@@ -63,16 +65,35 @@ function protectExcludedRegions(content) {
     return `{{${PLACEHOLDER_DELIMITER}FRONTMATTER_${index}${PLACEHOLDER_DELIMITER}}}`;
   });
 
-  // 2. 保护公式块 ($$...$$)
+  // 2. 保护 Markdown 链接 URL 部分（括号内的内容）
+  // 格式：[text](url)，其中 url 不应该被格式化（包含锚点等）
+  // 注意：只保护 URL 部分，不保护链接文本
+  const linkUrlRegex = /\[[^\[\]]+\]\([^\x01()]+\)/g;
+  protectedContent = protectedContent.replace(linkUrlRegex, (match) => {
+    // 分离文本和 URL
+    const textMatch = match.match(/\[([^\[\]]+)\]\(([^)]+)\)/);
+    if (textMatch) {
+      const text = textMatch[1];
+      const url = textMatch[2];
+      const index = placeholders.linkUrl.length;
+      placeholders.linkUrl.push(url);
+      // 只替换 URL 部分，保留文本
+      return `[${text}]({{${PLACEHOLDER_DELIMITER}LINK_URL_${index}${PLACEHOLDER_DELIMITER}}})`;
+    }
+    return match;
+  });
+
+  // 3. 保护公式块 ($$...$$)
   // 使用 [^\x01] 确保不会跨越已保护的区域
-  const mathBlockRegex = /\$\$[\s\S]+\$\$/g;
+  // 使用 +? 非贪婪匹配，避免匹配多个公式块时跨越中间内容
+  const mathBlockRegex = /\$\$[\s\S]+?\$\$/g;
   protectedContent = protectedContent.replace(mathBlockRegex, (match) => {
     const index = placeholders.mathBlock.length;
     placeholders.mathBlock.push(match);
     return `{{${PLACEHOLDER_DELIMITER}MATH_BLOCK_${index}${PLACEHOLDER_DELIMITER}}}`;
   });
 
-  // 3. 保护代码块 (```...```)
+  // 4. 保护代码块 (```...```)
   const codeBlockRegex = /```[\s\S]+?```/g;
   protectedContent = protectedContent.replace(codeBlockRegex, (match) => {
     const index = placeholders.codeBlock.length;
@@ -80,7 +101,7 @@ function protectExcludedRegions(content) {
     return `{{${PLACEHOLDER_DELIMITER}CODE_BLOCK_${index}${PLACEHOLDER_DELIMITER}}}`;
   });
 
-  // 4. 保护行内代码 (`...`)
+  // 5. 保护行内代码 (`...`)
   // 使用 [^\x01`] 确保不会跨越已保护的区域（占位符包含 \x01）
   const codeInlineRegex = /`[^\x01`]+`/g;
   protectedContent = protectedContent.replace(codeInlineRegex, (match) => {
@@ -89,7 +110,7 @@ function protectExcludedRegions(content) {
     return `{{${PLACEHOLDER_DELIMITER}CODE_INLINE_${index}${PLACEHOLDER_DELIMITER}}}`;
   });
 
-  // 5. 保护行内公式 ($...$)
+  // 6. 保护行内公式 ($...$)
   // 使用 [^\x01$\n] 确保不会跨越已保护的区域，也不包含换行
   const mathInlineRegex = /\$[^\x01$\n]+\$/g;
   protectedContent = protectedContent.replace(mathInlineRegex, (match) => {
@@ -181,6 +202,42 @@ function addSpaceBetweenChineseAndEnglish(content) {
 }
 
 /**
+ * 中文与运算符符号添加空格
+ * @param {string} content 内容
+ * @returns {string} 处理后的内容
+ */
+function addSpaceBetweenChineseAndOperator(content) {
+  // 运算符符号：= + - > < ——（全角破折号）
+  // 规则：运算符前后都必须是中文汉字（排除 HTML 标签、Markdown 标记等）
+  // 注意：
+  // - 排除 *（Markdown 加粗标记）和 _（Markdown 斜体标记）
+  // - 排除 /（常用于路径、分数，不作为运算符处理）
+  // - 包含 ——（全角破折号，中文语境中常作为连接符号）
+
+  // 中文汉字后接运算符再接中文汉字 → 添加空格（运算符前后）
+  // 例如：天气=雨天 → 天气 = 雨天
+  content = content.replace(/([\u4e00-\u9fff])([=+\-])([\u4e00-\u9fff])/g, (match, before, op, after) => {
+    return `${before} ${op} ${after}`;
+  });
+
+  // 比较运算符单独处理（> 和 < 容易与 HTML 标签混淆）
+  // 只处理：中文>中文 或 中文<中文（前后都是中文）
+  content = content.replace(/([\u4e00-\u9fff])([><])([\u4e00-\u9fff])/g, (match, before, op, after) => {
+    return `${before} ${op} ${after}`;
+  });
+
+  // 全角破折号（——）单独处理
+  // 例如：机器学习——深度学习 → 机器学习 —— 深度学习
+  // 扩展：允许破折号前后是中文汉字、引号、Markdown标记（* 和 _）
+  // 处理情况如："标准件"——虽然、两类问题——**求切线**
+  content = content.replace(/([\u4e00-\u9fff"'*_])(——)([\u4e00-\u9fff"'*_])/g, (match, before, dash, after) => {
+    return `${before} ${dash} ${after}`;
+  });
+
+  return content;
+}
+
+/**
  * 全角引号替换为半角引号
  * @param {string} content 内容
  * @returns {string} 处理后的内容
@@ -247,7 +304,14 @@ function formatContent(content, filePath) {
     }
   }
 
-  // 2.2 全角引号
+  // 2.2 中文与运算符空格
+  const beforeOpSpacing = formatted;
+  formatted = addSpaceBetweenChineseAndOperator(formatted);
+  if (beforeOpSpacing !== formatted) {
+    issues.push({ type: 'operator_spacing', count: 1 });
+  }
+
+  // 2.3 全角引号
   const beforeQuotes = formatted;
   formatted = replaceFullWidthQuotes(formatted);
   if (beforeQuotes !== formatted) {
@@ -257,14 +321,14 @@ function formatContent(content, filePath) {
     }
   }
 
-  // 2.3 加粗格式统一
+  // 2.4 加粗格式统一
   const beforeBold = formatted;
   formatted = unifyBoldFormat(formatted);
   if (beforeBold !== formatted) {
     issues.push({ type: 'bold', count: 1 });
   }
 
-  // 2.4 清理中文标点周围的空格
+  // 2.5 清理中文标点周围的空格
   const beforePunct = formatted;
   formatted = cleanPunctuationSpacing(formatted);
   if (beforePunct !== formatted) {
@@ -357,6 +421,9 @@ function generateDiffReport(result) {
       switch (issue.type) {
         case 'spacing':
           lines.push(`    - 中英文空格: ${issue.count} 处需要添加`);
+          break;
+        case 'operator_spacing':
+          lines.push(`    - 运算符空格: 需要添加`);
           break;
         case 'quotes':
           lines.push(`    - 全角引号: ${issue.count} 处需要替换`);
