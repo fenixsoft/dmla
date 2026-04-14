@@ -1,3 +1,4 @@
+from .svm.kernel_s_v_m import KernelSVM
 from .bayesian.gaussian_mixture_model import GaussianMixtureModel
 from .svm.simple_s_v_m import SimpleSVM
 from .bayesian.simple_bayesian_network import SimpleBayesianNetwork

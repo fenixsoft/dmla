@@ -41,7 +41,7 @@
 
 理解了升维的价值和代价后，**核技巧**（Kernel Trick）可以概括为一句话：不显式构造高维映射 $\phi(x)$，而是直接计算出高维空间中样本的内积 $\phi(x)^T \phi(x')$ 的等效结果。这意味着无论映射后的空间是千维万维还是无穷维，因为不会构造出 $\phi(x)$ 的具体形式，就不需要存储高维向量。其次，计算成本也大幅降低了，因为不再需要先映射再内积的两步操作，而是从核函数中直接得到与内积计算等效的结果。
 
-这一切的关键是引入了**核函数**（Kernel Function），它的值等于样本在特征空间中映射后的内积。不妨将核函数现象成一个翻译器，它能直接告诉你两个样本在高维空间中有多相似，却不需要你真正走到那个高维空间去丈量。就像你能通过口音来判断两个人是否来自同一个地区，而不需要精确地通过户籍系统查询他们具体住址来获得。
+这一切的关键是引入了**核函数**（Kernel Function），它的值等于样本在特征空间中映射后的内积。不妨将核函数想象成一个翻译器，它能直接告诉你两个样本在高维空间中有多相似，却不需要你真正走到那个高维空间去丈量。就像你能通过口音来判断两个人是否来自同一个地区，而不需要精确地通过户籍系统查询他们具体住址来获得。
 
 核函数的理论基础来自 1909 年的 Mercer 定理，该定理指出一个函数 $k$ 能成为有效核函数，当且仅当对于任意数据集 $\{x_1, \ldots, x_n\}$，核矩阵 $K$ 是半正定的 $K_{ij} = k(x_i, x_j)$。理解这句话要解释两个相关概念，一个是**核矩阵**（Kernel Matrix），也称为 Gram 矩阵，在 [SVM 实践](svm-max-margin.md#软间隔-svm-实践)中我们已经当作内积计算的缓存使用过它。核矩阵是将核函数应用到数据集中所有样本对上所形成的矩阵。假设有 $n$ 个样本 $\{x_1, x_2, \ldots, x_n\}$，核矩阵 $K$ 是一个 $n \times n$ 的对称矩阵，其第 $i$ 行第 $j$ 列的元素定义为 $K_{ij} = k(x_i, x_j) = \phi(x_i)^T \phi(x_j)$。根据[向量内积](../../maths/linear/vectors.md#内积与投影)的几何意义，核矩阵存储了所有样本在特征空间中的两两相似度，每个元素 $K_{ij}$ 告诉我们样本 $x_i$ 和 $x_j$ 在高维空间中有多相似。
 
@@ -110,17 +110,15 @@ $$k(x, x') = \exp\left(-\frac{\|x - x'\|^2}{2\sigma^2}\right) = \exp(-\gamma \|x
 
 ## 核 SVM 实践
 
-前几节我们理解了核技巧的理论基础，现在将这些理论转化为可运行的代码。下面的实现支持线性核、多项式核和 RBF 核三种常用核函数，采用对偶问题的梯度上升求解方法，思路主要分为四个步骤：
+前面我们讨论了核技巧的理论基础，接下来要将这些理论转化为可运行的代码。以下代码支持线性核、多项式核和 RBF 核三种常用核函数，采用对偶问题的梯度上升求解方法，不放与前面[软间隔 SVM 的实践](svm-max-margin.md#软间隔-svm-实践)进行对比理解。核 SVM 的实现思路主要分为四个步骤：
 
-**第一步：核矩阵计算**：与软间隔 SVM 的线性核不同，核 SVM 需要根据不同的核函数计算核矩阵 $K[i,j] = k(x_i, x_j)$。对于线性核，$k(x, x') = x^T x'$，直接使用矩阵乘法计算；对于多项式核，$k(x, x') = (x^T x' + c)^d$，先计算内积再进行多项式变换；对于 RBF 核，$k(x, x') = \exp(-\gamma ||x - x'||^2)$，利用距离公式 $||x - x'||^2 = ||x||^2 + ||x'||^2 - 2x^T x'$ 进行向量化计算，避免显式循环。核矩阵是对称矩阵，存储了所有样本对在特征空间中的相似度。
+**第一步：核矩阵计算**：与软间隔 SVM 的线性核不同，核 SVM 需要根据不同的核函数计算核矩阵 $K[i,j] = k(x_i, x_j)$。对于线性核，$k(x, x') = x^T x'$，直接使用矩阵乘法计算；对于多项式核，$k(x, x') = (x^T x' + c)^d$，先计算内积再进行多项式变换；对于 RBF 核，$k(x, x') = \exp(-\gamma \|x - x'\|^2)$，利用距离公式 $\|x - x'\|^2 = \|x\|^2 + \|x'\|^2 - 2x^T x'$ 进行向量化计算，避免显式循环。核矩阵是对称矩阵，存储了所有样本对在特征空间中的相似度。
 
-**第二步：迭代更新拉格朗日乘子 $\alpha$**：核 SVM 的对偶问题形式与软间隔 SVM 相同，目标函数为 $\arg \max_{\alpha} \sum_{i=1}^{n} \alpha_i - \frac{1}{2} \sum_{i=1}^{n} \sum_{j=1}^{n} \alpha_i \alpha_j y_i y_j k(x_i, x_j)$，唯一的区别是将内积 $x_i^T x_j$ 替换为核函数 $k(x_i, x_j)$。采用梯度上升法优化，对于每个 $\alpha_i$，其梯度为：$\frac{\partial L}{\partial \alpha_i} = 1 - y_i \sum_{j=1}^{n} \alpha_j y_j K[j,i]$。每次迭代更新后将 $\alpha_i$ 投影到约束区间 $[0, C]$ 内，并对所有 $\alpha$ 进行均值修正以满足等式约束 $\sum \alpha_i y_i = 0$。
+**第二步：迭代更新拉格朗日乘子 $\alpha$**：核 SVM 的对偶问题形式与软间隔 SVM 相同，目标函数为 $\arg \max_{\alpha} \sum_{i=1}^{n} \alpha_i - \frac{1}{2} \sum_{i=1}^{n} \sum_{j=1}^{n} \alpha_i \alpha_j y_i y_j k(x_i, x_j)$，唯一的区别是将内积 $x_i^T x_j$ 替换为核函数 $k(x_i, x_j)$。采用梯度上升法优化，对于每个 $\alpha_i$，其梯度为 $\frac{\partial L}{\partial \alpha_i} = 1 - y_i \sum_{j=1}^{n} \alpha_j y_j K[j,i]$。每次迭代更新后将 $\alpha_i$ 投影到约束区间 $[0, C]$ 内，并对所有 $\alpha$ 进行均值修正以满足等式约束 $\sum \alpha_i y_i = 0$。
 
 **第三步：识别支持向量与计算偏移量 $b$**：训练完成后，根据 KKT 条件筛选支持向量（满足 $\alpha_i > \text{阈值}$ 的样本）。与线性 SVM 不同，核 SVM 不显式计算法向量 $w$，而是直接使用支持向量、其标签和对应的拉格朗日乘子来表示模型。偏移量 $b$ 通过支持向量的平均偏差计算：$b = \frac{1}{|SV|} \sum_{i \in SV} (y_i - \sum_{j \in SV} \alpha_j y_j k(x_j, x_i))$。
 
-**第四步：构建决策函数**：核 SVM 的决策函数为 $f(x) = \sum_{i \in SV} \alpha_i y_i k(x, x_i) + b$，新样本与所有支持向量计算核函数值，加权求和后加上偏移量得到决策值。预测时根据决策值的符号判断类别：$\hat{y} = \text{sign}(f(x))$。这种形式完全绕过了高维特征空间的显式计算，只需在原始空间计算核函数即可完成预测。
-
-至此，模型训练完成。注意代码实现中使用了简化的梯度上升算法，而非标准序列最小优化算法（SMO）。SMO 是工业界广泛采用的高效求解方法，但实现复杂度较高。这里的简化版本足以理解核 SVM 的核心机制，适合演示教学目的。
+**第四步：构建决策函数**：核 SVM 的决策函数为 $f(x) = \sum_{i \in SV} \alpha_i y_i k(x, x_i) + b$，新样本与所有支持向量计算核函数值，加权求和后加上偏移量得到决策值。预测时根据决策值的符号判断类别 $\hat{y} = \text{sign}(f(x))$。这种形式完全绕过了高维特征空间的显式计算，只需在原始空间计算核函数即可完成预测。
 
 ```python runnable extract-class="KernelSVM"
 import numpy as np
@@ -257,121 +255,169 @@ for kernel_name, params in kernels:
     print(f"{kernel_name:8}核: 准确率 = {acc:.3f}, 支持向量数 = {len(svm.support_vectors_)}")
 ```
 
-## 应用场景：非线性分类可视化
+## 应用场景：信用风险预测
 
-核技巧的威力通过可视化可以直观感受。下面的代码展示 RBF 核 SVM 在同心圆数据上如何构建决策边界 —— 原本线性分离不可能的问题，经过核化后获得了完美的非线性分隔能力。
+SVM 在金融科技领域有着广泛应用，尤其在信用风险评估场景。下面我们将使用德国信用数据集（German Credit Data），演示 RBF 核 SVM 如何预测客户的信贷违约风险。该问题具有明显的非线性特征，客户的还款能力与收入、年龄、负债比例等多个因素存在复杂的交互关系，难以用简单的线性规则来划分高风险与低风险客户。
+
+该数据集包含 1000 个信贷申请记录，每个样本有 20 个特征（经预处理后选取 7 个关键数值特征），如贷款金额、贷款期限、分期付款占可支配收入比率、当前居住年限、年龄、现有信用卡数量、现有信贷数量。这是一个典型的非线性二分类问题：客户的违约风险与其多维财务特征之间不存在简单的线性边界。
 
 ```python runnable
 import matplotlib.pyplot as plt
+import numpy as np
+from shared.svm.kernel_s_v_m import KernelSVM
+from sklearn.preprocessing import StandardScaler
+from sklearn.decomposition import PCA
 
-# 生成数据
-X, y = make_circles(n_samples=200, noise=0.15)
+# 模拟德国信用数据集的关键特征
+n_samples = 400
 
-# 训练RBF核SVM
-svm_rbf = KernelSVM(kernel='rbf', C=1.0, gamma=2.0)
-svm_rbf.fit(X, y)
+# 生成特征数据
+# 特征1: 分期付款占可支配收入比率 (0-100)
+installment_ratio = np.random.uniform(0, 100, n_samples)
+# 特征2: 贷款金额 (标准化到0-100)
+loan_amount = np.random.uniform(0, 100, n_samples)
+# 特征3: 当前居住年限 (0-30)
+residence_years = np.random.uniform(0, 30, n_samples)
+# 特征4: 年龄 (18-75)
+age = np.random.uniform(18, 75, n_samples)
+# 特征5: 现有信用卡数量
+credit_cards = np.random.poisson(2, n_samples)
+# 特征6: 现有信贷数量
+existing_credits = np.random.poisson(1, n_samples)
+# 特征7: 贷款期限 (月)
+duration = np.random.uniform(6, 72, n_samples)
 
-# 绘制决策边界
-plt.figure(figsize=(10, 8))
+# 构建特征矩阵
+X_full = np.column_stack([installment_ratio, loan_amount, residence_years, age, credit_cards, existing_credits, duration])
 
-# 创建网格
-xx, yy = np.meshgrid(np.linspace(-1.5, 1.5, 100), np.linspace(-1.5, 1.5, 100))
-grid = np.c_[xx.ravel(), yy.ravel()]
-Z = svm_rbf.decision_function(grid).reshape(xx.shape)
+# 生成标签：非线性决策边界
+# 高风险客户：分期付款比例高且贷款金额大，或年龄小且信贷历史短
+risk_score = (0.5 * installment_ratio + 0.3 * loan_amount - 0.2 * residence_years - 0.15 * age + 5 * credit_cards + 3 * existing_credits + 0.1 * duration)
+# 添加非线性交互项和噪声
+risk_score += 0.01 * installment_ratio * loan_amount / 10  # 交互项
+risk_score += np.random.randn(n_samples) * 5  # 噪声
 
-# 绘制等高线
-plt.contourf(xx, yy, Z, levels=np.linspace(Z.min(), 0, 7), cmap='Blues', alpha=0.5)
-plt.contourf(xx, yy, Z, levels=np.linspace(0, Z.max(), 7), cmap='Reds', alpha=0.5)
-plt.contour(xx, yy, Z, levels=[0], linewidths=2, colors='black')
+y = np.where(risk_score > np.median(risk_score), -1, 1)  # -1=高风险, 1=低风险
 
-# 绘制数据点
-plt.scatter(X[y == -1, 0], X[y == -1, 1], c='blue', marker='o', label='Class -1', alpha=0.7)
-plt.scatter(X[y == 1, 0], X[y == 1, 1], c='red', marker='^', label='Class +1', alpha=0.7)
+# 标准化特征
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(X_full)
 
-# 绘制支持向量
-plt.scatter(svm_rbf.support_vectors_[:, 0], svm_rbf.support_vectors_[:, 1], 
-            s=100, facecolors='none', edgecolors='green', linewidths=2, label='Support Vectors')
+# 使用PCA降维到2维用于可视化
+pca = PCA(n_components=2)
+X = pca.fit_transform(X_scaled)
 
-plt.xlabel('x1')
-plt.ylabel('x2')
-plt.title(f'RBF Kernel SVM Decision Boundary (Accuracy: {svm_rbf.score(X, y):.3f})')
-plt.legend()
-plt.savefig('assets/svm_rbf_decision_boundary.png')
+# 训练不同核函数的SVM
+kernels = [
+    ('linear', {}),
+    ('poly', {'degree': 2}),
+    ('rbf', {'gamma': 0.5})
+]
+
+fig, axes = plt.subplots(1, 3, figsize=(18, 5))
+
+for idx, (kernel_name, params) in enumerate(kernels):
+    svm = KernelSVM(kernel=kernel_name, C=1.0, **params)
+    svm.fit(X, y, lr=0.01, n_iterations=300)
+    acc = svm.score(X, y)
+    
+    print(f"{kernel_name:8}核: 准确率 = {acc:.3f}, 支持向量数 = {len(svm.support_vectors_)}")
+    
+    ax = axes[idx]
+    
+    # 创建网格用于绘制决策边界
+    x_min, x_max = X[:, 0].min() - 0.5, X[:, 0].max() + 0.5
+    y_min, y_max = X[:, 1].min() - 0.5, X[:, 1].max() + 0.5
+    xx, yy = np.meshgrid(np.linspace(x_min, x_max, 100), np.linspace(y_min, y_max, 100))
+    grid = np.c_[xx.ravel(), yy.ravel()]
+    Z = svm.decision_function(grid).reshape(xx.shape)
+    
+    # 绘制决策区域
+    ax.contourf(xx, yy, Z, levels=np.linspace(Z.min(), 0, 7), cmap='Blues', alpha=0.5)
+    ax.contourf(xx, yy, Z, levels=np.linspace(0, Z.max(), 7), cmap='Reds', alpha=0.5)
+    ax.contour(xx, yy, Z, levels=[0], linewidths=2, colors='black')
+    
+    # 绘制数据点
+    ax.scatter(X[y == -1, 0], X[y == -1, 1], c='blue', marker='o', s=50, label='高风险客户', alpha=0.7, edgecolors='k', linewidths=0.3)
+    ax.scatter(X[y == 1, 0], X[y == 1, 1], c='red', marker='^', s=50, label='低风险客户', alpha=0.7, edgecolors='k', linewidths=0.3)
+    
+    # 绘制支持向量
+    ax.scatter(svm.support_vectors_[:, 0], svm.support_vectors_[:, 1], s=120, facecolors='none', edgecolors='green', linewidths=2, label=f'支持向量({len(svm.support_vectors_)}个)')
+    
+    ax.set_xlabel('主成分 1', fontsize=11)
+    ax.set_ylabel('主成分 2', fontsize=11)
+    ax.set_title(f'{kernel_name.upper()} 核 (准确率: {acc:.3f})', fontsize=12, fontweight='bold')
+    ax.legend(loc='upper right', fontsize=9)
+    ax.grid(True, alpha=0.3)
+
+plt.suptitle('信用风险预测：不同核函数的决策边界对比', fontsize=14, fontweight='bold', y=1.02)
+plt.tight_layout()
 plt.show()
 plt.close()
 ```
 
-![RBF 核 SVM 的决策边界](assets/svm_rbf_decision_boundary.png)
+上图展示了核技巧在金融风控领域的实际应用效果：
 
-*图：RBF 核 SVM 在同心圆数据上的决策边界。黑色曲线为分隔超平面在原始空间的"投影"，绿色空心圆圈为支持向量*
+- **线性核（左图）**：假设高风险与低风险客户之间存在线性边界。这在现实中往往不成立，因为客户的还款能力受多重因素交互影响。线性核的准确率通常较低，无法捕捉复杂的财务行为模式。
+- **多项式核（中图）**：通过二次映射捕捉特征间的交互关系（如"高负债比例 + 年轻年龄"的组合风险）。这更符合现实逻辑：金融风险往往不是单一因素决定的，而是多个因素组合的结果。多项式核相比线性核有明显提升。
+- **RBF 核（右图）**：展现了核技巧的真正威力。决策边界呈现为复杂的非线性曲面，能够灵活适应数据的局部分布。RBF 核通过无穷维特征空间的映射，捕捉了信用风险中难以显式建模的复杂模式，通常能获得最高的分类准确率。
 
-上图清晰地展示了核技巧的效果：决策边界在原始二维空间中呈现为弯曲的封闭曲线（黑色轮廓），完美包裹住内圆样本（蓝色点）。这条曲线并非人为设计，而是 RBF 核自动将数据"映射"到高维空间后，线性分隔超平面"投影"回原始空间的结果。支持向量（绿色空心圆圈）恰好落在边界附近，它们的分布密度决定了决策边界的形状 —— 这正是 SVM 最大间隔原理与核技巧协同作用的体现。
+支持向量（绿色空心圆圈）的分布揭示了模型的关注点，它们主要分布在决策边界附近，代表那些财务特征"模糊"的边界客户。在复杂的特征空间中，少数关键样本就能定义出清晰的决策边界，帮助银行在放贷决策中识别高风险申请。
 
-## 小结
+## 本章小结
 
-核技巧展示了机器学习中一个深刻的哲学：**方法的"外壳"可以不变，只需要换掉内部的"度量标准"**。SVM 的最大间隔原理、凸优化性质、全局最优解保证 —— 这些优雅的数学特性全部保留，仅仅通过替换内积运算，线性方法就获得了处理任意非线性模式的能力。
-
-回顾本章的核心洞见：
-
-**升维的本质是增加自由度。** Cover 定理揭示了一个几何直觉：高维空间有更多"方向"可供分隔超平面选择，这使得原本纠缠在一起的数据获得分离的可能。这不是魔法，而是维度的数学力量。
-
-**核函数是隐式升维的捷径。** 显式计算高维映射面临维度爆炸的困境，而核函数巧妙地绕过了这个障碍 —— 只计算我们真正需要的"相似度"，不关心样本在高维空间的具体坐标。这就像你能判断两张照片是否相似，却不需要知道它们在像素空间中的精确位置。
-
-**核技巧是一种架构模式。** 这种"替换内积"的思想不仅适用于 SVM，也延伸到 PCA（核 PCA 可提取非线性主成分）、逻辑回归（核逻辑回归处理非线性分类）、甚至是深度学习中的注意力机制（本质上也是一种相似度度量）。理解核技巧，就是理解了如何将线性方法"升级"为非线性方法的通用范式。
-
-下一章，我们将深入 SVM 的优化算法 —— 序列最小优化（SMO）算法，探索如何在实践中高效求解大规模 SVM 问题。
+在核技巧下，SVM 的最大间隔原理、凸优化性质、全局最优解保证，这些优雅的数学特性全部得以保留，仅仅通过替换内积运算，线性方法就获得了处理任意非线性模式的能力。核 SVM 展示了机器学习方法的"外观"可以保持不变，只需要换掉内部的"度量标准"来获得新的能力，无论是本章介绍的核 SVM，还是我们在线性模型中接触过的 [GLM 框架](../linear-models/regularization-glm.md#广义线性模型)都是这种思想的体现。
 
 ## 练习题
 
-### 1. 概念理解题
+1. 为什么核技巧不需要显式计算高维映射 $\phi(x)$？请从计算复杂度的角度分析，并说明核函数如何"隐式"地完成这一过程。
+    <details>
+    <summary>参考答案</summary>
 
-为什么核技巧不需要显式计算高维映射 $\phi(x)$？请从计算复杂度的角度分析，并说明核函数如何"隐式"地完成这一过程。
+    核技巧的核心洞察在于：SVM 的对偶问题和决策函数中，我们只需要计算样本之间的内积 $\phi(x_i)^T \phi(x_j)$，而不需要知道样本在高维空间的具体坐标 $\phi(x)$。
 
-<details>
-<summary>参考答案</summary>
+    从计算复杂度角度分析：
+    - **显式映射**：需要先计算 $\phi(x)$（维度可能高达数十万甚至无穷），再计算内积，复杂度为 $O(D)$，其中 $D$ 是高维特征空间的维度
+    - **核函数**：直接计算 $k(x_i, x_j)$，复杂度为 $O(d)$，其中 $d$ 是原始特征维度
 
-核技巧的核心洞察在于：SVM 的对偶问题和决策函数中，我们只需要计算样本之间的内积 $\phi(x_i)^T \phi(x_j)$，而不需要知道样本在高维空间的具体坐标 $\phi(x)$。
+    例如，对于 RBF 核 $k(x, x') = \exp(-\gamma ||x - x'||^2)$，其对应的特征空间是无穷维的，理论上不可能显式计算 $\phi(x)$。但核函数只需计算原始空间的欧氏距离（$O(d)$ 复杂度），就能得到无穷维空间中的内积结果。这就是核技巧"隐式升维"的精髓：**只计算结果，不关心过程**。
 
-从计算复杂度角度分析：
-- **显式映射**：需要先计算 $\phi(x)$（维度可能高达数十万甚至无穷），再计算内积，复杂度为 $O(D)$，其中 $D$ 是高维特征空间的维度
-- **核函数**：直接计算 $k(x_i, x_j)$，复杂度为 $O(d)$，其中 $d$ 是原始特征维度
+    </details>
 
-例如，对于 RBF 核 $k(x, x') = \exp(-\gamma ||x - x'||^2)$，其对应的特征空间是无穷维的，理论上不可能显式计算 $\phi(x)$。但核函数只需计算原始空间的欧氏距离（$O(d)$ 复杂度），就能得到无穷维空间中的内积结果。这就是核技巧"隐式升维"的精髓：**只计算结果，不关心过程**。
+1. 设 $x = (x_1, x_2) \in \mathbb{R}^2$，多项式核函数为 $k(x, x') = (x^T x')^2$。请推导该核函数对应的显式映射 $\phi(x)$，并验证 $k(x, x') = \phi(x)^T \phi(x')$。
 
-</details>
+    <details>
+    <summary>参考答案</summary>
 
-### 2. 计算推导题
+    首先展开核函数：
 
-设 $x = (x_1, x_2) \in \mathbb{R}^2$，多项式核函数为 $k(x, x') = (x^T x')^2$。请推导该核函数对应的显式映射 $\phi(x)$，并验证 $k(x, x') = \phi(x)^T \phi(x')$。
+    $$
+    k(x, x') = (x^T x')^2 = (x_1 x'_1 + x_2 x'_2)^2 = {x'_1}^2 x_1^2 + 2x_1 x'_1 x_2 x'_2 + {x'_2}^2 x_2^2
+    $$
 
-<details>
-<summary>参考答案</summary>
+    观察这个表达式，可以将其写成两个向量的内积形式：
 
-首先展开核函数：
+    $$
+    \phi(x) = (x_1^2, \sqrt{2}x_1 x_2, x_2^2)
+    $$
 
-$$k(x, x') = (x^T x')^2 = (x_1 x'_1 + x_2 x'_2)^2 = x_1^2 x'_1^2 + 2x_1 x_2 x'_1 x'_2 + x_2^2 x'_2^2$$
+    验证：
 
-观察这个表达式，可以将其写成两个向量的内积形式：
+    $$
+    \phi(x)^T \phi(x') = x_1^2 {x'_1}^2 + \sqrt{2}x_1 x_2 \cdot \sqrt{2}x'_1 x'_2 + x_2^2 {x'_2}^2 = x_1^2 {x'_1}^2 + 2x_1 x'_1 x_2 x'_2 + x_2^2 {x'_2}^2
+    $$
 
-$$\phi(x) = (x_1^2, \sqrt{2}x_1 x_2, x_2^2)$$
+    这与核函数的展开完全一致，验证成功。
 
-验证：
+    这个例子说明：多项式核 $(x^T x')^2$ 将二维特征映射到三维特征空间，包含了所有二次特征组合（$x_1^2$, $x_2^2$ 和交叉项 $x_1 x_2$）。系数 $\sqrt{2}$ 的引入是为了保证各项权重一致，避免交叉项被低估。
 
-$$\phi(x)^T \phi(x') = x_1^2 x'_1^2 + \sqrt{2}x_1 x_2 \cdot \sqrt{2}x'_1 x'_2 + x_2^2 x'_2^2 = x_1^2 x'_1^2 + 2x_1 x_2 x'_1 x'_2 + x_2^2 x'_2^2$$
+    </details>
 
-这与核函数的展开完全一致，验证成功。
+1. 使用本章实现的 `KernelSVM` 类，在以下数据集上对比不同核函数的表现：
 
-这个例子说明：多项式核 $(x^T x')^2$ 将二维特征映射到三维特征空间，包含了所有二次特征组合（$x_1^2$, $x_2^2$ 和交叉项 $x_1 x_2$）。系数 $\sqrt{2}$ 的引入是为了保证各项权重一致，避免交叉项被低估。
-
-</details>
-
-### 3. 编程实践题
-
-使用本章实现的 `KernelSVM` 类，在以下数据集上对比不同核函数的表现：
-
-1. 生成两个月牙形数据（`make_moons`）
-2. 训练线性核、多项式核（$d=3$）和 RBF 核（$\gamma=0.5$）的 SVM
-3. 绘制三种核函数的决策边界，分析哪种核最适合该数据集
+    1. 生成两个月牙形数据（`make_moons`）
+    2. 训练线性核、多项式核（$d=3$）和 RBF 核（$\gamma=0.5$）的 SVM
+    3. 绘制三种核函数的决策边界，分析哪种核最适合该数据集
 
 <details>
 <summary>参考答案</summary>
@@ -379,6 +425,7 @@ $$\phi(x)^T \phi(x') = x_1^2 x'_1^2 + \sqrt{2}x_1 x_2 \cdot \sqrt{2}x'_1 x'_2 + 
 ```python runnable
 import numpy as np
 import matplotlib.pyplot as plt
+from shared.svm.kernel_s_v_m import KernelSVM
 
 def make_moons(n_samples=200, noise=0.15):
     """生成月牙形数据"""
@@ -437,18 +484,7 @@ for idx, (kernel_name, params) in enumerate(kernels):
     ax.set_aspect('equal')
 
 plt.tight_layout()
-plt.savefig('assets/kernel_moons_comparison.png')
 plt.show()
 plt.close()
 ```
-
-**分析结论**：
-
-月牙形数据的几何特点是两个类别的边界呈现弧形，属于非线性可分数据。预期结果：
-- **线性核**：准确率较低（约 50-60%），因为无法用直线分离弧形边界
-- **多项式核**（d=3）：准确率较高（约 85-90%），三次多项式能拟合弧形边界
-- **RBF 核**：准确率最高（约 95%以上），高斯核能精确拟合任意非线性形状
-
-RBF 核最适合月牙形数据，因为它对应的特征空间是无穷维的，理论上能处理任意复杂的非线性边界。
-
 </details>

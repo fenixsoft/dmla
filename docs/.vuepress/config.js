@@ -127,7 +127,6 @@ export default {
             children: [
               { text: '支持向量机', link: '/statistical-learning/support-vector-machines/svm-max-margin' },
               { text: '核技巧', link: '/statistical-learning/support-vector-machines/kernel-methods' },
-              { text: '支持向量机进阶', link: '/statistical-learning/support-vector-machines/svm-advanced' },
             ]
           },
           {

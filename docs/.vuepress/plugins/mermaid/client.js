@@ -31,7 +31,19 @@ async function renderMermaid() {
         htmlLabels: true
       },
       themeVariables: {
-        fontSize: '12px'
+        fontSize: '14px',
+        // 节点样式 - 与 SVG 图片一致
+        primaryColor: '#eeeeee',
+        primaryBorderColor: '#999999',
+        primaryTextColor: '#333333',
+        // 节点边框宽度
+        nodeBorderWidth: '2px',
+        // 线条样式
+        lineColor: '#333333',
+        // 菱形节点样式
+        secondaryColor: '#eeeeee',
+        secondaryBorderColor: '#999999',
+        secondaryTextColor: '#333333'
       }
     })
     mermaidLoaded = true
@@ -96,7 +108,19 @@ export default defineClientConfig({
             htmlLabels: true
           },
           themeVariables: {
-            fontSize: '12px'
+            fontSize: '14px',
+            // 节点样式 - 与 SVG 图片一致
+            primaryColor: '#eeeeee',
+            primaryBorderColor: '#999999',
+            primaryTextColor: '#333333',
+            // 节点边框宽度
+            nodeBorderWidth: '2px',
+            // 线条样式
+            lineColor: '#333333',
+            // 菱形节点样式
+            secondaryColor: '#eeeeee',
+            secondaryBorderColor: '#999999',
+            secondaryTextColor: '#333333'
           }
         })
         mermaidLoaded = true

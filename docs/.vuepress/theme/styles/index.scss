@@ -158,6 +158,48 @@ body {
 // 标题间距由默认主题的 normalize.scss 控制，使用 --header-offset 变量
 
 .theme-default-content {
+  // Mermaid 图表样式 - 与 SVG 图片边框和底色一致
+  // 使用 !important 覆盖 mermaid 内联样式（mermaid 使用 ID 选择器生成内联样式）
+  .mermaid {
+    svg {
+      // 节点矩形、圆形、椭圆、多边形、路径样式
+      .node rect,
+      .node circle,
+      .node ellipse,
+      .node polygon,
+      .node path:not(.flowchart-link) {
+        fill: #eeeeee !important;
+        stroke: #999999 !important;
+        stroke-width: 2 !important;
+      }
+
+      // 连线样式
+      .flowchart-link,
+      .edgePath .path {
+        stroke: #333333 !important;
+        fill: none !important;
+      }
+
+      // 箭头样式
+      .marker {
+        fill: #333333 !important;
+        stroke: #333333 !important;
+      }
+
+      // 文字样式
+      .label text,
+      .node .label text,
+      text {
+        fill: #333333 !important;
+      }
+
+      // foreignObject 内的文字样式
+      foreignObject div,
+      .label span {
+        color: #333333 !important;
+      }
+    }
+  }
   // 优化后的 padding：减少两端空白和顶部空白
   padding: 0 !important;
 
