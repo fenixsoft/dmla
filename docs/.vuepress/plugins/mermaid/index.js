@@ -16,13 +16,22 @@ export default {
       const code = token.content.trim()
       const lang = token.info.trim().toLowerCase()
 
-      if (lang === 'mermaid') {
+      // 支持大小修饰符：mermaid small, mermaid compact, mermaid tiny
+      // small: zoom 0.85, compact: zoom 0.75, tiny: zoom 0.6
+      if (lang.startsWith('mermaid')) {
         // 转义 HTML 特殊字符，保留原始代码用于调试
         const escapedCode = code
           .replace(/&/g, '&amp;')
           .replace(/</g, '&lt;')
           .replace(/>/g, '&gt;')
-        return `<pre class="mermaid"><code>${escapedCode}</code></pre>`
+
+        // 解析大小修饰符，只接受 small, compact, tiny
+        const parts = lang.split(/\s+/)
+        const sizeModifier = parts[1]
+        const validSizes = ['small', 'compact', 'tiny']
+        const sizeClass = validSizes.includes(sizeModifier) ? `mermaid-${sizeModifier}` : ''
+
+        return `<pre class="mermaid ${sizeClass}"><code>${escapedCode}</code></pre>`
       }
 
       return defaultFence(tokens, idx, options, env, self)

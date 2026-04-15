@@ -28,22 +28,32 @@ async function renderMermaid() {
       securityLevel: 'loose',
       flowchart: {
         useMaxWidth: true,
-        htmlLabels: true
+        htmlLabels: true,
+        // 大幅减小节点间距和层级间距，使图表更紧凑
+        nodeSpacing: 20,
+        rankSpacing: 25,
+        // 使用贝塞尔曲线，连线更紧凑
+        curve: 'basis'
       },
       themeVariables: {
-        fontSize: '14px',
+        // 默认字体从 14px 减小到 11px，节点会更小
+        fontSize: '11px',
         // 节点样式 - 与 SVG 图片一致
         primaryColor: '#eeeeee',
         primaryBorderColor: '#999999',
         primaryTextColor: '#333333',
-        // 节点边框宽度
-        nodeBorderWidth: '2px',
+        // 节点边框宽度从 2px 减小到 1px
+        nodeBorderWidth: '1px',
         // 线条样式
         lineColor: '#333333',
+        // 线条宽度变细
+        edgeLineWidth: '1px',
         // 菱形节点样式
         secondaryColor: '#eeeeee',
         secondaryBorderColor: '#999999',
-        secondaryTextColor: '#333333'
+        secondaryTextColor: '#333333',
+        // 减小节点内部 padding
+        nodePadding: 8
       }
     })
     mermaidLoaded = true
@@ -61,11 +71,14 @@ async function renderMermaid() {
     const codeEl = el.querySelector('code')
     const code = codeEl ? codeEl.textContent : el.textContent
 
+    // 提取尺寸修饰符类名（mermaid-small, mermaid-compact, mermaid-tiny）
+    const sizeClasses = el.className.split(' ').filter(cls => cls.startsWith('mermaid-') && cls !== 'mermaid')
+
     if (code && code.trim()) {
       try {
-        // 创建新的 div 容器
+        // 创建新的 div 容器，保留尺寸修饰符
         const div = document.createElement('div')
-        div.className = 'mermaid'
+        div.className = 'mermaid ' + sizeClasses.join(' ')
         div.style.textAlign = 'center'
         div.textContent = code.trim()
 
@@ -78,11 +91,45 @@ async function renderMermaid() {
         // 渲染
         await mermaid.run({ nodes: [div] })
 
-        // 渲染后确保居中
+        // 渲染后确保居中，并根据缩放调整容器大小
         const svg = div.querySelector('svg')
         if (svg) {
           svg.style.display = 'inline-block'
           svg.style.margin = '0 auto'
+
+          // 如果有尺寸修饰符，调整容器大小以避免裁剪
+          const sizeClass = sizeClasses.find(cls => cls.startsWith('mermaid-'))
+          if (sizeClass) {
+            // 获取缩放比例
+            const scales = {
+              'mermaid-small': 0.85,
+              'mermaid-compact': 0.75,
+              'mermaid-tiny': 0.6
+            }
+            const scale = scales[sizeClass] || 1
+
+            // 获取 SVG 的原始尺寸
+            const viewBox = svg.getAttribute('viewBox')
+            if (viewBox) {
+              const parts = viewBox.split(' ')
+              const width = parseFloat(parts[2])
+              const height = parseFloat(parts[3])
+
+              // 设置容器宽高为缩放后的尺寸
+              div.style.width = `${width * scale}px`
+              div.style.height = `${height * scale}px`
+              div.style.overflow = 'hidden'
+              div.style.display = 'inline-block'
+              div.style.textAlign = 'left'
+
+              // SVG 使用 transform scale
+              svg.style.transform = `scale(${scale})`
+              svg.style.transformOrigin = 'top left'
+              // SVG 保持原始尺寸
+              svg.style.width = `${width}px`
+              svg.style.height = `${height}px`
+            }
+          }
         }
       } catch (err) {
         console.error('Mermaid render error:', err)
@@ -105,22 +152,32 @@ export default defineClientConfig({
           securityLevel: 'loose',
           flowchart: {
             useMaxWidth: true,
-            htmlLabels: true
+            htmlLabels: true,
+            // 大幅减小节点间距和层级间距，使图表更紧凑
+            nodeSpacing: 20,
+            rankSpacing: 25,
+            // 使用贝塞尔曲线，连线更紧凑
+            curve: 'basis'
           },
           themeVariables: {
-            fontSize: '14px',
+            // 默认字体从 14px 减小到 11px，节点会更小
+            fontSize: '11px',
             // 节点样式 - 与 SVG 图片一致
             primaryColor: '#eeeeee',
             primaryBorderColor: '#999999',
             primaryTextColor: '#333333',
-            // 节点边框宽度
-            nodeBorderWidth: '2px',
+            // 节点边框宽度从 2px 减小到 1px
+            nodeBorderWidth: '1px',
             // 线条样式
             lineColor: '#333333',
+            // 线条宽度变细
+            edgeLineWidth: '1px',
             // 菱形节点样式
             secondaryColor: '#eeeeee',
             secondaryBorderColor: '#999999',
-            secondaryTextColor: '#333333'
+            secondaryTextColor: '#333333',
+            // 减小节点内部 padding
+            nodePadding: 8
           }
         })
         mermaidLoaded = true

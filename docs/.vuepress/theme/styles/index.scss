@@ -161,6 +161,9 @@ body {
   // Mermaid 图表样式 - 与 SVG 图片边框和底色一致
   // 使用 !important 覆盖 mermaid 内联样式（mermaid 使用 ID 选择器生成内联样式）
   .mermaid {
+    text-align: center;
+    margin: 1rem 0;
+
     svg {
       // 节点矩形、圆形、椭圆、多边形、路径样式
       .node rect,
@@ -170,7 +173,7 @@ body {
       .node path:not(.flowchart-link) {
         fill: #eeeeee !important;
         stroke: #999999 !important;
-        stroke-width: 2 !important;
+        stroke-width: 1 !important;
       }
 
       // 连线样式
@@ -178,6 +181,7 @@ body {
       .edgePath .path {
         stroke: #333333 !important;
         fill: none !important;
+        stroke-width: 1 !important;
       }
 
       // 箭头样式
@@ -199,6 +203,16 @@ body {
         color: #333333 !important;
       }
     }
+  }
+
+  // Mermaid 图表尺寸修饰符 - 容器居中显示
+  // 使用方式：```mermaid small、```mermaid compact、```mermaid tiny
+  .mermaid-small,
+  .mermaid-compact,
+  .mermaid-tiny {
+    display: block !important;
+    margin: 1rem auto !important;
+    text-align: center !important;
   }
   // 优化后的 padding：减少两端空白和顶部空白
   padding: 0 !important;
