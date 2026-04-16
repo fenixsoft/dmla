@@ -1,4 +1,5 @@
 # 无监督学习模块
 # 包含聚类、降维等实现
 
-__all__ = []
+from .k_means import KMeans
+__all__ = [ 'KMeans']

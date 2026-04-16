@@ -18,6 +18,12 @@ import time
 import traceback
 from typing import Optional
 
+# 配置 matplotlib 中文字体支持（在导入 matplotlib 之前）
+import matplotlib
+matplotlib.rcParams['font.sans-serif'] = ['WenQuanYi Micro Hei', 'DejaVu Sans']
+matplotlib.rcParams['font.monospace'] = ['WenQuanYi Micro Hei', 'DejaVu Sans Mono']
+matplotlib.rcParams['axes.unicode_minus'] = False
+
 # 强制重建 matplotlib 字体缓存，确保中文字体正确识别
 import matplotlib.font_manager as fm
 fm._load_fontmanager(try_read_cache=False)

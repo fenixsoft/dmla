@@ -315,22 +315,10 @@ plt.close()
 
    ```mermaid compact
    graph TD
-       %% 定义节点样式
-       classDef weather fill:#FFE4B5,stroke:#333,stroke-width:2px
-       classDef forecast fill:#E6E6FA,stroke:#333,stroke-width:2px
-       classDef umbrella fill:#98FB98,stroke:#333,stroke-width:2px
-       classDef mood fill:#87CEEB,stroke:#333,stroke-width:2px
-
-       %% 节点定义
-       W[天气]:::weather
-       F[预报]:::forecast
-       U[带伞]:::umbrella
-       M[心情]:::mood
-
        %% 边定义
-       W --> U
-       F --> U
-       W --> M
+       W[天气] --> U[带伞]
+       F[预报] --> U[带伞]
+       W[天气] --> M[心情]
    ```
 
    - 当已知"天气 = 雨天"时，"心情"与"预报"是否条件独立？为什么？

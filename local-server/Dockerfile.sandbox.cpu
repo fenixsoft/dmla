@@ -42,10 +42,10 @@ RUN pip install --no-cache-dir \
 # 复制 Kernel 执行器
 COPY local-server/src/kernel_runner.py /workspace/kernel_runner.py
 
-# 配置 matplotlib 中文字体支持
-RUN mkdir -p ~/.config/matplotlib && \
-    printf "font.family: sans-serif\nfont.sans-serif: WenQuanYi Micro Hei, Noto Sans CJK SC, DejaVu Sans\naxes.unicode_minus: False\n" > ~/.config/matplotlib/matplotlibrc && \
-    rm -rf ~/.cache/matplotlib
+# 配置 matplotlib 中文字体支持（包括 sans-serif 和 monospace）
+RUN mkdir -p /root/.config/matplotlib && \
+    printf "font.family: sans-serif\nfont.sans-serif: WenQuanYi Micro Hei, DejaVu Sans\nfont.monospace: WenQuanYi Micro Hei, DejaVu Sans Mono\naxes.unicode_minus: False\n" > /root/.config/matplotlib/matplotlibrc && \
+    rm -rf /root/.cache/matplotlib
 
 # 设置默认命令
 CMD ["python3"]

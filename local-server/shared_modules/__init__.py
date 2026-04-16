@@ -1,3 +1,6 @@
+from .tree.ada_boost import AdaBoost
+from .tree.random_forest_classifier import RandomForestClassifier
+from .unsupervised.k_means import KMeans
 from .tree.decision_tree_classifier import DecisionTreeClassifier
 from .tree.decision_tree_classifier import DecisionTreeClassifier
 from .svm.kernel_s_v_m import KernelSVM

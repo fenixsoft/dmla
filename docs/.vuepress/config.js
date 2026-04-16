@@ -135,7 +135,7 @@ export default {
             children: [
               { text: '决策树', link: '/statistical-learning/decision-tree-ensemble/decision-tree' },
               { text: '随机森林', link: '/statistical-learning/decision-tree-ensemble/random-forest' },
-              { text: '提升方法（Boosting）', link: '/statistical-learning/decision-tree-ensemble/boosting' },
+              { text: '提升方法', link: '/statistical-learning/decision-tree-ensemble/boosting' },
             ]
           },
           {
@@ -144,7 +144,6 @@ export default {
             children: [
               { text: '聚类', link: '/statistical-learning/unsupervised-learning/clustering' },
               { text: '降维', link: '/statistical-learning/unsupervised-learning/dimensionality-reduction' },
-              { text: '进阶', link: '/statistical-learning/unsupervised-learning/unsupervised-advanced' },
             ]
           },
         ]
