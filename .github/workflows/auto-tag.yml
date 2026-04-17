@@ -11,6 +11,10 @@ on:
       - 'local-server/shared_modules/**'
       - 'local-server/src/kernel_runner.py'
 
+# 权限配置：需要 contents: write 才能推送 Tag
+permissions:
+  contents: write
+
 # 并发控制：防止短时间内多次触发
 concurrency:
   group: auto-tag
