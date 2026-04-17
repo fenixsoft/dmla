@@ -5,7 +5,8 @@
   "type": "module",
   "main": "src/index.js",
   "bin": {
-    "dmla-install": "./bin/dmla-install.js"
+    "dmla-install": "./bin/dmla-install.js",
+    "install": "./bin/dmla-install.js"
   },
   "scripts": {
     "start": "node src/index.js",
