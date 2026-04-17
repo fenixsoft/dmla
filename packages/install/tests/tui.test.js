@@ -2,6 +2,13 @@
  * TUI 模块单元测试
  */
 import { describe, it, expect, beforeAll } from '@jest/globals'
+import { fileURLToPath } from 'url'
+import path from 'path'
+import fs from 'fs'
+
+// ESM 中获取 __dirname
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
 
 describe('TUI Module', () => {
   beforeAll(() => {
@@ -9,8 +16,6 @@ describe('TUI Module', () => {
   })
 
   it('should have correct package.json', async () => {
-    const fs = await import('fs')
-    const path = await import('path')
     const pkgPath = path.resolve(__dirname, '../package.json')
     const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'))
 
