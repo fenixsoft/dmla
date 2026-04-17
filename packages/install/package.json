@@ -1,0 +1,47 @@
+{
+  "name": "@dmla/install",
+  "version": "0.0.0",
+  "description": "DMLA 沙箱环境 TUI 安装向导",
+  "type": "module",
+  "main": "src/index.js",
+  "bin": {
+    "dmla-install": "./bin/dmla-install.js"
+  },
+  "scripts": {
+    "start": "node src/index.js",
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js"
+  },
+  "dependencies": {
+    "enquirer": "^2.4.1",
+    "chalk": "^5.3.0",
+    "ora": "^8.0.1",
+    "cli-progress": "^3.12.0",
+    "dockerode": "^4.0.2",
+    "execa": "^9.5.2"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "transform": {},
+    "moduleFileExtensions": ["js", "mjs"],
+    "testMatch": ["**/tests/**/*.test.js"]
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": [
+    "dmla",
+    "sandbox",
+    "install",
+    "tui",
+    "docker"
+  ],
+  "author": "icyfenix",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/icyfenix/dmla"
+  }
+}

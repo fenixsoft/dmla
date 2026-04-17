@@ -96,10 +96,38 @@ npm run cdn:refresh
 npm run build:sandbox
 
 # 构建 CPU 版本（无 GPU 支持）
-docker build -t dmla-sandbox:latest . -f local-server/Dockerfile.sandbox --build-arg GPU=false
+npm run build:sandbox:cpu
 
 # 测试沙箱镜像
 docker run --rm dmla-sandbox:gpu python3 -c "print('Hello')"
+```
+
+### DMLA CLI（用户安装后使用）
+
+```bash
+# 启动服务
+dmla start                 # 默认端口 3001
+dmla start --port 8080     # 自定义端口
+dmla start --gpu           # GPU 模式
+
+# 停止服务
+dmla stop
+
+# 查看状态
+dmla status
+
+# 安装镜像
+dmla install               # 安装所有镜像
+dmla install --cpu         # 仅 CPU 版本
+dmla install --gpu         # 仅 GPU 版本
+dmla install --registry tcr  # 从 TCR 安装（国内加速）
+
+# 更新
+dmla update                # 更新 npm 包和镜像
+dmla update --registry tcr
+
+# 环境诊断
+dmla doctor
 ```
 
 ### 共享模块（可复用 Python 类）

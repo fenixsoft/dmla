@@ -3,6 +3,10 @@
   "version": "1.0.0",
   "description": "Design Machine Learning Applications - 设计机器学习应用系统",
   "type": "module",
+  "workspaces": [
+    "packages/*",
+    "local-server"
+  ],
   "scripts": {
     "dev": "vuepress dev docs",
     "build": "vuepress build docs",
@@ -10,7 +14,7 @@
     "server": "cd local-server && npm start",
     "extract:shared": "node scripts/extract-shared-modules.js",
     "build:sandbox": "npm run extract:shared && docker build -t dmla-sandbox:gpu . -f local-server/Dockerfile.sandbox",
-    "build:sandbox:cpu": "npm run extract:shared && docker build -t dmla-sandbox:latest . -f local-server/Dockerfile.sandbox.cpu",
+    "build:sandbox:cpu": "npm run extract:shared && docker build -t dmla-sandbox:cpu . -f local-server/Dockerfile.sandbox.cpu",
     "build:sandbox:all": "npm run build:sandbox && npm run build:sandbox:cpu",
     "cdn:refresh": "node scripts/cdn-refresh.js",
     "format:md": "node scripts/format-markdown.js",

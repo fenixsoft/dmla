@@ -1,6 +1,7 @@
 # ============================================
 # DMLA Python Sandbox Image (GPU Version)
 # 支持 CUDA 11.8 的 Python 执行环境
+# 镜像名称: dmla-sandbox:gpu
 # ============================================
 
 FROM nvidia/cuda:11.8-cudnn8-runtime-ubuntu22.04

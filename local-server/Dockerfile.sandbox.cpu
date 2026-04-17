@@ -1,6 +1,7 @@
 # ============================================
 # DMLA Python Sandbox Image (CPU Version)
 # 适用于无 GPU 环境的 Python 执行环境
+# 镜像名称: dmla-sandbox:cpu
 # ============================================
 
 FROM python:3.11-slim

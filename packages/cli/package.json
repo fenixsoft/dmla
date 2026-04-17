@@ -1,0 +1,47 @@
+{
+  "name": "@dmla/cli",
+  "version": "0.0.0",
+  "description": "DMLA 沙箱服务命令行工具",
+  "type": "module",
+  "main": "src/index.js",
+  "bin": {
+    "dmla": "./bin/dmla.js"
+  },
+  "scripts": {
+    "start": "node src/index.js",
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js"
+  },
+  "dependencies": {
+    "commander": "^12.1.0",
+    "chalk": "^5.3.0",
+    "enquirer": "^2.4.1",
+    "dockerode": "^4.0.2",
+    "express": "^4.21.2",
+    "cors": "^2.8.5"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "transform": {},
+    "moduleFileExtensions": ["js", "mjs"],
+    "testMatch": ["**/tests/**/*.test.js"]
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": [
+    "dmla",
+    "sandbox",
+    "python",
+    "machine-learning",
+    "cli"
+  ],
+  "author": "icyfenix",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/icyfenix/dmla"
+  }
+}

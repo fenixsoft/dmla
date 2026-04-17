@@ -1,0 +1,314 @@
+name: Publish DMLA Packages and Images
+
+on:
+  push:
+    tags:
+      - '[0-9]+.[0-9]+.[0-9]+-*'  # 匹配时间戳格式如 2026.4.17-1503
+  workflow_dispatch:
+    inputs:
+      skip_npm:
+        description: '跳过 npm 发布'
+        required: false
+        default: 'false'
+      skip_docker:
+        description: '跳过 Docker 镜像推送'
+        required: false
+        default: 'false'
+
+# 并发控制：同一版本只能有一个发布流程
+concurrency:
+  group: publish-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  # 镜像仓库配置
+  DOCKERHUB_NAMESPACE: icyfenix
+  TCR_NAMESPACE: ccr.ccs.tencentyun.com/icyfenix
+  IMAGE_NAME: dmla-sandbox
+
+jobs:
+  # ─────────────────────────────────────────────────────────────
+  # Job 1: 发布 npm 包
+  # ─────────────────────────────────────────────────────────────
+  publish-npm:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.inputs.skip_npm != 'true' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: |
+          cd packages/cli && npm test
+          cd ../install && npm test
+
+      - name: Get version from tag
+        id: version
+        run: |
+          # 从 Git Tag 获取版本号
+          if [[ "${{ github.ref_type }}" == "tag" ]]; then
+            VERSION="${{ github.ref_name }}"
+          else
+            # 手动触发时生成时间戳版本
+            VERSION="$(date +%Y.%-m.%-d-%H%M)"
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "📦 Version: $VERSION"
+
+      - name: Update package versions
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+
+          # 更新 packages/cli 版本
+          cd packages/cli
+          npm version "$VERSION" --no-git-tag-version --allow-same-version
+
+          # 更新 packages/install 版本
+          cd ../install
+          npm version "$VERSION" --no-git-tag-version --allow-same-version
+
+          echo "✅ Package versions updated to $VERSION"
+
+      - name: Build CLI package
+        run: |
+          cd packages/cli
+          npm pack
+
+      - name: Publish @dmla/cli to npm
+        run: |
+          cd packages/cli
+          npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish @dmla/install to npm
+        run: |
+          cd packages/install
+          npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Summary
+        run: |
+          echo "🎉 npm packages published successfully!"
+          echo "- @dmla/cli@${{ steps.version.outputs.version }}"
+          echo "- @dmla/install@${{ steps.version.outputs.version }}"
+
+  # ─────────────────────────────────────────────────────────────
+  # Job 2: 构建 Docker 镜像
+  # ─────────────────────────────────────────────────────────────
+  build-images:
+    runs-on: ubuntu-latest
+    needs: publish-npm
+    if: ${{ always() && github.event.inputs.skip_docker != 'true' && needs.publish-npm.result == 'success' }}
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    strategy:
+      matrix:
+        type: [cpu, gpu]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Get version from tag
+        id: version
+        run: |
+          if [[ "${{ github.ref_type }}" == "tag" ]]; then
+            VERSION="${{ github.ref_name }}"
+          else
+            VERSION="$(date +%Y.%-m.%-d-%H%M)"
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Extract shared modules
+        run: npm run extract:shared
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build ${{ matrix.type }} image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: local-server/Dockerfile.sandbox${{ matrix.type == 'cpu' && '.cpu' || '' }}
+          tags: |
+            ${{ env.IMAGE_NAME }}:${{ matrix.type }}
+            ${{ env.IMAGE_NAME }}:${{ steps.version.outputs.version }}-${{ matrix.type }}
+          outputs: type=docker,dest=/tmp/image-${{ matrix.type }}.tar
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Test image
+        run: |
+          docker load -i /tmp/image-${{ matrix.type }}.tar
+          docker run --rm ${{ env.IMAGE_NAME }}:${{ matrix.type }} python3 -c "print('Image OK')"
+
+      - name: Upload image artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: image-${{ matrix.type }}
+          path: /tmp/image-${{ matrix.type }}.tar
+          retention-days: 1
+
+  # ─────────────────────────────────────────────────────────────
+  # Job 3: 推送到 Docker Hub
+  # ─────────────────────────────────────────────────────────────
+  push-dockerhub:
+    runs-on: ubuntu-latest
+    needs: build-images
+    if: ${{ always() && github.event.inputs.skip_docker != 'true' && needs.build-images.result == 'success' }}
+    strategy:
+      matrix:
+        type: [cpu, gpu]
+    steps:
+      - name: Download image artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: image-${{ matrix.type }}
+          path: /tmp
+
+      - name: Load image
+        run: docker load -i /tmp/image-${{ matrix.type }}.tar
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Tag and push images
+        run: |
+          VERSION="${{ needs.build-images.outputs.version }}"
+
+          # Tag for Docker Hub
+          docker tag ${{ env.IMAGE_NAME }}:${{ matrix.type }} \
+            ${{ env.DOCKERHUB_NAMESPACE }}/${{ env.IMAGE_NAME }}:${{ matrix.type }}
+          docker tag ${{ env.IMAGE_NAME }}:${{ matrix.type }} \
+            ${{ env.DOCKERHUB_NAMESPACE }}/${{ env.IMAGE_NAME }}:${{ VERSION }}-${{ matrix.type }}
+
+          # Push stable tag
+          docker push ${{ env.DOCKERHUB_NAMESPACE }}/${{ env.IMAGE_NAME }}:${{ matrix.type }}
+
+          # Push version tag
+          docker push ${{ env.DOCKERHUB_NAMESPACE }}/${{ env.IMAGE_NAME }}:${{ VERSION }}-${{ matrix.type }}
+
+          echo "✅ Pushed to Docker Hub:"
+          echo "  - ${DOCKERHUB_NAMESPACE}/${IMAGE_NAME}:${{ matrix.type }}"
+          echo "  - ${DOCKERHUB_NAMESPACE}/${IMAGE_NAME}:${{ VERSION }}-${{ matrix.type }}"
+        env:
+          DOCKERHUB_NAMESPACE: icyfenix
+          IMAGE_NAME: dmla-sandbox
+
+  # ─────────────────────────────────────────────────────────────
+  # Job 4: 推送到腾讯云 TCR
+  # ─────────────────────────────────────────────────────────────
+  push-tcr:
+    runs-on: ubuntu-latest
+    needs: build-images
+    if: ${{ always() && github.event.inputs.skip_docker != 'true' && needs.build-images.result == 'success' }}
+    strategy:
+      matrix:
+        type: [cpu, gpu]
+    steps:
+      - name: Download image artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: image-${{ matrix.type }}
+          path: /tmp
+
+      - name: Load image
+        run: docker load -i /tmp/image-${{ matrix.type }}.tar
+
+      - name: Login to Tencent TCR
+        uses: docker/login-action@v3
+        with:
+          registry: ccr.ccs.tencentyun.com
+          username: ${{ secrets.TCR_USERNAME }}
+          password: ${{ secrets.TCR_PASSWORD }}
+
+      - name: Tag and push images to TCR
+        run: |
+          VERSION="${{ needs.build-images.outputs.version }}"
+          TCR_REGISTRY="ccr.ccs.tencentyun.com"
+          TCR_NS="icyfenix"
+          IMAGE_NAME="dmla-sandbox"
+
+          # Tag for TCR
+          docker tag ${IMAGE_NAME}:${{ matrix.type }} \
+            ${TCR_REGISTRY}/${TCR_NS}/${IMAGE_NAME}:${{ matrix.type }}
+          docker tag ${IMAGE_NAME}:${{ matrix.type }} \
+            ${TCR_REGISTRY}/${TCR_NS}/${IMAGE_NAME}:${{ VERSION }}-${{ matrix.type }}
+
+          # Push stable tag
+          docker push ${TCR_REGISTRY}/${TCR_NS}/${IMAGE_NAME}:${{ matrix.type }}
+
+          # Push version tag
+          docker push ${TCR_REGISTRY}/${TCR_NS}/${IMAGE_NAME}:${{ VERSION }}-${{ matrix.type }}
+
+          echo "✅ Pushed to TCR:"
+          echo "  - ${TCR_REGISTRY}/${TCR_NS}/${IMAGE_NAME}:${{ matrix.type }}"
+          echo "  - ${TCR_REGISTRY}/${TCR_NS}/${IMAGE_NAME}:${{ VERSION }}-${{ matrix.type }}"
+
+  # ─────────────────────────────────────────────────────────────
+  # Job 5: 发布完成总结
+  # ─────────────────────────────────────────────────────────────
+  summary:
+    runs-on: ubuntu-latest
+    needs: [publish-npm, push-dockerhub, push-tcr]
+    if: ${{ always() }}
+    steps:
+      - name: Summary
+        run: |
+          echo "## 🚀 DMLA 发布完成" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [[ "${{ github.ref_type }}" == "tag" ]]; then
+            VERSION="${{ github.ref_name }}"
+          else
+            VERSION="$(date +%Y.%-m.%-d-%H%M)"
+          fi
+
+          echo "### 版本: $VERSION" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          echo "#### npm 包" >> $GITHUB_STEP_SUMMARY
+          echo "- @dmla/cli@$VERSION" >> $GITHUB_STEP_SUMMARY
+          echo "- @dmla/install@$VERSION" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          echo "#### Docker 镜像" >> $GITHUB_STEP_SUMMARY
+          echo "**Docker Hub:**" >> $GITHUB_STEP_SUMMARY
+          echo "- icyfenix/dmla-sandbox:cpu" >> $GITHUB_STEP_SUMMARY
+          echo "- icyfenix/dmla-sandbox:gpu" >> $GITHUB_STEP_SUMMARY
+          echo "- icyfenix/dmla-sandbox:$VERSION-cpu" >> $GITHUB_STEP_SUMMARY
+          echo "- icyfenix/dmla-sandbox:$VERSION-gpu" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**腾讯云 TCR:**" >> $GITHUB_STEP_SUMMARY
+          echo "- ccr.ccs.tencentyun.com/icyfenix/dmla-sandbox:cpu" >> $GITHUB_STEP_SUMMARY
+          echo "- ccr.ccs.tencentyun.com/icyfenix/dmla-sandbox:gpu" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          echo "### 安装命令" >> $GITHUB_STEP_SUMMARY
+          echo '```bash' >> $GITHUB_STEP_SUMMARY
+          echo '# 一键安装' >> $GITHUB_STEP_SUMMARY
+          echo 'curl -fsSL https://ai.icyfenix.cn/install.sh | sh' >> $GITHUB_STEP_SUMMARY
+          echo '' >> $GITHUB_STEP_SUMMARY
+          echo '# 或使用 npx' >> $GITHUB_STEP_SUMMARY
+          echo 'npx @dmla/install' >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
