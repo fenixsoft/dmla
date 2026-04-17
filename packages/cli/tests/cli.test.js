@@ -15,7 +15,7 @@ describe('CLI Module', () => {
     const pkgPath = path.resolve(__dirname, '../package.json')
     const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'))
 
-    expect(pkg.name).toBe('@dmla/cli')
+    expect(pkg.name).toBe('@icyfenix-dmla/cli')
     expect(pkg.bin).toBeDefined()
     expect(pkg.bin.dmla).toBe('./bin/dmla.js')
   })

@@ -1,5 +1,5 @@
 {
-  "name": "@dmla/install",
+  "name": "@icyfenix-dmla/install",
   "version": "0.0.0",
   "description": "DMLA 沙箱环境 TUI 安装向导",
   "type": "module",

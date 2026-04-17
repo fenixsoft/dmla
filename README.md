@@ -16,7 +16,7 @@ curl -fsSL https://ai.icyfenix.cn/install.sh | sh
 2. 安装 Node.js 18+：https://nodejs.org/
 3. 安装 CLI：
    ```bash
-   npm install -g @dmla/cli
+   npm install -g @icyfenix-dmla/cli
    ```
 
 4. 安装镜像：

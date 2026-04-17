@@ -14,7 +14,7 @@ describe('TUI Module', () => {
     const pkgPath = path.resolve(__dirname, '../package.json')
     const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'))
 
-    expect(pkg.name).toBe('@dmla/install')
+    expect(pkg.name).toBe('@icyfenix-dmla/install')
     expect(pkg.dependencies.enquirer).toBeDefined()
   })
 

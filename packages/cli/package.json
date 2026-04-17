@@ -1,5 +1,5 @@
 {
-  "name": "@dmla/cli",
+  "name": "@icyfenix-dmla/cli",
   "version": "0.0.0",
   "description": "DMLA 沙箱服务命令行工具",
   "type": "module",

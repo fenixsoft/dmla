@@ -156,7 +156,7 @@ export async function startServer(port, useGpu = false) {
 
     if (!actualServerPath) {
       console.log(chalk.red('❌ 找不到服务入口文件'))
-      console.log(chalk.yellow('💡 提示: 确保正确安装了 @dmla/cli'))
+      console.log(chalk.yellow('💡 提示: 确保正确安装了 @icyfenix-dmla/cli'))
       return
     }
 
@@ -230,7 +230,7 @@ export async function getStatus() {
   try {
     const pkgPath = path.resolve(__dirname, '../package.json')
     const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'))
-    console.log(chalk.gray(`   @dmla/cli: ${pkg.version}`))
+    console.log(chalk.gray(`   @icyfenix-dmla/cli: ${pkg.version}`))
   } catch {
     console.log(chalk.gray('   版本信息不可用'))
   }

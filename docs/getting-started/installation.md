@@ -24,7 +24,7 @@ curl -fsSL https://ai.icyfenix.cn/install.sh | sh
 如果你已安装 Node.js，可以直接运行安装向导：
 
 ```bash
-npx @dmla/install
+npx @icyfenix-dmla/install
 ```
 
 安装向导提供：
@@ -38,7 +38,7 @@ npx @dmla/install
 ### 1. 安装 CLI 工具
 
 ```bash
-npm install -g @dmla/cli
+npm install -g @icyfenix-dmla/cli
 ```
 
 ### 2. 安装 Docker 镜像

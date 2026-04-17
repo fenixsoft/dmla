@@ -9,21 +9,21 @@ import http from 'http'
  * 安装 npm 包
  */
 export async function installNpmPackage() {
-  console.log(chalk.gray('执行 npm install -g @dmla/cli...'))
+  console.log(chalk.gray('执行 npm install -g @icyfenix-dmla/cli...'))
 
   try {
-    execSync('npm install -g @dmla/cli', { stdio: 'inherit' })
+    execSync('npm install -g @icyfenix-dmla/cli', { stdio: 'inherit' })
     console.log(chalk.green('✅ npm 包安装完成'))
   } catch (error) {
     console.log(chalk.yellow('⚠️ npm 包安装失败'))
-    console.log(chalk.yellow('💡 请手动执行: npm install -g @dmla/cli'))
+    console.log(chalk.yellow('💡 请手动执行: npm install -g @icyfenix-dmla/cli'))
   }
 
   // 验证命令可用
   console.log(chalk.gray('验证 dmla 命令...'))
   try {
     const version = execSync('dmla --version', { encoding: 'utf8' }).trim()
-    console.log(chalk.green(`✅ @dmla/cli ${version} 已安装`))
+    console.log(chalk.green(`✅ @icyfenix-dmla/cli ${version} 已安装`))
   } catch {
     console.log(chalk.yellow('⚠️ dmla 命令暂不可用，可能需要重新打开终端'))
   }

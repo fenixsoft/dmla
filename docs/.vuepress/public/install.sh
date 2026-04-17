@@ -104,9 +104,9 @@ fi
 echo "${BOLD}📦 启动安装向导...${NC}"
 echo ""
 
-# 使用 npx 运行 @dmla/install
+# 使用 npx 运行 @icyfenix-dmla/install
 # --yes 参数自动接受 npx 的安装确认
-npx --yes @dmla/install
+npx --yes @icyfenix-dmla/install
 
 # ─────────────────────────────────────────────────────────────
 # 完成

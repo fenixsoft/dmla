@@ -114,8 +114,8 @@ export async function updateAll(registry = 'dockerhub') {
   // 更新 npm 包
   console.log(chalk.bold('📦 更新 npm 包'))
   try {
-    console.log(chalk.gray('   执行 npm update -g @dmla/cli...'))
-    execSync('npm update -g @dmla/cli', { stdio: 'inherit' })
+    console.log(chalk.gray('   执行 npm update -g @icyfenix-dmla/cli...'))
+    execSync('npm update -g @icyfenix-dmla/cli', { stdio: 'inherit' })
     console.log(chalk.green('✅ npm 包已更新'))
   } catch (error) {
     console.log(chalk.yellow('⚠️ npm 包更新失败或已是最新版本'))

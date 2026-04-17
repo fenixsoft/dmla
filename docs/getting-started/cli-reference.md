@@ -1,11 +1,11 @@
 # CLI 命令参考
 
-`@dmla/cli` 提供完整的沙箱服务管理命令。
+`@icyfenix-dmla/cli` 提供完整的沙箱服务管理命令。
 
 ## 安装 CLI
 
 ```bash
-npm install -g @dmla/cli
+npm install -g @icyfenix-dmla/cli
 ```
 
 安装后，`dmla` 命令可在终端直接调用。

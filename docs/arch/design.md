@@ -68,7 +68,7 @@ dmla/
 │   └── statistical-learning/    # 机器学习教程
 │
 ├── packages/                    # npm 包（monorepo）
-│   ├── cli/                     # @dmla/cli - 命令行工具
+│   ├── cli/                     # @icyfenix-dmla/cli - 命令行工具
 │   │   ├── bin/dmla.js          # CLI 入口
 │   │   └ src/
 │   │    ├─ index.js             # 命令解析
@@ -76,7 +76,7 @@ dmla/
 │   │   └ tests/                 # 单元测试
 │   │   └ package.json
 │   │
-│   └── install/                 # @dmla/install - TUI 安装向导
+│   └── install/                 # @icyfenix-dmla/install - TUI 安装向导
 │       ├── bin/dmla-install.js
 │       ├── src/
 │       │  ├─ index.js           # TUI 入口
@@ -145,8 +145,8 @@ dmla/
 │  │  publish.yml             │                                   │
 │  │                                                          │   │
 │  │  Job: publish-npm        │                                   │
-│  │    ├─ @dmla/cli          │                                   │
-│  │    └─ @dmla/install      │                                   │
+│  │    ├─ @icyfenix-dmla/cli          │                                   │
+│  │    └─ @icyfenix-dmla/install      │                                   │
 │  │                                                          │   │
 │  │  Job: build-images       │                                   │
 │  │    ├─ CPU 镜像           │                                   │
@@ -187,7 +187,7 @@ curl -fsSL https://ai.icyfenix.cn/install.sh | sh
 1. 检测 Docker 环境
 2. 检测 Node.js 环境
 3. 检测 GPU（可选）
-4. 调用 `npx @dmla/install`
+4. 调用 `npx @icyfenix-dmla/install`
 
 ### TUI 安装向导流程
 
@@ -221,7 +221,7 @@ curl -fsSL https://ai.icyfenix.cn/install.sh | sh
 │     └─ docker tag 重命名                                        │
 │                                                                 │
 │  6. 安装 npm 包                                                  │
-│     └─ npm install -g @dmla/cli                                 │
+│     └─ npm install -g @icyfenix-dmla/cli                         │
 │                                                                 │
 │  7. 验证安装                                                     │
 │     ├─ 启动服务                                                 │

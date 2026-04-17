@@ -85,14 +85,14 @@ jobs:
           cd packages/cli
           npm pack
 
-      - name: Publish @dmla/cli to npm
+      - name: Publish @icyfenix-dmla/cli to npm
         run: |
           cd packages/cli
           npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-      - name: Publish @dmla/install to npm
+      - name: Publish @icyfenix-dmla/install to npm
         run: |
           cd packages/install
           npm publish --access public
@@ -102,8 +102,8 @@ jobs:
       - name: Summary
         run: |
           echo "🎉 npm packages published successfully!"
-          echo "- @dmla/cli@${{ steps.version.outputs.version }}"
-          echo "- @dmla/install@${{ steps.version.outputs.version }}"
+          echo "- @icyfenix-dmla/cli@${{ steps.version.outputs.version }}"
+          echo "- @icyfenix-dmla/install@${{ steps.version.outputs.version }}"
 
   # ─────────────────────────────────────────────────────────────
   # Job 2: 构建 Docker 镜像
@@ -288,8 +288,8 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
 
           echo "#### npm 包" >> $GITHUB_STEP_SUMMARY
-          echo "- @dmla/cli@$VERSION" >> $GITHUB_STEP_SUMMARY
-          echo "- @dmla/install@$VERSION" >> $GITHUB_STEP_SUMMARY
+          echo "- @icyfenix-dmla/cli@$VERSION" >> $GITHUB_STEP_SUMMARY
+          echo "- @icyfenix-dmla/install@$VERSION" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
 
           echo "#### Docker 镜像" >> $GITHUB_STEP_SUMMARY
@@ -310,5 +310,5 @@ jobs:
           echo 'curl -fsSL https://ai.icyfenix.cn/install.sh | sh' >> $GITHUB_STEP_SUMMARY
           echo '' >> $GITHUB_STEP_SUMMARY
           echo '# 或使用 npx' >> $GITHUB_STEP_SUMMARY
-          echo 'npx @dmla/install' >> $GITHUB_STEP_SUMMARY
+          echo 'npx @icyfenix-dmla/install' >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
