@@ -63,7 +63,7 @@ npm run dev
 #### 本地模式（前端 + 沙箱服务）
 ```bash
 # 首次运行需构建 Docker 沙箱镜像
-npm run build:sandbox
+npm run build:sandbox:gpu
 
 # 启动完整本地服务（VuePress + API 服务器）
 npm run local
@@ -93,7 +93,7 @@ npm run cdn:refresh
 
 ```bash
 # 构建 GPU 版本沙箱镜像
-npm run build:sandbox
+npm run build:sandbox:gpu
 
 # 构建 CPU 版本（无 GPU 支持）
 npm run build:sandbox:cpu
@@ -139,7 +139,7 @@ dmla doctor
 npm run extract:shared
 
 # 构建镜像时自动执行提取
-npm run build:sandbox
+npm run build:sandbox:gpu
 ```
 
 **使用方式**：

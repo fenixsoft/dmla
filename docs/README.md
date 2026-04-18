@@ -29,24 +29,55 @@ actions:
   - text: 开始阅读
     link: /contents.html
     type: primary
-  - text: 部署沙箱
-    link: /boards.html
+  - text: 构建沙箱
+    link: /sandbox.html
     type: secondary
-features:
-  - title: 🧑‍💻 开发者与智能
-    details: 以开发者向人工智能转型的视角撰写，成体系的机器学习文章集
-  - title: 🏅 实践驱动
-    details: 由案例和代码驱动，通过动手实践理解人工智能的原理
-  - title: 💾 代码沙箱
-    details: 部署沙箱 Docker 后，文章中的 Python 代码支持在线修改与执行，支持 GPU 加速
+# features:
+#   - title: 🧑‍💻 开发者与智能
+#     details: 以开发者向人工智能转型的视角撰写，成体系的机器学习文章集
+#   - title: 🏅 实践驱动
+#     details: 由案例和代码驱动，通过动手实践理解人工智能的原理
+#   - title: 💾 代码沙箱
+#     details: 部署沙箱 Docker 后，文章中的 Python 代码支持在线修改与执行，支持 GPU 加速
 footer: CC-BY-4.0 Licensed | Copyright © 2026
 ---
 
 <HomeHero />
 
+## 文档简介
+TBD
+
 ## 快速开始
 
-TBD
+- **在线阅读**：本文档在线阅读地址为 [https://ai.icyfenix.cn](https://ai.icyfenix.cn) 。
+网站由 GitHub Pages 提供网站存储空间；由 Github Acitons 提供的持续集成服务实时把 Git 仓库的 Markdown 文档编译同步至网站，并推送至 CDN 提供国内的访问加速；由 GitHub Discussions 与 [Giscus](https://github.com/giscus/giscus) 提供讨论服务。
+
+- **代码沙箱**：本文档内包含大量的代码实践，用于演示机器学习算法以及进行模型训练。对于第一部分数学基础和第二部分经典统计学习算法，只需纯 CPU 环境即可运行。对于深度学习及之后的内容，需要有 GPU 支持（目前是 Pytorch with CUDA 11.8）。可通过如下命令一键完成沙箱环境构建。租赁 GPU 云主机可在 10 元成本内完成所有训练实践，更多详情请参见[沙箱环境构建](sandbox.md)。
+  ```shell
+  curl -fsSL https://ai.icyfenix.cn/install.sh | sh
+  ```
+
+- **离线运行**：
+  - 部署离线站点：文档基于 [Vuepress](https://vuepress.vuejs.org/zh/) 构建，如你希望在企业内部搭建文档站点，请使用如下命令：
+
+  ``` shell
+  # 克隆获取源码
+  git clone https://github.com/fenixsoft/dmla.git && cd dmla
+
+  # 安装工程依赖
+  npm install
+
+  # 运行网站，文档地址默认为 http://localhost:8080，沙箱地址默认为 http://localhost:3001
+  npm run local
+  ```
+  
+  - 本地运行时，如需使用运行文档中的代码，仍然需要有 Docker 镜像的支持，镜像可使用前面沙箱一键安装直接拉取，也可以使用如下命令在本机构建：
+  ``` shell
+  npm run build:sandbox:all
+  ```
+
+- **二次演绎、传播和发行**：本文档中所有的内容，如引用其他资料，均在文档中明确列出资料来源，一切权利归属原作者。除此以外的所有内容，包括但不限于文字、图片、表格，等等，均属笔者原创，这些原创内容，笔者声明以[知识共享署名 4.0 国际许可协议](http://creativecommons.org/licenses/by/4.0/) 发行，只要遵循许可协议条款中署名、非商业性使用、相同方式共享的条件，你可以在任何地方、以任何形式、向任何人使用、修改、演绎、传播本文档中任何部分的内容。详细可见本文档的“协议”一节。
+
 
 ## 协议
 

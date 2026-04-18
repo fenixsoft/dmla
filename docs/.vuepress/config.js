@@ -169,9 +169,10 @@ export default {
 
   // 插件配置
   plugins: [
-    // 自动注册 components 目录下的组件
+    // 自动注册 components 目录下的组件，排除 HomeHero（已手动注册）
     registerComponentsPlugin({
       componentsDir: path.resolve(__dirname, './components'),
+      excludes: ['HomeHero.vue'],
     }),
     // 图片缩放，排除带有 data-no-zoom 属性的图片
     mediumZoomPlugin({

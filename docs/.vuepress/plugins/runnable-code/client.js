@@ -473,11 +473,15 @@ function initCodeBlock(block) {
           body: JSON.stringify({ code, useGpu })
         })
 
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}`)
-        }
-
+        // 解析响应内容，即使 HTTP 状态码不是 200
         const result = await response.json()
+
+        if (!response.ok) {
+          // 显示后端返回的具体错误消息
+          outputArea.className = 'output-area error'
+          outputArea.textContent = result.error || `请求失败 (HTTP ${response.status})`
+          return
+        }
         const outputs = result.outputs || []
 
         if (result.success) {

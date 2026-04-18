@@ -13,9 +13,9 @@
     "local": "concurrently \"npm run dev\" \"npm run server\"",
     "server": "cd local-server && npm start",
     "extract:shared": "node scripts/extract-shared-modules.js",
-    "build:sandbox": "npm run extract:shared && docker build -t dmla-sandbox:gpu . -f local-server/Dockerfile.sandbox",
+    "build:sandbox:gpu": "npm run extract:shared && docker build -t dmla-sandbox:gpu . -f local-server/Dockerfile.sandbox",
     "build:sandbox:cpu": "npm run extract:shared && docker build -t dmla-sandbox:cpu . -f local-server/Dockerfile.sandbox.cpu",
-    "build:sandbox:all": "npm run build:sandbox && npm run build:sandbox:cpu",
+    "build:sandbox:all": "npm run build:sandbox:gpu && npm run build:sandbox:cpu",
     "cdn:refresh": "node scripts/cdn-refresh.js",
     "format:md": "node scripts/format-markdown.js",
     "format:md:check": "node scripts/format-markdown.js --check",
@@ -27,8 +27,8 @@
     "education",
     "markdown"
   ],
-  "author": "",
-  "license": "MIT",
+  "author": "icyfenix",
+  "license": "CC-BY-4.0",
   "devDependencies": {
     "@vuepress/bundler-vite": "2.0.0-rc.19",
     "@vuepress/plugin-git": "2.0.0-rc.66",

@@ -1,5 +1,6 @@
 import { defineClientConfig } from 'vuepress/client'
 import './styles/custom.css'
+import HomeHero from './components/HomeHero.vue'
 
 // Sidebar 配置（从 config.js 同步）
 const sidebarConfig = [
@@ -35,8 +36,9 @@ const sidebarConfig = [
 
 export default defineClientConfig({
   enhance({ app }) {
-    // 注意：GlobalTOC 已由 VuePress 自动注册（位于 components 目录）
-    // 不要重复注册，否则会产生警告
+    // 手动注册 HomeHero 组件，确保 VuePress 上下文正确传递
+    // 避免 registerComponentsPlugin 自动注册导致的 HMR 上下文问题
+    app.component('HomeHero', HomeHero)
 
     // 注入 sidebar 配置到全局属性
     app.provide('sidebarConfig', sidebarConfig)

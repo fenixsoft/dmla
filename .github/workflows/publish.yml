@@ -9,11 +9,11 @@ on:
       skip_npm:
         description: '跳过 npm 发布'
         required: false
-        default: 'ture'
+        default: 'false'
       skip_docker:
         description: '跳过 Docker 镜像推送'
         required: false
-        default: 'ture'
+        default: 'false'
 
 # 并发控制：同一版本只能有一个发布流程
 concurrency:

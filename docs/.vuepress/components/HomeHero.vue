@@ -1,6 +1,6 @@
 <script setup>
 import { computed } from 'vue'
-import { usePageFrontmatter, useSiteLocaleData, withBase, AutoLink, ClientOnly } from 'vuepress/client'
+import { usePageFrontmatter, useSiteLocaleData, withBase, AutoLink } from 'vuepress/client'
 
 const frontmatter = usePageFrontmatter()
 const siteLocale = useSiteLocaleData()

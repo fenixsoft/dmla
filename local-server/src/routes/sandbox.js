@@ -62,8 +62,21 @@ router.post('/run', async (req, res) => {
     if (!imageExists) {
       return res.status(503).json({
         success: false,
-        error: `Sandbox image not found. Run: npm run build:sandbox${useGpu ? ' (with GPU support)' : ''}`
+        error: useGpu
+          ? 'GPU 镜像未安装。请运行以下命令安装：\n\nnpm run build:sandbox:gpu\n\n或使用 dmla CLI：\n\ndmla install --gpu'
+          : '沙箱镜像未安装。请运行以下命令安装：\n\nnpm run build:sandbox:cpu\n\n或使用 dmla CLI：\n\ndmla install --cpu'
       })
+    }
+
+    // 如果请求 GPU，检查 GPU 是否可用
+    if (useGpu) {
+      const gpuAvailable = await checkGPUAvailable()
+      if (!gpuAvailable) {
+        return res.status(503).json({
+          success: false,
+          error: 'GPU 硬件不可用。请确保系统安装了 NVIDIA GPU 驱动和 nvidia-container-toolkit。\n\n诊断步骤：\n1. 运行 nvidia-smi 检查 GPU 状态\n2. 运行 docker run --rm --gpus all nvidia/cuda:11.8-base nvidia-smi 测试 Docker GPU 支持\n\n或使用 dmla doctor 进行环境诊断'
+        })
+      }
     }
 
     // 执行代码
