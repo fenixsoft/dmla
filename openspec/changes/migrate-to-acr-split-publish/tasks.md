@@ -61,3 +61,11 @@
 - [x] 10.1 更新 `openspec/specs/installation-cli/spec.md`
 - [x] 10.2 更新 `openspec/specs/installation-tui/spec.md`
 - [x] 10.3 更新 `openspec/specs/sandbox-settings/spec.md`
+
+## 11. GitHub Actions 版本更新（Node.js 24）
+
+- [x] 11.1 更新 `publish-npm.yml` actions 版本
+- [x] 11.2 更新 `publish-docker.yml` actions 版本
+- [x] 11.3 更新 `auto-tag.yml` actions 版本
+- [x] 11.4 更新 `auto-tag-npm.yml` actions 版本
+- [x] 11.5 更新 `deploy.yml` actions 版本
