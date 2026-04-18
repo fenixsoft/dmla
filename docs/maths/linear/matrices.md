@@ -85,6 +85,27 @@ $$\mathbf{A} = \begin{pmatrix}
 29 & 40 & 51
 \end{pmatrix}$$
 
+- **矩阵外积**（Outer Product）：向量外积是矩阵乘法的特例，它将一个列向量与一个行向量相乘，得到一个矩阵。设 $\mathbf{u}$ 是 $m$ 维列向量，$\mathbf{v}$ 是 $n$ 维列向量，则它们的外积 $\mathbf{u} \mathbf{v}^T$ 是一个 $m \times n$ 矩阵：$(\mathbf{u} \mathbf{v}^T)_{ij} = u_i \cdot v_j$。外积的每一行都是向量 $\mathbf{v}^T$ 的标量倍数，因此外积矩阵的秩始终为 1。外积在机器学习中有广泛应用，如协方差矩阵计算、主成分分析、低秩矩阵近似等。以下是一个 $3 \times 1$ 列向量与 $1 \times 2$ 行向量外积的具体示例，结果为 $3 \times 2$ 矩阵：
+
+$$\mathbf{u} = \begin{pmatrix}
+1 \\
+2 \\
+3
+\end{pmatrix}, \quad
+\mathbf{v}^T = \begin{pmatrix}
+4 & 5
+\end{pmatrix}, \quad
+\mathbf{u} \mathbf{v}^T = \begin{pmatrix}
+1 \cdot 4 & 1 \cdot 5 \\
+2 \cdot 4 & 2 \cdot 5 \\
+3 \cdot 4 & 3 \cdot 5
+\end{pmatrix}
+= \begin{pmatrix}
+4 & 5 \\
+8 & 10 \\
+12 & 15
+\end{pmatrix}$$
+
 从代数角度看，矩阵乘法运算过程是一系列繁琐的加、乘法运算，可是它的几何意义却十分简洁，就是连续的 $\mathbf{A}$、$\mathbf{B}$ 两次线性变换（见本文的[线性变换](#线性变换的几何直观)一节），这是人类理解矩阵乘法的捷径，代数公式是上帝留给计算机去使用的。
 
 另外，在讲解[向量内积](vectors.md#内积与投影)时提到过，向量、矩阵的乘法根据上下文可能有不同含义，要注意通过符号写法区分。矩阵乘法的写法就是“$\mathbf{AB}$”，这里并不是像初等代数乘法那般中间省略了乘号。如果在文献中看到 $\mathbf{A} * \mathbf{B}$ 或者 $\mathbf{A} \odot \mathbf{B}$，所指的其实是矩阵的 Hadamard 积（逐元素乘积），它是指两个维度完全一样的矩阵，对应位置的元素逐个相乘，形成另一个维度一样的矩阵： $(\mathbf{A} \odot \mathbf{B})_{ij} = a_{ij} \cdot b_{ij} \quad (1 \leq i \leq m,\ 1 \leq j \leq n)$

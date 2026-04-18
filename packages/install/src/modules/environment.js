@@ -29,7 +29,10 @@ async function checkDocker() {
  */
 function checkNode() {
   try {
-    const version = execSync('node --version', { encoding: 'utf8' }).trim()
+    const version = execSync('node --version', {
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'ignore']
+    }).trim()
     return {
       installed: true,
       version: version.replace('v', '')
@@ -47,7 +50,12 @@ function checkNode() {
  */
 function checkGPU() {
   try {
-    const output = execSync('nvidia-smi -L', { timeout: 5000, encoding: 'utf8' })
+    // stdio: ['ignore', 'pipe', 'ignore'] 隐藏 stderr 输出
+    const output = execSync('nvidia-smi -L', {
+      timeout: 5000,
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'ignore']
+    })
     if (output.includes('GPU')) {
       // 提取 GPU 名称
       const lines = output.split('\n').filter(l => l.includes('GPU'))
@@ -70,7 +78,10 @@ function checkGPU() {
  */
 function checkPort(port) {
   try {
-    execSync(`nc -z localhost ${port}`, { timeout: 1000 })
+    execSync(`nc -z localhost ${port}`, {
+      timeout: 1000,
+      stdio: ['ignore', 'pipe', 'ignore']
+    })
     return false // 端口被占用
   } catch {
     return true // 端口可用

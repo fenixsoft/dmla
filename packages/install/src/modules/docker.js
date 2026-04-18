@@ -58,7 +58,7 @@ export async function pullImages(types, registry = 'dockerhub') {
       const image = docker.getImage(remoteImage)
       await image.tag({ repo: CONFIG.imageName, tag: type })
 
-      console.log(chalk.green(`✅ ${type.toUpperCase()} 镜像拉取完成`))
+      console.log(chalk.green(`✔ ${type.toUpperCase()} 镜像拉取完成`))
       console.log()
     } catch (error) {
       multibar.stop()
@@ -75,65 +75,128 @@ export async function pullImages(types, registry = 'dockerhub') {
  */
 async function pullImageWithProgress(imageName, type, multibar) {
   return new Promise((resolve, reject) => {
-    // 进度跟踪
+    console.log(chalk.gray(`  正在拉取: ${imageName}`))
+
+    // 保存每个 layer 的最新状态
     const layers = {}
-    let overallBar = multibar.create(100, 0, {
-      type: chalk.bold(type.toUpperCase()),
-      downloaded: '准备中...'
-    })
+    let outputLines = 0
+    let hasUpdate = false
 
     docker.pull(imageName, (err, stream) => {
       if (err) {
+        console.log(chalk.red(`  拉取失败: ${err.message}`))
         reject(err)
         return
       }
 
-      docker.modem.followProgress(stream, (err, output) => {
-        if (err) {
-          reject(err)
-        } else {
-          overallBar.update(100, { downloaded: '完成' })
-          resolve(output)
-        }
-      }, (event) => {
-        // 更新进度
-        if (event.id && event.progress) {
-          layers[event.id] = event.progress
+      stream.on('data', (chunk) => {
+        try {
+          const lines = chunk.toString().split('\n').filter(Boolean)
+          for (const line of lines) {
+            const event = JSON.parse(line)
+            if (!event.id) continue
 
-          // 计算总体进度
-          const totalLayers = Object.keys(layers).length
-          let completed = 0
-          let totalSize = 0
-          let downloadedSize = 0
-
-          for (const [id, progress] of Object.entries(layers)) {
-            // 解析进度字符串 "xMB/yMB"
-            const match = progress.match(/(\d+\.?\d*[KMGT]?B)\/(\d+\.?\d*[KMGT]?B)/)
-            if (match) {
-              downloadedSize += parseSize(match[1])
-              totalSize += parseSize(match[2])
+            // 更新 layer 状态
+            const existing = layers[event.id] || {}
+            layers[event.id] = {
+              id: event.id,
+              status: event.status,
+              progress: event.progress || existing.progress || '',
+              progressDetail: event.progressDetail || existing.progressDetail || {}
             }
-            if (progress.includes('complete') || progress.includes('Pull complete')) {
-              completed++
+
+            // 标记需要刷新显示
+            if (event.status === 'Downloading' || event.status === 'Pull complete' || event.status === 'Already exists') {
+              hasUpdate = true
             }
           }
 
-          const percentage = totalSize > 0 ? Math.round((downloadedSize / totalSize) * 100) : 0
-          const downloadedStr = formatSize(downloadedSize) + '/' + formatSize(totalSize)
+          // 刷新显示
+          if (hasUpdate) {
+            hasUpdate = false
+            // 移动光标到顶部并清除
+            if (outputLines > 0) {
+              process.stdout.write(`\x1b[${outputLines}A\x1b[0J`)
+            }
 
-          overallBar.update(percentage, {
-            type: chalk.bold(type.toUpperCase()),
-            downloaded: downloadedStr
-          })
+            outputLines = 0
+            for (const [layerId, layer] of Object.entries(layers)) {
+              const output = formatLayerOutput(layer)
+              process.stdout.write(output + '\n')
+              outputLines++
+            }
+          }
+        } catch (e) {
+          // 忽略解析错误
         }
+      })
 
-        // 处理完成状态
-        if (event.status === 'Download complete' || event.status === 'Pull complete') {
-          // 不做特殊处理，让进度自然更新
+      stream.on('error', (err) => {
+        console.log(chalk.red(`  Stream 错误: ${err.message}`))
+        reject(err)
+      })
+
+      stream.on('end', () => {
+        // 最终输出所有完成状态
+        if (outputLines > 0) {
+          process.stdout.write(`\x1b[${outputLines}A\x1b[0J`)
         }
+        for (const [layerId, layer] of Object.entries(layers)) {
+          console.log(formatLayerOutput(layer))
+        }
+        console.log(chalk.green(`  ✔ 拉取完成`))
+        resolve()
       })
     })
   })
+}
+
+/**
+ * 格式化单个 layer 输出，类似 Docker 原生格式
+ */
+function formatLayerOutput(layer) {
+  const id = layer.id.substring(0, 12)
+
+  if (layer.status === 'Already exists') {
+    return `${id}: Already exists `
+  }
+
+  if (layer.status === 'Pull complete') {
+    return `${id}: Pull complete `
+  }
+
+  if (layer.status === 'Verifying Checksum') {
+    return `${id}: Verifying Checksum`
+  }
+
+  if (layer.status === 'Download complete') {
+    return `${id}: Download complete`
+  }
+
+  if (layer.status === 'Downloading') {
+    const detail = layer.progressDetail || {}
+    const current = detail.current || 0
+    const total = detail.total || 0
+
+    // 如果有 progressDetail，生成进度条
+    if (total > 0) {
+      const barWidth = 50
+      const percent = Math.round((current / total) * 100)
+      const filled = Math.min(Math.round((current / total) * barWidth), barWidth)
+      const arrow = filled < barWidth ? '>' : ''
+      const bar = '='.repeat(filled) + arrow + ' '.repeat(barWidth - filled - (arrow ? 1 : 0))
+
+      const currentStr = formatSize(current)
+      const totalStr = formatSize(total)
+
+      return `${id}: Downloading [${bar}]  ${currentStr}/${totalStr}`
+    }
+
+    // 没有 progressDetail，只显示状态
+    return `${id}: Downloading ${layer.progress}`
+  }
+
+  return `${id}: ${layer.status} ${layer.progress || ''}`
 }
 
 /**
