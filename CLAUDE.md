@@ -117,14 +117,14 @@ dmla stop
 dmla status
 
 # 安装镜像
-dmla install               # 安装所有镜像
+dmla install               # 安装所有镜像（默认从 Docker Hub）
 dmla install --cpu         # 仅 CPU 版本
 dmla install --gpu         # 仅 GPU 版本
-dmla install --registry tcr  # 从 TCR 安装（国内加速）
+dmla install --registry acr  # 从阿里云 ACR 安装（国内加速）
 
 # 更新
 dmla update                # 更新 npm 包和镜像
-dmla update --registry tcr
+dmla update --registry acr
 
 # 环境诊断
 dmla doctor
@@ -183,3 +183,23 @@ TENCENT_SECRET_ID=your_secret_id
 TENCENT_SECRET_KEY=your_secret_key
 CDN_DOMAIN=your_domain.com
 ```
+
+### GitHub Actions 发布流程
+
+项目使用独立的 npm 和 Docker 发布流程：
+
+| Workflow | 触发条件 | Tag 格式 | 说明 |
+|----------|----------|----------|------|
+| `auto-tag-npm.yml` | packages/ 目录变更 | `npm-YYYY.M.D-HHMM` | npm 包自动打 Tag |
+| `auto-tag.yml` | local-server/ Docker 相关变更 | `YYYY.M.D-HHMM` | Docker 镜像自动打 Tag |
+| `publish-npm.yml` | npm- 开头的 Tag | - | 发布 npm 包 |
+| `publish-docker.yml` | 非 npm- 开头的 Tag | - | 发布 Docker 镜像 |
+
+**镜像仓库**：
+- Docker Hub: `icyfenix/dmla-sandbox`（全球用户）
+- 阿里云 ACR: `crpi-aani1ibpows293b8.cn-hangzhou.personal.cr.aliyuncs.com/icyfenix/dmla-sandbox`（国内加速）
+
+**Secrets 配置**：
+- `NPM_TOKEN`: npm 发布认证
+- `DOCKER_USERNAME/DOCKER_PASSWORD`: Docker Hub 认证
+- `ACR_USERNAME/ACR_PASSWORD`: 阿里云 ACR 认证

@@ -28,7 +28,7 @@ npx @icyfenix-dmla/install
 ```
 
 安装向导提供：
-- 镜像仓库选择（Docker Hub / 腾讯云 TCR）
+- 镜像仓库选择（Docker Hub / 阿里云 ACR）
 - 镜像类型选择（CPU / GPU）
 - 端口配置
 - 安装进度显示
@@ -47,8 +47,8 @@ npm install -g @icyfenix-dmla/cli
 # 默认从 Docker Hub 安装
 dmla install
 
-# 从腾讯云 TCR 安装（国内加速）
-dmla install --registry tcr
+# 从阿里云 ACR 安装（国内加速）
+dmla install --registry acr
 
 # 仅安装 CPU 版本
 dmla install --cpu
@@ -91,19 +91,19 @@ dmla update
 
 ## 国内用户加速
 
-国内用户推荐使用腾讯云 TCR 镜像仓库：
+国内用户推荐使用阿里云 ACR 镜像仓库：
 
 ```bash
-# 安装时指定 TCR
-dmla install --registry tcr
+# 安装时指定 ACR
+dmla install --registry acr
 
-# 更新时指定 TCR
-dmla update --registry tcr
+# 更新时指定 ACR
+dmla update --registry acr
 ```
 
 镜像地址：
-- `ccr.ccs.tencentyun.com/icyfenix/dmla-sandbox:cpu`
-- `ccr.ccs.tencentyun.com/icyfenix/dmla-sandbox:gpu`
+- `crpi-aani1ibpows293b8.cn-hangzhou.personal.cr.aliyuncs.com/icyfenix/dmla-sandbox:cpu`
+- `crpi-aani1ibpows293b8.cn-hangzhou.personal.cr.aliyuncs.com/icyfenix/dmla-sandbox:gpu`
 
 ## 故障排除
 

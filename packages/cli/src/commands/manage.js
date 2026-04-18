@@ -19,7 +19,7 @@ const CONFIG = {
   imageCpu: 'dmla-sandbox:cpu',
   imageGpu: 'dmla-sandbox:gpu',
   dockerhubRegistry: 'icyfenix',
-  tcrRegistry: 'ccr.ccs.tencentyun.com/icyfenix',
+  acrRegistry: 'crpi-aani1ibpows293b8.cn-hangzhou.personal.cr.aliyuncs.com/icyfenix',
   imageName: 'dmla-sandbox',
   defaultPort: 3001
 }
@@ -28,8 +28,8 @@ const CONFIG = {
  * 获取镜像仓库地址
  */
 function getRegistryUrl(registry) {
-  if (registry === 'tcr') {
-    return `${CONFIG.tcrRegistry}/${CONFIG.imageName}`
+  if (registry === 'acr') {
+    return `${CONFIG.acrRegistry}/${CONFIG.imageName}`
   }
   return `${CONFIG.dockerhubRegistry}/${CONFIG.imageName}`
 }
@@ -40,7 +40,7 @@ function getRegistryUrl(registry) {
 export async function installImages(types, registry = 'dockerhub') {
   const registryUrl = getRegistryUrl(registry)
 
-  console.log(chalk.gray(`   从 ${registry === 'tcr' ? '腾讯云 TCR' : 'Docker Hub'} 拉取镜像`))
+  console.log(chalk.gray(`   从 ${registry === 'acr' ? '阿里云 ACR' : 'Docker Hub'} 拉取镜像`))
 
   for (const type of types) {
     console.log()
@@ -289,13 +289,13 @@ export async function runDoctor() {
     console.log(chalk.yellow('   ⚠️ Docker Hub 连接超时或受限'))
   }
 
-  // 测试 TCR
-  console.log(chalk.gray('   测试腾讯云 TCR 连接...'))
+  // 测试 ACR
+  console.log(chalk.gray('   测试阿里云 ACR 连接...'))
   try {
-    execSync('docker pull ccr.ccs.tencentyun.com/icyfenix/dmla-sandbox:cpu --quiet', { timeout: 10000 })
-    console.log(chalk.green('   ✅ TCR 连接正常'))
+    execSync('docker pull crpi-aani1ibpows293b8.cn-hangzhou.personal.cr.aliyuncs.com/icyfenix/dmla-sandbox:cpu --quiet', { timeout: 10000 })
+    console.log(chalk.green('   ✅ ACR 连接正常'))
   } catch {
-    console.log(chalk.yellow('   ⚠️ TCR 连接超时或受限'))
+    console.log(chalk.yellow('   ⚠️ ACR 连接超时或受限'))
   }
 
   console.log()

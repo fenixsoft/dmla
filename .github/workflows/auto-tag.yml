@@ -8,7 +8,7 @@ on:
       # 仅这些路径变化触发自动打 Tag
       - 'local-server/Dockerfile.sandbox'
       - 'local-server/Dockerfile.sandbox.cpu'
-      - 'local-server/shared_modules/**'
+      # - 'local-server/shared_modules/**'
       - 'local-server/src/kernel_runner.py'
   workflow_dispatch:
     # 支持手动触发用于测试

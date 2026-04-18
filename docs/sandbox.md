@@ -3,7 +3,7 @@
 
 ::: danger 安全提示
 
-由于沙箱的功能是从外部接收并执行 Python 代码，唯一的安全防护只有 CGroup 隔离，**将沙箱服务直接暴露在公网环境可能会带来安全风险**。建议你优先考虑将沙箱运行于本地虚拟机或者无敏感数据的云服务中。
+由于沙箱的功能是从外部接收并执行 Python 代码，唯一的安全防护只有 CGroups 隔离，**将沙箱服务直接暴露在公网环境可能会带来安全风险**。建议你优先考虑将沙箱运行于本地或者无敏感数据的云服务中。
 :::
 
 ## 部署前准备
@@ -12,8 +12,8 @@
 
 - 已经[部署](https://docs.docker.com/engine/install)好了 Docker 环境。
 - 已经[部署](https://nodejs.org/en/download)好了 NodeJS 22.x+ 环境。
-- 可选：具备 Nvidia GPU 且已经[安装](https://www.nvidia.com/en-us/drivers/) 了 Nvidia 驱动（如需使用 GPU 进行训练）。
-- 其余依赖（如 JupterNotebook 环境、Python、Numpy、Pytorch、CUDA 等）均通过 Docker 镜像来使用，不需要单独安装。
+- 可选：如需使用 GPU 训练，应具备 Nvidia GPU 且已经[安装](https://www.nvidia.com/en-us/drivers/) 了 Nvidia 驱动。
+- 其余依赖（如 Jupyter Notebook 环境、Python、Numpy、Pytorch、CUDA 等）均通过 Docker 镜像来使用，不需要单独安装。
 
 ## 快速开始
 
@@ -43,11 +43,11 @@
     dmla install               # 安装所有镜像
     dmla install --cpu         # 仅 CPU 版本
     dmla install --gpu         # 仅 GPU 版本
-    dmla install --registry tcr  # 从腾讯云 TCR 安装镜像（国内加速）
+    dmla install --registry acr  # 从阿里云 ACR 安装镜像（国内加速）
 
     # 更新
     dmla update                # 更新 npm 包和镜像
-    dmla update --registry tcr
+    dmla update --registry acr
 
     # 环境诊断
     dmla doctor
@@ -66,7 +66,7 @@
     docker pull icyfenix/dmla-sandbox:gpu
 
     # 使用国内的镜像缓存
-    docker pull ccr.ccs.tencentyun.com/icyfenix/dmla-sandbox:[cpu/gpu]
+    docker pull crpi-aani1ibpows293b8.cn-hangzhou.personal.cr.aliyuncs.com/icyfenix/dmla-sandbox:[cpu/gpu]
 
     # 本地编译镜像
     npm run build:sandbox:[cpu/gpu/all]

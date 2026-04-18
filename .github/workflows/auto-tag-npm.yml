@@ -1,0 +1,75 @@
+name: Auto Tag for npm Package Changes
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'packages/cli/**'
+      - 'packages/install/**'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: auto-tag-npm
+  cancel-in-progress: true
+
+jobs:
+  create-tag:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Generate npm timestamp tag
+        id: generate_tag
+        run: |
+          # 使用 UTC+8 时间（北京时间），添加 npm- 前缀
+          TAG="npm-$(TZ='Asia/Shanghai' date +%Y.%-m.%-d-%H%M)"
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+          echo "🕐 Generated npm tag: $TAG"
+
+      - name: Check if tag exists
+        id: check_tag
+        run: |
+          TAG="${{ steps.generate_tag.outputs.tag }}"
+
+          if git tag -l | grep -q "^${TAG}$"; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+            echo "⚠️ Tag $TAG already exists, skipping"
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+            echo "✅ Tag $TAG does not exist, creating"
+          fi
+
+      - name: Create and push tag
+        if: ${{ steps.check_tag.outputs.exists == 'false' }}
+        run: |
+          TAG="${{ steps.generate_tag.outputs.tag }}"
+          git tag "$TAG"
+          git push origin "$TAG"
+          echo "🎉 Created and pushed npm tag: $TAG"
+
+      - name: Summary
+        if: ${{ always() }}
+        run: |
+          TAG="${{ steps.generate_tag.outputs.tag }}"
+          EXISTS="${{ steps.check_tag.outputs.exists }}"
+
+          echo "## 📦 npm 自动 Tag 生成" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Tag: $TAG" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [[ "$EXISTS" == "true" ]]; then
+            echo "状态: ⚠️ Tag 已存在，跳过创建" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "状态: ✅ Tag 已创建并推送" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "触发 npm 发布流程..." >> $GITHUB_STEP_SUMMARY
+          fi

@@ -12,7 +12,7 @@ const CONFIG = {
   imageCpu: 'dmla-sandbox:cpu',
   imageGpu: 'dmla-sandbox:gpu',
   dockerhubRegistry: 'icyfenix',
-  tcrRegistry: 'ccr.ccs.tencentyun.com/icyfenix',
+  acrRegistry: 'crpi-aani1ibpows293b8.cn-hangzhou.personal.cr.aliyuncs.com/icyfenix',
   imageName: 'dmla-sandbox'
 }
 
@@ -20,8 +20,8 @@ const CONFIG = {
  * 获取镜像仓库地址
  */
 function getRegistryUrl(registry) {
-  if (registry === 'tcr') {
-    return `${CONFIG.tcrRegistry}/${CONFIG.imageName}`
+  if (registry === 'acr') {
+    return `${CONFIG.acrRegistry}/${CONFIG.imageName}`
   }
   return `${CONFIG.dockerhubRegistry}/${CONFIG.imageName}`
 }
@@ -31,7 +31,7 @@ function getRegistryUrl(registry) {
  */
 export async function pullImages(types, registry = 'dockerhub') {
   const registryUrl = getRegistryUrl(registry)
-  const registryName = registry === 'tcr' ? '腾讯云 TCR' : 'Docker Hub'
+  const registryName = registry === 'acr' ? '阿里云 ACR' : 'Docker Hub'
 
   console.log(chalk.gray(`从 ${registryName} 拉取镜像`))
   console.log()

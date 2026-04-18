@@ -149,15 +149,27 @@ export default {
         ]
       },
       {
-        text: '深度学习（2006-2017 TF架构前）',
+        text: '深度学习时代',
+        collapsible: false,
+        children: [
+          {
+            text: '神经网络',
+            collapsible: false,
+            children: [
+              { text: '神经网络的起源', link: '/deep-learning/neural-network-structure/idea-origin' },
+              { text: '线性感知机', link: '/deep-learning/neural-network-structure/perceptron' },
+              { text: '多层感知机', link: '/deep-learning/neural-network-structure/mlp' },
+              { text: '前向传播', link: '/deep-learning/neural-network-structure/forward-propagation' },
+            ]
+          },
+        ]
+      },
+      {
+        text: '大语言模型实践',
         collapsible: false,
       },
       {
-        text: '大语言模型（2017- SOTA）',
-        collapsible: false,
-      },
-      {
-        text: 'AI Infra & 应用',
+        text: 'AI Infra & 应用（名字待定）',
         collapsible: false,
       },
       {

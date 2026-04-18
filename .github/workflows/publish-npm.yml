@@ -1,0 +1,91 @@
+name: Publish npm Packages
+
+on:
+  push:
+    tags:
+      - 'npm-[0-9]+.[0-9]+.[0-9]+-*'  # 匹配 npm-2026.4.17-1503 格式
+  workflow_dispatch:
+
+concurrency:
+  group: publish-npm-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  publish-npm:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: |
+          npm test -w @icyfenix-dmla/cli
+          npm test -w @icyfenix-dmla/install
+
+      - name: Get version from tag
+        id: version
+        run: |
+          if [[ "${{ github.ref_type }}" == "tag" ]]; then
+            # 从 npm-YYYY.M.D-HHMM 格式中提取版本号
+            VERSION="${{ github.ref_name }}"
+            # 移除 npm- 前缀
+            VERSION="${VERSION#npm-}"
+          else
+            # 手动触发时生成时间戳版本
+            VERSION="$(date +%Y.%-m.%-d-%H%M)"
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "📦 npm Version: $VERSION"
+
+      - name: Update package versions
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+
+          cd packages/cli
+          npm version "$VERSION" --no-git-tag-version --allow-same-version
+
+          cd ../install
+          npm version "$VERSION" --no-git-tag-version --allow-same-version
+
+          echo "✅ Package versions updated to $VERSION"
+
+      - name: Publish @icyfenix-dmla/cli to npm
+        run: |
+          cd packages/cli
+          npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish @icyfenix-dmla/install to npm
+        run: |
+          cd packages/install
+          npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Summary
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          echo "## 🚀 npm 包发布完成" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 版本: $VERSION" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "#### 发布的包" >> $GITHUB_STEP_SUMMARY
+          echo "- @icyfenix-dmla/cli@$VERSION" >> $GITHUB_STEP_SUMMARY
+          echo "- @icyfenix-dmla/install@$VERSION" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 安装命令" >> $GITHUB_STEP_SUMMARY
+          echo '```bash' >> $GITHUB_STEP_SUMMARY
+          echo 'npm install -g @icyfenix-dmla/cli@$VERSION' >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY

@@ -62,7 +62,7 @@ program
   .option('--cpu', '仅安装 CPU 版本')
   .option('--gpu', '仅安装 GPU 版本')
   .option('--all', '安装所有镜像（默认）')
-  .option('-r, --registry <type>', '镜像仓库 (dockerhub/tcr)', 'dockerhub')
+  .option('-r, --registry <type>', '镜像仓库 (dockerhub/acr)', 'dockerhub')
   .action(async (options) => {
     const registry = options.registry
     let types = []
@@ -84,7 +84,7 @@ program
 program
   .command('update')
   .description('更新 npm 包和 Docker 镜像')
-  .option('-r, --registry <type>', '镜像仓库 (dockerhub/tcr)', 'dockerhub')
+  .option('-r, --registry <type>', '镜像仓库 (dockerhub/acr)', 'dockerhub')
   .action(async (options) => {
     console.log(chalk.blue('🔄 更新 DMLA...'))
     await updateAll(options.registry)

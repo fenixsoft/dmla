@@ -16,10 +16,10 @@ describe('Image Name Mapping', () => {
     expect(expectedLocalNames).toContain('dmla-sandbox:gpu')
   })
 
-  it('should support both dockerhub and tcr registries', async () => {
+  it('should support both dockerhub and acr registries', async () => {
     // 验证仓库配置
-    const registries = ['dockerhub', 'tcr']
+    const registries = ['dockerhub', 'acr']
     expect(registries).toContain('dockerhub')
-    expect(registries).toContain('tcr')
+    expect(registries).toContain('acr')
   })
 })

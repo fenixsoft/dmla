@@ -93,7 +93,7 @@ dmla install [options]
 | `--cpu` | 仅安装 CPU 版本 |
 | `--gpu` | 仅安装 GPU 版本 |
 | `--all` | 安装所有镜像（默认） |
-| `-r, --registry <type>` | 镜像仓库：dockerhub 或 tcr |
+| `-r, --registry <type>` | 镜像仓库：dockerhub 或 acr |
 
 **示例：**
 
@@ -104,11 +104,11 @@ dmla install
 # 仅安装 CPU 版本
 dmla install --cpu
 
-# 从 TCR 安装（国内加速）
-dmla install --registry tcr
+# 从 ACR 安装（国内加速）
+dmla install --registry acr
 
 # 仅安装 GPU 版本
-dmla install --gpu --registry tcr
+dmla install --gpu --registry acr
 ```
 
 ## dmla update
@@ -123,7 +123,7 @@ dmla update [options]
 
 | 选项 | 描述 |
 |------|------|
-| `-r, --registry <type>` | 镜像仓库：dockerhub 或 tcr |
+| `-r, --registry <type>` | 镜像仓库：dockerhub 或 acr |
 
 **示例：**
 
@@ -131,8 +131,8 @@ dmla update [options]
 # 更新所有（默认从 Docker Hub）
 dmla update
 
-# 更新并指定 TCR
-dmla update --registry tcr
+# 更新并指定 ACR
+dmla update --registry acr
 ```
 
 ## dmla doctor
@@ -148,7 +148,7 @@ dmla doctor
 - Docker 镜像完整性
 - GPU 驿动和设备
 - 端口可用性
-- 网络连通性（Docker Hub / TCR）
+- 网络连通性（Docker Hub / ACR）
 
 ## dmla --help
 
@@ -175,9 +175,9 @@ dmla --version
 - 无需登录
 - 全球访问
 
-### 腾讯云 TCR
+### 阿里云 ACR
 
-- 地址：`ccr.ccs.tencentyun.com/icyfenix/dmla-sandbox`
+- 地址：`crpi-aani1ibpows293b8.cn-hangzhou.personal.cr.aliyuncs.com/icyfenix/dmla-sandbox`
 - 无需登录（公开镜像）
 - 国内访问更快
 

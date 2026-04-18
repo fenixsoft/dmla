@@ -101,7 +101,7 @@ async function main() {
       initial: 2,  // 默认选择 'auto'
       choices: [
         { name: 'dockerhub', message: 'Docker Hub (全球访问)' },
-        { name: 'tcr', message: '腾讯云 TCR (国内加速)' },
+        { name: 'acr', message: '阿里云 ACR (国内加速)' },
         { name: 'auto', message: '自动选择 (根据网络延迟)' }
       ]
     })
@@ -110,9 +110,9 @@ async function main() {
     if (registry === 'auto') {
       // 简化的自动选择逻辑
       console.log(chalk.gray('   检测网络延迟...'))
-      // 默认使用 TCR（国内用户更常见）
-      registry = 'tcr'
-      console.log(chalk.gray(`   已选择: ${registry === 'tcr' ? '腾讯云 TCR' : 'Docker Hub'}`))
+      // 默认使用 ACR（国内用户更常见）
+      registry = 'acr'
+      console.log(chalk.gray(`   已选择: ${registry === 'acr' ? '阿里云 ACR' : 'Docker Hub'}`))
     }
 
     console.log()
