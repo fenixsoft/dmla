@@ -269,9 +269,19 @@ export async function runPythonCode(code, useGpu = false) {
       stderr: true
     })
 
-    // 解析输出
-    const rawOutput = parseDockerLogs(logs)
-    log(`Raw output length: ${rawOutput.length}`)
+    // 解析输出 - 分别处理 stdout 和 stderr
+    const { stdout, stderr } = parseDockerLogsSeparate(logs)
+    log(`Stdout length: ${stdout.length}`)
+    log(`Stderr length: ${stderr.length}`)
+
+    // stderr 可能包含 CUDA banner 等信息，记录用于调试
+    if (stderr.length > 0) {
+      log(`Stderr content preview: ${stderr.substring(0, 500)}`)
+    }
+
+    // 使用 stdout 解析 JSON
+    const rawOutput = stdout
+    log(`Stdout content preview: ${rawOutput.substring(0, 200)}`)
 
     // 解析 JSON 输出
     let parsedResult
@@ -369,6 +379,49 @@ function parseDockerLogs(logs) {
 
   // 如果是字符串
   return logs.toString()
+}
+
+/**
+ * 解析 Docker 日志输出，分别返回 stdout 和 stderr
+ * Docker 日志格式: [8字节头][数据]
+ * 头部第一个字节: 0=stdin, 1=stdout, 2=stderr
+ */
+function parseDockerLogsSeparate(logs) {
+  if (!logs || logs.length === 0) return { stdout: '', stderr: '' }
+
+  // 如果是 Buffer
+  if (Buffer.isBuffer(logs)) {
+    let stdout = ''
+    let stderr = ''
+    let offset = 0
+
+    while (offset < logs.length) {
+      // 跳过 8 字节头
+      if (offset + 8 > logs.length) break
+
+      const streamType = logs[offset]  // 1=stdout, 2=stderr
+      const length = logs.readUInt32BE(offset + 4)
+
+      offset += 8
+
+      if (offset + length > logs.length) break
+
+      const chunk = logs.slice(offset, offset + length).toString('utf8')
+
+      if (streamType === 1) {
+        stdout += chunk
+      } else if (streamType === 2) {
+        stderr += chunk
+      }
+
+      offset += length
+    }
+
+    return { stdout, stderr }
+  }
+
+  // 如果是字符串，无法区分，全部作为 stdout
+  return { stdout: logs.toString(), stderr: '' }
 }
 
 /**
