@@ -86,10 +86,20 @@ jobs:
       - name: Verify published package
         run: |
           VERSION="${{ steps.version.outputs.version }}"
+          echo "等待 npm registry 同步..."
+          sleep 10
           echo "验证发布的包内容..."
-          npm pack @icyfenix-dmla/cli@$VERSION --registry https://registry.npmjs.org
+          # 尝试下载并验证，最多等待 30 秒
+          for i in 1 2 3; do
+            if npm pack @icyfenix-dmla/cli@$VERSION --registry https://registry.npmjs.org 2>/dev/null; then
+              break
+            fi
+            echo "等待 registry 同步... ($i/3)"
+            sleep 10
+          done
           tar -tf icyfenix-dmla-cli-$VERSION.tgz | grep -E "server/index|server/sandbox" || {
             echo "❌ 发布的包缺少服务器文件"
+            tar -tf icyfenix-dmla-cli-$VERSION.tgz
             exit 1
           }
           echo "✅ 发布包验证通过"
