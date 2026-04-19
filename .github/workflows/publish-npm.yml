@@ -66,14 +66,14 @@ jobs:
       - name: Publish @icyfenix-dmla/cli to npm
         run: |
           cd packages/cli
-          npm publish --access public
+          npm publish --access public --tag latest
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Publish @icyfenix-dmla/install to npm
         run: |
           cd packages/install
-          npm publish --access public
+          npm publish --access public --tag latest
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 

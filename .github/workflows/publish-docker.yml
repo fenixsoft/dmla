@@ -3,7 +3,8 @@ name: Publish Docker Images
 on:
   push:
     tags:
-      - '[0-9]+.[0-9]+.[0-9]+-*'  # 匹配 2026.4.17-1503 格式（不含 npm- 前缀）
+      - '*'  # 匹配所有非 npm- 前缀的 tag（如 2026.4.19-0825）
+      - '!npm-*'  # 排除 npm 包的 tag
   workflow_dispatch:
     inputs:
       skip_dockerhub:
