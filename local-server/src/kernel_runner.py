@@ -18,6 +18,27 @@ import time
 import traceback
 from typing import Optional
 
+# 抑制导入时的 stdout 输出，避免污染 JSON 结果
+import io
+import os
+
+# 将 stdout 重定向到临时缓冲区，抑制导入时的输出
+_original_stdout = sys.stdout
+_suppress_buffer = io.StringIO()
+
+def suppress_stdout():
+    """抑制 stdout 输出"""
+    sys.stdout = _suppress_buffer
+    sys.stderr = _suppress_buffer
+
+def restore_stdout():
+    """恢复 stdout 输出"""
+    sys.stdout = _original_stdout
+    sys.stderr = sys.stdout
+
+# 在导入 matplotlib 前抑制输出
+suppress_stdout()
+
 # 配置 matplotlib 中文字体支持（在导入 matplotlib 之前）
 import matplotlib
 matplotlib.rcParams['font.sans-serif'] = ['WenQuanYi Micro Hei', 'DejaVu Sans']
@@ -27,6 +48,9 @@ matplotlib.rcParams['axes.unicode_minus'] = False
 # 强制重建 matplotlib 字体缓存，确保中文字体正确识别
 import matplotlib.font_manager as fm
 fm._load_fontmanager(try_read_cache=False)
+
+# 导入完成后恢复 stdout
+restore_stdout()
 
 # 超时时间（秒）
 DEFAULT_TIMEOUT = 60
@@ -43,6 +67,9 @@ def run_code(code: str, timeout: int = DEFAULT_TIMEOUT) -> dict:
     Returns:
         包含 success, outputs, executionTime 的字典
     """
+    # 在执行过程中抑制 stdout，避免 kernel 启动输出污染结果
+    suppress_stdout()
+
     from jupyter_client import KernelManager
 
     start_time = time.time()
@@ -129,6 +156,9 @@ def run_code(code: str, timeout: int = DEFAULT_TIMEOUT) -> dict:
 
         execution_time = time.time() - start_time
 
+        # 执行完成后恢复 stdout，准备输出 JSON
+        restore_stdout()
+
         if timed_out:
             return {
                 'success': False,
@@ -149,6 +179,7 @@ def run_code(code: str, timeout: int = DEFAULT_TIMEOUT) -> dict:
 
     except Exception as e:
         execution_time = time.time() - start_time
+        restore_stdout()
         return {
             'success': False,
             'outputs': [{
@@ -161,6 +192,9 @@ def run_code(code: str, timeout: int = DEFAULT_TIMEOUT) -> dict:
         }
 
     finally:
+        # 确保 stdout 已恢复
+        restore_stdout()
+
         # 清理资源
         if kc:
             try:
