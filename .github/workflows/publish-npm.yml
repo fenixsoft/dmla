@@ -36,6 +36,9 @@ jobs:
           npm test -w @icyfenix-dmla/cli
           npm test -w @icyfenix-dmla/install
 
+      - name: Build CLI package
+        run: npm run build -w @icyfenix-dmla/cli
+
       - name: Get version from tag
         id: version
         run: |

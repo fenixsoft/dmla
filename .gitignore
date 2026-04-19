@@ -6,6 +6,7 @@ dist/
 docs/.vuepress/dist/
 docs/.vuepress/.temp/
 docs/.vuepress/.cache/
+packages/cli/src/server/
 
 # IDE
 .idea/

@@ -5,15 +5,39 @@
 import Docker from 'dockerode'
 import path from 'path'
 import { fileURLToPath } from 'url'
+import fs from 'fs'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
-// 项目根目录（从 local-server/src 向上两级）
-const PROJECT_ROOT = path.resolve(__dirname, '..', '..')
+// 检测运行模式并计算正确的路径
+// 开发模式: 从 local-server/src 运行，项目根目录在上两级
+// 独立模式: 从 packages/cli/src/server 运行，无 shared_modules 目录
+function detectProjectRoot() {
+  // 尝试向上两级查找 local-server 目录（开发模式）
+  const candidateRoot = path.resolve(__dirname, '..', '..')
+  const localServerPath = path.join(candidateRoot, 'local-server')
+  if (fs.existsSync(localServerPath)) {
+    return candidateRoot
+  }
 
-// 共享模块目录
-const DEFAULT_SHARED_MODULES_PATH = path.join(PROJECT_ROOT, 'local-server', 'shared_modules')
+  // 尝试向上三级查找（独立模式下的项目根目录）
+  const standaloneRoot = path.resolve(__dirname, '..', '..', '..')
+  const standaloneLocalServer = path.join(standaloneRoot, 'local-server')
+  if (fs.existsSync(standaloneLocalServer)) {
+    return standaloneRoot
+  }
+
+  // 独立安装模式，无项目根目录
+  return null
+}
+
+const PROJECT_ROOT = detectProjectRoot()
+
+// 共享模块目录（仅开发模式可用）
+const DEFAULT_SHARED_MODULES_PATH = PROJECT_ROOT
+  ? path.join(PROJECT_ROOT, 'local-server', 'shared_modules')
+  : null
 
 const docker = new Docker()
 
@@ -29,7 +53,12 @@ const SANDBOX_CONFIG = {
  * 获取共享模块路径
  */
 function getSharedModulesPath() {
-  return process.env.SHARED_MODULES_PATH || DEFAULT_SHARED_MODULES_PATH
+  // 优先使用环境变量指定的路径
+  if (process.env.SHARED_MODULES_PATH) {
+    return process.env.SHARED_MODULES_PATH
+  }
+  // 开发模式下的默认路径
+  return DEFAULT_SHARED_MODULES_PATH
 }
 
 /**
@@ -123,9 +152,8 @@ export async function runPythonCode(code, useGpu = false) {
   const useMount = shouldMountSharedModules()
   const sharedModulesPath = getSharedModulesPath()
 
-  if (useMount) {
+  if (useMount && sharedModulesPath) {
     // 检查共享模块目录是否存在
-    const fs = await import('fs')
     if (fs.existsSync(sharedModulesPath)) {
       containerConfig.HostConfig.Binds = [
         `${sharedModulesPath}:/usr/local/lib/python3.11/site-packages/shared:ro`
@@ -135,6 +163,8 @@ export async function runPythonCode(code, useGpu = false) {
       console.warn(`[Sandbox] 警告: 共享模块目录不存在: ${sharedModulesPath}`)
       console.warn('[Sandbox] 提示: 运行 npm run extract:shared 生成共享模块')
     }
+  } else if (!sharedModulesPath) {
+    console.log('[Sandbox] 独立安装模式，无共享模块目录')
   } else {
     console.log('[Sandbox] Volume Mount 已禁用 (MOUNT_SHARED_MODULES=false)')
   }
