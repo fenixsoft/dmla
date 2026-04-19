@@ -4,7 +4,7 @@
  */
 import { program } from 'commander'
 import chalk from 'chalk'
-import { startServer, stopServer, getStatus } from './commands/server.js'
+import { startServer, startServerSync, stopServer, getStatus } from './commands/server.js'
 import { updateAll, runDoctor } from './commands/manage.js'
 import { runInstallTUI } from '@icyfenix-dmla/install'
 
@@ -23,13 +23,24 @@ program
   .description('启动沙箱服务')
   .option('-p, --port <number>', '服务端口', '3001')
   .option('--gpu', '使用 GPU 镜像')
+  .option('--sync', '同步模式：在当前进程运行，日志直接输出（用于调试）')
   .action(async (options) => {
     const port = parseInt(options.port, 10)
     const useGpu = options.gpu
+    const sync = options.sync
+
     console.log(chalk.blue('🚀 启动 DMLA 沙箱服务...'))
     console.log(chalk.gray(`   端口: ${port}`))
     console.log(chalk.gray(`   镜像: ${useGpu ? 'GPU' : 'CPU'}`))
-    await startServer(port, useGpu)
+    if (sync) {
+      console.log(chalk.yellow(`   模式: 同步（调试模式）`))
+    }
+
+    if (sync) {
+      await startServerSync(port, useGpu)
+    } else {
+      await startServer(port, useGpu)
+    }
   })
 
 // ─────────────────────────────────────────────────────────────

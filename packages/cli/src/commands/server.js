@@ -114,7 +114,75 @@ async function findServiceContainer() {
 }
 
 /**
- * 启动服务
+ * 查找服务器入口文件
+ */
+function findServerPath() {
+  const serverPath = path.resolve(__dirname, '../../../local-server/src/index.js')
+  const standaloneServerPath = path.resolve(__dirname, '../server/index.js')
+
+  return fs.existsSync(serverPath) ? serverPath :
+         fs.existsSync(standaloneServerPath) ? standaloneServerPath : null
+}
+
+/**
+ * 同步启动服务（在当前进程运行，用于调试）
+ * @param {number} port - 服务端口
+ * @param {boolean} useGpu - 是否使用 GPU
+ */
+export async function startServerSync(port, useGpu = false) {
+  // 检查端口
+  const portAvailable = await checkPortAvailable(port)
+  if (!portAvailable) {
+    console.log(chalk.red(`❌ 端口 ${port} 已被占用`))
+    console.log(chalk.yellow('💡 提示: 使用 --port 选项指定其他端口'))
+    return
+  }
+
+  // 检查镜像
+  const imageType = useGpu ? 'gpu' : 'cpu'
+  const imageExists = await checkImageExists(imageType)
+  if (!imageExists) {
+    console.log(chalk.red(`❌ 镜像 ${useGpu ? CONFIG.imageGpu : CONFIG.imageCpu} 不存在`))
+    console.log(chalk.yellow('💡 提示: 运行 dmla install 安装镜像'))
+    return
+  }
+
+  // 检查服务是否已运行
+  const alreadyRunning = await checkServiceRunning(port)
+  if (alreadyRunning) {
+    console.log(chalk.green(`✅ 服务已在端口 ${port} 运行`))
+    return
+  }
+
+  // 查找服务器入口
+  const actualServerPath = findServerPath()
+  if (!actualServerPath) {
+    console.log(chalk.red('❌ 找不到服务入口文件'))
+    console.log(chalk.yellow('💡 提示: 确保正确安装了 @icyfenix-dmla/cli'))
+    return
+  }
+
+  console.log(chalk.gray('   同步模式启动...'))
+  console.log(chalk.gray(`   服务入口: ${actualServerPath}`))
+  console.log()
+
+  // 设置环境变量
+  process.env.PORT = port.toString()
+  process.env.USE_GPU = useGpu ? 'true' : 'false'
+  process.env.DMLA_SYNC_MODE = 'true'  // 标记同步模式，让服务器在 import 时启动
+
+  // 动态 import 服务器模块并直接运行
+  // 服务器模块会在 import 时自动启动（因为入口点检测逻辑）
+  try {
+    await import(actualServerPath)
+  } catch (error) {
+    console.log(chalk.red(`❌ 服务启动失败: ${error.message}`))
+    console.log(chalk.gray(error.stack))
+  }
+}
+
+/**
+ * 启动服务（异步模式，spawn 子进程）
  */
 export async function startServer(port, useGpu = false) {
   // 检查端口
@@ -145,14 +213,7 @@ export async function startServer(port, useGpu = false) {
   console.log(chalk.gray('   正在启动...'))
 
   try {
-    // 使用 spawn 启动 server 进程
-    const serverPath = path.resolve(__dirname, '../../../local-server/src/index.js')
-
-    // 如果 server 文件不存在，说明是独立安装模式，需要启动内置服务
-    const standaloneServerPath = path.resolve(__dirname, '../server/index.js')
-
-    const actualServerPath = fs.existsSync(serverPath) ? serverPath :
-                             fs.existsSync(standaloneServerPath) ? standaloneServerPath : null
+    const actualServerPath = findServerPath()
 
     if (!actualServerPath) {
       console.log(chalk.red('❌ 找不到服务入口文件'))

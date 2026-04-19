@@ -32,12 +32,14 @@ app.use((err, req, res, next) => {
   })
 })
 
-// 仅在直接运行时启动服务器（被 import 时不启动）
-// 使用路径比较，兼容 Windows 和 Unix 系统
+// 启动服务器
+// 条件1: 直接运行（入口点匹配）
+// 条件2: 同步模式（DMLA_SYNC_MODE 环境变量）
 const __filename = fileURLToPath(import.meta.url)
 const entryPoint = resolve(process.argv[1] || '')
+const shouldStart = __filename === entryPoint || process.env.DMLA_SYNC_MODE === 'true'
 
-if (__filename === entryPoint) {
+if (shouldStart) {
   app.listen(PORT, () => {
     console.log(`🚀 DMLA 本地服务已启动`)
     console.log(`   API: http://localhost:${PORT}`)
