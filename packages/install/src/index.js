@@ -203,8 +203,59 @@ export async function runInstallTUI() {
     console.log(chalk.bold('拉取 Docker 镜像'))
     console.log()
 
-    await pullImages(imageTypes, registry)
-    console.log()
+    const pullResults = await pullImages(imageTypes, registry)
+
+    // 检查是否有失败的镜像
+    const failedImages = Object.entries(pullResults)
+      .filter(([type, result]) => !result.success)
+      .map(([type, result]) => ({ type, ...result }))
+
+    if (failedImages.length > 0) {
+      console.log(chalk.yellow('⚠️  部分镜像拉取失败'))
+      console.log()
+
+      // 检查是否有可用的镜像
+      const availableImages = Object.entries(pullResults)
+        .filter(([type, result]) => result.success)
+        .map(([type]) => type)
+
+      if (availableImages.length > 0) {
+        console.log(chalk.green(`✔ 已成功拉取镜像: ${availableImages.join(', ')}`))
+        console.log(chalk.gray('   您可以使用这些镜像启动服务'))
+      }
+
+      console.log()
+      console.log(chalk.yellow('手动拉取镜像命令：'))
+      for (const failed of failedImages) {
+        console.log(chalk.cyan(`   docker pull ${failed.manualCommand}`))
+        console.log(chalk.gray(`   docker tag ${failed.manualCommand} dmla-sandbox:${failed.type}`))
+      }
+      console.log()
+
+      // 询问是否继续
+      const continueChoice = await prompt({
+        type: 'select',
+        name: 'action',
+        message: '是否继续安装 CLI？',
+        choices: [
+          { name: 'continue', message: '继续安装（稍后手动拉取镜像）' },
+          { name: 'exit', message: '退出安装' }
+        ]
+      })
+
+      if (continueChoice.action === 'exit') {
+        gracefulExit()
+        return
+      }
+
+      console.log(chalk.gray('继续安装...'))
+      console.log()
+    } else {
+      // 全部成功
+      const successCount = Object.keys(pullResults).length
+      console.log(chalk.green(`✔ ${successCount} 个镜像已准备就绪`))
+      console.log()
+    }
 
     // ─────────────────────────────────────────────────────────────
     // 步骤 6: 安装 npm 包

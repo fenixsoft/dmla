@@ -4,6 +4,8 @@
 import chalk from 'chalk'
 import Docker from 'dockerode'
 import cliProgress from 'cli-progress'
+import pkg from 'enquirer'
+const { prompt } = pkg
 
 const docker = new Docker()
 
@@ -27,7 +29,20 @@ function getRegistryUrl(registry) {
 }
 
 /**
+ * 检查本地镜像是否存在
+ */
+async function checkImageExists(imageName) {
+  try {
+    await docker.getImage(imageName).inspect()
+    return true
+  } catch {
+    return false
+  }
+}
+
+/**
  * 拉取镜像并显示进度
+ * @returns {Object} 拉取结果 { cpu: {success: boolean, error?: string}, gpu: {success: boolean, error?: string} }
  */
 export async function pullImages(types, registry = 'dockerhub') {
   const registryUrl = getRegistryUrl(registry)
@@ -36,22 +51,43 @@ export async function pullImages(types, registry = 'dockerhub') {
   console.log(chalk.gray(`从 ${registryName} 拉取镜像`))
   console.log()
 
-  // 创建进度条
-  const multibar = new cliProgress.MultiBar({
-    format: `{type} [{bar}] {percentage}% | {downloaded}`,
-    hideCursor: true,
-    barsIncompleteChar: '░',
-    barsCompleteChar: '█',
-  })
+  const results = {}
 
   for (const type of types) {
-    const remoteImage = `${registryUrl}:${type}`
     const localImage = type === 'gpu' ? CONFIG.imageGpu : CONFIG.imageCpu
+    const remoteImage = `${registryUrl}:${type}`
 
     console.log(chalk.bold(`${type.toUpperCase()} 版本`))
 
+    // 检查本地镜像是否已存在
+    const exists = await checkImageExists(localImage)
+
+    if (exists) {
+      console.log(chalk.yellow(`⚠️  本地已存在 ${localImage} 镜像`))
+
+      const updateChoice = await prompt({
+        type: 'select',
+        name: 'action',
+        message: '是否更新镜像？',
+        choices: [
+          { name: 'update', message: '更新镜像（重新拉取）' },
+          { name: 'skip', message: '跳过（使用现有镜像）' }
+        ]
+      })
+
+      if (updateChoice.action === 'skip') {
+        console.log(chalk.green(`✔ 跳过 ${type.toUpperCase()} 镜像，使用现有版本`))
+        console.log()
+        results[type] = { success: true, skipped: true }
+        continue
+      }
+
+      console.log(chalk.gray(`更新镜像...`))
+    }
+
+    // 拉取镜像
     try {
-      await pullImageWithProgress(remoteImage, type, multibar)
+      await pullImageWithProgress(remoteImage)
 
       // Tag 为本地名称
       console.log(chalk.gray(`重命名为 ${localImage}...`))
@@ -60,20 +96,34 @@ export async function pullImages(types, registry = 'dockerhub') {
 
       console.log(chalk.green(`✔ ${type.toUpperCase()} 镜像拉取完成`))
       console.log()
+      results[type] = { success: true }
     } catch (error) {
-      multibar.stop()
       console.log(chalk.red(`❌ ${type.toUpperCase()} 镜像拉取失败: ${error.message}`))
-      throw error
+      console.log()
+
+      // 给用户手动拉取命令
+      console.log(chalk.yellow('💡 您可以手动拉取镜像：'))
+      console.log(chalk.cyan(`   docker pull ${remoteImage}`))
+      console.log(chalk.gray(`   docker tag ${remoteImage} ${localImage}`))
+      console.log()
+
+      results[type] = { success: false, error: error.message, manualCommand: remoteImage }
+
+      // 如果本地已有镜像，可以继续使用
+      if (exists) {
+        console.log(chalk.gray('   但本地已有镜像，安装将继续进行'))
+        console.log()
+      }
     }
   }
 
-  multibar.stop()
+  return results
 }
 
 /**
  * 带进度显示的镜像拉取
  */
-async function pullImageWithProgress(imageName, type, multibar) {
+async function pullImageWithProgress(imageName) {
   return new Promise((resolve, reject) => {
     console.log(chalk.gray(`  正在拉取: ${imageName}`))
 
