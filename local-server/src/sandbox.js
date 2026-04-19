@@ -158,16 +158,17 @@ export async function checkGPUAvailable() {
  * 执行 Python 代码
  * 使用 IPython Kernel 执行代码，支持富输出（图片、文本、错误等）
  * @param {string} code - Python 代码
- * @param {boolean} useGpu - 是否使用 GPU
+ * @param {boolean} useGpu - 是否启用 GPU 设备
+ * @param {string|null} imageOverride - 可选，指定使用的镜像名称（覆盖默认选择）
  * @returns {Promise<{success: boolean, outputs: Array, executionTime: number, gpuUsed: boolean}>}
  */
-export async function runPythonCode(code, useGpu = false) {
+export async function runPythonCode(code, useGpu = false, imageOverride = null) {
   const startTime = Date.now()
 
-  log(`runPythonCode called, useGpu=${useGpu}, code length=${code.length}`)
+  log(`runPythonCode called, useGpu=${useGpu}, code length=${code.length}, imageOverride=${imageOverride}`)
 
-  // 选择镜像
-  const image = useGpu ? SANDBOX_CONFIG.imageGpu : SANDBOX_CONFIG.imageCpu
+  // 选择镜像：优先使用指定的镜像，否则根据 useGpu 选择
+  const image = imageOverride || (useGpu ? SANDBOX_CONFIG.imageGpu : SANDBOX_CONFIG.imageCpu)
   log(`Using image: ${image}`)
 
   // 创建容器配置 - 使用 kernel_runner.py 执行代码

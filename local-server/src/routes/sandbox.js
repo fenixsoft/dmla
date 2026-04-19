@@ -58,20 +58,34 @@ router.post('/run', async (req, res) => {
   }
 
   try {
-    // 检查镜像是否存在
-    const imageExists = await checkImageExists(useGpu)
+    // 检查镜像是否存在，智能降级
+    // GPU镜像包含CPU的全部功能，如果CPU镜像不存在但GPU镜像存在，可以使用GPU镜像执行CPU代码
+    let actualUseGpu = useGpu
+    let actualImage = null  // 指定使用的镜像
+    let imageExists = await checkImageExists(useGpu)
+
+    if (!imageExists && !useGpu) {
+      // CPU镜像不存在，检查是否可以用GPU镜像替代
+      const gpuImageExists = await checkImageExists(true)
+      if (gpuImageExists) {
+        imageExists = true
+        actualUseGpu = false  // 不启用GPU设备
+        actualImage = SANDBOX_CONFIG.imageGpu  // 使用GPU镜像
+        console.log('[Sandbox] CPU镜像不存在，使用GPU镜像执行（不启用GPU设备）')
+      }
+    }
 
     if (!imageExists) {
       return res.status(503).json({
         success: false,
         error: useGpu
           ? 'GPU 镜像未安装。请运行以下命令安装：\n\nnpm run build:sandbox:gpu\n\n或使用 dmla CLI：\n\ndmla install --gpu'
-          : '沙箱镜像未安装。请运行以下命令安装：\n\nnpm run build:sandbox:cpu\n\n或使用 dmla CLI：\n\ndmla install --cpu'
+          : '沙箱镜像未安装。请运行以下命令安装：\n\nnpm run build:sandbox:cpu\n\n或使用 dmla CLI：\n\ndmla install --cpu\n\n注意：如果您已安装 GPU 镜像，它也支持 CPU 执行'
       })
     }
 
     // 如果请求 GPU，检查 GPU 是否可用
-    if (useGpu) {
+    if (actualUseGpu) {
       const gpuAvailable = await checkGPUAvailable()
       if (!gpuAvailable) {
         return res.status(503).json({
@@ -81,8 +95,8 @@ router.post('/run', async (req, res) => {
       }
     }
 
-    // 执行代码
-    const result = await runPythonCode(code, useGpu)
+    // 执行代码（使用确定后的镜像）
+    const result = await runPythonCode(code, actualUseGpu, actualImage)
 
     res.json(result)
 
