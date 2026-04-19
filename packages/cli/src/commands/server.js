@@ -6,7 +6,7 @@ import Docker from 'dockerode'
 import { spawn } from 'child_process'
 import http from 'http'
 import path from 'path'
-import { fileURLToPath } from 'url'
+import { fileURLToPath, pathToFileURL } from 'url'
 import fs from 'fs'
 
 const __filename = fileURLToPath(import.meta.url)
@@ -173,8 +173,10 @@ export async function startServerSync(port, useGpu = false) {
 
   // 动态 import 服务器模块并直接运行
   // 服务器模块会在 import 时自动启动（因为入口点检测逻辑）
+  // Windows 需要将路径转换为 file:// URL 格式
   try {
-    await import(actualServerPath)
+    const serverURL = pathToFileURL(actualServerPath).href
+    await import(serverURL)
   } catch (error) {
     console.log(chalk.red(`❌ 服务启动失败: ${error.message}`))
     console.log(chalk.gray(error.stack))
