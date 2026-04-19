@@ -39,6 +39,16 @@ jobs:
       - name: Build CLI package
         run: npm run build -w @icyfenix-dmla/cli
 
+      - name: Verify build output
+        run: |
+          echo "检查构建产物..."
+          ls -la packages/cli/src/server/
+          if [ ! -f "packages/cli/src/server/index.js" ]; then
+            echo "❌ 构建失败：缺少 server/index.js"
+            exit 1
+          fi
+          echo "✅ 构建产物验证通过"
+
       - name: Get version from tag
         id: version
         run: |
@@ -72,6 +82,17 @@ jobs:
           npm publish --access public --tag latest
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Verify published package
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          echo "验证发布的包内容..."
+          npm pack @icyfenix-dmla/cli@$VERSION --registry https://registry.npmjs.org
+          tar -tf icyfenix-dmla-cli-$VERSION.tgz | grep -E "server/index|server/sandbox" || {
+            echo "❌ 发布的包缺少服务器文件"
+            exit 1
+          }
+          echo "✅ 发布包验证通过"
 
       - name: Publish @icyfenix-dmla/install to npm
         run: |

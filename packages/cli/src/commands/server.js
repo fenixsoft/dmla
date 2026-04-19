@@ -117,11 +117,40 @@ async function findServiceContainer() {
  * 查找服务器入口文件
  */
 function findServerPath() {
+  // 开发环境路径：packages/cli/src/commands -> ../../../local-server/src/index.js
   const serverPath = path.resolve(__dirname, '../../../local-server/src/index.js')
+  // npm 包路径：packages/cli/src/commands -> ../server/index.js
   const standaloneServerPath = path.resolve(__dirname, '../server/index.js')
 
-  return fs.existsSync(serverPath) ? serverPath :
-         fs.existsSync(standaloneServerPath) ? standaloneServerPath : null
+  // 检查 __dirname 是否正确（调试用）
+  const cliPackageRoot = path.resolve(__dirname, '../..')
+  const expectedServerDir = path.resolve(cliPackageRoot, 'src/server')
+
+  if (fs.existsSync(serverPath)) {
+    return serverPath
+  }
+
+  if (fs.existsSync(standaloneServerPath)) {
+    return standaloneServerPath
+  }
+
+  // 调试输出：显示路径信息帮助诊断
+  console.log(chalk.yellow('⚠️ 服务入口文件查找失败'))
+  console.log(chalk.gray(`   __dirname: ${__dirname}`))
+  console.log(chalk.gray(`   开发路径: ${serverPath} (${fs.existsSync(serverPath) ? '存在' : '不存在'})`))
+  console.log(chalk.gray(`   npm路径: ${standaloneServerPath} (${fs.existsSync(standaloneServerPath) ? '存在' : '不存在'})`))
+  console.log(chalk.gray(`   CLI包根目录: ${cliPackageRoot}`))
+
+  // 检查 CLI 包根目录下的文件结构
+  const srcDir = path.resolve(cliPackageRoot, 'src')
+  if (fs.existsSync(srcDir)) {
+    console.log(chalk.gray(`   src目录内容: ${fs.readdirSync(srcDir).join(', ')}`))
+    if (fs.existsSync(expectedServerDir)) {
+      console.log(chalk.gray(`   server目录内容: ${fs.readdirSync(expectedServerDir).join(', ')}`))
+    }
+  }
+
+  return null
 }
 
 /**
