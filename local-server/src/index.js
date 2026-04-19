@@ -20,6 +20,16 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() })
 })
 
+// 停止服务（用于 CLI stop 命令）
+app.post('/api/shutdown', (req, res) => {
+  res.json({ status: 'shutting_down', timestamp: new Date().toISOString() })
+  console.log('🛑 收到停止请求，服务即将关闭...')
+  // 延迟关闭，确保响应发送完成
+  setTimeout(() => {
+    process.exit(0)
+  }, 100)
+})
+
 // 沙箱 API
 app.use('/api/sandbox', sandboxRouter)
 

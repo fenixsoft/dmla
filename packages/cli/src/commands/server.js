@@ -261,7 +261,51 @@ export async function startServer(port, useGpu = false) {
  * 停止服务
  */
 export async function stopServer() {
-  // 查找运行中的容器
+  // 首先尝试通过 API 停止服务
+  const port = CONFIG.defaultPort
+  const running = await checkServiceRunning(port)
+
+  if (running) {
+    try {
+      // 调用 shutdown API
+      await new Promise((resolve, reject) => {
+        const req = http.request({
+          hostname: 'localhost',
+          port: port,
+          path: '/api/shutdown',
+          method: 'POST',
+          timeout: 5000
+        }, (res) => {
+          if (res.statusCode === 200) {
+            console.log(chalk.green('✅ 服务已停止'))
+            resolve()
+          } else {
+            reject(new Error(`HTTP ${res.statusCode}`))
+          }
+        })
+        req.on('error', (e) => reject(e))
+        req.on('timeout', () => {
+          req.destroy()
+          reject(new Error('Timeout'))
+        })
+        req.end()
+      })
+
+      // 等待服务完全关闭
+      let attempts = 0
+      while (attempts < 10) {
+        const stillRunning = await checkServiceRunning(port)
+        if (!stillRunning) break
+        await new Promise(r => setTimeout(r, 200))
+        attempts++
+      }
+      return
+    } catch (error) {
+      console.log(chalk.yellow(`⚠️ 通过 API 停止失败: ${error.message}`))
+    }
+  }
+
+  // 尝试查找并停止 Docker 容器
   const container = await findServiceContainer()
 
   if (container) {
@@ -269,14 +313,15 @@ export async function stopServer() {
       const containerObj = docker.getContainer(container.Id)
       await containerObj.stop()
       await containerObj.remove()
-      console.log(chalk.green('✅ 服务已停止'))
+      console.log(chalk.green('✅ 服务容器已停止'))
     } catch (error) {
-      console.log(chalk.red(`❌ 停止失败: ${error.message}`))
+      console.log(chalk.red(`❌ 停止容器失败: ${error.message}`))
     }
+  } else if (!running) {
+    console.log(chalk.gray('   服务未运行'))
   } else {
-    // 尝试通过端口查找进程
-    console.log(chalk.yellow('⚠️ 未找到运行中的服务容器'))
-    console.log(chalk.gray('   提示: 服务可能以非容器模式运行'))
+    console.log(chalk.yellow('⚠️ 无法停止服务'))
+    console.log(chalk.gray('   提示: 手动终止端口 3001 上的进程'))
   }
 }
 
