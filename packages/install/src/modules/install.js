@@ -32,7 +32,7 @@ export async function installNpmPackage() {
 /**
  * 验证安装并启动服务
  */
-export async function verifyInstallation(port = 3001) {
+export async function verifyInstallation(port = 3001, useGpu = false) {
   console.log(chalk.gray('启动服务...'))
 
   // 检查 dmla 命令是否可用
@@ -45,11 +45,13 @@ export async function verifyInstallation(port = 3001) {
     console.log(chalk.gray('dmla 命令暂不可用，使用 npx 启动...'))
   }
 
-  // 启动服务（优先使用 dmla，否则用 npx）
-  const cmd = dmlaAvailable ? 'dmla' : 'npx'
+  // 构建启动参数
+  const gpuArg = useGpu ? ['--gpu'] : []
   const args = dmlaAvailable
-    ? ['start', '--port', port.toString()]
-    : ['@icyfenix-dmla/cli', 'start', '--port', port.toString()]
+    ? ['start', '--port', port.toString(), ...gpuArg]
+    : ['@icyfenix-dmla/cli', 'start', '--port', port.toString(), ...gpuArg]
+
+  const cmd = dmlaAvailable ? 'dmla' : 'npx'
 
   const serverProcess = spawn(cmd, args, {
     stdio: 'inherit',
@@ -59,7 +61,7 @@ export async function verifyInstallation(port = 3001) {
   // 处理启动错误
   serverProcess.on('error', (err) => {
     console.log(chalk.yellow('⚠️ 服务启动失败'))
-    console.log(chalk.yellow(`💡 请手动执行: npx @icyfenix-dmla/cli start --port ${port}`))
+    console.log(chalk.yellow(`💡 请手动执行: ${cmd} ${args.join(' ')}`))
     return false
   })
 
@@ -83,7 +85,7 @@ export async function verifyInstallation(port = 3001) {
   }
 
   console.log(chalk.yellow('⚠️ 服务启动超时'))
-  console.log(chalk.yellow('💡 请手动执行: dmla start'))
+  console.log(chalk.yellow(`💡 请手动执行: ${cmd} ${args.join(' ')}`))
   return false
 }
 

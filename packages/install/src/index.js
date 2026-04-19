@@ -283,7 +283,9 @@ export async function runInstallTUI() {
     })
 
     if (startNow.start === 'yes') {
-      await verifyInstallation(port)
+      // 根据安装的镜像类型决定是否使用 GPU
+      const useGpu = imageTypes.includes('gpu')
+      await verifyInstallation(port, useGpu)
     }
 
     // ─────────────────────────────────────────────────────────────
@@ -292,10 +294,14 @@ export async function runInstallTUI() {
     showBanner()
     console.log(chalk.green('DMLA Sandbox 安装成功'))
     console.log(chalk.gray('常用命令:'))
-    console.log(chalk.gray('  dmla start      启动服务'))
-    console.log(chalk.gray('  dmla status     查看状态'))
-    console.log(chalk.gray('  dmla update     更新版本'))
-    console.log(chalk.gray('  dmla doctor     环境诊断'))
+    if (imageTypes.includes('gpu')) {
+      console.log(chalk.gray('  dmla start --gpu  启动 GPU 服务'))
+    } else {
+      console.log(chalk.gray('  dmla start        启动服务'))
+    }
+    console.log(chalk.gray('  dmla status       查看状态'))
+    console.log(chalk.gray('  dmla update       更新版本'))
+    console.log(chalk.gray('  dmla doctor       环境诊断'))
     console.log()
     console.log(chalk.gray(`服务地址: http://localhost:${port}`))
     console.log(chalk.gray(`健康检查: http://localhost:${port}/api/health`))
