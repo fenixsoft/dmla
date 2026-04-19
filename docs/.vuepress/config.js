@@ -156,7 +156,7 @@ export default {
             text: '神经网络',
             collapsible: false,
             children: [
-              { text: '神经网络的起源', link: '/deep-learning/neural-network-structure/idea-origin' },
+              { text: '神经网络设计思想', link: '/deep-learning/neural-network-structure/idea-origin' },
               { text: '线性感知机', link: '/deep-learning/neural-network-structure/perceptron' },
               { text: '多层感知机', link: '/deep-learning/neural-network-structure/mlp' },
               { text: '前向传播', link: '/deep-learning/neural-network-structure/forward-propagation' },

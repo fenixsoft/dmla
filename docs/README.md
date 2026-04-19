@@ -52,9 +52,9 @@ TBD
 - **在线阅读**：本文档在线阅读地址为 [https://ai.icyfenix.cn](https://ai.icyfenix.cn) 。
 网站由 GitHub Pages 提供网站存储空间；由 Github Acitons 提供的持续集成服务实时把 Git 仓库的 Markdown 文档编译同步至网站，并推送至 CDN 提供国内的访问加速；由 GitHub Discussions 与 [Giscus](https://github.com/giscus/giscus) 提供讨论服务。
 
-- **代码沙箱**：本文档内包含大量的代码实践，用于演示机器学习算法以及进行模型训练。对于第一部分数学基础和第二部分经典统计学习算法，只需纯 CPU 环境即可运行。对于深度学习及之后的内容，需要有 GPU 支持（目前是 Pytorch with CUDA 11.8）。可通过如下命令一键完成沙箱环境构建。租赁 GPU 云主机可在 10 元成本内完成所有训练实践，更多详情请参见[沙箱环境构建](sandbox.md)。
+- **代码沙箱**：本文档内包含大量的代码实践，用于演示机器学习算法以及进行模型训练。对于第一部分数学基础和第二部分经典统计学习算法，只需纯 CPU 环境即可运行。对于深度学习及之后的内容，需要有 GPU 支持（目前是 Pytorch with CUDA 11.8）。可通过如下命令一键完成沙箱环境构建。租赁 GPU 云主机可在 10 元成本内完成所有训练实践，更多详情请参见[构建沙箱环境](sandbox.md)。
   ```shell
-  curl -fsSL https://ai.icyfenix.cn/install.sh | sh
+  npx @icyfenix-dmla/install
   ```
 
 - **离线运行**：

@@ -21,8 +21,6 @@
 - 如果你使用的是互联网上部署的文档（[https://ai.icyfenix.cn](https://ai.icyfenix.cn)），可以在本地运行如下命令，使用`DMLA-CLI`部署沙箱环境，让网站上的代码能够在你本地执行：
 
     ``` shell
-    curl -fsSL https://ai.icyfenix.cn/install.sh | sh
-    # 或者
     npx @icyfenix-dmla/install
     ```
 
@@ -40,10 +38,7 @@
     dmla status
 
     # 安装镜像
-    dmla install               # 安装所有镜像
-    dmla install --cpu         # 仅 CPU 版本
-    dmla install --gpu         # 仅 GPU 版本
-    dmla install --registry acr  # 从阿里云 ACR 安装镜像（国内加速）
+    dmla install
 
     # 更新
     dmla update                # 更新 npm 包和镜像
@@ -61,12 +56,13 @@
     npm run local
 
     # 拉取镜像
-    docker pull icyfenix/dmla-sandbox:cpu
-    或者
+    # 从 Docker Hub 拉取（全球用户）
     docker pull icyfenix/dmla-sandbox:gpu
+    docker tag icyfenix/dmla-sandbox:gpu dmla-sandbox:gpu
 
-    # 使用国内的镜像缓存
-    docker pull crpi-aani1ibpows293b8.cn-hangzhou.personal.cr.aliyuncs.com/fenixsoft/dmla-sandbox:[cpu/gpu]
+    # 或从阿里云 ACR 拉取（国内加速）
+    docker pull crpi-aani1ibpows293b8.cn-hangzhou.personal.cr.aliyuncs.com/fenixsoft/dmla-sandbox:gpu
+    docker tag crpi-aani1ibpows293b8.cn-hangzhou.personal.cr.aliyuncs.com/fenixsoft/dmla-sandbox:gpu dmla-sandbox:gpu
 
     # 本地编译镜像
     npm run build:sandbox:[cpu/gpu/all]
@@ -78,11 +74,11 @@
 - 对于第一部分数学基础和第二部分经典统计学习算法，只需纯 CPU 环境即可运行。
 - 对于深度学习及之后的内容，需要有 GPU 异构计算环境的支持（目前是 Pytorch with CUDA 11.8）。
 - 沙箱环境默认端口为 3001，如果你选择了其他端口，或者非本机的沙箱（如云服务），请点击文档右上角设置图标 <a href="javascript:document.getElementsByTagName('button')[0].click()"><svg data-v-9eec72c3="" class="settings-icon" style="width:18px; height:18px; color:#000" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle data-v-9eec72c3="" cx="12" cy="12" r="3"></circle><path data-v-9eec72c3="" d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg></a> 手动填入沙箱地址。
-- 包括大语言模型的完整训练在内，本文档所有练习都可以在 16G 级别的 Nvidia 显卡上顺利完成。如本地硬件不满足，可考虑以按用量付费方式，通过云服务商的 GPU 异构计算服务部署沙箱来完成练习（按 3090 GPU / 2元 / 小时，成本 10 元以内）。
+- 包括大语言模型的完整训练在内，本文档所有练习都可以在 16G 级别的 Nvidia 显卡上顺利完成。如本地硬件不满足要求，也可考虑以按用量付费方式，通过云服务商的 GPU 异构计算服务部署沙箱来完成练习（按 GeForce RTX 3090 GPU / 2 元 / 小时，成本在 10 元以内）。
 
 ## 检查环境
 
-你可以使用以下示例代码实际检查沙箱环境是否已经可用：
+你可以使用以下示例代码实际检查沙箱环境是否已经可用，代码可编辑，点击 Run 或者 Run on GPU 按钮运行代码：
 
 ```python runnable gpu
 import importlib.util
