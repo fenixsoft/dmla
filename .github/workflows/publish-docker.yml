@@ -20,6 +20,7 @@ concurrency:
   cancel-in-progress: false
 
 env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   IMAGE_NAME: dmla-sandbox
   DOCKERHUB_NAMESPACE: icyfenix
   ACR_REGISTRY: crpi-aani1ibpows293b8.cn-hangzhou.personal.cr.aliyuncs.com
