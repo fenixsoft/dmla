@@ -109,7 +109,7 @@ export async function runInstallTUI() {
     console.log()
 
     // ─────────────────────────────────────────────────────────────
-    // 步骤 2: 选择镜像仓库
+    // 步骤 2: 选择镜像仓库（或跳过拉取）
     // ─────────────────────────────────────────────────────────────
     const registryChoice = await prompt({
       type: 'select',
@@ -119,12 +119,18 @@ export async function runInstallTUI() {
       choices: [
         { name: 'auto', message: '自动选择 (根据网络延迟)' },
         { name: 'dockerhub', message: 'Docker Hub (全球访问)' },
-        { name: 'acr', message: '阿里云 ACR (国内加速)' }
+        { name: 'acr', message: '阿里云 ACR (国内加速)' },
+        { name: 'skip', message: '暂不拉取镜像 (仅安装 CLI)' }
       ]
     })
 
     let registry = registryChoice.registry
-    if (registry === 'auto') {
+    let skipPull = false
+
+    if (registry === 'skip') {
+      skipPull = true
+      console.log(chalk.gray('   将仅安装 CLI 工具'))
+    } else if (registry === 'auto') {
       console.log(chalk.gray('   检测网络延迟...'))
       registry = 'acr'
       console.log(chalk.gray(`   已选择: ${registry === 'acr' ? '阿里云 ACR' : 'Docker Hub'}`))
@@ -133,40 +139,39 @@ export async function runInstallTUI() {
     console.log()
 
     // ─────────────────────────────────────────────────────────────
-    // 步骤 3: 选择镜像类型
+    // 步骤 3: 选择镜像类型（如果需要拉取）
     // ─────────────────────────────────────────────────────────────
-    const choices = [
-      { name: 'auto', message: '自动选择 (根据环境)' },
-      { name: 'all', message: '全部安装 (CPU + GPU)' },
-      { name: 'cpu', message: '仅 CPU 版本 (~650MB)' },
-      { name: 'gpu', message: '仅 GPU 版本 (~5.62GB)' },
-      { name: 'skip', message: '暂不拉取镜像 (仅安装 CLI)' }
-    ]
-
-    const typeChoice = await prompt({
-      type: 'select',
-      name: 'imageType',
-      message: '请选择要安装的镜像',
-      initial: 0,  // 默认选择第一项（自动选择）
-      choices
-    })
-
     let imageTypes = []
-    let skipPull = false
-    const selectedType = typeChoice.imageType
-    if (selectedType === 'skip') {
-      skipPull = true
-    } else if (selectedType === 'auto') {
-      // 根据环境自动选择
-      imageTypes = env.gpu ? ['gpu'] : ['cpu']
-      console.log(chalk.gray(`   已选择: ${env.gpu ? 'GPU 版本' : 'CPU 版本'}`))
-    } else if (selectedType === 'all') {
-      imageTypes = ['cpu', 'gpu']
-    } else {
-      imageTypes = [selectedType]
-    }
 
-    console.log()
+    if (!skipPull) {
+      const choices = [
+        { name: 'auto', message: '自动选择 (根据环境)' },
+        { name: 'all', message: '全部安装 (CPU + GPU)' },
+        { name: 'cpu', message: '仅 CPU 版本 (~650MB)' },
+        { name: 'gpu', message: '仅 GPU 版本 (~5.62GB)' }
+      ]
+
+      const typeChoice = await prompt({
+        type: 'select',
+        name: 'imageType',
+        message: '请选择要安装的镜像',
+        initial: 0,  // 默认选择第一项（自动选择）
+        choices
+      })
+
+      const selectedType = typeChoice.imageType
+      if (selectedType === 'auto') {
+        // 根据环境自动选择
+        imageTypes = env.gpu ? ['gpu'] : ['cpu']
+        console.log(chalk.gray(`   已选择: ${env.gpu ? 'GPU 版本' : 'CPU 版本'}`))
+      } else if (selectedType === 'all') {
+        imageTypes = ['cpu', 'gpu']
+      } else {
+        imageTypes = [selectedType]
+      }
+
+      console.log()
+    }
 
     // ─────────────────────────────────────────────────────────────
     // 步骤 4: 配置端口
