@@ -18,12 +18,25 @@ import time
 import traceback
 from typing import Optional
 
+# 调试日志文件（容器内路径）
+DEBUG_LOG = '/tmp/kernel_runner.log'
+
+def log_debug(message):
+    """写入调试日志"""
+    try:
+        with open(DEBUG_LOG, 'a') as f:
+            timestamp = time.strftime('%Y-%m-%d %H:%M:%S')
+            f.write(f"[{timestamp}] {message}\n")
+    except:
+        pass
+
 # 抑制导入时的 stdout 输出，避免污染 JSON 结果
 import io
 import os
 
 # 将 stdout 重定向到临时缓冲区，抑制导入时的输出
 _original_stdout = sys.stdout
+_original_stderr = sys.stderr
 _suppress_buffer = io.StringIO()
 
 def suppress_stdout():
@@ -34,10 +47,14 @@ def suppress_stdout():
 def restore_stdout():
     """恢复 stdout 输出"""
     sys.stdout = _original_stdout
-    sys.stderr = sys.stdout
+    sys.stderr = _original_stderr
+
+log_debug('Starting kernel_runner.py')
+log_debug(f'Arguments: {sys.argv}')
 
 # 在导入 matplotlib 前抑制输出
 suppress_stdout()
+log_debug('Suppressing stdout for imports')
 
 # 配置 matplotlib 中文字体支持（在导入 matplotlib 之前）
 import matplotlib
@@ -51,6 +68,7 @@ fm._load_fontmanager(try_read_cache=False)
 
 # 导入完成后恢复 stdout
 restore_stdout()
+log_debug('Imports completed, stdout restored')
 
 # 超时时间（秒）
 DEFAULT_TIMEOUT = 60
@@ -67,8 +85,11 @@ def run_code(code: str, timeout: int = DEFAULT_TIMEOUT) -> dict:
     Returns:
         包含 success, outputs, executionTime 的字典
     """
+    log_debug(f'run_code called, code length={len(code)}, timeout={timeout}')
+
     # 在执行过程中抑制 stdout，避免 kernel 启动输出污染结果
     suppress_stdout()
+    log_debug('stdout suppressed for kernel execution')
 
     from jupyter_client import KernelManager
 
@@ -78,34 +99,47 @@ def run_code(code: str, timeout: int = DEFAULT_TIMEOUT) -> dict:
     kc = None
     outputs = []
     timed_out = False
+    msg_count = 0
 
     try:
         # 1. 启动 Kernel
+        log_debug('Creating KernelManager')
         km = KernelManager()
+        log_debug('Starting kernel')
         km.start_kernel()
+        log_debug('Kernel started, creating client')
         kc = km.client()
         kc.start_channels()
+        log_debug('Channels started')
 
         # 等待 Kernel 就绪（最多 30 秒）
         ready_timeout = min(30, timeout // 2) if timeout > 2 else 1
+        log_debug(f'Waiting for kernel ready, timeout={ready_timeout}')
         kc.wait_for_ready(timeout=ready_timeout)
+        log_debug('Kernel ready')
 
         # 2. 执行代码
+        log_debug('Executing code')
         msg_id = kc.execute(code, allow_stdin=False)
+        log_debug(f'Code execution started, msg_id={msg_id}')
 
         # 3. 收集输出
+        log_debug('Collecting outputs')
         while True:
             # 检查是否已超时
             remaining = deadline - time.time()
             if remaining <= 0:
+                log_debug('Execution timeout reached')
                 timed_out = True
                 break
 
             try:
                 # 使用剩余时间作为超时
                 msg = kc.get_iopub_msg(timeout=max(1, remaining))
+                msg_count += 1
             except Exception as e:
                 # EmptyQueueError 或其他超时异常
+                log_debug(f'get_iopub_msg exception: {type(e).__name__}: {e}')
                 # 检查是否真的超时了
                 if time.time() >= deadline:
                     timed_out = True
@@ -113,10 +147,12 @@ def run_code(code: str, timeout: int = DEFAULT_TIMEOUT) -> dict:
 
             msg_type = msg['header']['msg_type']
             content = msg['content']
+            log_debug(f'Message {msg_count}: type={msg_type}')
 
             # 忽略状态消息，只关注 idle 作为结束标志
             if msg_type == 'status':
                 if content.get('execution_state') == 'idle':
+                    log_debug('Kernel idle, execution complete')
                     break
                 continue
 
@@ -127,6 +163,7 @@ def run_code(code: str, timeout: int = DEFAULT_TIMEOUT) -> dict:
                     'name': content.get('name', 'stdout'),
                     'text': content.get('text', '')
                 })
+                log_debug(f'Stream output: {content.get("name")} len={len(content.get("text", ""))}')
 
             elif msg_type == 'display_data':
                 outputs.append({
@@ -134,6 +171,7 @@ def run_code(code: str, timeout: int = DEFAULT_TIMEOUT) -> dict:
                     'data': content.get('data', {}),
                     'metadata': content.get('metadata', {})
                 })
+                log_debug(f'Display data: keys={list(content.get("data", {}).keys())}')
 
             elif msg_type == 'execute_result':
                 outputs.append({
@@ -142,6 +180,7 @@ def run_code(code: str, timeout: int = DEFAULT_TIMEOUT) -> dict:
                     'metadata': content.get('metadata', {}),
                     'execution_count': content.get('execution_count')
                 })
+                log_debug(f'Execute result: keys={list(content.get("data", {}).keys())}')
 
             elif msg_type == 'error':
                 outputs.append({
@@ -150,14 +189,23 @@ def run_code(code: str, timeout: int = DEFAULT_TIMEOUT) -> dict:
                     'evalue': content.get('evalue', ''),
                     'traceback': content.get('traceback', [])
                 })
+                log_debug(f'Error: {content.get("ename")}: {content.get("evalue")}')
 
             elif msg_type == 'clear_output':
-                pass
+                log_debug('Clear output received')
 
         execution_time = time.time() - start_time
+        log_debug(f'Execution finished, time={execution_time:.3f}s, outputs={len(outputs)}, timed_out={timed_out}')
 
         # 执行完成后恢复 stdout，准备输出 JSON
         restore_stdout()
+        log_debug('stdout restored for JSON output')
+
+        # 读取 suppressed buffer 内容，记录到日志
+        suppressed_content = _suppress_buffer.getvalue()
+        if suppressed_content:
+            log_debug(f'Suppressed output length: {len(suppressed_content)}')
+            log_debug(f'Suppressed output preview: {suppressed_content[:500]}')
 
         if timed_out:
             return {
@@ -179,6 +227,8 @@ def run_code(code: str, timeout: int = DEFAULT_TIMEOUT) -> dict:
 
     except Exception as e:
         execution_time = time.time() - start_time
+        log_debug(f'Exception in run_code: {type(e).__name__}: {e}')
+        log_debug(f'Traceback: {traceback.format_exc()}')
         restore_stdout()
         return {
             'success': False,
@@ -194,19 +244,22 @@ def run_code(code: str, timeout: int = DEFAULT_TIMEOUT) -> dict:
     finally:
         # 确保 stdout 已恢复
         restore_stdout()
+        log_debug('stdout restored in finally')
 
         # 清理资源
         if kc:
             try:
                 kc.stop_channels()
-            except Exception:
-                pass
+                log_debug('Channels stopped')
+            except Exception as e:
+                log_debug(f'Error stopping channels: {e}')
 
         if km:
             try:
                 km.shutdown_kernel(now=True)
-            except Exception:
-                pass
+                log_debug('Kernel shutdown')
+            except Exception as e:
+                log_debug(f'Error shutting down kernel: {e}')
 
 
 def main():
@@ -219,7 +272,10 @@ def main():
     result = run_code(args.code, args.timeout)
 
     # 输出 JSON 结果到 stdout
-    print(json.dumps(result, ensure_ascii=False))
+    output_json = json.dumps(result, ensure_ascii=False)
+    log_debug(f'Final JSON output length: {len(output_json)}')
+    log_debug(f'Final JSON preview: {output_json[:500]}')
+    print(output_json)
 
 
 if __name__ == '__main__':
