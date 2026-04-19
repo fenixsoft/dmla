@@ -5,7 +5,8 @@
 import { program } from 'commander'
 import chalk from 'chalk'
 import { startServer, stopServer, getStatus } from './commands/server.js'
-import { installImages, updateAll, runDoctor } from './commands/manage.js'
+import { updateAll, runDoctor } from './commands/manage.js'
+import { runInstallTUI } from '@icyfenix-dmla/install'
 
 const VERSION = '0.0.0' // 将在发布时由 workflow 更新
 
@@ -58,24 +59,9 @@ program
 // ─────────────────────────────────────────────────────────────
 program
   .command('install')
-  .description('安装 Docker 镜像')
-  .option('--cpu', '仅安装 CPU 版本')
-  .option('--gpu', '仅安装 GPU 版本')
-  .option('--all', '安装所有镜像（默认）')
-  .option('-r, --registry <type>', '镜像仓库 (dockerhub/acr)', 'dockerhub')
-  .action(async (options) => {
-    const registry = options.registry
-    let types = []
-
-    if (options.cpu) types.push('cpu')
-    if (options.gpu) types.push('gpu')
-    if (types.length === 0 || options.all) types = ['cpu', 'gpu']
-
-    console.log(chalk.blue('📦 安装 DMLA Docker 镜像...'))
-    console.log(chalk.gray(`   仓库: ${registry}`))
-    console.log(chalk.gray(`   类型: ${types.join(', ')}`))
-
-    await installImages(types, registry)
+  .description('启动安装向导')
+  .action(async () => {
+    await runInstallTUI()
   })
 
 // ─────────────────────────────────────────────────────────────

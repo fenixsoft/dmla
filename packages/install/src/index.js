@@ -25,6 +25,21 @@ function isPortAvailable(port) {
 }
 
 /**
+ * 显示 Banner
+ */
+function showBanner() {
+  console.log()
+  console.log(chalk.cyan(' ______   ____    ____  _____          _       '))
+  console.log(chalk.cyan('|_   _ `.|_   \\  /   _||_   _|        / \\      '))
+  console.log(chalk.cyan('  | | `. \\ |   \\/   |    | |         / _ \\     '))
+  console.log(chalk.cyan('  | |  | | | |\\  /| |    | |   _    / ___ \\    '))
+  console.log(chalk.cyan(' _| |_.\' /_| |_\\/_| |_  _| |__/ | _/ /   \\ \\_  '))
+  console.log(chalk.cyan('|______.\'|_____||_____||________||____| |____| '))
+  console.log(chalk.blue('== Designing Machine Learning Applications =='))
+  console.log()
+}
+
+/**
  * 显示退出信息并终止程序
  */
 function gracefulExit() {
@@ -35,29 +50,31 @@ function gracefulExit() {
   process.exit(0)
 }
 
-// 监听 Ctrl+C 信号
-process.on('SIGINT', gracefulExit)
+/**
+ * 设置信号监听
+ */
+function setupSignalHandlers() {
+  process.on('SIGINT', gracefulExit)
 
-// 监听 enquirer 的取消事件
-process.on('uncaughtException', (err) => {
-  if (err.code === 'ERR_USE_AFTER_CLOSE') {
-    gracefulExit()
-  } else {
-    throw err
-  }
-})
+  process.on('uncaughtException', (err) => {
+    if (err.code === 'ERR_USE_AFTER_CLOSE') {
+      gracefulExit()
+    } else {
+      throw err
+    }
+  })
+}
 
-console.log()
-console.log(chalk.cyan(' ______   ____    ____  _____          _       '))
-console.log(chalk.cyan('|_   _ `.|_   \\  /   _||_   _|        / \\      '))
-console.log(chalk.cyan('  | | `. \\ |   \\/   |    | |         / _ \\     '))
-console.log(chalk.cyan('  | |  | | | |\\  /| |    | |   _    / ___ \\    '))
-console.log(chalk.cyan(' _| |_.\' /_| |_\\/_| |_  _| |__/ | _/ /   \\ \\_  '))
-console.log(chalk.cyan('|______.\'|_____||_____||________||____| |____| '))
-console.log(chalk.blue('== Designing Machine Learning Applications =='))
-console.log()
+/**
+ * 运行安装 TUI 主流程
+ */
+export async function runInstallTUI() {
+  // 设置信号监听
+  setupSignalHandlers()
 
-async function main() {
+  // 显示 Banner
+  showBanner()
+
   try {
     // ─────────────────────────────────────────────────────────────
     // 步骤 1: 环境检测
@@ -108,9 +125,7 @@ async function main() {
 
     let registry = registryChoice.registry
     if (registry === 'auto') {
-      // 简化的自动选择逻辑
       console.log(chalk.gray('   检测网络延迟...'))
-      // 默认使用 ACR（国内用户更常见）
       registry = 'acr'
       console.log(chalk.gray(`   已选择: ${registry === 'acr' ? '阿里云 ACR' : 'Docker Hub'}`))
     }
@@ -126,7 +141,6 @@ async function main() {
       { name: 'gpu', message: '仅 GPU 版本 (~2.5GB)' }
     ]
 
-    // 如果检测到GPU，添加推荐选项并设为默认
     if (env.gpu) {
       choices.push({ name: 'gpu-recommended', message: `仅 GPU 版本 (推荐，已检测到 GPU)` })
     }
@@ -135,7 +149,7 @@ async function main() {
       type: 'select',
       name: 'imageType',
       message: '请选择要安装的镜像',
-      initial: env.gpu ? 3 : 1,  // 有GPU默认选推荐项，无GPU默认选CPU
+      initial: env.gpu ? 3 : 1,
       choices
     })
 
@@ -156,7 +170,6 @@ async function main() {
     const defaultPort = 3001
     let port = defaultPort
 
-    // 检测默认端口是否可用
     const portAvailable = await isPortAvailable(defaultPort)
 
     if (portAvailable) {
@@ -182,7 +195,6 @@ async function main() {
     }
 
     console.log(chalk.gray(`   端口: ${port}`))
-
     console.log()
 
     // ─────────────────────────────────────────────────────────────
@@ -192,7 +204,6 @@ async function main() {
     console.log()
 
     await pullImages(imageTypes, registry)
-
     console.log()
 
     // ─────────────────────────────────────────────────────────────
@@ -202,7 +213,6 @@ async function main() {
     console.log()
 
     await installNpmPackage()
-
     console.log()
 
     // ─────────────────────────────────────────────────────────────
@@ -228,15 +238,7 @@ async function main() {
     // ─────────────────────────────────────────────────────────────
     // 完成
     // ─────────────────────────────────────────────────────────────
-    console.log()
-    console.log(chalk.cyan(' ______   ____    ____  _____          _       '))
-    console.log(chalk.cyan('|_   _ `.|_   \\  /   _||_   _|        / \\      '))
-    console.log(chalk.cyan('  | | `. \\ |   \\/   |    | |         / _ \\     '))
-    console.log(chalk.cyan('  | |  | | | |\\  /| |    | |   _    / ___ \\    '))
-    console.log(chalk.cyan(' _| |_.\' /_| |_\\/_| |_  _| |__/ | _/ /   \\ \\_  '))
-    console.log(chalk.cyan('|______.\'|_____||_____||________||____| |____| '))
-    console.log(chalk.blue('== Designing Machine Learning Applications =='))
-    console.log()
+    showBanner()
     console.log(chalk.green('DMLA Sandbox 安装成功'))
     console.log(chalk.gray('常用命令:'))
     console.log(chalk.gray('  dmla start      启动服务'))
@@ -249,7 +251,6 @@ async function main() {
     console.log()
 
   } catch (error) {
-    // 用户取消安装（Ctrl+C）
     if (error.message && error.message.includes('cancel')) {
       gracefulExit()
       return
@@ -261,4 +262,9 @@ async function main() {
   }
 }
 
-main()
+// 直接运行时执行主流程（通过检测是否为主模块）
+// ES Module 中使用 import.meta.url 检测
+const isMainModule = import.meta.url === `file://${process.argv[1].replace(/\\/g, '/')}`
+if (isMainModule) {
+  runInstallTUI()
+}

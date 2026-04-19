@@ -29,8 +29,6 @@ env:
 jobs:
   build-images:
     runs-on: ubuntu-latest
-    outputs:
-      version: ${{ steps.version.outputs.version }}
     strategy:
       matrix:
         type: [cpu, gpu]
@@ -43,16 +41,6 @@ jobs:
         with:
           node-version: '24'
 
-      - name: Get version from tag
-        id: version
-        run: |
-          if [[ "${{ github.ref_type }}" == "tag" ]]; then
-            VERSION="${{ github.ref_name }}"
-          else
-            VERSION="$(date +%Y.%-m.%-d-%H%M)"
-          fi
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-
       - name: Extract shared modules
         run: npm run extract:shared
 
@@ -64,9 +52,7 @@ jobs:
         with:
           context: .
           file: local-server/Dockerfile.sandbox${{ matrix.type == 'cpu' && '.cpu' || '' }}
-          tags: |
-            ${{ env.IMAGE_NAME }}:${{ matrix.type }}
-            ${{ env.IMAGE_NAME }}:${{ steps.version.outputs.version }}-${{ matrix.type }}
+          tags: ${{ env.IMAGE_NAME }}:${{ matrix.type }}
           outputs: type=docker,dest=/tmp/image-${{ matrix.type }}.tar
           cache-from: type=gha
           cache-to: type=gha,mode=max
@@ -108,21 +94,15 @@ jobs:
 
       - name: Tag and push images
         run: |
-          VERSION="${{ needs.build-images.outputs.version }}"
           DOCKERHUB_NAMESPACE="icyfenix"
           IMAGE_NAME="dmla-sandbox"
 
           docker tag ${IMAGE_NAME}:${{ matrix.type }} \
             ${DOCKERHUB_NAMESPACE}/${IMAGE_NAME}:${{ matrix.type }}
-          docker tag ${IMAGE_NAME}:${{ matrix.type }} \
-            ${DOCKERHUB_NAMESPACE}/${IMAGE_NAME}:${VERSION}-${{ matrix.type }}
-
           docker push ${DOCKERHUB_NAMESPACE}/${IMAGE_NAME}:${{ matrix.type }}
-          docker push ${DOCKERHUB_NAMESPACE}/${IMAGE_NAME}:${VERSION}-${{ matrix.type }}
 
           echo "✅ Pushed to Docker Hub:"
           echo "  - ${DOCKERHUB_NAMESPACE}/${IMAGE_NAME}:${{ matrix.type }}"
-          echo "  - ${DOCKERHUB_NAMESPACE}/${IMAGE_NAME}:${VERSION}-${{ matrix.type }}"
 
   push-acr:
     runs-on: ubuntu-latest
@@ -150,22 +130,16 @@ jobs:
 
       - name: Tag and push images to ACR
         run: |
-          VERSION="${{ needs.build-images.outputs.version }}"
           ACR_REGISTRY="crpi-aani1ibpows293b8.cn-hangzhou.personal.cr.aliyuncs.com"
           ACR_NS="fenixsoft"
           IMAGE_NAME="dmla-sandbox"
 
           docker tag ${IMAGE_NAME}:${{ matrix.type }} \
             ${ACR_REGISTRY}/${ACR_NS}/${IMAGE_NAME}:${{ matrix.type }}
-          docker tag ${IMAGE_NAME}:${{ matrix.type }} \
-            ${ACR_REGISTRY}/${ACR_NS}/${IMAGE_NAME}:${VERSION}-${{ matrix.type }}
-
           docker push ${ACR_REGISTRY}/${ACR_NS}/${IMAGE_NAME}:${{ matrix.type }}
-          docker push ${ACR_REGISTRY}/${ACR_NS}/${IMAGE_NAME}:${VERSION}-${{ matrix.type }}
 
           echo "✅ Pushed to ACR:"
           echo "  - ${ACR_REGISTRY}/${ACR_NS}/${IMAGE_NAME}:${{ matrix.type }}"
-          echo "  - ${ACR_REGISTRY}/${ACR_NS}/${IMAGE_NAME}:${VERSION}-${{ matrix.type }}"
 
   summary:
     runs-on: ubuntu-latest
@@ -174,22 +148,12 @@ jobs:
     steps:
       - name: Summary
         run: |
-          if [[ "${{ github.ref_type }}" == "tag" ]]; then
-            VERSION="${{ github.ref_name }}"
-          else
-            VERSION="$(date +%Y.%-m.%-d-%H%M)"
-          fi
-
           echo "## 🐳 Docker 镜像发布完成" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### 版本: $VERSION" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
 
           echo "#### Docker Hub" >> $GITHUB_STEP_SUMMARY
           echo "- icyfenix/dmla-sandbox:cpu" >> $GITHUB_STEP_SUMMARY
           echo "- icyfenix/dmla-sandbox:gpu" >> $GITHUB_STEP_SUMMARY
-          echo "- icyfenix/dmla-sandbox:$VERSION-cpu" >> $GITHUB_STEP_SUMMARY
-          echo "- icyfenix/dmla-sandbox:$VERSION-gpu" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
 
           echo "#### 阿里云 ACR（国内加速）" >> $GITHUB_STEP_SUMMARY
@@ -201,7 +165,9 @@ jobs:
           echo '```bash' >> $GITHUB_STEP_SUMMARY
           echo '# Docker Hub（全球）' >> $GITHUB_STEP_SUMMARY
           echo 'docker pull icyfenix/dmla-sandbox:gpu' >> $GITHUB_STEP_SUMMARY
+          echo 'docker pull icyfenix/dmla-sandbox:cpu' >> $GITHUB_STEP_SUMMARY
           echo '' >> $GITHUB_STEP_SUMMARY
           echo '# 阿里云 ACR（国内加速）' >> $GITHUB_STEP_SUMMARY
           echo 'docker pull crpi-aani1ibpows293b8.cn-hangzhou.personal.cr.aliyuncs.com/fenixsoft/dmla-sandbox:gpu' >> $GITHUB_STEP_SUMMARY
+          echo 'docker pull crpi-aani1ibpows293b8.cn-hangzhou.personal.cr.aliyuncs.com/fenixsoft/dmla-sandbox:cpu' >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY

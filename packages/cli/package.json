@@ -17,7 +17,8 @@
     "enquirer": "^2.4.1",
     "dockerode": "^4.0.2",
     "express": "^4.21.2",
-    "cors": "^2.8.5"
+    "cors": "^2.8.5",
+    "@icyfenix-dmla/install": "*"
   },
   "devDependencies": {
     "jest": "^29.7.0"
