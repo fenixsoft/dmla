@@ -8,7 +8,7 @@ import path from 'path'
 import { fileURLToPath } from 'url'
 import fs from 'fs'
 import { startServer, startServerSync, stopServer, getStatus } from './commands/server.js'
-import { updateAll, runDoctor } from './commands/manage.js'
+import { runDoctor } from './commands/manage.js'
 import { runInstallTUI } from '@icyfenix-dmla/install'
 
 // 从 package.json 读取版本号
@@ -142,18 +142,6 @@ program
   .description('启动安装向导')
   .action(async () => {
     await runInstallTUI()
-  })
-
-// ─────────────────────────────────────────────────────────────
-// update 命令
-// ─────────────────────────────────────────────────────────────
-program
-  .command('update')
-  .description('更新 npm 包和 Docker 镜像')
-  .option('-r, --registry <type>', '镜像仓库 (dockerhub/acr)', 'dockerhub')
-  .action(async (options) => {
-    console.log(chalk.blue('更新 DMLA...'))
-    await updateAll(options.registry)
   })
 
 // ─────────────────────────────────────────────────────────────

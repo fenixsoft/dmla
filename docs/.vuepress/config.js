@@ -160,6 +160,9 @@ export default {
               { text: '线性感知机', link: '/deep-learning/neural-network-structure/perceptron' },
               { text: '多层感知机', link: '/deep-learning/neural-network-structure/mlp' },
               { text: '前向传播', link: '/deep-learning/neural-network-structure/forward-propagation' },
+              { text: '反向传播', link: '/deep-learning/neural-network-structure/backpropagation' },
+              { text: '激活函数', link: '/deep-learning/neural-network-structure/activation-functions' },
+              { text: '损失函数', link: '/deep-learning/neural-network-structure/loss-functions' },
             ]
           },
         ]

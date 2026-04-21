@@ -148,7 +148,7 @@ export async function runInstallTUI() {
         { name: 'auto', message: '自动选择 (根据环境)' },
         { name: 'all', message: '全部安装 (CPU + GPU)' },
         { name: 'cpu', message: '仅 CPU 版本 (~ 650MB)' },
-        { name: 'gpu', message: '仅 GPU 版本 (~ 5.62GB)' }
+        { name: 'gpu', message: '仅 GPU 版本 (~ 6.85GB)' }
       ]
 
       const typeChoice = await prompt({
@@ -321,8 +321,7 @@ export async function runInstallTUI() {
     console.log(chalk.gray('常用命令:'))
     console.log(chalk.gray('  dmla start        启动服务'))
     console.log(chalk.gray('  dmla status       查看状态'))
-    console.log(chalk.gray('  dmla install      拉取镜像'))
-    console.log(chalk.gray('  dmla update       更新版本'))
+    console.log(chalk.gray('  dmla install      安装/更新镜像'))
     console.log(chalk.gray('  dmla doctor       环境诊断'))
     console.log()
     console.log(chalk.gray(`服务地址: http://localhost:${port}`))
