@@ -6,12 +6,13 @@
  *
  * 标记语法: ```python runnable extract-class="ClassName"
  *
- * 路径映射:
+ * 路径映射（支持多级目录）:
  *   docs/statistical-learning/linear-models/*.md → shared_modules/linear/*.py
  *   docs/statistical-learning/bayesian-methods/*.md → shared_modules/bayesian/*.py
  *   docs/statistical-learning/support-vector-machines/*.md → shared_modules/svm/*.py
  *   docs/statistical-learning/decision-tree-ensemble/*.md → shared_modules/tree/*.py
  *   docs/statistical-learning/unsupervised-learning/*.md → shared_modules/unsupervised/*.py
+ *   docs/deep-learning/neural-network-structure/*.md → shared_modules/neural/*.py
  */
 
 import fs from 'fs';
@@ -23,16 +24,19 @@ const __dirname = path.dirname(__filename);
 
 // 项目根目录
 const PROJECT_ROOT = path.resolve(__dirname, '..');
-const DOCS_DIR = path.join(PROJECT_ROOT, 'docs', 'statistical-learning');
+const DOCS_DIR = path.join(PROJECT_ROOT, 'docs');
 const SHARED_MODULES_DIR = path.join(PROJECT_ROOT, 'local-server', 'shared_modules');
 
-// 文档路径到模块路径的映射
+// 文档路径到模块路径的映射（支持多级目录）
 const CHAPTER_MAPPING = {
-  'linear-models': 'linear',
-  'bayesian-methods': 'bayesian',
-  'support-vector-machines': 'svm',
-  'decision-tree-ensemble': 'tree',
-  'unsupervised-learning': 'unsupervised'
+  // statistical-learning
+  'statistical-learning/linear-models': 'linear',
+  'statistical-learning/bayesian-methods': 'bayesian',
+  'statistical-learning/support-vector-machines': 'svm',
+  'statistical-learning/decision-tree-ensemble': 'tree',
+  'statistical-learning/unsupervised-learning': 'unsupervised',
+  // deep-learning
+  'deep-learning/neural-network-structure': 'neural'
 };
 
 // 类名到文件名的转换 (PascalCase → snake_case)
@@ -212,14 +216,14 @@ function main() {
   // 扫描所有文档
   const moduleClasses = {}; // 按模块分组收集类名
 
-  for (const chapterDir of Object.keys(CHAPTER_MAPPING)) {
-    const chapterPath = path.join(DOCS_DIR, chapterDir);
+  for (const docPath of Object.keys(CHAPTER_MAPPING)) {
+    const chapterPath = path.join(DOCS_DIR, docPath);
 
     if (!fs.existsSync(chapterPath)) {
       continue;
     }
 
-    console.log(`\n扫描 ${chapterDir}/`);
+    console.log(`\n扫描 ${docPath}/`);
 
     const files = fs.readdirSync(chapterPath).filter(f => f.endsWith('.md'));
 
@@ -228,7 +232,16 @@ function main() {
       const classes = processFile(filePath);
 
       if (classes.length > 0) {
-        const moduleDir = CHAPTER_MAPPING[chapterDir];
+        const moduleDir = CHAPTER_MAPPING[docPath];
+
+        // 确保模块目录存在
+        const fullModuleDir = path.join(SHARED_MODULES_DIR, moduleDir);
+        if (!fs.existsSync(fullModuleDir)) {
+          fs.mkdirSync(fullModuleDir, { recursive: true });
+          // 创建 __init__.py
+          fs.writeFileSync(path.join(fullModuleDir, '__init__.py'), '__all__ = []\n');
+          console.log(`    创建目录: ${moduleDir}/`);
+        }
 
         if (!moduleClasses[moduleDir]) {
           moduleClasses[moduleDir] = [];

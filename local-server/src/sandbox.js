@@ -155,6 +155,116 @@ export async function checkGPUAvailable() {
 }
 
 /**
+ * 检查 CUDA 兼容性
+ * 在 GPU 镜像中运行简单的 CUDA 操作测试，验证 PyTorch 与 GPU 兼容
+ * @returns {Promise<{compatible: boolean, issues: string[], details: object}>}
+ */
+export async function checkCUDACompatibility() {
+  let container = null
+
+  const testCode = `
+import torch
+import json
+
+result = {
+    'pytorch_version': torch.__version__,
+    'cuda_available': torch.cuda.is_available(),
+    'cuda_version': str(torch.version.cuda) if torch.cuda.is_available() else None,
+    'device_name': torch.cuda.get_device_name(0) if torch.cuda.is_available() else None,
+    'compatible': True,
+    'test_passed': False,
+    'error': None
+}
+
+if torch.cuda.is_available():
+    try:
+        x = torch.randn(100, 100, device='cuda')
+        y = x + x
+        torch.cuda.synchronize()
+        result['test_passed'] = True
+    except RuntimeError as e:
+        result['compatible'] = False
+        result['error'] = str(e)
+        if 'no kernel image' in str(e) or 'CUDA error' in str(e):
+            result['error_type'] = 'compatibility'
+
+print(json.dumps(result))
+`
+
+  try {
+    container = await docker.createContainer({
+      Image: SANDBOX_CONFIG.imageGpu,
+      Cmd: ['python3', '-c', testCode],
+      HostConfig: {
+        DeviceRequests: [{
+          Driver: 'nvidia',
+          Count: -1,
+          Capabilities: [['gpu']]
+        }],
+        AutoRemove: false
+      },
+      Env: ['PYTHONUNBUFFERED=1']
+    })
+
+    await container.start()
+    await container.wait()
+
+    const logs = await container.logs({
+      stdout: true,
+      stderr: true
+    })
+
+    const { stdout, stderr } = parseDockerLogsSeparate(logs)
+
+    // 尝试解析 JSON 输出
+    const jsonStart = stdout.indexOf('{')
+    if (jsonStart !== -1) {
+      try {
+        const result = JSON.parse(stdout.substring(jsonStart))
+        return {
+          compatible: result.compatible && result.test_passed,
+          issues: result.error ? [result.error] : [],
+          details: result
+        }
+      } catch {
+        // JSON 解析失败
+      }
+    }
+
+    // 如果无法解析，检查 stderr 是否有 CUDA 错误
+    if (stderr.includes('no kernel image') || stderr.includes('CUDA error')) {
+      return {
+        compatible: false,
+        issues: [stderr],
+        details: { raw_output: stderr }
+      }
+    }
+
+    // 默认返回未知状态
+    return {
+      compatible: true,  // 假设兼容，让实际执行来验证
+      issues: [],
+      details: { stdout, stderr }
+    }
+
+  } catch (error) {
+    return {
+      compatible: false,
+      issues: [error.message],
+      details: { error: error.message }
+    }
+  } finally {
+    if (container) {
+      try {
+        await container.remove({ force: true })
+      } catch {
+        // 忽略清理错误
+      }
+    }
+  }
+}
+
+/**
  * 执行 Python 代码
  * 使用 IPython Kernel 执行代码，支持富输出（图片、文本、错误等）
  * @param {string} code - Python 代码
@@ -170,6 +280,53 @@ export async function runPythonCode(code, useGpu = false, imageOverride = null) 
   // 选择镜像：优先使用指定的镜像，否则根据 useGpu 选择
   const image = imageOverride || (useGpu ? SANDBOX_CONFIG.imageGpu : SANDBOX_CONFIG.imageCpu)
   log(`Using image: ${image}`)
+
+  // GPU 兼容性预检查
+  if (useGpu) {
+    log('GPU mode: running CUDA compatibility pre-check...')
+    const compatResult = await checkCUDACompatibility()
+    log(`CUDA compatibility check result: ${JSON.stringify(compatResult)}`)
+
+    if (!compatResult.compatible) {
+      log('CUDA compatibility check failed')
+      const executionTime = (Date.now() - startTime) / 1000
+
+      // 构建详细的错误信息
+      const errorDetails = compatResult.details || {}
+      const errorType = errorDetails.error_type || 'unknown'
+
+      let errorMessage = 'CUDA 兼容性错误：PyTorch CUDA 版本与您的 GPU 不兼容\n\n'
+
+      if (errorType === 'compatibility' || compatResult.issues.some(i => i.includes('no kernel image'))) {
+        errorMessage += `诊断详情:\n`
+        errorMessage += `- PyTorch 版本: ${errorDetails.pytorch_version || '未知'}\n`
+        errorMessage += `- CUDA 版本: ${errorDetails.cuda_version || '未知'}\n`
+        errorMessage += `- GPU 设备: ${errorDetails.device_name || '未知'}\n`
+        errorMessage += `- 错误类型: CUDA kernel 不兼容\n\n`
+        errorMessage += `解决方案:\n`
+        errorMessage += `1. 使用 CPU 模式运行代码（在前端选择 "Run on CPU"）\n`
+        errorMessage += `2. 在代码开头添加: device = torch.device('cpu')\n`
+        errorMessage += `3. 重新构建兼容的 Docker 镜像（修改 Dockerfile.sandbox 使用 CUDA 12.x）\n\n`
+        errorMessage += `更多诊断信息请运行: dmla doctor`
+      } else {
+        errorMessage += `错误详情: ${compatResult.issues.join('\n')}\n\n`
+        errorMessage += `建议使用 CPU 模式运行代码。`
+      }
+
+      return {
+        success: false,
+        outputs: [{
+          type: 'error',
+          ename: 'CUDACompatError',
+          evalue: 'CUDA 兼容性错误',
+          traceback: [errorMessage]
+        }],
+        executionTime,
+        gpuUsed: false
+      }
+    }
+    log('CUDA compatibility check passed')
+  }
 
   // 创建容器配置 - 使用 kernel_runner.py 执行代码
   const containerConfig = {
@@ -484,6 +641,7 @@ export async function pullImage(useGpu = false) {
 export default {
   runPythonCode,
   checkGPUAvailable,
+  checkCUDACompatibility,
   checkImageExists,
   pullImage,
   SANDBOX_CONFIG

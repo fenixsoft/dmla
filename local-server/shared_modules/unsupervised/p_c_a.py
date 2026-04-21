@@ -47,11 +47,7 @@ class PCA:
         
         # 步骤2：计算协方差矩阵（对应理论中的 S = 1/n Σ(x_i - x̄)(x_i - x̄)^T）
         # 使用 n-1 而非 n，得到无偏估计（与 sklearn 一致）
-        # 当 n_samples = 1 时，使用 n 避免除以零
-        if n_samples > 1:
-            cov_matrix = X_centered.T @ X_centered / (n_samples - 1)
-        else:
-            cov_matrix = X_centered.T @ X_centered / n_samples
+        cov_matrix = X_centered.T @ X_centered / (n_samples - 1)
         
         # 步骤3：特征分解（对应理论中的 S = VΛV^T）
         # np.linalg.eigh 专门用于对称矩阵，返回实数特征值
@@ -67,11 +63,7 @@ class PCA:
         
         # 步骤4：计算方差解释比例（对应理论中的 Σλ_j / Σλ_total）
         total_variance = eigenvalues.sum()
-        if total_variance > 1e-12:
-            self.explained_variance_ratio_ = eigenvalues / total_variance
-        else:
-            # 当总方差为0时（如单样本情况），均匀分配方差解释比例
-            self.explained_variance_ratio_ = np.ones(n_features) / n_features
+        self.explained_variance_ratio_ = eigenvalues / total_variance
         
         # 确定主成分数量
         if self.n_components is None:

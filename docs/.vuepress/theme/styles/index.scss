@@ -171,15 +171,16 @@ body {
       .node ellipse,
       .node polygon,
       .node path:not(.flowchart-link) {
-        fill: #eeeeee !important;
-        stroke: #999999 !important;
-        stroke-width: 1 !important;
+        fill: #e2e8f0 !important;
+        stroke: #cbd5e1 !important;
+        stroke-width: 2 !important;
+        rx: 6px !important; // 圆角矩形
       }
 
       // 连线样式
       .flowchart-link,
       .edgePath .path {
-        stroke: #333333 !important;
+        stroke: #9da4ad !important;
         fill: none !important;
         stroke-width: 1 !important;
       }
@@ -244,7 +245,7 @@ body {
   // 段落样式 - 与 pencil 设计稿一致
   p {
     margin-bottom: 1rem;
-    line-height: 1.6;
+    line-height: 1.8;
     font-size: 16px;
     color: var(--vp-c-text);
   }
@@ -265,7 +266,7 @@ body {
   ol {
     padding-left: 1.5rem;
     margin-bottom: 1rem;
-    line-height: 1.6;
+    line-height: 1.8;
     font-size: 16px;
 
     li {

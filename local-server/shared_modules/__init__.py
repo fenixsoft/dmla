@@ -1,3 +1,4 @@
+from .neural.perceptron import Perceptron
 from .unsupervised.p_c_a import PCA
 from .tree.ada_boost import AdaBoost
 from .tree.random_forest_classifier import RandomForestClassifier

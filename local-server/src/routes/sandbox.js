@@ -2,7 +2,7 @@
  * 沙箱 API 路由
  */
 import { Router } from 'express'
-import sandbox, { runPythonCode, checkImageExists, checkGPUAvailable } from '../sandbox.js'
+import sandbox, { runPythonCode, checkImageExists, checkGPUAvailable, checkCUDACompatibility } from '../sandbox.js'
 
 const { SANDBOX_CONFIG } = sandbox
 
@@ -123,6 +123,43 @@ router.get('/gpu', async (req, res) => {
   } catch (error) {
     res.status(500).json({
       available: false,
+      error: error.message
+    })
+  }
+})
+
+/**
+ * CUDA 兼容性检查
+ * 返回详细的 CUDA 环境诊断信息
+ */
+router.get('/cuda-compat', async (req, res) => {
+  try {
+    const imageGpuExists = await checkImageExists(true)
+
+    if (!imageGpuExists) {
+      return res.json({
+        status: 'error',
+        message: 'GPU 镜像未安装',
+        compatible: false,
+        suggestion: '请运行 npm run build:sandbox:gpu 或 dmla install --gpu'
+      })
+    }
+
+    const compatResult = await checkCUDACompatibility()
+
+    res.json({
+      status: compatResult.compatible ? 'ok' : 'error',
+      compatible: compatResult.compatible,
+      details: compatResult.details,
+      issues: compatResult.issues,
+      message: compatResult.compatible
+        ? 'CUDA 环境完全兼容，GPU 加速可用'
+        : 'CUDA 环境不兼容，请使用 CPU 模式或重新构建镜像'
+    })
+  } catch (error) {
+    res.status(500).json({
+      status: 'error',
+      compatible: false,
       error: error.message
     })
   }

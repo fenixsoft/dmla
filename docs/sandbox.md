@@ -11,9 +11,9 @@
 确保你的系统：
 
 - 已经部署好了 [Docker 环境](https://docs.docker.com/engine/install)。
-- 已经部署好了 [NodeJS 22.x+ 环境](https://nodejs.org/en/download)。
+- 已经部署好了 [NodeJS 20.x+ 环境](https://nodejs.org/en/download)。
 - 可选：如需使用 GPU 训练，应具备 Nvidia GPU 且已经安装了 [Nvidia 驱动](https://www.nvidia.com/en-us/drivers/) 。
-- 其余依赖（如 Jupyter Notebook 环境、Python、Numpy、Pytorch、CUDA 等）均通过 Docker 镜像来使用，不需要单独安装。
+- 其余依赖（如 Jupyter Notebook Kernel、Python、Numpy、PyTorch、CUDA 等）均通过 Docker 镜像来使用，不需要单独安装。
 
 ## 快速开始
 

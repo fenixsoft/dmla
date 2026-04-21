@@ -1,17 +1,26 @@
 # ============================================
 # DMLA Python Sandbox Image (GPU Version)
-# 支持 CUDA 11.8 的 Python 执行环境
+# 支持 CUDA 12.8 的 Python 执行环境
 # 镜像名称: dmla-sandbox:gpu
 #
 # 构建命令: docker build -t dmla-sandbox:gpu . -f local-server/Dockerfile.sandbox
+#
+# CUDA 兼容性诊断:
+#   docker run --rm --gpus all dmla-sandbox:gpu python3 /workspace/cuda_compat_check.py
+#
+# 支持的 GPU:
+#   - RTX 30 系列 (Ampere, sm_86)
+#   - RTX 40 系列 (Ada Lovelace, sm_89)
+#   - H100/H200 (Hopper, sm_90)
 # ============================================
 
-FROM nvidia/cuda:11.8.0-cudnn8-runtime-ubuntu22.04
+FROM nvidia/cuda:12.8.0-cudnn-runtime-ubuntu22.04
 
 # 设置环境变量
 ENV DEBIAN_FRONTEND=noninteractive
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
+ENV DMLA_CUDA_COMPAT=unknown
 
 # 替换为阿里云镜像源
 RUN sed -i 's|http://archive.ubuntu.com|http://mirrors.aliyun.com|g' /etc/apt/sources.list \
@@ -47,17 +56,19 @@ RUN pip install --no-cache-dir -i https://pypi.tuna.tsinghua.edu.cn/simple \
     ipykernel \
     jupyter_client
 
-# 安装 PyTorch (GPU 版本，CUDA 11.8)
+# 安装 PyTorch (GPU 版本，CUDA 12.8)
 RUN pip install --no-cache-dir \
-    torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+    torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu128
 
-# 复制 Kernel 执行器
+# 复制执行器和诊断脚本
 COPY local-server/src/kernel_runner.py /workspace/kernel_runner.py
+COPY local-server/src/cuda_compat_check.py /workspace/cuda_compat_check.py
 
 # 配置 matplotlib 中文字体支持（包括 sans-serif 和 monospace）
 RUN mkdir -p /root/.config/matplotlib && \
     printf "font.family: sans-serif\nfont.sans-serif: WenQuanYi Micro Hei, DejaVu Sans\nfont.monospace: WenQuanYi Micro Hei, DejaVu Sans Mono\naxes.unicode_minus: False\n" > /root/.config/matplotlib/matplotlibrc && \
     rm -rf /root/.cache/matplotlib
 
-# 设置默认命令
-CMD ["python3"]
+# 默认命令 - 运行 CUDA 兼容性检查
+# 实际代码执行时会被 sandbox.js 的 Cmd 参数覆盖
+CMD ["python3", "/workspace/cuda_compat_check.py"]

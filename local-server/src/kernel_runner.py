@@ -30,6 +30,62 @@ def log_debug(message):
     except:
         pass
 
+# CUDA 兼容性错误诊断
+CUDA_COMPAT_ERROR_SIGNATURES = [
+    "no kernel image is available for execution on the device",
+    "CUDA error: device-side assert triggered",
+    "CUDA error: invalid device ordinal",
+    "RuntimeError: CUDA error",
+]
+
+CUDA_COMPAT_SOLUTION = """
+================================================================================
+CUDA 兼容性错误诊断
+================================================================================
+
+错误原因: PyTorch CUDA 版本与 GPU 硬件/驱动不兼容
+
+您遇到的错误表明 Docker 容器中的 PyTorch 版本编译时使用的 CUDA 版本
+与您宿主机的 GPU 或 NVIDIA 驱动版本不匹配。
+
+常见原因:
+  1. GPU 的 Compute Capability 高于 PyTorch 支持的版本
+     (例如: RTX 4090 需要 CUDA 11.8+ 的完整支持)
+  2. NVIDIA 驱动版本过低，不支持容器内的 CUDA 版本
+  3. PyTorch 编译时未包含您 GPU 架构的 CUDA kernel
+
+解决方案:
+  选项 1: 使用 CPU 模式运行代码
+    在代码开头添加:
+      device = torch.device('cpu')
+    或在前端选择 "Run on CPU" 而非 "Run on GPU"
+
+  选项 2: 重新构建兼容的 Docker 镜像
+    检查您的 GPU Compute Capability:
+      nvidia-smi --query-gpu=name,compute_cap --format=csv
+
+    根据结果选择合适的 PyTorch 版本:
+      - RTX 30 系列 (Ampere, sm_80): CUDA 11.1+ 即可
+      - RTX 40 系列 (Ada Lovelace, sm_89): 需要 CUDA 11.8+ 或 12.x
+      - H100 (Hopper, sm_90): 需要 CUDA 12.x
+
+    修改 local-server/Dockerfile.sandbox:
+      # 将 CUDA 11.8 改为 CUDA 12.1
+      FROM nvidia/cuda:12.1.0-cudnn8-runtime-ubuntu22.04
+
+      # 安装对应版本的 PyTorch
+      pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
+
+  选项 3: 升级 NVIDIA 驱动
+    检查当前驱动版本:
+      nvidia-smi
+
+    如果驱动版本过低，请升级到支持 CUDA 12.x 的版本
+    (通常需要 Driver Version >= 525.x)
+
+================================================================================
+"""
+
 # 抑制导入时的 stdout 输出，避免污染 JSON 结果
 import io
 import os
@@ -72,6 +128,32 @@ log_debug('Imports completed, stdout restored')
 
 # 超时时间（秒）
 DEFAULT_TIMEOUT = 60
+
+
+def is_cuda_compat_error(error_message: str) -> bool:
+    """检测是否为 CUDA 兼容性错误"""
+    for sig in CUDA_COMPAT_ERROR_SIGNATURES:
+        if sig in error_message:
+            return True
+    return False
+
+
+def enrich_cuda_error(error_dict: dict) -> dict:
+    """增强 CUDA 兼容性错误的输出，添加诊断信息"""
+    error_value = error_dict.get('evalue', '')
+    if is_cuda_compat_error(error_value):
+        # 添加诊断信息到 traceback
+        enriched_traceback = error_dict.get('traceback', [])
+        enriched_traceback.append("")
+        enriched_traceback.append(CUDA_COMPAT_SOLUTION)
+
+        return {
+            'type': 'error',
+            'ename': 'CUDACompatError',
+            'evalue': f"CUDA 兼容性错误: {error_value}",
+            'traceback': enriched_traceback
+        }
+    return error_dict
 
 
 def run_code(code: str, timeout: int = DEFAULT_TIMEOUT) -> dict:
@@ -183,12 +265,20 @@ def run_code(code: str, timeout: int = DEFAULT_TIMEOUT) -> dict:
                 log_debug(f'Execute result: keys={list(content.get("data", {}).keys())}')
 
             elif msg_type == 'error':
-                outputs.append({
+                # 检查是否为 CUDA 兼容性错误，增强错误信息
+                error_output = {
                     'type': 'error',
                     'ename': content.get('ename', 'UnknownError'),
                     'evalue': content.get('evalue', ''),
                     'traceback': content.get('traceback', [])
-                })
+                }
+
+                # 增强 CUDA 兼容性错误
+                if is_cuda_compat_error(content.get('evalue', '')):
+                    error_output = enrich_cuda_error(error_output)
+                    log_debug(f'Detected CUDA compatibility error, enriched output')
+
+                outputs.append(error_output)
                 log_debug(f'Error: {content.get("ename")}: {content.get("evalue")}')
 
             elif msg_type == 'clear_output':
@@ -230,14 +320,22 @@ def run_code(code: str, timeout: int = DEFAULT_TIMEOUT) -> dict:
         log_debug(f'Exception in run_code: {type(e).__name__}: {e}')
         log_debug(f'Traceback: {traceback.format_exc()}')
         restore_stdout()
+
+        # 检查是否为 CUDA 兼容性错误
+        error_output = {
+            'type': 'error',
+            'ename': type(e).__name__,
+            'evalue': str(e),
+            'traceback': traceback.format_exc().split('\n')
+        }
+
+        if is_cuda_compat_error(str(e)):
+            error_output = enrich_cuda_error(error_output)
+            log_debug(f'Detected CUDA compatibility error in exception, enriched output')
+
         return {
             'success': False,
-            'outputs': [{
-                'type': 'error',
-                'ename': type(e).__name__,
-                'evalue': str(e),
-                'traceback': traceback.format_exc().split('\n')
-            }],
+            'outputs': [error_output],
             'executionTime': round(execution_time, 3)
         }
 
@@ -262,12 +360,74 @@ def run_code(code: str, timeout: int = DEFAULT_TIMEOUT) -> dict:
                 log_debug(f'Error shutting down kernel: {e}')
 
 
+def check_cuda_compatibility():
+    """
+    快速检查 CUDA 兼容性
+
+    Returns:
+        dict: 包含兼容性状态和详细信息
+    """
+    result = {
+        'compatible': True,
+        'cuda_available': False,
+        'driver_version': None,
+        'pytorch_cuda_version': None,
+        'device_name': None,
+        'issues': []
+    }
+
+    try:
+        import torch
+
+        result['pytorch_version'] = torch.__version__
+        result['cuda_available'] = torch.cuda.is_available()
+
+        if result['cuda_available']:
+            result['pytorch_cuda_version'] = torch.version.cuda
+            result['device_name'] = torch.cuda.get_device_name(0)
+
+            # 尝试简单的 CUDA 操作
+            try:
+                x = torch.randn(10, 10, device='cuda')
+                y = x + x
+                torch.cuda.synchronize()
+                result['test_passed'] = True
+            except RuntimeError as e:
+                if is_cuda_compat_error(str(e)):
+                    result['compatible'] = False
+                    result['test_passed'] = False
+                    result['issues'].append(str(e))
+                else:
+                    result['compatible'] = False
+                    result['test_passed'] = False
+                    result['issues'].append(f"CUDA operation failed: {e}")
+        else:
+            result['compatible'] = False
+            result['issues'].append("CUDA not available in PyTorch")
+
+    except ImportError:
+        result['compatible'] = False
+        result['issues'].append("PyTorch not installed")
+    except Exception as e:
+        result['compatible'] = False
+        result['issues'].append(f"Check failed: {e}")
+
+    return result
+
+
 def main():
     parser = argparse.ArgumentParser(description='IPython Kernel 执行器')
     parser.add_argument('--code', type=str, required=True, help='要执行的 Python 代码')
     parser.add_argument('--timeout', type=int, default=DEFAULT_TIMEOUT, help='执行超时时间（秒）')
+    parser.add_argument('--check-cuda', action='store_true', help='仅检查 CUDA 兼容性')
 
     args = parser.parse_args()
+
+    # CUDA 兼容性检查模式
+    if args.check_cuda:
+        result = check_cuda_compatibility()
+        print(json.dumps(result, ensure_ascii=False))
+        return
 
     result = run_code(args.code, args.timeout)
 
