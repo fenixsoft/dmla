@@ -53,10 +53,14 @@ export async function verifyInstallation(port = 3001, useGpu = false) {
 
   const cmd = dmlaAvailable ? 'dmla' : 'npx'
 
-  const serverProcess = spawn(cmd, args, {
+  // Windows 需要 shell: true，Linux/macOS 不需要
+  const isWindows = process.platform === 'win32'
+  const spawnOptions = {
     stdio: 'inherit',
-    shell: true  // Windows 需要 shell: true
-  })
+    ...(isWindows ? { shell: true } : {})
+  }
+
+  const serverProcess = spawn(cmd, args, spawnOptions)
 
   // 处理启动错误
   serverProcess.on('error', (err) => {
