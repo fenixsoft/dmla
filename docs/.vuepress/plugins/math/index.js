@@ -376,12 +376,13 @@ export default {
 
       // 处理公式编号标记 <!-- equation:label=xxx --> ... <!-- end-equation -->
       // 以及 <!-- eqref:xxx --> 引用标记
+      // 注意：HTML 注释在 markdown-it 中会被解析为 html_block token
       let i = 0
       while (i < state.tokens.length) {
         const token = state.tokens[i]
 
-        // 检查是否是公式编号开始标记
-        if (token.type === 'html_inline' && token.content) {
+        // 检查是否是公式编号开始标记（html_block 或 html_inline）
+        if ((token.type === 'html_block' || token.type === 'html_inline') && token.content) {
           const labelMatch = token.content.match(/<!--\s*equation:label=([^>]+)\s*-->/)
           if (labelMatch) {
             const label = labelMatch[1]
@@ -389,43 +390,52 @@ export default {
             const equationNumber = equationCounter
             equationLabels.set(label, equationNumber)
 
-            // 查找下一个 math_block token（公式内容）
+            // 查找下一个 math_block token（公式内容）和结束标记
+            let mathBlockIndex = -1
+            let endMarkerIndex = -1
             let j = i + 1
             while (j < state.tokens.length) {
               const nextToken = state.tokens[j]
-              if (nextToken.type === 'html_inline' && nextToken.content && nextToken.content.includes('<!-- end-equation -->')) {
-                // 找到了结束标记，修改中间的公式渲染
+              // 检查结束标记（html_block 或 html_inline）
+              if ((nextToken.type === 'html_block' || nextToken.type === 'html_inline') &&
+                  nextToken.content && nextToken.content.includes('<!-- end-equation -->')) {
+                endMarkerIndex = j
                 break
               }
-              if (nextToken.type === 'math_block') {
-                // 修改公式渲染，添加编号
-                const originalContent = nextToken.content
-                try {
-                  const html = katex.renderToString(originalContent, {
-                    throwOnError: false,
-                    displayMode: true,
-                    strict: "ignore"
-                  })
-                  nextToken.type = 'html_block'
-                  nextToken.tag = 'div'
-                  nextToken.content = `<div class="katex-display equation-numbered" id="eq-${label}" data-equation-number="${equationNumber}" data-label="${label}">
-                    <div class="equation-content">${html}</div>
-                    <div class="equation-number">(${equationNumber})</div>
-                  </div>`
-                } catch (e) {
-                  console.warn('KaTeX equation render error:', e.message)
-                }
-                break
+              if (nextToken.type === 'math_block' && mathBlockIndex === -1) {
+                mathBlockIndex = j
               }
               j++
             }
 
-            // 移除开始和结束标记 token
+            // 如果找到了 math_block，修改它的渲染
+            if (mathBlockIndex !== -1) {
+              const mathToken = state.tokens[mathBlockIndex]
+              const originalContent = mathToken.content
+              try {
+                const html = katex.renderToString(originalContent, {
+                  throwOnError: false,
+                  displayMode: true,
+                  strict: "ignore"
+                })
+                mathToken.type = 'html_block'
+                mathToken.tag = 'div'
+                mathToken.content = `<div class="katex-display equation-numbered" id="eq-${label}" data-equation-number="${equationNumber}" data-label="${label}">
+                  <div class="equation-content">${html}</div>
+                  <div class="equation-number">(${equationNumber})</div>
+                </div>`
+              } catch (e) {
+                console.warn('KaTeX equation render error:', e.message)
+              }
+            }
+
+            // 移除开始标记 token
             token.type = 'text'
             token.content = ''
-            if (j < state.tokens.length && state.tokens[j].type === 'html_inline') {
-              state.tokens[j].type = 'text'
-              state.tokens[j].content = ''
+            // 移除结束标记 token
+            if (endMarkerIndex !== -1) {
+              state.tokens[endMarkerIndex].type = 'text'
+              state.tokens[endMarkerIndex].content = ''
             }
           }
 
@@ -435,10 +445,8 @@ export default {
             const label = eqrefMatch[1]
             const equationNumber = equationLabels.get(label)
             if (equationNumber) {
-              token.type = 'html_inline'
               token.content = `<a href="#eq-${label}" class="equation-reference">(${equationNumber})</a>`
             } else {
-              token.type = 'html_inline'
               token.content = `<span class="equation-reference-unknown">(${label}?)</span>`
             }
           }
