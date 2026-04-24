@@ -21,9 +21,8 @@ const toCircleNumber = (num) => {
   return num
 }
 
-// 添加公式编号和引用样式
-const equationStyles = document.createElement('style')
-equationStyles.textContent = `
+// 公式编号样式内容（在 onMounted 中插入）
+const equationStylesContent = `
   /* 编号公式容器 */
   .equation-numbered {
     display: flex !important;
@@ -125,7 +124,9 @@ equationStyles.textContent = `
     vertical-align: baseline;
   }
 `
-document.head.appendChild(equationStyles)
+
+// 样式元素引用（在 onMounted 中创建）
+let equationStyles = null
 
 // 创建公式预览提示框
 let previewElement = null
@@ -458,12 +459,22 @@ const setupMutationObserver = () => {
   })
 }
 
+// 插入公式编号样式（仅在浏览器环境中执行）
+const insertEquationStyles = () => {
+  if (equationStyles) return // 避免重复插入
+  equationStyles = document.createElement('style')
+  equationStyles.textContent = equationStylesContent
+  document.head.appendChild(equationStyles)
+}
+
 export default {
   setup() {
     const route = useRoute()
 
     // 页面加载时处理
     onMounted(() => {
+      // 插入样式（仅在浏览器环境中）
+      insertEquationStyles()
       // 等待 DOM 完全渲染
       setTimeout(processEquationNumbers, 100)
       // 设置 MutationObserver 监听后续变化
