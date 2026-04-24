@@ -376,16 +376,36 @@ export default {
 
       // 处理公式编号标记 <!-- equation:label=xxx --> ... <!-- end-equation -->
       // 以及 <!-- eqref:xxx --> 引用标记
-      // 注意：HTML 注释在 markdown-it 中会被解析为 html_block token
+      // 注意：HTML 注释可能是 html_block（独立行）或 html_inline（行内）
       let i = 0
       while (i < state.tokens.length) {
         const token = state.tokens[i]
 
-        // 检查是否是公式编号开始标记（html_block 或 html_inline）
-        if ((token.type === 'html_block' || token.type === 'html_inline') && token.content) {
+        // 处理 inline token 的 children（公式引用可能在行内文本中）
+        if (token.type === 'inline' && token.children) {
+          for (const child of token.children) {
+            if (child.type === 'html_inline' && child.content) {
+              const eqrefMatch = child.content.match(/<!--\s*eqref:([^>]+)\s*-->/)
+              if (eqrefMatch) {
+                const label = eqrefMatch[1].trim()
+                const equationNumber = equationLabels.get(label)
+                if (equationNumber) {
+                  child.type = 'html_inline'
+                  child.content = `<a href="#eq-${label}" class="equation-reference">(${equationNumber})</a>`
+                } else {
+                  child.type = 'html_inline'
+                  child.content = `<span class="equation-reference-unknown">(${label}?)</span>`
+                }
+              }
+            }
+          }
+        }
+
+        // 检查是否是公式编号开始标记（html_block）
+        if (token.type === 'html_block' && token.content) {
           const labelMatch = token.content.match(/<!--\s*equation:label=([^>]+)\s*-->/)
           if (labelMatch) {
-            const label = labelMatch[1]
+            const label = labelMatch[1].trim()
             equationCounter++
             const equationNumber = equationCounter
             equationLabels.set(label, equationNumber)
@@ -396,9 +416,8 @@ export default {
             let j = i + 1
             while (j < state.tokens.length) {
               const nextToken = state.tokens[j]
-              // 检查结束标记（html_block 或 html_inline）
-              if ((nextToken.type === 'html_block' || nextToken.type === 'html_inline') &&
-                  nextToken.content && nextToken.content.includes('<!-- end-equation -->')) {
+              // 检查结束标记（html_block）
+              if (nextToken.type === 'html_block' && nextToken.content && nextToken.content.includes('<!-- end-equation -->')) {
                 endMarkerIndex = j
                 break
               }
@@ -439,7 +458,7 @@ export default {
             }
           }
 
-          // 检查是否是公式引用标记 <!-- eqref:xxx -->
+          // 检查是否是公式引用标记（在独立行的 html_block 中）
           const eqrefMatch = token.content.match(/<!--\s*eqref:([^>]+)\s*-->/)
           if (eqrefMatch) {
             const label = eqrefMatch[1]

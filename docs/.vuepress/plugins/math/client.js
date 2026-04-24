@@ -195,8 +195,72 @@ const hideEquationPreview = () => {
   }
 }
 
+// 将服务端渲染的括号数字转换为圆圈数字
+const convertNumbersToCircles = () => {
+  // 处理公式编号
+  const numberDivs = document.querySelectorAll('.equation-number')
+  for (const div of numberDivs) {
+    const text = div.textContent
+    const match = text.match(/^\((\d+)\)$/)
+    if (match) {
+      const num = parseInt(match[1])
+      if (num <= 50) {
+        div.textContent = toCircleNumber(num)
+      } else {
+        // 超过50使用CSS圆圈
+        const circleSpan = document.createElement('span')
+        circleSpan.className = 'equation-number-circle'
+        circleSpan.textContent = num
+        div.textContent = ''
+        div.appendChild(circleSpan)
+      }
+    }
+  }
+
+  // 处理公式引用链接
+  const refLinks = document.querySelectorAll('.equation-reference')
+  for (const link of refLinks) {
+    const text = link.textContent
+    const match = text.match(/^\((\d+)\)$/)
+    if (match) {
+      const num = parseInt(match[1])
+      if (num <= 50) {
+        link.textContent = toCircleNumber(num)
+      } else {
+        const circleSpan = document.createElement('span')
+        circleSpan.className = 'equation-number-circle'
+        circleSpan.textContent = num
+        link.textContent = ''
+        link.appendChild(circleSpan)
+      }
+      // 添加鼠标悬停预览功能
+      const label = link.getAttribute('href')?.match(/#eq-(.+)$/)?.[1]
+      if (label) {
+        link.dataset.label = label.trim()
+        link.addEventListener('mouseenter', () => {
+          showEquationPreview(link, label.trim())
+        })
+        link.addEventListener('mouseleave', () => {
+          hideEquationPreview()
+        })
+        link.addEventListener('click', (e) => {
+          e.preventDefault()
+          hideEquationPreview()
+          const target = document.getElementById(`eq-${label.trim()}`)
+          if (target) {
+            target.scrollIntoView({ behavior: 'smooth', block: 'start' })
+          }
+        })
+      }
+    }
+  }
+}
+
 // 处理公式编号（使用 TreeWalker 查找注释节点）
 const processEquationNumbers = () => {
+  // 首先转换服务端渲染的括号数字为圆圈数字
+  convertNumbersToCircles()
+
   let equationCounter = 0
   const equationLabels = new Map()
 
