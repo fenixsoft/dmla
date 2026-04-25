@@ -37,17 +37,23 @@ async function refreshCDN() {
       }
     })
 
-    // 全站刷新
+    // 全站刷新 - 刷新根目录和 assets 目录
     console.log(`🚀 正在刷新 CDN: https://${cdnDomain}/`)
 
+    const paths = [
+      `https://${cdnDomain}/`,           // 根目录
+      `https://${cdnDomain}/assets/`     // assets 目录（JS/CSS 文件）
+    ]
+
     const result = await client.PurgePathCache({
-      Paths: [`https://${cdnDomain}/`],
+      Paths: paths,
       FlushType: 'flush'
     })
 
     console.log('✅ CDN 刷新任务已提交:')
     console.log(`   任务 ID: ${result.TaskId}`)
-    console.log(`   刷新路径: https://${cdnDomain}/`)
+    console.log(`   刷新路径:`)
+    paths.forEach(p => console.log(`     - ${p}`))
 
   } catch (error) {
     console.error('❌ CDN 刷新失败:', error.message)
