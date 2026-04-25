@@ -161,7 +161,15 @@ export default {
               { text: '多层感知机', link: '/deep-learning/neural-network-structure/mlp' },
               { text: '前向传播', link: '/deep-learning/neural-network-structure/forward-propagation' },
               { text: '反向传播', link: '/deep-learning/neural-network-structure/backpropagation' },
-              { text: '激活函数与损失函数', link: '/deep-learning/neural-network-structure/activation-functions' },
+              { text: '激活函数与损失函数', link: '/deep-learning/neural-network-structure/activation-loss-functions' },
+            ]
+          },
+          {
+            text: '优化神经网络',
+            collapsible: false,
+            children: [
+              { text: '梯度下降', link: '/deep-learning/deep-network-optimization/gradient-descent' },
+              { text: '自适应优化器', link: '/deep-learning/deep-network-optimization/adaptive-optimizers' },
             ]
           },
         ]

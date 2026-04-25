@@ -48,14 +48,13 @@ const processMathInHtml = (html) => {
 export default {
   name: 'vuepress-plugin-math-katex',
 
-  // 每个页面开始时重置计数器
-  onPrepared: (app) => {
-    // 页面切换时重置计数器
-    equationCounter = 0
-    equationLabels.clear()
-  },
-
   extendsMarkdown: (md) => {
+    // 在每个页面的 markdown 处理开始时重置计数器
+    // 使用 markdown-it 的 core ruler 在解析前重置
+    md.core.ruler.push('reset_equation_counter', (state) => {
+      equationCounter = 0
+      equationLabels.clear()
+    })
     // 解析块级公式 $$...$$
     const parseBlockMath = (state, startLine, endLine, silent) => {
       const start = state.bMarks[startLine] + state.tShift[startLine]
@@ -410,8 +409,9 @@ export default {
             const equationNumber = equationCounter
             equationLabels.set(label, equationNumber)
 
-            // 查找下一个 math_block token（公式内容）和结束标记
-            let mathBlockIndex = -1
+            // 查找所有连续的 math_block tokens（公式内容）和结束标记
+            // 跳过中间的空白 token 和 paragraph token
+            let mathBlockIndices = []
             let endMarkerIndex = -1
             let j = i + 1
             while (j < state.tokens.length) {
@@ -421,30 +421,69 @@ export default {
                 endMarkerIndex = j
                 break
               }
-              if (nextToken.type === 'math_block' && mathBlockIndex === -1) {
-                mathBlockIndex = j
+              // 收集 math_block tokens
+              if (nextToken.type === 'math_block') {
+                mathBlockIndices.push(j)
+              }
+              // 跳过空白、段落和 inline token（这些可能在两个公式之间）
+              if (nextToken.type !== 'math_block' &&
+                  nextToken.type !== 'html_block' &&
+                  nextToken.type !== 'paragraph_open' &&
+                  nextToken.type !== 'paragraph_close' &&
+                  nextToken.type !== 'inline' &&
+                  !(nextToken.type === 'text' && !nextToken.content?.trim())) {
+                // 遇到非预期的 token，停止收集
+                break
               }
               j++
             }
 
-            // 如果找到了 math_block，修改它的渲染
-            if (mathBlockIndex !== -1) {
-              const mathToken = state.tokens[mathBlockIndex]
-              const originalContent = mathToken.content
-              try {
-                const html = katex.renderToString(originalContent, {
-                  throwOnError: false,
-                  displayMode: true,
-                  strict: "ignore"
-                })
-                mathToken.type = 'html_block'
-                mathToken.tag = 'div'
-                mathToken.content = `<div class="katex-display equation-numbered" id="eq-${label}" data-equation-number="${equationNumber}" data-label="${label}">
-                  <div class="equation-content">${html}</div>
-                  <div class="equation-number">(${equationNumber})</div>
-                </div>`
-              } catch (e) {
-                console.warn('KaTeX equation render error:', e.message)
+            // 处理多公式情况：将所有公式合并到一个容器中
+            if (mathBlockIndices.length > 0) {
+              // 渲染所有公式内容
+              const renderedFormulas = []
+              mathBlockIndices.forEach((blockIndex) => {
+                const mathToken = state.tokens[blockIndex]
+                const originalContent = mathToken.content
+                try {
+                  const html = katex.renderToString(originalContent, {
+                    throwOnError: false,
+                    displayMode: true,
+                    strict: "ignore"
+                  })
+                  renderedFormulas.push(html)
+                } catch (e) {
+                  console.warn('KaTeX equation render error:', e.message)
+                  renderedFormulas.push(`<div class="katex-error">$$${originalContent}$$</div>`)
+                }
+              })
+
+              // 创建合并的公式容器
+              const formulasHtml = renderedFormulas.map(html =>
+                `<div class="equation-content">${html}</div>`
+              ).join('\n')
+
+              // 将第一个 math_block 改为合并的容器
+              const firstMathToken = state.tokens[mathBlockIndices[0]]
+              firstMathToken.type = 'html_block'
+              firstMathToken.tag = 'div'
+              firstMathToken.content = `<div class="katex-display equation-numbered equation-group" id="eq-${label}" data-equation-number="${equationNumber}" data-label="${label}">
+                ${formulasHtml}
+                <div class="equation-number">(${equationNumber})</div>
+              </div>`
+
+              // 清空其他 math_block tokens 和中间的空白/段落 token
+              for (let k = mathBlockIndices[0] + 1; k <= endMarkerIndex - 1; k++) {
+                const tok = state.tokens[k]
+                // 只清空非结束标记的 token
+                if (tok.type === 'math_block' ||
+                    tok.type === 'paragraph_open' ||
+                    tok.type === 'paragraph_close' ||
+                    tok.type === 'inline' ||
+                    (tok.type === 'text' && !tok.content?.trim())) {
+                  tok.type = 'text'
+                  tok.content = ''
+                }
               }
             }
 

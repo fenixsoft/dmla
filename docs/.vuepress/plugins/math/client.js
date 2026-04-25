@@ -35,6 +35,30 @@ const equationStylesContent = `
     scroll-margin-top: 0px;
   }
 
+  /* 多公式组容器 */
+  .equation-numbered.equation-group {
+    flex-direction: column;
+    align-items: flex-end;
+  }
+
+  .equation-numbered.equation-group .equation-content {
+    width: 100%;
+    text-align: center;
+    margin-bottom: 0.5em;
+  }
+
+  .equation-numbered.equation-group .equation-content:last-of-type {
+    margin-bottom: 0;
+  }
+
+  .equation-numbered.equation-group .equation-number {
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    margin-left: 0;
+  }
+
   /* 公式内容区域 */
   .equation-numbered .equation-content {
     flex: 1;
@@ -104,6 +128,18 @@ const equationStylesContent = `
     visibility: visible;
   }
 
+  .equation-preview .equation-preview-formula {
+    margin: 0.5em 0;
+  }
+
+  .equation-preview .equation-preview-formula:first-child {
+    margin-top: 0;
+  }
+
+  .equation-preview .equation-preview-formula:last-child {
+    margin-bottom: 0;
+  }
+
   .equation-preview .katex-display {
     margin: 0 !important;
   }
@@ -148,13 +184,20 @@ const showEquationPreview = (refElement, label) => {
 
   if (!equationElement) return
 
-  // 获取公式内容
-  const contentDiv = equationElement.querySelector('.equation-content')
-  if (!contentDiv) return
+  // 获取所有公式内容（多公式组可能有多个 .equation-content）
+  const contentDivs = equationElement.querySelectorAll('.equation-content')
+  if (contentDivs.length === 0) return
 
   // 设置预览内容
   const previewContent = preview.querySelector('.equation-preview-content')
-  previewContent.innerHTML = contentDiv.innerHTML
+  // 清空并添加所有公式内容
+  previewContent.innerHTML = ''
+  contentDivs.forEach((contentDiv, index) => {
+    const formulaDiv = document.createElement('div')
+    formulaDiv.className = 'equation-preview-formula'
+    formulaDiv.innerHTML = contentDiv.innerHTML
+    previewContent.appendChild(formulaDiv)
+  })
 
   // 更新标题显示公式编号（圆圈数字）
   const number = equationElement.dataset.equationNumber
