@@ -1,6 +1,19 @@
 /**
  * Math 插件 - 支持 Markdown 中的 LaTeX 数学公式
  * 使用 KaTeX 在服务端渲染，支持公式编号和引用
+ *
+ * 公式编号语法：
+ * - 单公式：$$[label] 公式内容 $$ （标签在方括号内）
+ * - 多公式：$$$[label] $$公式1$$ $$公式2$$ $$$ （用 $$$ 包裹）
+ *
+ * 公式引用语法：
+ * - {{label}} （Vue 模板风格）
+ *
+ * 兼容旧语法：
+ * - <!-- equation:label=xxx --> ... <!-- end-equation -->
+ * - <!-- eqref:xxx -->
+ * - \begin{equation}...\end{equation}
+ * - \eqref{xxx}, \ref{xxx}
  */
 import katex from 'katex'
 import { path } from 'vuepress/utils'
@@ -22,6 +35,15 @@ const processMathInHtml = (html) => {
     if (equationNumber) {
       const display = eqPrefix ? `(${equationNumber})` : `${equationNumber}`
       return `<a href="#eq-${label}" class="equation-reference">${display}</a>`
+    }
+    return `<span class="equation-reference-unknown">${label}?</span>`
+  })
+
+  // 处理 {{xxx}} 引用语法
+  html = html.replace(/\{\{([a-zA-Z0-9:_-]+)\}\}/g, (match, label) => {
+    const equationNumber = equationLabels.get(label)
+    if (equationNumber) {
+      return `<a href="#eq-${label}" class="equation-reference">(${equationNumber})</a>`
     }
     return `<span class="equation-reference-unknown">${label}?</span>`
   })
@@ -55,27 +77,82 @@ export default {
       equationCounter = 0
       equationLabels.clear()
     })
-    // 解析块级公式 $$...$$
+
+    // ========== 多公式块解析 $$$[label] ... $$$ ==========
+    const parseEquationBlock = (state, startLine, endLine, silent) => {
+      const start = state.bMarks[startLine] + state.tShift[startLine]
+      const max = state.eMarks[startLine]
+
+      // 检查是否以 $$$ 开头
+      if (state.src.slice(start, start + 3) !== '$$$') {
+        return false
+      }
+
+      // 检查是否有标签 $$$[label]
+      const afterMarker = state.src.slice(start + 3, max).trim()
+      const labelMatch = afterMarker.match(/^\[([^\]]+)\]/)
+      const label = labelMatch ? labelMatch[1] : null
+
+      // 查找结束的 $$$
+      for (let nextLine = startLine + 1; nextLine < endLine; nextLine++) {
+        const lineStart = state.bMarks[nextLine] + state.tShift[nextLine]
+        const lineMax = state.eMarks[nextLine]
+        const lineContent = state.src.slice(lineStart, lineMax).trim()
+
+        // 检查整行是否只有 $$$
+        if (lineContent === '$$$') {
+          // 收集内容
+          const contentStart = state.bMarks[startLine] + state.tShift[startLine] + 3
+          const contentEnd = lineStart
+          const content = state.src.slice(contentStart, contentEnd).trim()
+
+          if (!silent) {
+            const token = state.push('equation_block', 'div', 0)
+            token.content = content
+            token.label = label
+            token.block = true
+          }
+          state.line = nextLine + 1
+          return true
+        }
+      }
+
+      return false
+    }
+
+    // ========== 块级公式解析 $$...$$ ==========
     const parseBlockMath = (state, startLine, endLine, silent) => {
       const start = state.bMarks[startLine] + state.tShift[startLine]
       const max = state.eMarks[startLine]
 
-      // 检查是否以 $$ 开头
+      // 检查是否以 $$ 开头（排除 $$$）
       if (state.src.slice(start, start + 2) !== '$$') {
         return false
       }
+      if (start + 2 < max && state.src.charCodeAt(start + 2) === 0x24 /* $ */) {
+        return false // 这是 $$$，由 parseEquationBlock 处理
+      }
 
-      // 检查单行公式 $$...$$
+      // 检查单行公式 $$[label]...$$ 或 $$...$$
       const firstLineEnd = state.eMarks[startLine]
       const firstLineContent = state.src.slice(start + 2, firstLineEnd)
-      const singleLineMatch = firstLineContent.indexOf('$$')
 
-      if (singleLineMatch !== -1) {
+      // 检查是否有标签 $$[label]
+      const labelMatch = firstLineContent.match(/^\s*\[([^\]]+)\]\s*/)
+      const label = labelMatch ? labelMatch[1] : null
+      // 如果有标签，移除标签部分获取公式内容
+      const contentAfterLabel = labelMatch ? firstLineContent.slice(labelMatch[0].length) : firstLineContent
+
+      // 检查单行公式结束标记
+      const singleLineEnd = contentAfterLabel.indexOf('$$')
+
+      if (singleLineEnd !== -1) {
         // 单行块级公式
-        const content = firstLineContent.slice(0, singleLineMatch).trim()
+        const content = contentAfterLabel.slice(0, singleLineEnd).trim()
         if (!silent) {
           const token = state.push('math_block', 'div', 0)
           token.content = content
+          token.label = label
           token.block = true
         }
         state.line = startLine + 1
@@ -89,16 +166,17 @@ export default {
         const lineContent = state.src.slice(lineStart, lineMax)
         const trimmedContent = lineContent.trim()
 
-        // 检查整行是否只有 $$
+        // 检查整行是否只有 $$（排除 $$$）
         if (trimmedContent === '$$') {
           // 收集内容
-          const contentStart = state.bMarks[startLine] + state.tShift[startLine] + 2
+          const contentStart = state.bMarks[startLine] + state.tShift[startLine] + 2 + (labelMatch ? labelMatch[0].length : 0)
           const contentEnd = lineStart
           const content = state.src.slice(contentStart, contentEnd).trim()
 
           if (!silent) {
             const token = state.push('math_block', 'div', 0)
             token.content = content
+            token.label = label
             token.block = true
           }
           state.line = nextLine + 1
@@ -106,15 +184,16 @@ export default {
         }
 
         // 检查行末是否有 $$（支持 \end{pmatrix} $$ 格式）
-        if (trimmedContent.endsWith('$$')) {
+        if (trimmedContent.endsWith('$$') && !trimmedContent.endsWith('$$$')) {
           // 收集内容，不包括最后的 $$
-          const contentStart = state.bMarks[startLine] + state.tShift[startLine] + 2
+          const contentStart = state.bMarks[startLine] + state.tShift[startLine] + 2 + (labelMatch ? labelMatch[0].length : 0)
           const contentEnd = lineStart + lineContent.lastIndexOf('$$')
           const content = state.src.slice(contentStart, contentEnd).trim()
 
           if (!silent) {
             const token = state.push('math_block', 'div', 0)
             token.content = content
+            token.label = label
             token.block = true
           }
           state.line = nextLine + 1
@@ -125,12 +204,12 @@ export default {
       return false
     }
 
-    // 解析 equation 环境 \begin{equation} ... \end{equation}
+    // ========== equation 环境 \begin{equation} ... \end{equation} ==========
     const parseEquationEnv = (state, startLine, endLine, silent) => {
       const start = state.bMarks[startLine] + state.tShift[startLine]
       const max = state.eMarks[startLine]
 
-      // 检查是否以 \begin{equation} 开头（Markdown 中写作 \begin，实际是单个反斜杠）
+      // 检查是否以 \begin{equation} 开头
       const beginMarker = '\\begin{equation}'
       const lineContent = state.src.slice(start, max).trim()
       if (!lineContent.startsWith(beginMarker)) {
@@ -145,7 +224,6 @@ export default {
 
         // 跳过第一行（开始标记所在行）
         if (nextLine === startLine) {
-          // 检查是否在同一行结束
           const endMarker = '\\end{equation}'
           const endIndex = lineContent.indexOf(endMarker, beginMarker.length)
           if (endIndex !== -1) {
@@ -176,7 +254,6 @@ export default {
           return true
         }
 
-        // 检查行内是否有 \end{equation}
         const endMarker = '\\end{equation}'
         const endIndex = lineContent.indexOf(endMarker)
         if (endIndex !== -1) {
@@ -196,6 +273,8 @@ export default {
 
       return false
     }
+
+    // ========== 渲染规则 ==========
 
     // 渲染 equation 环境（带编号）
     md.renderer.rules.math_equation = (tokens, idx) => {
@@ -234,9 +313,95 @@ export default {
       }
     }
 
+    // 渲染多公式块 $$$[label] ... $$$
+    md.renderer.rules.equation_block = (tokens, idx) => {
+      const content = tokens[idx].content
+      const label = tokens[idx].label
+
+      equationCounter++
+      const equationNumber = equationCounter
+
+      // 如果有标签，存储映射关系
+      if (label) {
+        equationLabels.set(label, equationNumber)
+      }
+
+      // 解析内部的 $$...$$ 公式
+      const formulas = []
+      // 匹配 $$...$$ 格式的公式
+      const formulaPattern = /\$\$([^$]+)\$\$/g
+      let formulaMatch
+      while ((formulaMatch = formulaPattern.exec(content)) !== null) {
+        const formulaContent = formulaMatch[1].trim()
+        try {
+          const html = katex.renderToString(formulaContent, {
+            throwOnError: false,
+            displayMode: true,
+            strict: "ignore"
+          })
+          formulas.push(html)
+        } catch (e) {
+          console.warn('KaTeX equation_block render error:', e.message)
+          formulas.push(`<div class="katex-error">$$${formulaContent}$$</div>`)
+        }
+      }
+
+      // 如果没有找到 $$...$$ 格式，尝试将整个内容作为公式
+      if (formulas.length === 0) {
+        try {
+          const html = katex.renderToString(content, {
+            throwOnError: false,
+            displayMode: true,
+            strict: "ignore"
+          })
+          formulas.push(html)
+        } catch (e) {
+          console.warn('KaTeX equation_block render error:', e.message)
+          formulas.push(`<div class="katex-error">$$${content}$$</div>`)
+        }
+      }
+
+      // 构建多公式容器
+      const formulasHtml = formulas.map(html =>
+        `<div class="equation-content">${html}</div>`
+      ).join('\n')
+
+      const anchorAttr = label ? `id="eq-${label}"` : ''
+      return `<div class="katex-display equation-numbered equation-group" data-equation-number="${equationNumber}" data-label="${label || ''}" ${anchorAttr}>
+        ${formulasHtml}
+        <div class="equation-number">(${equationNumber})</div>
+      </div>`
+    }
+
     // 渲染块级公式（服务端渲染）
     md.renderer.rules.math_block = (tokens, idx) => {
       const content = tokens[idx].content
+      const label = tokens[idx].label
+
+      // 如果有标签，需要编号
+      if (label) {
+        equationCounter++
+        const equationNumber = equationCounter
+        equationLabels.set(label, equationNumber)
+
+        try {
+          const html = katex.renderToString(content, {
+            throwOnError: false,
+            displayMode: true,
+            strict: "ignore"
+          })
+
+          return `<div class="katex-display equation-numbered" data-equation-number="${equationNumber}" data-label="${label}" id="eq-${label}">
+            <div class="equation-content">${html}</div>
+            <div class="equation-number">(${equationNumber})</div>
+          </div>`
+        } catch (e) {
+          console.warn('KaTeX block render error:', e.message)
+          return `<div class="katex-error">$$[${label}]${content}$$</div>`
+        }
+      }
+
+      // 无标签的普通公式
       try {
         return `<div class="katex-display">${katex.renderToString(content, {
           throwOnError: false,
@@ -250,23 +415,40 @@ export default {
     }
 
     // 注册块级公式解析规则
+    md.block.ruler.before('paragraph', 'equation_block', parseEquationBlock, {
+      alt: ['paragraph', 'reference', 'blockquote', 'list']
+    })
     md.block.ruler.before('paragraph', 'math_block', parseBlockMath, {
       alt: ['paragraph', 'reference', 'blockquote', 'list']
     })
-
-    // 注册 equation 环境解析规则（优先级高于 math_block）
     md.block.ruler.before('math_block', 'math_equation', parseEquationEnv, {
       alt: ['paragraph', 'reference', 'blockquote', 'list']
     })
 
-    // 处理行内公式 $...$ 和引用 \eqref{...} \ref{...}
+    // ========== 行内解析规则 ==========
+
+    // 处理行内公式 $...$ 和引用 {{...}}, \eqref{...}, \ref{...}
     md.inline.ruler.before('escape', 'math_inline', (state, silent) => {
       const start = state.pos
       const max = state.posMax
 
+      // 检查是否是 {{xxx}} 引用语法
+      const vueRefPattern = /^\{\{([a-zA-Z0-9:_-]+)\}\}/
+      const remaining = state.src.slice(start)
+      const vueRefMatch = remaining.match(vueRefPattern)
+
+      if (vueRefMatch) {
+        if (!silent) {
+          const label = vueRefMatch[1]
+          const token = state.push('math_vue_ref', 'span', 0)
+          token.content = label
+        }
+        state.pos += vueRefMatch[0].length
+        return true
+      }
+
       // 检查是否是 \eqref{...} 或 \ref{...}
       const refPattern = /^\\(eq)?ref\{([^}]+)\}/
-      const remaining = state.src.slice(start)
       const refMatch = remaining.match(refPattern)
 
       if (refMatch) {
@@ -280,12 +462,12 @@ export default {
         return true
       }
 
-      // 检查是否以 $ 开头（且不是 $$）
+      // 检查是否以 $ 开头（且不是 $$ 或 $$$）
       if (state.src.charCodeAt(start) !== 0x24 /* $ */) {
         return false
       }
 
-      // 检查是否是 $$（块级公式已处理）
+      // 检查是否是 $$ 或 $$$（块级公式已处理）
       if (start + 1 < max && state.src.charCodeAt(start + 1) === 0x24) {
         return false
       }
@@ -318,6 +500,16 @@ export default {
       state.pos = pos + 1
       return true
     })
+
+    // 渲染 {{xxx}} 引用
+    md.renderer.rules.math_vue_ref = (tokens, idx) => {
+      const label = tokens[idx].content
+      const equationNumber = equationLabels.get(label)
+      if (equationNumber) {
+        return `<a href="#eq-${label}" class="equation-reference">(${equationNumber})</a>`
+      }
+      return `<span class="equation-reference-unknown">(${label}?)</span>`
+    }
 
     // 渲染 \eqref{...}
     md.renderer.rules.math_eqref = (tokens, idx) => {
@@ -354,21 +546,18 @@ export default {
       }
     }
 
-    // 处理 HTML 块内的数学公式和公式编号标记
-    // markdown-it 将 HTML 标签视为原始内容，不解析内部的 Markdown
-    // 这里我们在 core ruler 中添加一个规则，在解析完成后处理 HTML 块内的 $...$ 和公式编号标记
+    // ========== 处理 HTML 块内的数学公式和公式编号标记 ==========
     md.core.ruler.push('process_math_in_html', (state) => {
       for (const token of state.tokens) {
         // 处理 html_block 和 html_inline 类型的 token
         if (token.type === 'html_block' || token.type === 'html_inline') {
-          if (token.content && token.content.includes('$')) {
+          if (token.content && (token.content.includes('$') || token.content.includes('{{'))) {
             token.content = processMathInHtml(token.content)
           }
         }
 
         // 处理段落中的公式编号 HTML 注释标记
         if (token.type === 'paragraph_open' || token.type === 'paragraph_close') {
-          // 查找相邻的 html_inline token
           continue
         }
       }
@@ -384,6 +573,7 @@ export default {
         if (token.type === 'inline' && token.children) {
           for (const child of token.children) {
             if (child.type === 'html_inline' && child.content) {
+              // 处理 <!-- eqref:xxx --> 引用标记
               const eqrefMatch = child.content.match(/<!--\s*eqref:([^>]+)\s*-->/)
               if (eqrefMatch) {
                 const label = eqrefMatch[1].trim()
@@ -410,7 +600,6 @@ export default {
             equationLabels.set(label, equationNumber)
 
             // 查找所有连续的 math_block tokens（公式内容）和结束标记
-            // 跳过中间的空白 token 和 paragraph token
             let mathBlockIndices = []
             let endMarkerIndex = -1
             let j = i + 1
@@ -425,14 +614,13 @@ export default {
               if (nextToken.type === 'math_block') {
                 mathBlockIndices.push(j)
               }
-              // 跳过空白、段落和 inline token（这些可能在两个公式之间）
+              // 跳过空白、段落和 inline token
               if (nextToken.type !== 'math_block' &&
                   nextToken.type !== 'html_block' &&
                   nextToken.type !== 'paragraph_open' &&
                   nextToken.type !== 'paragraph_close' &&
                   nextToken.type !== 'inline' &&
                   !(nextToken.type === 'text' && !nextToken.content?.trim())) {
-                // 遇到非预期的 token，停止收集
                 break
               }
               j++
@@ -475,7 +663,6 @@ export default {
               // 清空其他 math_block tokens 和中间的空白/段落 token
               for (let k = mathBlockIndices[0] + 1; k <= endMarkerIndex - 1; k++) {
                 const tok = state.tokens[k]
-                // 只清空非结束标记的 token
                 if (tok.type === 'math_block' ||
                     tok.type === 'paragraph_open' ||
                     tok.type === 'paragraph_close' ||

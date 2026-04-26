@@ -111,9 +111,7 @@ $$l = -\sum_{i=1}^{I} y_i \log a_i^K$$
 
 其中 $y_i$ 是真实标签的 [One-Hot](https://en.wikipedia.org/wiki/One-hot) 编码（正确类别为 1，其他类别为 0）。$\log a_i^K$ 是预测概率的对数，概率越接近 1，对数越接近 0，整体损失等于正确类别预测概率的负对数，概率越低损失越大。$l$ 对 $z_i^K$ 的偏导数为（推导见[练习题](#练习题)部分）：
 
-<!-- equation:label=eq:backprop-output-eq -->
-$$\frac{\partial l}{\partial z_i^K} = a_i^K - y_i$$
-<!-- end-equation -->
+$$[eq:backprop-output-eq] \frac{\partial l}{\partial z_i^K} = a_i^K - y_i$$
 
 数学上 Softmax + Cross-Entropy 的梯度十分简洁，就等于预测概率减去真实标签，这意味着输出层的误差信号无需进行求导运算，只要简单的减法即可得到，误差信号 $\delta^K$ 就是 $\mathbf{a}^K - \mathbf{y}$。
 
@@ -121,25 +119,21 @@ $$\frac{\partial l}{\partial z_i^K} = a_i^K - y_i$$
 
 输出层的误差信号计算出来后，需要逐层传递到隐藏层。设第 $k$ 层（隐藏层）的误差信号为 $\delta^k$，从第 $k+1$ 层传递过来的梯度为 $\delta^{k+1}$。$\delta^k$ 是损失函数对该层预激活值的梯度，根据链式法则，只要乘以激活函数的导数 $\sigma'(z)$，就能将梯度从激活值的输出端传递到输入端，得到每个隐藏层的误差信号：
 
-<!-- equation:label=eq:backprop-error-sign -->
-$$\delta^k = \frac{\partial l}{\partial \mathbf{z}^k} = \frac{\partial l}{\partial \mathbf{a}^k} \cdot \frac{\partial \mathbf{a}^k}{\partial \mathbf{z}^k}= \frac{\partial l}{\partial \mathbf{a}^k} \cdot \sigma'(\mathbf{z}^k)$$
-<!-- end-equation -->
+$$[eq:backprop-error-sign] \delta^k = \frac{\partial l}{\partial \mathbf{z}^k} = \frac{\partial l}{\partial \mathbf{a}^k} \cdot \frac{\partial \mathbf{a}^k}{\partial \mathbf{z}^k}= \frac{\partial l}{\partial \mathbf{a}^k} \cdot \sigma'(\mathbf{z}^k)$$
 
 式子里的 $\frac{\partial l}{\partial \mathbf{a}^k}$ 可以从第 $k+1$ 层传递过来的误差信号 $\delta^{k+1}$ 得到：
 
 $$\frac{\partial l}{\partial \mathbf{a}^k} = \frac{\partial l}{\partial \mathbf{z}^{k+1}} \cdot \frac{\partial \mathbf{z}^{k+1}}{\partial \mathbf{a}^k} = (\mathbf{W}^{k+1})^T \delta^{k+1}$$
 
-其中 $\frac{\partial l}{\partial \mathbf{z}^{k+1}}$ 就是上一层的误差信号 $\delta^{k+1}$，一直迭代推到输出层（见 <!-- eqref:eq:backprop-output-eq --> ）就是 $\mathbf{a}^K - \mathbf{y}$。$\frac{\partial \mathbf{z}^{k+1}}{\partial \mathbf{a}^k}$ 是下一层预激活值对本层激活值的导数，由于 $\mathbf{z}^{k+1} = \mathbf{W}^{k+1} \mathbf{a}^k + \mathbf{b}^{k+1}$，所以它相对于 $\mathbf{a}^k$ 的偏导数就等于权重矩阵 $\mathbf{W}^{k+1}$。前文提到过，机器学习常用约定是使用分母布局，梯度为列向量，此时需要转置以保证维度匹配为了满足矩阵乘法[内维匹配](../../maths/linear/matrices.md#矩阵的运算)要求，将权重矩阵的转置 $(\mathbf{W}^{k+1})^T$ 后与上一层的误差信号相乘。从信号传播的角度看，这个操作类似于信号缩放，前向传播用 $\mathbf{W}^{k+1}$ 将信号放大，反向传播用转置 $(\mathbf{W}^{k+1})^T$ 将梯度缩回。将这个式子代入隐藏层的误差信号（见 <!-- eqref:eq:backprop-error-sign -->）得到：
+其中 $\frac{\partial l}{\partial \mathbf{z}^{k+1}}$ 就是上一层的误差信号 $\delta^{k+1}$，一直迭代推到输出层（见 {{eq:backprop-output-eq}}）就是 $\mathbf{a}^K - \mathbf{y}$。$\frac{\partial \mathbf{z}^{k+1}}{\partial \mathbf{a}^k}$ 是下一层预激活值对本层激活值的导数，由于 $\mathbf{z}^{k+1} = \mathbf{W}^{k+1} \mathbf{a}^k + \mathbf{b}^{k+1}$，所以它相对于 $\mathbf{a}^k$ 的偏导数就等于权重矩阵 $\mathbf{W}^{k+1}$。前文提到过，机器学习常用约定是使用分母布局，梯度为列向量，此时需要转置以保证维度匹配为了满足矩阵乘法[内维匹配](../../maths/linear/matrices.md#矩阵的运算)要求，将权重矩阵的转置 $(\mathbf{W}^{k+1})^T$ 后与上一层的误差信号相乘。从信号传播的角度看，这个操作类似于信号缩放，前向传播用 $\mathbf{W}^{k+1}$ 将信号放大，反向传播用转置 $(\mathbf{W}^{k+1})^T$ 将梯度缩回。将这个式子代入隐藏层的误差信号（见 {{eq:backprop-error-sign}}）得到：
 
-<!-- equation:label=eq:backprop-hidden -->
-$$\delta^k = (\mathbf{W}^{k+1})^T \delta^{k+1} \cdot \sigma'(\mathbf{z}^k)$$
-<!-- end-equation -->
+$$[eq:backprop-hidden] \delta^k = (\mathbf{W}^{k+1})^T \delta^{k+1} \cdot \sigma'(\mathbf{z}^k)$$
 
 这就是隐藏层误差信号的传递公式，隐藏层的误差信号可以通过上一层误差信号乘以本层权重矩阵的转置，再乘以本层激活函数的导数来获取。不妨用信号衰减来类比理解这部分推导过程，误差信号 $\delta^{k+1}$ 从下游传来，经过权重矩阵的逆映射（$(\mathbf{W}^{k+1})^T$）缩放大小，再经过激活函数导数（$\sigma'(\mathbf{z}^k)$）调整强度，最终得到本层的误差信号 $\delta^k$。如果激活函数导数很小（如 Sigmoid 在两端），误差信号就会被大幅衰减，这就是后面梯度消失问题的根源。
 
 ### 参数梯度计算
 
-有了误差信号 $\delta^k$（见 <!-- eqref:eq:backprop-hidden -->），就可以计算第 $k$ 层参数的梯度。这些梯度告诉我们权重和偏置应该调整多少才能降低损失。根据链式法则，权重梯度为：
+有了误差信号 $\delta^k$（见 {{eq:backprop-hidden}}），就可以计算第 $k$ 层参数的梯度。这些梯度告诉我们权重和偏置应该调整多少才能降低损失。根据链式法则，权重梯度为：
 
 $$\frac{\partial l}{\partial \mathbf{W}^k} = \frac{\partial l}{\partial z^k} \cdot \frac{\partial z^k}{\partial \mathbf{W}^k} $$
 

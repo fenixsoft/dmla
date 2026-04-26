@@ -528,9 +528,28 @@ const processEquationNumbers = () => {
   }
 }
 
-// MutationObserver 监听内容变化（处理 VuePress HMR 热更新）
+// MutationObserver 监听内容变化（处理 VuePress HMR 热更新和路由切换）
 let mutationObserver = null
 let debounceTimer = null
+
+// 检查元素是否在内容区域内（递归向上查找）
+const isInContentArea = (element) => {
+  if (!element) return false
+  if (element.classList && element.classList.contains('theme-default-content')) {
+    return true
+  }
+  // 递归向上查找，最多查找 10 层
+  let parent = element.parentElement
+  let depth = 0
+  while (parent && depth < 10) {
+    if (parent.classList && parent.classList.contains('theme-default-content')) {
+      return true
+    }
+    parent = parent.parentElement
+    depth++
+  }
+  return false
+}
 
 // 设置 MutationObserver 监听内容变化
 const setupMutationObserver = () => {
@@ -539,15 +558,15 @@ const setupMutationObserver = () => {
   mutationObserver = new MutationObserver((mutations) => {
     // 检查是否有内容变化
     const hasContentChange = mutations.some(mutation => {
-      // 检查是否是内容区域的变化
-      const target = mutation.target
-      // VuePress 内容容器通常是 .theme-default-content
-      if (target.classList && target.classList.contains('theme-default-content')) {
+      // 检查目标元素或其父元素是否在内容区域内
+      if (isInContentArea(mutation.target)) {
         return true
       }
-      // 检查父元素是否是内容区域
-      if (target.parentElement && target.parentElement.classList) {
-        return target.parentElement.classList.contains('theme-default-content')
+      // 检查添加的节点是否在内容区域内
+      for (const node of mutation.addedNodes) {
+        if (node.nodeType === Node.ELEMENT_NODE && isInContentArea(node)) {
+          return true
+        }
       }
       return false
     })
@@ -555,7 +574,7 @@ const setupMutationObserver = () => {
     if (hasContentChange) {
       // 使用防抖避免频繁处理
       clearTimeout(debounceTimer)
-      debounceTimer = setTimeout(processEquationNumbers, 150)
+      debounceTimer = setTimeout(processEquationNumbers, 100)
     }
   })
 
@@ -586,12 +605,24 @@ export default {
       setTimeout(processEquationNumbers, 100)
       // 设置 MutationObserver 监听后续变化
       setupMutationObserver()
+
+      // 监听 pageshow 事件处理 bfcache 恢复
+      // 当用户点击后退/前进按钮时，浏览器可能从 bfcache 恢复页面
+      // 此时不会触发 onMounted，需要通过 pageshow 事件处理
+      window.addEventListener('pageshow', (event) => {
+        // event.persisted 为 true 表示页面从 bfcache 恢复
+        if (event.persisted) {
+          // 等待 DOM 状态稳定后重新处理公式编号
+          setTimeout(processEquationNumbers, 50)
+        }
+      })
     })
 
     // 路由变化时重新处理
     watch(
       () => route.path,
       () => {
+        // 使用 nextTick 确保 Vue 完成 DOM 更新后再处理
         setTimeout(processEquationNumbers, 200)
       }
     )

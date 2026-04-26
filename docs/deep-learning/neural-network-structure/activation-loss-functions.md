@@ -62,7 +62,7 @@ tanh 函数的导数 $\tanh'(z) = 1 - \tanh^2(z)$，导数最大值为 $1$（当
 
 **ReLU 函数**（Rectified Linear Unit，修正线性单元）是深度学习时代最流行的激活函数，它的表达式与传统的 Sigmoid 、tanh 等充斥指数运算的函数相比，显得有些格格不入，它的函数与导数为：
 
-$$\text{ReLU}(z) = \max(0, z) = \begin{cases} z & z > 0 \\ 0 & z \leq 0 \end{cases}，\text{ReLU}'(z) = \begin{cases} 1 & z > 0 \\ 0 & z \leq 0 \end{cases}$$
+$$\text{ReLU}(z) = \max(0, z) = \begin{cases} z & z > 0 \\ 0 & z \leq 0 \end{cases}, \quad \text{ReLU}'(z) = \begin{cases} 1 & z > 0 \\ 0 & z \leq 0 \end{cases}$$
 
 ReLU 设计的极其简单，正数就保持不变，负数就置零，在零点的左右导数甚至都不相等。谁能想到这个看似简陋的规则，居然一举解决了困扰神经网络多年的梯度消失问题，深度学习在 2012 年后的爆发后的成名作品 AlexNet、VGG、ResNet 等均使用 ReLU。如果把 Sigmoid 和 ReLU 想象成两根水管的话，Sigmoid 的管道逐渐变窄（导数衰减），水流越来越慢，最终几乎静止；ReLU 的管道在负数区域关闭阀门，在正数区域保持通畅（导数为 1），既不会变窄让水流减速，也不会边宽酿成洪水（梯度爆炸），深层网络前面几层也能获得足够的水压。
 
@@ -74,19 +74,19 @@ ReLU 的优势除了梯度完整传递，不会被衰减，使得深层网络训
 
 针对 ReLU 的神经元死亡问题，学界给出的改进方案是负数区域不再完全置零，而是保持一个小的斜率，让梯度仍能传递。**Leaky ReLU**（泄漏 ReLU）由法国计算机科学家安德鲁·L·马斯（Andrew L. Maas）等人在 2013 年提出，它的函数和导数为：
 
-$$\text{LeakyReLU}(z) = \max(\alpha z, z) = \begin{cases} z & z > 0 \\ \alpha z & z \leq 0 \end{cases}，\text{LeakyReLU}'(z) = \begin{cases} 1 & z > 0 \\ \alpha & z \leq 0 \end{cases}$$
+$$\text{LeakyReLU}(z) = \max(\alpha z, z) = \begin{cases} z & z > 0 \\ \alpha z & z \leq 0 \end{cases}, \quad \text{LeakyReLU}'(z) = \begin{cases} 1 & z > 0 \\ \alpha & z \leq 0 \end{cases}$$
 
 其中 $\alpha$ 是小正数（通常 $0.01$）。如果说 ReLU 的负数区域像水管里面紧闭的阀门，水流完全堵住；Leaky ReLU 的负数区域像一扇留了一点缝隙的阀门，水流变小（$\alpha = 0.01$ 时水流为 $1\%$），但仍能通过。这意味着神经元即使进入负数区域，梯度仍能传递，虽然传不了多远就会梯度消失，但起码还有机会复活。实践中，Leaky ReLU 在某些任务上比 ReLU 表现略好，尤其是在初始化不当或学习率较大的情况下。
 
 德国计算机科学家德约克-阿内·克莱弗特（Djork-Arné Clevert）等人在 2015 年提出**ELU 函数**（Exponential Linear Unit，指数线性单元），进一步改进负数区域的处理，它的函数与导数为：
 
-$$\text{ELU}(z) = \begin{cases} z & z > 0 \\ \alpha(e^z - 1) & z \leq 0 \end{cases}，\text{ELU}'(z) = \begin{cases} 1 & z > 0 \\ \alpha e^z & z \leq 0 \end{cases}$$
+$$\text{ELU}(z) = \begin{cases} z & z > 0 \\ \alpha(e^z - 1) & z \leq 0 \end{cases}, \quad \text{ELU}'(z) = \begin{cases} 1 & z > 0 \\ \alpha e^z & z \leq 0 \end{cases}$$
 
 其中 $\alpha$ 是超参数（通常 $1.0$）。ELU 针对 ReLU 和 Leaky ReLU 在 $z = 0$ 处存在的折角（从 $0$ 突变到 $z$ 和 从 $\alpha z$ 突变到 $z$）进行了修补，折角可能影响优化平滑性。ELU 在负数区域使用指数函数 $e^z - 1$ 平滑过渡，避免折角，有利于下一层输入分布平衡（类似 tanh 的零中心优势）
 
 同样在 2015 年，何凯明（2015 年在微软亚洲研究院，现为 FAIR 研究员）提出 **PReLU 函数**（Parametric ReLU，参数化 ReLU），将 Leaky ReLU 的斜率参数化，它的函数与导数是：
 
-$$\text{PReLU}(z) = \begin{cases} z & z > 0 \\ \alpha_i z & z \leq 0 \end{cases}，\text{LeakyReLU}'(z) = \begin{cases} 1 & z > 0 \\ \alpha_i & z \leq 0 \end{cases}$$
+$$\text{PReLU}(z) = \begin{cases} z & z > 0 \\ \alpha_i z & z \leq 0 \end{cases}, \quad \text{LeakyReLU}'(z) = \begin{cases} 1 & z > 0 \\ \alpha_i & z \leq 0 \end{cases}$$
 
 其中 $\alpha_i$ 不再是人为设置的超参数，而是网络可学习的参数，每个神经元有独立的斜率。何凯明等人在 ResNet（深度残差网络，2015 年 ImageNet 冠军）中使用 PReLU，发现斜率通过反向传播学习，自动适应数据分布，比固定斜率更灵活。实验显示，PReLU 在 ImageNet 分类任务上比 ReLU 提升约 1% 的准确率（不要被 1% 数字误导，当年 ImageNet 分类任务冠军的错误率才 3.57%，准确率提升 1% 是一个巨大的进步）。
 

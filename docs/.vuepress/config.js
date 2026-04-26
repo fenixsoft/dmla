@@ -168,8 +168,17 @@ export default {
             text: '优化神经网络',
             collapsible: false,
             children: [
-              { text: '梯度下降', link: '/deep-learning/deep-network-optimization/gradient-descent' },
-              { text: '自适应优化器', link: '/deep-learning/deep-network-optimization/adaptive-optimizers' },
+              { text: '梯度下降', link: '/deep-learning/neural-network-optimization/gradient-descent' },
+              { text: '自适应优化器', link: '/deep-learning/neural-network-optimization/adaptive-optimizers' },
+            ]
+          },
+          {
+            text: '神经网络稳定性',
+            collapsible: false,
+            children: [
+              { text: '权重初始化', link: '/deep-learning/neural-network-stability/weight-initialization' },
+              { text: 'Dropout 正则化', link: '/deep-learning/neural-network-stability/dropout' },
+              { text: '批归一化', link: '/deep-learning/neural-network-stability/batch-normalization' },
             ]
           },
         ]
@@ -183,7 +192,7 @@ export default {
         collapsible: false,
       },
       {
-        text: '经典论文阅读',
+        text: '附录：经典论文',
         collapsible: false,
         children: [
               { text: '临时格式测试页面', link: '/test.md' },
