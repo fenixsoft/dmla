@@ -3,7 +3,7 @@
     <!-- 左侧：字数统计 + 更新时间 -->
     <div class="footer-meta">
       <!-- 字数统计 -->
-      <div class="meta-item word-count">
+      <div class="meta-item word-count" :title="wordCountHint">
         <svg class="meta-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
           <polyline points="14 2 14 8 20 8"></polyline>
@@ -54,7 +54,14 @@ const page = usePageData()
 
 // 字数统计 - VuePress v2 中 wordCount 直接在 page 根级别
 const wordCount = computed(() => page.value.wordCount || 0)
+const textWordCount = computed(() => page.value.textWordCount || 0)
+const codeWordCount = computed(() => page.value.codeWordCount || 0)
 const formattedWordCount = computed(() => wordCount.value.toLocaleString())
+const wordCountHint = computed(() => {
+  const text = textWordCount.value.toLocaleString()
+  const code = codeWordCount.value.toLocaleString()
+  return `文字：${text} 字\n代码：${code} 字`
+})
 
 // 更新时间
 const lastUpdated = computed(() => {

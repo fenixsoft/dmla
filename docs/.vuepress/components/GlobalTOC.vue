@@ -2,7 +2,7 @@
   <div class="global-toc">
     <!-- 统计信息 -->
     <div v-if="level === 0" class="stats-info">
-      <p>共计 <strong>{{ tocArticleCount }}</strong> 篇文章，合计 <strong>{{ totalWords.toLocaleString() }}</strong> 字，最后更新日期 <strong>{{ lastUpdateDate }}</strong>。</p>
+      <p>共计 <strong>{{ tocArticleCount }}</strong> 篇文章，合计 <strong :title="totalWordsHint">{{ totalWords.toLocaleString() }}</strong> 字，最后更新日期 <strong>{{ lastUpdateDate }}</strong>。</p>
     </div>
     <ol>
       <li v-for="(page, index) in information" :key="index">
@@ -10,11 +10,11 @@
           <a :href="page.links">
             <span :class="'level' + level">{{ page.title }}</span>
           </a>
-          <span class="words">{{ page.words }}</span>
+          <span class="words" :title="page.wordHint">{{ page.words }}</span>
         </span>
         <span v-else :class="'level' + level">
           {{ page.title }}
-          <span class="words">{{ page.words }}</span>
+          <span class="words" :title="page.wordHint">{{ page.words }}</span>
         </span>
         <GlobalTOC v-if="page.children && page.children.length > 0"
           :pages="page.children"
@@ -99,6 +99,53 @@ export default defineComponent({
       return total
     })
 
+    // 合计分类字数（文字和代码）
+    const totalTextWords = computed(() => {
+      if (props.level !== 0) return 0
+
+      const sidebar = sidebarConfig.value
+      if (!sidebar || sidebar.length === 0) return 0
+
+      let total = 0
+      const countTextWords = (items) => {
+        for (const item of items) {
+          if (item.link) {
+            const data = findWordCountData(item.link)
+            if (data.wordCount > 100) total += data.textWordCount || 0
+          }
+          if (item.children) countTextWords(item.children)
+        }
+      }
+      countTextWords(sidebar)
+      return total
+    })
+
+    const totalCodeWords = computed(() => {
+      if (props.level !== 0) return 0
+
+      const sidebar = sidebarConfig.value
+      if (!sidebar || sidebar.length === 0) return 0
+
+      let total = 0
+      const countCodeWords = (items) => {
+        for (const item of items) {
+          if (item.link) {
+            const data = findWordCountData(item.link)
+            if (data.wordCount > 100) total += data.codeWordCount || 0
+          }
+          if (item.children) countCodeWords(item.children)
+        }
+      }
+      countCodeWords(sidebar)
+      return total
+    })
+
+    // 合计字数的悬浮提示
+    const totalWordsHint = computed(() => {
+      if (props.level !== 0) return ''
+      return `文字：${totalTextWords.value.toLocaleString()} 字\n代码：${totalCodeWords.value.toLocaleString()} 字`
+    })
+
     // 最后更新日期（使用当前日期，因为无法在客户端获取git信息）
     const lastUpdateDate = computed(() => {
       if (props.level !== 0) return ''
@@ -120,9 +167,11 @@ export default defineComponent({
           return true
         })
         .map(item => {
+        const wordData = getWordData(item)
         const result = {
           title: getTitle(item),
-          words: getWords(item),
+          words: wordData.display,
+          wordHint: wordData.hint,
           links: getLinks(item),
           children: []
         }
@@ -142,76 +191,91 @@ export default defineComponent({
       return item.text || item.title || '未知标题'
     }
 
-    function getWords(item) {
-      // 优先检查已处理的 words 属性
-      if (item.words) {
-        return item.words
+    function getWordData(item) {
+      // 返回 {display: '字数显示', hint: '悬浮提示'}
+      // 优先检查已处理的 words 和 wordHint 属性（用于递归渲染时）
+      if (item.words && item.wordHint) {
+        return { display: item.words, hint: item.wordHint }
       }
 
       if (typeof item === 'string') {
-        const wordCount = findWordCount(item)
-        return wordCount > 0 ? `${wordCount.toLocaleString()} 字` : ''
+        const data = findWordCountData(item)
+        return formatWordData(data)
       }
 
-      if (item.link) {
-        const wordCount = findWordCount(item.link)
-        return wordCount > 0 ? `${wordCount.toLocaleString()} 字` : ''
+      // 检查 link 或 links 属性（links 是处理后的属性）
+      const linkPath = item.link || item.links
+      if (linkPath) {
+        const data = findWordCountData(linkPath)
+        return formatWordData(data)
       }
 
       if (item.children && Array.isArray(item.children)) {
-        const totalWords = item.children.reduce((sum, child) => {
-          return sum + getWordCountNum(child)
-        }, 0)
-        return totalWords > 0 ? `${totalWords.toLocaleString()} 字` : ''
+        // 合计子项的字数
+        let totalText = 0, totalCode = 0
+        for (const child of item.children) {
+          // child 可能是字符串、原始 sidebar item，或已处理的 result
+          let childLink = typeof child === 'string' ? child : (child.link || child.links || '')
+          if (childLink) {
+            const childData = findWordCountData(childLink)
+            totalText += childData.textWordCount || 0
+            totalCode += childData.codeWordCount || 0
+          }
+        }
+        return formatWordData({ wordCount: totalText + totalCode, textWordCount: totalText, codeWordCount: totalCode })
       }
 
-      return ''
+      return { display: '', hint: '' }
     }
 
-    function getWordCountNum(item) {
-      if (typeof item === 'string') {
-        return findWordCount(item) || 0
+    function formatWordData(data) {
+      const wordCount = data.wordCount || 0
+      const textWordCount = data.textWordCount || 0
+      const codeWordCount = data.codeWordCount || 0
+      if (wordCount <= 0) return { display: '', hint: '' }
+      return {
+        display: `${wordCount.toLocaleString()} 字`,
+        hint: `文字：${textWordCount.toLocaleString()} 字\n代码：${codeWordCount.toLocaleString()} 字`
       }
-
-      if (item.link) {
-        return findWordCount(item.link) || 0
-      }
-
-      // 递归处理有 children 的项目
-      if (item.children && Array.isArray(item.children)) {
-        return item.children.reduce((sum, child) => {
-          return sum + getWordCountNum(child)
-        }, 0)
-      }
-
-      return 0
     }
 
     function getLinks(item) {
-      // 优先检查已处理的 links 属性，然后检查原始 link 属性
+      // 优先检查已处理的 links 属性
       if (item.links) {
         return item.links
       }
 
       if (typeof item === 'string') {
-        const wordCount = findWordCount(item)
-        return wordCount > 100 ? item : null
+        const data = findWordCountData(item)
+        return data.wordCount > 100 ? item : null
       }
 
+      // 检查原始的 link 属性
       if (item.link) {
-        const wordCount = findWordCount(item.link)
-        return wordCount > 100 ? item.link : null
+        const data = findWordCountData(item.link)
+        return data.wordCount > 100 ? item.link : null
       }
 
       return null
     }
 
-    function findWordCount(linkPath) {
+    function findWordCountData(linkPath) {
+      // 返回 {wordCount, textWordCount, codeWordCount}
       const data = wordCountData
-      if (!data || Object.keys(data).length === 0) return 0
+      if (!data || Object.keys(data).length === 0) return { wordCount: 0, textWordCount: 0, codeWordCount: 0 }
+
+      // 处理输入可能是对象的情况
+      let path = linkPath
+      if (typeof linkPath === 'object' && linkPath !== null) {
+        path = linkPath.link || ''
+      }
+
+      if (typeof path !== 'string' || !path) {
+        return { wordCount: 0, textWordCount: 0, codeWordCount: 0 }
+      }
 
       // 标准化路径
-      const normalizedPath = linkPath.startsWith('/') ? linkPath : '/' + linkPath
+      const normalizedPath = path.startsWith('/') ? path : '/' + path
 
       // 尝试多种路径格式
       const candidates = [
@@ -223,12 +287,22 @@ export default defineComponent({
 
       for (const candidate of candidates) {
         if (data[candidate] !== undefined) {
-          // wordCountData 结构为 {title, wordCount}
-          return data[candidate].wordCount || data[candidate]
+          // wordCountData 结构为 {title, wordCount, textWordCount, codeWordCount}
+          const entry = data[candidate]
+          return {
+            wordCount: entry.wordCount || 0,
+            textWordCount: entry.textWordCount || 0,
+            codeWordCount: entry.codeWordCount || 0
+          }
         }
       }
 
-      return 0
+      return { wordCount: 0, textWordCount: 0, codeWordCount: 0 }
+    }
+
+    // 兼容旧的 findWordCount 函数（用于统计信息）
+    function findWordCount(linkPath) {
+      return findWordCountData(linkPath).wordCount
     }
 
     return {
@@ -236,6 +310,9 @@ export default defineComponent({
       // 统计信息（仅在顶层显示）
       tocArticleCount,
       totalWords,
+      totalTextWords,
+      totalCodeWords,
+      totalWordsHint,
       lastUpdateDate
     }
   }
