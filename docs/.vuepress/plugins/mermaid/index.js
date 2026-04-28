@@ -19,19 +19,15 @@ export default {
       // 支持大小修饰符：mermaid small, mermaid compact, mermaid tiny
       // small: zoom 0.85, compact: zoom 0.75, tiny: zoom 0.6
       if (lang.startsWith('mermaid')) {
-        // 转义 HTML 特殊字符，保留原始代码用于调试
-        const escapedCode = code
-          .replace(/&/g, '&amp;')
-          .replace(/</g, '&lt;')
-          .replace(/>/g, '&gt;')
-
         // 解析大小修饰符，只接受 small, compact, tiny
         const parts = lang.split(/\s+/)
         const sizeModifier = parts[1]
         const validSizes = ['small', 'compact', 'tiny']
         const sizeClass = validSizes.includes(sizeModifier) ? `mermaid-${sizeModifier}` : ''
 
-        return `<pre class="mermaid ${sizeClass}"><code>${escapedCode}</code></pre>`
+        // 使用 data-mermaid 属性存储原始代码，避免浏览器解析 HTML 标签
+        // encodeURIComponent 确保 <br> 等标签不会被浏览器规范化
+        return `<pre class="mermaid ${sizeClass}" data-mermaid="${encodeURIComponent(code)}"></pre>`
       }
 
       return defaultFence(tokens, idx, options, env, self)

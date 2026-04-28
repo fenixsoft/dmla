@@ -67,9 +67,8 @@ async function renderMermaid() {
     // 跳过已经渲染过的元素
     if (el.dataset.rendered === 'true') continue
 
-    // 获取 code 元素中的内容
-    const codeEl = el.querySelector('code')
-    const code = codeEl ? codeEl.textContent : el.textContent
+    // 从 data-mermaid 属性获取原始代码（避免浏览器解析 HTML 标签）
+    const code = el.dataset.mermaid ? decodeURIComponent(el.dataset.mermaid) : el.textContent
 
     // 提取尺寸修饰符类名（mermaid-small, mermaid-compact, mermaid-tiny）
     const sizeClasses = el.className.split(' ').filter(cls => cls.startsWith('mermaid-') && cls !== 'mermaid')
