@@ -173,7 +173,7 @@ export default {
             ]
           },
           {
-            text: '神经网络稳定性',
+            text: '深层网络稳定性',
             collapsible: false,
             children: [
               { text: '权重初始化', link: '/deep-learning/neural-network-stability/weight-initialization' },
