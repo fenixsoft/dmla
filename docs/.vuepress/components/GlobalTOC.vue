@@ -211,17 +211,24 @@ export default defineComponent({
       }
 
       if (item.children && Array.isArray(item.children)) {
-        // 合计子项的字数
+        // 递归合计所有后代页面的字数
         let totalText = 0, totalCode = 0
-        for (const child of item.children) {
-          // child 可能是字符串、原始 sidebar item，或已处理的 result
-          let childLink = typeof child === 'string' ? child : (child.link || child.links || '')
-          if (childLink) {
-            const childData = findWordCountData(childLink)
-            totalText += childData.textWordCount || 0
-            totalCode += childData.codeWordCount || 0
+        const sumChildrenWords = (children) => {
+          for (const child of children) {
+            // child 可能是字符串、原始 sidebar item，或已处理的 result
+            let childLink = typeof child === 'string' ? child : (child.link || child.links || '')
+            if (childLink) {
+              const childData = findWordCountData(childLink)
+              totalText += childData.textWordCount || 0
+              totalCode += childData.codeWordCount || 0
+            }
+            // 如果子项还有 children，递归统计
+            if (child.children && Array.isArray(child.children)) {
+              sumChildrenWords(child.children)
+            }
           }
         }
+        sumChildrenWords(item.children)
         return formatWordData({ wordCount: totalText + totalCode, textWordCount: totalText, codeWordCount: totalCode })
       }
 
