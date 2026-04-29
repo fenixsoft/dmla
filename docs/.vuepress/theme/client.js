@@ -5,6 +5,8 @@ import Layout from './layouts/Layout.vue'
 import Preview from './layouts/Preview.vue'
 import { getSiteConfig } from './utils/configMigration.js'
 import { getThemeConfig } from './config/highlightThemes.js'
+import { useRoute, useRouter } from 'vuepress/client'
+import { watch, nextTick, onMounted } from 'vue'
 import './styles/index.scss'
 
 // 各主题对应的背景色
@@ -74,6 +76,103 @@ function handleConfigChange(event) {
   }
 }
 
+/**
+ * 将当前高亮的 sidebar 项滚动到可视区域顶部
+ */
+function scrollSidebarToActive() {
+  const sidebar = document.querySelector('.vp-sidebar')
+  if (!sidebar) return
+
+  // 获取当前 URL 的 hash
+  const hash = window.location.hash
+
+  // 查找与当前 hash 匹配的 sidebar 项，或最深的 active 项
+  let targetItem = null
+
+  if (hash) {
+    // 如果有 hash，查找链接匹配该 hash 的项
+    const hashLink = `${window.location.pathname}${hash}`
+    targetItem = sidebar.querySelector(`.vp-sidebar-item.active a[href="${hashLink}"]`)
+    if (targetItem) {
+      targetItem = targetItem.closest('.vp-sidebar-item')
+    }
+  }
+
+  // 如果没找到匹配 hash 的项，使用最后一个（最深的）active 项
+  if (!targetItem) {
+    const activeItems = sidebar.querySelectorAll('.vp-sidebar-item.active')
+    if (activeItems.length > 0) {
+      // 使用最后一个 active 项（最深的嵌套项）
+      targetItem = activeItems[activeItems.length - 1]
+    }
+  }
+
+  if (!targetItem) return
+
+  // 计算高亮项相对于 sidebar 容器的位置
+  const sidebarRect = sidebar.getBoundingClientRect()
+  const targetRect = targetItem.getBoundingClientRect()
+
+  // 如果高亮项不在可视区域内（或不在顶部区域），则滚动
+  const isAboveView = targetRect.top < sidebarRect.top
+  const isBelowView = targetRect.bottom > sidebarRect.bottom
+  const isNotNearTop = targetRect.top > sidebarRect.top + 50
+
+  if (isAboveView || isBelowView || isNotNearTop) {
+    // 计算滚动位置：让高亮项位于 sidebar 顶部附近
+    const offsetTop = targetItem.offsetTop - sidebar.offsetTop - 10
+
+    sidebar.scrollTo({
+      top: offsetTop,
+      behavior: 'smooth'
+    })
+  }
+}
+
+/**
+ * 监听路由变化，自动滚动 sidebar 到高亮项
+ */
+function setupSidebarScroll() {
+  const route = useRoute()
+  const router = useRouter()
+
+  // 防抖处理，避免频繁滚动
+  let scrollTimeout = null
+
+  const handleScroll = () => {
+    if (scrollTimeout) {
+      clearTimeout(scrollTimeout)
+    }
+    scrollTimeout = setTimeout(() => {
+      nextTick(() => {
+        scrollSidebarToActive()
+      })
+    }, 100)
+  }
+
+  // 监听路由 hash 变化（文章滚动时 hash 会跟随改变）
+  watch(
+    () => route.hash,
+    handleScroll,
+    { immediate: false }
+  )
+
+  // 监听路由路径变化（页面切换）
+  watch(
+    () => route.path,
+    handleScroll,
+    { immediate: false }
+  )
+
+  // 页面首次加载时，滚动到当前高亮项
+  onMounted(() => {
+    nextTick(() => {
+      // 等待 sidebar 渲染完成后滚动
+      setTimeout(scrollSidebarToActive, 200)
+    })
+  })
+}
+
 export default defineClientConfig({
   layouts: {
     Layout,
@@ -84,6 +183,9 @@ export default defineClientConfig({
     setupDarkMode()
     setupHeaders()
     setupSidebarItems()
+
+    // 初始化 sidebar 自动滚动
+    setupSidebarScroll()
 
     // 禁止浏览器翻译（网站本身就是中文）
     if (typeof document !== 'undefined') {
