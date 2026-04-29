@@ -204,7 +204,7 @@ import requests
 from io import BytesIO
 
 # 加载真实图片
-response = requests.get("https://icyfenix.cn/images/logo-color.png")
+response = requests.get("http://ai.icyfenix.cn/logo_min_size.png")
 image_pil = Image.open(BytesIO(response.content))
 
 # 转换为灰度图（卷积核通常作用于单通道）

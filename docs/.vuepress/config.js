@@ -181,6 +181,16 @@ export default {
               { text: '批归一化', link: '/deep-learning/neural-network-stability/batch-normalization' },
             ]
           },
+          {
+            text: '卷积神经网络',
+            collapsible: false,
+            children: [
+              { text: '卷积神经网络', link: '/deep-learning/convolutional-neural-network/cnn-basics' },
+              // { text: 'AlexNet 与 CNN 复兴', link: '/deep-learning/convolutional-neural-network/alexnet' },
+              // { text: 'VGG 与 GoogLeNet', link: '/deep-learning/convolutional-neural-network/vgg-inception' },
+              // { text: 'ResNet 残差网络', link: '/deep-learning/convolutional-neural-network/resnet' },
+            ]
+          },
         ]
       },
       {

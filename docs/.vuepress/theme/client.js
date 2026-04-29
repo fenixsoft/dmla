@@ -77,6 +77,19 @@ function handleConfigChange(event) {
 }
 
 /**
+ * 将 sidebar 滚动到顶部
+ */
+function scrollSidebarToTop() {
+  const sidebar = document.querySelector('.vp-sidebar')
+  if (!sidebar) return
+
+  sidebar.scrollTo({
+    top: 0,
+    behavior: 'smooth'
+  })
+}
+
+/**
  * 将当前高亮的 sidebar 项滚动到可视区域顶部
  */
 function scrollSidebarToActive() {
@@ -140,6 +153,20 @@ function setupSidebarScroll() {
   let scrollTimeout = null
 
   const handleScroll = () => {
+    // 如果是首页，滚动到顶部
+    if (route.path === '/') {
+      if (scrollTimeout) {
+        clearTimeout(scrollTimeout)
+      }
+      scrollTimeout = setTimeout(() => {
+        nextTick(() => {
+          scrollSidebarToTop()
+        })
+      }, 100)
+      return
+    }
+
+    // 其他页面滚动到当前高亮项
     if (scrollTimeout) {
       clearTimeout(scrollTimeout)
     }
@@ -168,7 +195,13 @@ function setupSidebarScroll() {
   onMounted(() => {
     nextTick(() => {
       // 等待 sidebar 渲染完成后滚动
-      setTimeout(scrollSidebarToActive, 200)
+      setTimeout(() => {
+        if (route.path === '/') {
+          scrollSidebarToTop()
+        } else {
+          scrollSidebarToActive()
+        }
+      }, 200)
     })
   })
 }
