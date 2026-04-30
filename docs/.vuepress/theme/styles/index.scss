@@ -171,6 +171,27 @@ body {
     text-align: center;
     margin: 1rem 0;
 
+    // 修复 subgraph 标题被内容遮挡的问题
+    // cluster 的 rect 需要向下偏移，为标题留出空间
+    .cluster > rect:first-of-type {
+      // 使用 transform 将矩形向下移动，为标题留出空间
+      transform: translateY(20px) !important;
+      transform-box: fill-box !important;
+    }
+
+    // 确保 cluster label 在正确位置显示
+    .cluster-label {
+      // 增加 label 的 padding，确保文字不贴边
+      padding: 5px 10px !important;
+    }
+
+    .cluster rect {
+      fill: #fff !important;
+      stroke: #666 !important;
+      stroke-width: 1 !important;
+      rx: 6px !important; // 圆角矩形
+    }
+
     svg {
       // 节点矩形、圆形、椭圆、多边形、路径样式
       .node rect,
@@ -335,11 +356,10 @@ body {
     color: #ABB2BF !important;
   }
 
-  .runnable-code-block .code-header,
-  .runnable-code-block .toolbar,
-  .runnable-code-block .output-area {
-    // 这些 UI 元素样式在 custom.css 中定义，不受 PrismJS 主题影响
-  }
+  // runnable-code-block 的 UI 元素样式在 custom.css 中定义，不受 PrismJS 主题影响
+  // .runnable-code-block .code-header,
+  // .runnable-code-block .toolbar,
+  // .runnable-code-block .output-area { }
 
   // 表格样式
   table {
