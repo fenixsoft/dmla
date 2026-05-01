@@ -173,15 +173,70 @@ export async function runDoctor() {
   console.log(chalk.bold('GPU 驱动'))
 
   try {
-    const output = execSync('nvidia-smi -L', { timeout: 5000, encoding: 'utf8' })
+    // 获取完整的 nvidia-smi 输出以解析驱动和 CUDA 版本
+    const output = execSync('nvidia-smi', { timeout: 5000, encoding: 'utf8' })
+
+    // 解析驱动版本
+    const driverMatch = output.match(/Driver Version:\s*(\d+\.\d+)/)
+    const driverVersion = driverMatch ? driverMatch[1] : null
+
+    // 解析 CUDA 兼容上限
+    const cudaMatch = output.match(/CUDA Version:\s*(\d+\.\d+)/)
+    const cudaVersion = cudaMatch ? cudaMatch[1] : null
+
     if (output.includes('GPU')) {
       console.log(chalk.green('   ✅ NVIDIA GPU 可用'))
+
+      // 显示驱动版本和 CUDA 兼容上限
+      if (driverVersion) {
+        console.log(chalk.gray(`   驱动版本: ${driverVersion}`))
+      }
+      if (cudaVersion) {
+        console.log(chalk.gray(`   CUDA 兼容上限: ${cudaVersion}`))
+      }
+
+      // GPU 镜像兼容性检查（CUDA 12.8 需要驱动 >= 570）
+      const minDriverForGpuImage = 570
+      const driverNum = parseFloat(driverVersion || '0')
+
+      // 显示 GPU 设备信息
       const lines = output.split('\n').filter(l => l.trim())
-      lines.forEach(line => console.log(chalk.gray(`   ${line.trim()}`)))
+      lines.slice(0, 20).forEach(line => {
+        if (line.includes('GPU') && !line.includes('Driver Version') && !line.includes('CUDA Version')) {
+          console.log(chalk.gray(`   ${line.trim()}`))
+        }
+      })
+
+      console.log()
+
+      // GPU 镜像兼容性诊断
+      console.log(chalk.bold('GPU 镜像兼容性'))
+
+      if (gpuExists) {
+        if (driverNum >= minDriverForGpuImage) {
+          console.log(chalk.green(`   ✅ GPU 镜像可用 (驱动 ${driverVersion} >= ${minDriverForGpuImage})`))
+        } else {
+          console.log(chalk.red(`   ❌ GPU 镜像不兼容 (驱动 ${driverVersion} < ${minDriverForGpuImage})`))
+          console.log(chalk.yellow(`   💡 CUDA 12.8 需要驱动 >= ${minDriverForGpuImage}`))
+          console.log(chalk.yellow('   解决方案：'))
+          console.log(chalk.gray('      1. 升级 NVIDIA 驱动到 570+ 版本'))
+          console.log(chalk.gray('      2. 或在前端选择 "Run on CPU" 模式'))
+          issues.push('GPU 镜像不兼容，请升级驱动或使用 CPU 模式')
+        }
+      } else if (!gpuExists) {
+        console.log(chalk.yellow('   ⚠️ GPU 镜像未安装'))
+        if (driverNum >= minDriverForGpuImage) {
+          console.log(chalk.green(`   ✅ 驱动兼容，可以安装 GPU 镜像`))
+          console.log(chalk.gray('   运行 dmla install --gpu 安装'))
+        } else {
+          console.log(chalk.yellow(`   ⚠️ 驱动 ${driverVersion} 不兼容 CUDA 12.8`))
+          console.log(chalk.yellow(`   💡 需要驱动 >= ${minDriverForGpuImage} 才能使用 GPU 镜像`))
+        }
+      }
 
       // 检查 GPU 镜像
-      if (!gpuExists) {
-        console.log(chalk.yellow('   💡 检测到 GPU，建议安装 GPU 镜像'))
+      if (!gpuExists && driverNum >= minDriverForGpuImage) {
+        console.log(chalk.yellow('   💡 检测到兼容 GPU，建议安装 GPU 镜像'))
         issues.push('运行 dmla install --gpu 安装 GPU 镜像')
       }
     } else {

@@ -108,6 +108,44 @@ async function checkGPUAvailable() {
 }
 
 /**
+ * 检查 GPU 驱动兼容性
+ * @returns {Promise<{compatible: boolean, driverVersion: string|null, cudaVersion: string|null}>}
+ */
+async function checkGPUDriverCompatibility() {
+  const minDriverForCuda128 = 570
+
+  try {
+    const result = await new Promise((resolve, reject) => {
+      const proc = spawn('nvidia-smi', [], { timeout: 5000 })
+      let output = ''
+      proc.stdout.on('data', (data) => output += data.toString())
+      proc.stderr.on('data', (data) => output += data.toString())
+      proc.on('close', (code) => {
+        if (code === 0) resolve(output)
+        else reject(new Error('nvidia-smi failed'))
+      })
+      proc.on('error', reject)
+    })
+
+    // 解析驱动版本
+    const driverMatch = result.match(/Driver Version:\s*(\d+\.\d+)/)
+    const driverVersion = driverMatch ? driverMatch[1] : null
+
+    // 解析 CUDA 兼容上限
+    const cudaMatch = result.match(/CUDA Version:\s*(\d+\.\d+)/)
+    const cudaVersion = cudaMatch ? cudaMatch[1] : null
+
+    // 判断兼容性
+    const driverNum = parseFloat(driverVersion || '0')
+    const compatible = driverNum >= minDriverForCuda128
+
+    return { compatible, driverVersion, cudaVersion }
+  } catch {
+    return { compatible: false, driverVersion: null, cudaVersion: null }
+  }
+}
+
+/**
  * 检查服务是否运行
  */
 async function checkServiceRunning(port) {
@@ -218,6 +256,22 @@ export async function startServerSync(port, useGpu = false) {
     return
   }
 
+  // GPU 驱动兼容性预检
+  if (resolvedUseGpu) {
+    const driverCheck = await checkGPUDriverCompatibility()
+    if (!driverCheck.compatible && driverCheck.driverVersion) {
+      console.log(chalk.yellow(`⚠️ GPU 驱动兼容性警告`))
+      console.log(chalk.gray(`   当前驱动: ${driverCheck.driverVersion}`))
+      console.log(chalk.gray(`   CUDA 12.8 需要: 驱动 >= 570`))
+      console.log(chalk.yellow('   解决方案：'))
+      console.log(chalk.gray('      1. 升级 NVIDIA 驾动到 570+ 版本'))
+      console.log(chalk.gray('      2. 使用 CPU 模式: dmla start'))
+      console.log()
+      console.log(chalk.gray('   继续启动 GPU 模式（可能会失败）...'))
+      console.log()
+    }
+  }
+
   // 查找服务器入口
   const actualServerPath = findServerPath()
   if (!actualServerPath) {
@@ -274,6 +328,22 @@ export async function startServer(port, useGpu = false) {
   if (alreadyRunning) {
     console.log(chalk.green(`✅ 服务已在端口 ${port} 运行`))
     return
+  }
+
+  // GPU 驱动兼容性预检
+  if (resolvedUseGpu) {
+    const driverCheck = await checkGPUDriverCompatibility()
+    if (!driverCheck.compatible && driverCheck.driverVersion) {
+      console.log(chalk.yellow(`⚠️ GPU 驱动兼容性警告`))
+      console.log(chalk.gray(`   当前驱动: ${driverCheck.driverVersion}`))
+      console.log(chalk.gray(`   CUDA 12.8 需要: 驱动 >= 570`))
+      console.log(chalk.yellow('   解决方案：'))
+      console.log(chalk.gray('      1. 升级 NVIDIA 驱动到 570+ 版本'))
+      console.log(chalk.gray('      2. 使用 CPU 模式: dmla start'))
+      console.log()
+      console.log(chalk.gray('   继续启动 GPU 模式（可能会失败）...'))
+      console.log()
+    }
   }
 
   // 启动服务

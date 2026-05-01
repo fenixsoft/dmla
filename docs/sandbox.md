@@ -11,7 +11,9 @@
 
 - 已经部署好了 [Docker 环境](https://docs.docker.com/engine/install)。
 - 已经部署好了 [NodeJS 20.x+ 环境](https://nodejs.org/en/download)。
-- 可选：如需使用 GPU 训练，应具备 NVIDIA GPU 且已经安装了 [NVIDIA 驱动](https://www.nvidia.com/en-us/drivers/) 。
+- 可选：如需使用 GPU 训练，应具备 NVIDIA GPU 且已经安装了 [NVIDIA 驱动](https://www.nvidia.com/en-us/drivers/) ，且满足 CUDA 12.8 GA 驱动版本要求：
+    - Linux: >= 570.26
+    - Windows: >= 570.65 
 - 其余依赖（如 Jupyter Notebook Kernel、Python、Numpy、PyTorch、CUDA 等）均通过 Docker 镜像来使用，不需要单独安装。
 
 ## 快速开始

@@ -100,8 +100,28 @@ export async function runInstallTUI() {
 
     console.log(chalk.green(`✔ Node.js ${env.nodeVersion} 已安装`))
 
+    // GPU 信息显示
     if (env.gpu) {
       console.log(chalk.green(`✔ GPU: ${env.gpuInfo || '检测到'}`))
+
+      // 显示驱动版本和 CUDA 兼容上限
+      if (env.gpuDriverVersion) {
+        console.log(chalk.gray(`   驱动版本: ${env.gpuDriverVersion}`))
+      }
+      if (env.gpuCudaVersion) {
+        console.log(chalk.gray(`   CUDA 兼容上限: ${env.gpuCudaVersion}`))
+      }
+
+      // GPU 镜像兼容性检查（CUDA 12.8 需要驱动 >= 570）
+      const minDriverForGpuImage = 570
+      const driverVersion = parseFloat(env.gpuDriverVersion || '0')
+
+      if (driverVersion >= minDriverForGpuImage) {
+        console.log(chalk.green(`   GPU 镜像: 兼容 (驱动 >= ${minDriverForGpuImage})`))
+      } else if (driverVersion > 0) {
+        console.log(chalk.yellow(`   GPU 镜像: 不兼容 (需要驱动 >= ${minDriverForGpuImage})`))
+        console.log(chalk.yellow(`   💡 建议：升级 NVIDIA 驱动到 ${minDriverForGpuImage}+ 或使用 CPU 模式`))
+      }
     } else {
       console.log(chalk.gray('   GPU: 未检测到'))
     }

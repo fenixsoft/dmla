@@ -47,29 +47,43 @@ function checkNode() {
 
 /**
  * 检查 GPU 环境
+ * @returns {{ available: boolean, info: string|null, driverVersion: string|null }}
  */
 function checkGPU() {
   try {
     // stdio: ['ignore', 'pipe', 'ignore'] 隐藏 stderr 输出
-    const output = execSync('nvidia-smi -L', {
+    const output = execSync('nvidia-smi', {
       timeout: 5000,
       encoding: 'utf8',
       stdio: ['ignore', 'pipe', 'ignore']
     })
+
+    // 解析驱动版本：Driver Version: xxx.xx
+    const driverMatch = output.match(/Driver Version:\s*(\d+\.\d+)/)
+    const driverVersion = driverMatch ? driverMatch[1] : null
+
+    // 解析 CUDA 版本上限：CUDA Version: xxx.xx
+    const cudaMatch = output.match(/CUDA Version:\s*(\d+\.\d+)/)
+    const cudaVersion = cudaMatch ? cudaMatch[1] : null
+
     if (output.includes('GPU')) {
       // 提取 GPU 名称
       const lines = output.split('\n').filter(l => l.includes('GPU'))
       const gpuInfo = lines[0] || '检测到 GPU'
       return {
         available: true,
-        info: gpuInfo.trim()
+        info: gpuInfo.trim(),
+        driverVersion,
+        cudaVersion
       }
     }
   } catch {}
 
   return {
     available: false,
-    info: null
+    info: null,
+    driverVersion: null,
+    cudaVersion: null
   }
 }
 
@@ -102,6 +116,8 @@ export async function checkEnvironment() {
     node: nodeEnv.installed,
     nodeVersion: nodeEnv.version,
     gpu: gpuEnv.available,
-    gpuInfo: gpuEnv.info
+    gpuInfo: gpuEnv.info,
+    gpuDriverVersion: gpuEnv.driverVersion,
+    gpuCudaVersion: gpuEnv.cudaVersion
   }
 }
