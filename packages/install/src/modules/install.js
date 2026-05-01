@@ -2,7 +2,8 @@
  * npm 包安装和验证模块
  */
 import chalk from 'chalk'
-import { execSync, spawn } from 'child_process'
+import { execSync } from 'child_process'
+import { execa } from 'execa'
 import http from 'http'
 
 /**
@@ -53,14 +54,15 @@ export async function verifyInstallation(port = 3001, useGpu = false) {
 
   const cmd = dmlaAvailable ? 'dmla' : 'npx'
 
-  // Windows 需要 shell: true，Linux/macOS 不需要
+  // 使用 execa 替代 spawn，自动处理跨平台参数转义
+  // Windows 需要 shell: true，execa 会正确处理参数转义避免安全问题
   const isWindows = process.platform === 'win32'
   const spawnOptions = {
     stdio: 'inherit',
-    ...(isWindows ? { shell: true } : {})
+    shell: isWindows
   }
 
-  const serverProcess = spawn(cmd, args, spawnOptions)
+  const serverProcess = execa(cmd, args, spawnOptions)
 
   // 处理启动错误
   serverProcess.on('error', (err) => {
