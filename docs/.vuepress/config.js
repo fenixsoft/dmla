@@ -7,6 +7,7 @@ import runnableCodePlugin from './plugins/runnable-code/index.js'
 import mathPlugin from './plugins/math/index.js'
 import emphasisFixPlugin from './plugins/emphasis-fix/index.js'
 import wordCountPlugin from './plugins/word-count/index.js'
+import nnArchPlugin from './plugins/nn-arch/index.js'
 import dmlaTheme from './theme/index.js'
 import { searchProPlugin } from 'vuepress-plugin-search-pro'
 import { searchVersionFixPlugin } from './plugins/search-version-fix/index.js'
@@ -185,8 +186,8 @@ export default {
             text: '卷积神经网络',
             collapsible: false,
             children: [
-              { text: 'CNN 设计思想', link: '/deep-learning/convolutional-neural-network/cnn-basics' },
-              // { text: 'AlexNet 与 CNN 复兴', link: '/deep-learning/convolutional-neural-network/alexnet' },
+              { text: 'CNN 基础原理', link: '/deep-learning/convolutional-neural-network/cnn-basics' },
+              { text: 'AlexNet 与 CNN 复兴', link: '/deep-learning/convolutional-neural-network/alexnet' },
               // { text: 'VGG 与 GoogLeNet', link: '/deep-learning/convolutional-neural-network/vgg-inception' },
               // { text: 'ResNet 残差网络', link: '/deep-learning/convolutional-neural-network/resnet' },
             ]
@@ -202,7 +203,7 @@ export default {
         collapsible: false,
       },
       {
-        text: '附录：经典论文',
+        text: '附录：读经典论文',
         collapsible: false,
         children: [
               { text: '临时格式测试页面', link: '/test.md' },
@@ -240,6 +241,8 @@ export default {
     mathPlugin,
     // 字数统计
     wordCountPlugin,
+    // 神经网络架构可视化
+    nnArchPlugin,
     // 评论系统由 Comments.vue 组件直接集成 Giscus
   ],
 

@@ -198,35 +198,35 @@ $$f''(x) = \frac{d}{dx}\left(\frac{df}{dx}\right) = \frac{d^2 f}{dx^2}$$
     </details>
 
 1. 求下列函数的导数：
-   - (a) $f(x) = x^4 - 3x^2 + 2x - 5$
-   - (b) $g(x) = e^x \sin x$
-   - (c) $h(x) = \frac{\ln x}{x}$
+   - $f(x) = x^4 - 3x^2 + 2x - 5$
+   - $g(x) = e^x \sin x$
+   - $h(x) = \frac{\ln x}{x}$
     <details>
     <summary>参考答案</summary>
 
-    (a) 应用幂函数导数公式和加减法则：
+    - 应用幂函数导数公式和加减法则：
     $$f'(x) = 4x^3 - 6x + 2$$
 
-    (b) 应用乘法法则 $(f \cdot g)' = f' \cdot g + f \cdot g'$：
+    - 应用乘法法则 $(f \cdot g)' = f' \cdot g + f \cdot g'$：
     $$g'(x) = \frac{d}{dx}(e^x) \cdot \sin x + e^x \cdot \frac{d}{dx}(\sin x) = e^x \sin x + e^x \cos x = e^x(\sin x + \cos x)$$
 
-    (c) 应用除法法则 $\left(\frac{f}{g}\right)' = \frac{f' \cdot g - f \cdot g'}{g^2}$：
+    - 应用除法法则 $\left(\frac{f}{g}\right)' = \frac{f' \cdot g - f \cdot g'}{g^2}$：
     $$h'(x) = \frac{\frac{1}{x} \cdot x - \ln x \cdot 1}{x^2} = \frac{1 - \ln x}{x^2}$$
     </details>
 
 1. 设 $f(x) = x^3 - 3x$，求：
-   - (a) 函数的单调递增和递减区间
-   - (b) 函数的凹凸区间和拐点
+   - 函数的单调递增和递减区间
+   - 函数的凹凸区间和拐点
     <details>
     <summary>参考答案</summary>
 
-    (a) 首先求一阶导数：$f'(x) = 3x^2 - 3 = 3(x^2 - 1)$
+    首先求一阶导数：$f'(x) = 3x^2 - 3 = 3(x^2 - 1)$
 
     令 $f'(x) = 0$，得 $x = \pm 1$。
     - 当 $x < -1$ 或 $x > 1$ 时，$f'(x) > 0$，函数递增
     - 当 $-1 < x < 1$ 时，$f'(x) < 0$，函数递减
 
-    (b) 求二阶导数：$f''(x) = 6x$
+    求二阶导数：$f''(x) = 6x$
 
     令 $f''(x) = 0$，得 $x = 0$。
     - 当 $x < 0$ 时，$f''(x) < 0$，函数上凸
