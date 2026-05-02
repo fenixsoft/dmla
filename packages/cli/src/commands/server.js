@@ -22,6 +22,106 @@ const CONFIG = {
 }
 
 /**
+ * 从 Docker 镜像标签解析日期
+ * 标签格式: YYYY.M.D-HHMM (如 2026.4.21-2025)
+ * @returns {Date|null}
+ */
+function parseImageTagDate(tag) {
+  const match = tag.match(/^(\d{4})\.(\d{1,2})\.(\d{1,2})-(\d{4})$/)
+  if (!match) return null
+
+  const [, year, month, day, time] = match
+  const hour = time.substring(0, 2)
+  const minute = time.substring(2, 4)
+
+  return new Date(`${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}T${hour}:${minute}:00+08:00`)
+}
+
+/**
+ * 获取 Docker 镜像的最新标签日期
+ * @param {string} imageType - 'cpu' 或 'gpu'
+ * @returns {Promise<Date|null>}
+ */
+async function getImageLatestDate(imageType) {
+  const imageName = imageType === 'gpu' ? 'dmla-sandbox' : 'dmla-sandbox'
+
+  try {
+    const images = await docker.listImages()
+    const targetTag = imageType === 'gpu' ? ':gpu' : ':cpu'
+
+    for (const image of images) {
+      if (image.RepoTags) {
+        for (const tag of image.RepoTags) {
+          if (tag.includes(imageName) && tag.includes(targetTag)) {
+            // 尝试从标签解析日期
+            const tagPart = tag.split(':')[1]
+            const date = parseImageTagDate(tagPart)
+            if (date) return date
+
+            // 如果标签不是日期格式，使用镜像创建时间
+            return new Date(image.Created * 1000)
+          }
+        }
+      }
+    }
+    return null
+  } catch {
+    return null
+  }
+}
+
+/**
+ * 获取 CLI 包的构建日期
+ * @returns {Date|null}
+ */
+function getCliBuildDate() {
+  try {
+    // 尝试读取 version.json（build 时生成）
+    const versionPath = path.resolve(__dirname, '../../version.json')
+    if (fs.existsSync(versionPath)) {
+      const versionInfo = JSON.parse(fs.readFileSync(versionPath, 'utf8'))
+      return new Date(versionInfo.buildTime)
+    }
+
+    // 如果没有 version.json，使用 package.json 的修改时间作为参考
+    const pkgPath = path.resolve(__dirname, '../../package.json')
+    if (fs.existsSync(pkgPath)) {
+      const stats = fs.statSync(pkgPath)
+      return stats.mtime
+    }
+
+    return null
+  } catch {
+    return null
+  }
+}
+
+/**
+ * 检查 --dev 模式的版本兼容性
+ * 比较镜像标签日期和 CLI 包构建日期
+ */
+async function checkDevModeCompatibility(imageType) {
+  const imageDate = await getImageLatestDate(imageType)
+  const cliDate = getCliBuildDate()
+
+  if (!imageDate || !cliDate) {
+    // 无法获取日期，不警告
+    return { compatible: true, imageDate: null, cliDate: null }
+  }
+
+  // 镜像日期比 CLI 包日期新，说明用户可能更新了镜像但 CLI 包是旧版本
+  // 在 --dev 模式下，本地代码会覆盖镜像中的代码，可能导致代码版本不匹配
+  const imageNewer = imageDate > cliDate
+
+  return {
+    compatible: !imageNewer,
+    imageDate,
+    cliDate,
+    warning: imageNewer ? '镜像版本比 CLI 包更新，本地代码可能覆盖了新版本镜像中的代码' : null
+  }
+}
+
+/**
  * 检查端口是否可用
  */
 async function checkPortAvailable(port) {
@@ -227,11 +327,42 @@ function findServerPath() {
 }
 
 /**
+ * 查找共享模块目录
+ * --dev 模式下需要挂载此目录
+ */
+function findSharedModulesPath() {
+  // 开发环境路径：packages/cli/src/commands -> ../../../local-server/shared_modules
+  const devPath = path.resolve(__dirname, '../../../local-server/shared_modules')
+  // npm 包路径：packages/cli/src/commands -> ../../shared_modules（构建后）
+  const npmPath = path.resolve(__dirname, '../../shared_modules')
+  // CLI 包根目录下的 shared_modules（构建后）
+  const cliRootPath = path.resolve(__dirname, '../../shared_modules')
+
+  // 优先使用开发环境路径（如果 local-server 存在）
+  if (fs.existsSync(devPath) && fs.readdirSync(devPath).length > 0) {
+    return devPath
+  }
+
+  // 其次使用 npm 包路径
+  if (fs.existsSync(npmPath) && fs.readdirSync(npmPath).length > 0) {
+    return npmPath
+  }
+
+  // 最后检查 CLI 包根目录
+  if (fs.existsSync(cliRootPath) && fs.readdirSync(cliRootPath).length > 0) {
+    return cliRootPath
+  }
+
+  return null
+}
+
+/**
  * 同步启动服务（在当前进程运行，用于调试）
  * @param {number} port - 服务端口
  * @param {boolean} useGpu - 是否使用 GPU（可选，自动检测）
+ * @param {boolean} dev - 开发模式（挂载本地代码）
  */
-export async function startServerSync(port, useGpu = false) {
+export async function startServerSync(port, useGpu = false, dev = false) {
   // 检查端口
   const portAvailable = await checkPortAvailable(port)
   if (!portAvailable) {
@@ -248,6 +379,20 @@ export async function startServerSync(port, useGpu = false) {
     return
   }
   const resolvedUseGpu = imageResolution.imageType === 'gpu'
+
+  // --dev 模式版本检查
+  if (dev) {
+    const compat = await checkDevModeCompatibility(imageResolution.imageType)
+    if (!compat.compatible) {
+      console.log(chalk.yellow('⚠️ 开发模式版本兼容性警告'))
+      console.log(chalk.gray(`   镜像构建时间: ${compat.imageDate?.toLocaleString('zh-CN') || '未知'}`))
+      console.log(chalk.gray(`   CLI 包构建时间: ${compat.cliDate?.toLocaleString('zh-CN') || '未知'}`))
+      console.log(chalk.yellow(`   风险: ${compat.warning}`))
+      console.log(chalk.gray('   说明: --dev 模式会挂载本地代码到容器，可能覆盖镜像中的新版本代码'))
+      console.log(chalk.gray('   建议: 如需使用镜像最新功能，请退出 --dev 模式，或更新 CLI 包'))
+      console.log()
+    }
+  }
 
   // 检查服务是否已运行
   const alreadyRunning = await checkServiceRunning(port)
@@ -276,19 +421,38 @@ export async function startServerSync(port, useGpu = false) {
   const actualServerPath = findServerPath()
   if (!actualServerPath) {
     console.log(chalk.red('❌ 找不到服务入口文件'))
-    console.log(chalk.yellow('提示: 确保正确安装了 @icyfenix-dmla/cli'))
+    console.log(chalk.yellow('提示: 保正确安装了 @icyfenix-dmla/cli'))
     return
+  }
+
+  // 查找共享模块路径（--dev 模式需要）
+  const sharedModulesPath = dev ? findSharedModulesPath() : null
+  if (dev && !sharedModulesPath) {
+    console.log(chalk.yellow('⚠️ --dev 模式需要共享模块目录'))
+    console.log(chalk.gray('   未找到 shared_modules，将仅使用镜像内置模块'))
   }
 
   console.log(chalk.gray(`   镜像类型: ${imageResolution.message}`))
   console.log(chalk.gray('   同步模式启动...'))
   console.log(chalk.gray(`   服务入口: ${actualServerPath}`))
+  if (dev && sharedModulesPath) {
+    console.log(chalk.gray(`   共享模块: ${sharedModulesPath}`))
+  }
   console.log()
 
   // 设置环境变量
   process.env.PORT = port.toString()
   process.env.USE_GPU = resolvedUseGpu ? 'true' : 'false'
   process.env.DMLA_SYNC_MODE = 'true'  // 标记同步模式，让服务器在 import 时启动
+
+  // --dev 模式：启用 Volume Mount
+  if (dev) {
+    process.env.MOUNT_SHARED_MODULES = 'true'
+    process.env.MOUNT_KERNEL_RUNNER = 'true'
+    if (sharedModulesPath) {
+      process.env.SHARED_MODULES_PATH = sharedModulesPath
+    }
+  }
 
   // 动态 import 服务器模块并直接运行
   // 服务器模块会在 import 时自动启动（因为入口点检测逻辑）
@@ -304,8 +468,11 @@ export async function startServerSync(port, useGpu = false) {
 
 /**
  * 启动服务（异步模式，spawn 子进程）
+ * @param {number} port - 服务端口
+ * @param {boolean} useGpu - 是否使用 GPU（可选，自动检测）
+ * @param {boolean} dev - 开发模式（挂载本地代码）
  */
-export async function startServer(port, useGpu = false) {
+export async function startServer(port, useGpu = false, dev = false) {
   // 检查端口
   const portAvailable = await checkPortAvailable(port)
   if (!portAvailable) {
@@ -323,6 +490,20 @@ export async function startServer(port, useGpu = false) {
   }
   const resolvedUseGpu = imageResolution.imageType === 'gpu'
 
+  // --dev 模式版本检查
+  if (dev) {
+    const compat = await checkDevModeCompatibility(imageResolution.imageType)
+    if (!compat.compatible) {
+      console.log(chalk.yellow('⚠️ 开发模式版本兼容性警告'))
+      console.log(chalk.gray(`   镜像构建时间: ${compat.imageDate?.toLocaleString('zh-CN') || '未知'}`))
+      console.log(chalk.gray(`   CLI 包构建时间: ${compat.cliDate?.toLocaleString('zh-CN') || '未知'}`))
+      console.log(chalk.yellow(`   风险: ${compat.warning}`))
+      console.log(chalk.gray('   说明: --dev 模式会挂载本地代码到容器，可能覆盖镜像中的新版本代码'))
+      console.log(chalk.gray('   建议: 如需使用镜像最新功能，请退出 --dev 模式，或更新 CLI 包'))
+      console.log()
+    }
+  }
+
   // 检查服务是否已运行
   const alreadyRunning = await checkServiceRunning(port)
   if (alreadyRunning) {
@@ -338,7 +519,7 @@ export async function startServer(port, useGpu = false) {
       console.log(chalk.gray(`   当前驱动: ${driverCheck.driverVersion}`))
       console.log(chalk.gray(`   CUDA 12.8 需要: 驱动 >= 570`))
       console.log(chalk.yellow('   解决方案：'))
-      console.log(chalk.gray('      1. 升级 NVIDIA 驱动到 570+ 版本'))
+      console.log(chalk.gray('      1. 升级 NVIDIA 驾动到 570+ 版本'))
       console.log(chalk.gray('      2. 使用 CPU 模式: dmla start'))
       console.log()
       console.log(chalk.gray('   继续启动 GPU 模式（可能会失败）...'))
@@ -357,6 +538,12 @@ export async function startServer(port, useGpu = false) {
       console.log(chalk.red('❌ 找不到服务入口文件'))
       console.log(chalk.yellow('提示: 确保正确安装了 @icyfenix-dmla/cli'))
       return
+    }
+
+    // 查找共享模块路径（--dev 模式需要）
+    const sharedModulesPath = dev ? findSharedModulesPath() : null
+    if (dev && sharedModulesPath) {
+      console.log(chalk.gray(`   共享模块: ${sharedModulesPath}`))
     }
 
     // 日志文件路径
@@ -380,12 +567,27 @@ export async function startServer(port, useGpu = false) {
       DMLA_LOG_FILE: logFile  // 传递日志文件路径给服务端
     }
 
+    // --dev 模式：启用 Volume Mount
+    if (dev) {
+      env.MOUNT_SHARED_MODULES = 'true'
+      env.MOUNT_KERNEL_RUNNER = 'true'
+      if (sharedModulesPath) {
+        env.SHARED_MODULES_PATH = sharedModulesPath
+      }
+    }
+
     // 写入启动日志
     const timestamp = new Date().toISOString()
     fs.writeSync(logStream, `[${timestamp}] Server starting...\n`)
     fs.writeSync(logStream, `[${timestamp}] Server path: ${actualServerPath}\n`)
     fs.writeSync(logStream, `[${timestamp}] Port: ${port}\n`)
     fs.writeSync(logStream, `[${timestamp}] GPU: ${resolvedUseGpu} (${imageResolution.message})\n`)
+    if (dev) {
+      fs.writeSync(logStream, `[${timestamp}] Dev mode: enabled (volume mount)\n`)
+      if (sharedModulesPath) {
+        fs.writeSync(logStream, `[${timestamp}] Shared modules: ${sharedModulesPath}\n`)
+      }
+    }
 
     // 使用 spawn 启动 server 进程
     // 重要：stdio 必须是 'ignore' 或管道，不能是 'inherit'
@@ -425,6 +627,9 @@ export async function startServer(port, useGpu = false) {
         console.log(chalk.green(`✅ 服务已启动: http://localhost:${port}`))
         console.log(chalk.gray(`   健康检查: http://localhost:${port}/api/health`))
         console.log(chalk.gray(`   日志查看: ${logFile}`))
+        if (dev) {
+          console.log(chalk.cyan('   开发模式: 已启用 Volume Mount'))
+        }
         return
       }
       await new Promise(resolve => setTimeout(resolve, 500))

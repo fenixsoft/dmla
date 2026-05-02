@@ -17,6 +17,8 @@
     "bin/",
     "src/",
     "scripts/",
+    "shared_modules/",
+    "version.json",
     "README.md"
   ],
   "dependencies": {

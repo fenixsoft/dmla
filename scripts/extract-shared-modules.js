@@ -6,13 +6,17 @@
  *
  * 标记语法: ```python runnable extract-class="ClassName"
  *
- * 路径映射（支持多级目录）:
- *   docs/statistical-learning/linear-models/*.md → shared_modules/linear/*.py
- *   docs/statistical-learning/bayesian-methods/*.md → shared_modules/bayesian/*.py
- *   docs/statistical-learning/support-vector-machines/*.md → shared_modules/svm/*.py
- *   docs/statistical-learning/decision-tree-ensemble/*.md → shared_modules/tree/*.py
- *   docs/statistical-learning/unsupervised-learning/*.md → shared_modules/unsupervised/*.py
- *   docs/deep-learning/neural-network-structure/*.md → shared_modules/neural/*.py
+ * 模块路径推断规则:
+ *   1. 显式映射（CHAPTER_MAPPING）优先，用于特殊命名
+ *   2. 未映射的目录自动推断：docs/<category>/<chapter>/ → shared_modules/<chapter_snake_case>/
+ *
+ * 显式映射示例:
+ *   'neural-network-structure' → 'neural' (简化命名)
+ *   'convolutional-neural-network' → 'cnn' (简化命名)
+ *
+ * 自动推断示例:
+ *   docs/deep-learning/transformer-models/ → shared_modules/transformer_models/
+ *   docs/statistical-learning/new-topic/ → shared_modules/new_topic/
  */
 
 import fs from 'fs';
@@ -27,24 +31,89 @@ const PROJECT_ROOT = path.resolve(__dirname, '..');
 const DOCS_DIR = path.join(PROJECT_ROOT, 'docs');
 const SHARED_MODULES_DIR = path.join(PROJECT_ROOT, 'local-server', 'shared_modules');
 
-// 文档路径到模块路径的映射（支持多级目录）
+// 显式映射（用于特殊命名覆盖）
+// 只在这里添加需要简化或特殊命名的目录
 const CHAPTER_MAPPING = {
-  // statistical-learning
+  // statistical-learning - 简化命名
   'statistical-learning/linear-models': 'linear',
   'statistical-learning/bayesian-methods': 'bayesian',
   'statistical-learning/support-vector-machines': 'svm',
   'statistical-learning/decision-tree-ensemble': 'tree',
   'statistical-learning/unsupervised-learning': 'unsupervised',
-  // deep-learning
-  'deep-learning/neural-network-structure': 'neural'
+  // deep-learning - 简化命名
+  'deep-learning/neural-network-structure': 'neural',
+  'deep-learning/convolutional-neural-network': 'cnn'
 };
 
+// 将目录名转换为 snake_case 模块名
+function dirToModuleName(dirName) {
+  return dirName
+    .replace(/-/g, '_')
+    .toLowerCase();
+}
+
+// 推断模块路径（先查显式映射，再用自动推断）
+function inferModulePath(docPath) {
+  // 1. 查显式映射
+  if (CHAPTER_MAPPING[docPath]) {
+    return CHAPTER_MAPPING[docPath];
+  }
+
+  // 2. 自动推断：取最后一级目录名转为 snake_case
+  // 例如: deep-learning/transformer-models → transformer_models
+  const parts = docPath.split('/');
+  const lastDir = parts[parts.length - 1];
+  return dirToModuleName(lastDir);
+}
+
+// 常见技术术语（保持不拆分，作为完整单词）
+const KNOWN_TERMS = [
+  'ImageNet', 'AlexNet', 'VGGNet', 'ResNet', 'GoogleNet', 'Inception',
+  'YOLO', 'Transformer', 'Encoder', 'Decoder', 'Attention',
+  'Dataset', 'DataLoader', 'Optimizer', 'Scheduler',
+  'Classifier', 'Regressor', 'Network', 'Model', 'Layer',
+  // 机器学习缩写词（保持完整）
+  'SVM', 'PCA', 'KMeans', 'GMM', 'LDA', 'NLP', 'CNN', 'RNN', 'LSTM', 'GAN'
+];
+
 // 类名到文件名的转换 (PascalCase → snake_case)
+// 保留常见术语不拆分，例如 ImageNet → imagenet（而非 image_net）
 function classNameToFileName(className) {
-  return className
-    .replace(/([A-Z])/g, '_$1')
-    .toLowerCase()
-    .replace(/^_/, '');
+  // 术语到占位符的映射（使用不会被拆分的格式）
+  const termMap = {};
+  for (let i = 0; i < KNOWN_TERMS.length; i++) {
+    termMap[KNOWN_TERMS[i]] = `__TERM${i}__`;
+  }
+
+  let result = className;
+
+  // 先用占位符保护已知术语（大写匹配，保护整个单词）
+  for (const [term, placeholder] of Object.entries(termMap)) {
+    result = result.replace(term, placeholder);
+  }
+
+  // 在占位符前后添加下划线边界（确保术语与其他部分分隔）
+  result = result
+    .replace(/([a-z])(__TERM)/g, '$1_$2')  // 小写后接占位符时加下划线
+    .replace(/(__\w+__)(__TERM)/g, '$1_$2')  // 占位符后接占位符时加下划线
+    .replace(/(__TERM\d+__)([A-Z])/g, '$1_$2');  // 占位符后接大写时加下划线
+
+  // 对剩余部分进行 snake_case 转换
+  result = result
+    .replace(/([a-z])([A-Z])/g, '$1_$2')  // 小写后接大写时加下划线
+    .toLowerCase();
+
+  // 恢复已知术语（占位符 → 小写术语）
+  for (let i = 0; i < KNOWN_TERMS.length; i++) {
+    const term = KNOWN_TERMS[i].toLowerCase();
+    const placeholder = `__term${i}__`;  // 占位符也被 toLowerCase 了
+    result = result.replace(placeholder, term);
+  }
+
+  // 清理多余的下划线
+  result = result.replace(/_+/g, '_').replace(/^_|_$/g, '');
+
+  return result;
 }
 
 // 改进的类定义提取（处理嵌套结构）
@@ -125,7 +194,8 @@ function processFile(filePath) {
   const results = [];
 
   // 正则匹配 extract-class="ClassName"
-  const codeBlockRegex = /```python\s+runnable\s+extract-class="(\w+)"\s*\n([\s\S]*?)```/g;
+  // 支持格式: ```python runnable [gpu] [timeout=xxx] extract-class="ClassName"
+  const codeBlockRegex = /```python\s+runnable[\s\w=]*extract-class="(\w+)"[\s\w=]*\n([\s\S]*?)```/g;
   let match;
 
   while ((match = codeBlockRegex.exec(content)) !== null) {
@@ -152,18 +222,56 @@ function generateModuleFile(className, classCode, moduleDir) {
   const fileName = classNameToFileName(className) + '.py';
   const modulePath = path.join(SHARED_MODULES_DIR, moduleDir, fileName);
 
-  // 检测是否需要 import numpy
-  const needsNumpy = classCode.includes('np.') || classCode.includes('numpy');
+  // 自动检测需要的导入
+  const imports = [];
 
-  let imports = '';
-  if (needsNumpy) {
-    imports = 'import numpy as np\n\n';
+  // PyTorch 相关
+  if (classCode.includes('torch.') || classCode.includes('nn.') || classCode.includes('Tensor')) {
+    imports.push('import torch');
   }
+  if (classCode.includes('nn.') || classCode.includes('nn.Module') || classCode.includes('Sequential') ||
+      classCode.includes('Conv2d') || classCode.includes('Linear') || classCode.includes('ReLU') ||
+      classCode.includes('Dropout') || classCode.includes('MaxPool2d') || classCode.includes('AdaptiveAvgPool2d')) {
+    imports.push('import torch.nn as nn');
+  }
+  if (classCode.includes('Dataset') || classCode.includes('DataLoader')) {
+    imports.push('from torch.utils.data import Dataset, DataLoader');
+  }
+
+  // 图像处理
+  if (classCode.includes('Image')) {
+    imports.push('from PIL import Image');
+  }
+  if (classCode.includes('transforms.')) {
+    imports.push('from torchvision import transforms');
+  }
+
+  // 数值计算
+  if (classCode.includes('np.') || classCode.includes('numpy')) {
+    imports.push('import numpy as np');
+  }
+
+  // 文件系统
+  if (classCode.includes('os.') || classCode.includes('os.path')) {
+    imports.push('import os');
+  }
+
+  // 排序并去重
+  const uniqueImports = [...new Set(imports)].sort((a, b) => {
+    // from 导入排在后面
+    if (a.startsWith('from') && !b.startsWith('from')) return 1;
+    if (!a.startsWith('from') && b.startsWith('from')) return -1;
+    return a.localeCompare(b);
+  });
+
+  const importsSection = uniqueImports.length > 0
+    ? uniqueImports.join('\n') + '\n\n'
+    : '';
 
   const content = `# ${className} 类定义
 # 从文档自动提取生成
 
-${imports}${classCode}
+${importsSection}${classCode}
 `;
 
   return { path: modulePath, content };
@@ -213,47 +321,61 @@ function main() {
     process.exit(1);
   }
 
-  // 扫描所有文档
+  // 扫描所有文档目录（支持自动推断）
   const moduleClasses = {}; // 按模块分组收集类名
 
-  for (const docPath of Object.keys(CHAPTER_MAPPING)) {
-    const chapterPath = path.join(DOCS_DIR, docPath);
+  // 遍历 docs 下的所有子目录
+  const categories = fs.readdirSync(DOCS_DIR).filter(f => {
+    const fullPath = path.join(DOCS_DIR, f);
+    return fs.statSync(fullPath).isDirectory() && !f.startsWith('.');
+  });
 
-    if (!fs.existsSync(chapterPath)) {
-      continue;
-    }
+  for (const category of categories) {
+    const categoryPath = path.join(DOCS_DIR, category);
+    const chapters = fs.readdirSync(categoryPath).filter(f => {
+      const fullPath = path.join(categoryPath, f);
+      return fs.statSync(fullPath).isDirectory() && !f.startsWith('.');
+    });
 
-    console.log(`\n扫描 ${docPath}/`);
+    for (const chapter of chapters) {
+      const docPath = `${category}/${chapter}`;
+      const chapterPath = path.join(DOCS_DIR, docPath);
 
-    const files = fs.readdirSync(chapterPath).filter(f => f.endsWith('.md'));
+      console.log(`\n扫描 ${docPath}/`);
 
-    for (const file of files) {
-      const filePath = path.join(chapterPath, file);
-      const classes = processFile(filePath);
+      const files = fs.readdirSync(chapterPath).filter(f => f.endsWith('.md'));
 
-      if (classes.length > 0) {
-        const moduleDir = CHAPTER_MAPPING[docPath];
+      for (const file of files) {
+        const filePath = path.join(chapterPath, file);
+        const classes = processFile(filePath);
 
-        // 确保模块目录存在
-        const fullModuleDir = path.join(SHARED_MODULES_DIR, moduleDir);
-        if (!fs.existsSync(fullModuleDir)) {
-          fs.mkdirSync(fullModuleDir, { recursive: true });
-          // 创建 __init__.py
-          fs.writeFileSync(path.join(fullModuleDir, '__init__.py'), '__all__ = []\n');
-          console.log(`    创建目录: ${moduleDir}/`);
-        }
+        if (classes.length > 0) {
+          // 使用推断函数获取模块路径（支持显式映射 + 自动推断）
+          const moduleDir = inferModulePath(docPath);
+          const mappingType = CHAPTER_MAPPING[docPath] ? '(显式映射)' : '(自动推断)';
+          console.log(`  模块路径: shared_modules/${moduleDir}/ ${mappingType}`);
 
-        if (!moduleClasses[moduleDir]) {
-          moduleClasses[moduleDir] = [];
-        }
+          // 确保模块目录存在
+          const fullModuleDir = path.join(SHARED_MODULES_DIR, moduleDir);
+          if (!fs.existsSync(fullModuleDir)) {
+            fs.mkdirSync(fullModuleDir, { recursive: true });
+            // 创建 __init__.py
+            fs.writeFileSync(path.join(fullModuleDir, '__init__.py'), '__all__ = []\n');
+            console.log(`    创建目录: ${moduleDir}/`);
+          }
 
-        for (const { className, code } of classes) {
-          // 生成模块文件
-          const { path: modulePath, content } = generateModuleFile(className, code, moduleDir);
-          fs.writeFileSync(modulePath, content);
-          console.log(`    写入: ${path.relative(PROJECT_ROOT, modulePath)}`);
+          if (!moduleClasses[moduleDir]) {
+            moduleClasses[moduleDir] = [];
+          }
 
-          moduleClasses[moduleDir].push(className);
+          for (const { className, code } of classes) {
+            // 生成模块文件
+            const { path: modulePath, content } = generateModuleFile(className, code, moduleDir);
+            fs.writeFileSync(modulePath, content);
+            console.log(`    写入: ${path.relative(PROJECT_ROOT, modulePath)}`);
+
+            moduleClasses[moduleDir].push(className);
+          }
         }
       }
     }

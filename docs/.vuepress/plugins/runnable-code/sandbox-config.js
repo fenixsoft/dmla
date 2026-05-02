@@ -1,9 +1,11 @@
 /**
  * 沙箱配置管理模块
  * 提供沙箱服务地址的读取和设置功能
+ *
+ * 注意：配置存储在 site-config 键中（与 Settings.vue 共用）
  */
 
-const STORAGE_KEY = 'sandbox-config'
+const STORAGE_KEY = 'site-config'  // 使用统一的存储键
 const DEFAULT_ENDPOINT = 'http://localhost:3001'
 
 /**
@@ -19,8 +21,9 @@ export function getSandboxConfig() {
     const stored = localStorage.getItem(STORAGE_KEY)
     if (stored) {
       const config = JSON.parse(stored)
+      // site-config 使用 sandboxEndpoint 字段
       return {
-        endpoint: config.endpoint || DEFAULT_ENDPOINT
+        endpoint: config.sandboxEndpoint || config.endpoint || DEFAULT_ENDPOINT
       }
     }
   } catch {
@@ -47,10 +50,25 @@ export function setSandboxConfig(config) {
     return
   }
 
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(config))
+  // 读取现有配置，只更新 endpoint 部分
+  try {
+    const existing = localStorage.getItem(STORAGE_KEY)
+    const existingConfig = existing ? JSON.parse(existing) : {}
 
-  // 更新全局配置
-  window.__SANDBOX_CONFIG__ = config
+    // 合并配置（保留其他字段如 highlightTheme）
+    const newConfig = {
+      ...existingConfig,
+      sandboxEndpoint: config.endpoint || DEFAULT_ENDPOINT
+    }
+
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(newConfig))
+
+    // 更新全局配置
+    window.__SANDBOX_CONFIG__ = { endpoint: newConfig.sandboxEndpoint }
+    window.__SITE_CONFIG__ = newConfig
+  } catch (error) {
+    console.error('[Sandbox Config] 保存配置失败:', error)
+  }
 }
 
 /**

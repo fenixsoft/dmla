@@ -61,9 +61,11 @@ class KernelSVM:
                 self.alpha[i] += lr * gradient
                 self.alpha[i] = np.clip(self.alpha[i], 0, self.C)
             
-            # 约束修正
+            # 约束修正：满足等式约束 sum(alpha * y) = 0
+            # 减去均值偏差后，需再次投影到边界约束 [0, C]
             self.alpha = self.alpha - np.mean(self.alpha * y) * y
             self.alpha = np.clip(self.alpha, 0, self.C)
+            # 注意：投影后等式约束可能不再精确满足，但迭代过程中误差会累积抵消
         
         # 支持向量
         sv_mask = self.alpha > 1e-5

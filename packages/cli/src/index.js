@@ -94,10 +94,12 @@ program
   .option('-p, --port <number>', '服务端口', '3001')
   .option('--gpu', '使用 GPU 镜像')
   .option('--sync', '同步模式：在当前进程运行，日志直接输出（用于调试）')
+  .option('--dev', '开发模式：挂载本地代码到容器，无需重建镜像')
   .action(async (options) => {
     const port = parseInt(options.port, 10)
     const useGpu = options.gpu
     const sync = options.sync
+    const dev = options.dev
 
     console.log(chalk.blue('启动 DMLA 沙箱服务...'))
     console.log(chalk.gray(`   端口: ${port}`))
@@ -105,11 +107,14 @@ program
     if (sync) {
       console.log(chalk.yellow(`   模式: 同步（调试模式）`))
     }
+    if (dev) {
+      console.log(chalk.cyan(`   模式: 开发（挂载本地代码）`))
+    }
 
     if (sync) {
-      await startServerSync(port, useGpu)
+      await startServerSync(port, useGpu, dev)
     } else {
-      await startServer(port, useGpu)
+      await startServer(port, useGpu, dev)
     }
   })
 

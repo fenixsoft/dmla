@@ -172,6 +172,9 @@ const props = defineProps({
   }
 })
 
+// 当前使用的端点（响应式，会在配置变化时更新）
+const currentEndpoint = ref(getSandboxEndpoint())
+
 // 计算超时值（用于 API）
 const timeoutValue = computed(() => {
   if (!props.timeout) return null
@@ -186,9 +189,9 @@ const showProgress = computed(() => {
   return parseInt(props.timeout, 10) > 60
 })
 
-// 获取 API 端点
+// 获取 API 端点（响应式更新）
 const resolvedEndpoint = computed(() => {
-  return props.apiEndpoint || getSandboxEndpoint() + '/api/sandbox/run'
+  return props.apiEndpoint || currentEndpoint.value + '/api/sandbox/run'
 })
 
 // 状态
@@ -205,6 +208,15 @@ const progressInterval = ref(null)
 // 图片模态框状态
 const showImageModal = ref(false)
 const modalImageData = ref('')
+
+// 监听配置变化事件
+function handleConfigChange(event) {
+  if (event.detail && event.detail.sandboxEndpoint) {
+    currentEndpoint.value = event.detail.sandboxEndpoint
+    // 配置变化后重新检查连接状态
+    checkSandboxAvailability()
+  }
+}
 
 // 运行代码
 async function runCode(useGpu = false) {
@@ -328,20 +340,33 @@ function formatTime(seconds) {
 }
 
 // 检查沙箱可用性
-onMounted(async () => {
+async function checkSandboxAvailability() {
   try {
-    const response = await fetch(resolvedEndpoint.value.replace('/run', '/health'), {
+    const response = await fetch(currentEndpoint.value + '/api/health', {
       method: 'GET'
     })
     sandboxAvailable.value = response.ok
   } catch {
     sandboxAvailable.value = false
   }
+}
+
+// 注册配置变化事件监听
+onMounted(async () => {
+  // 初始化端点
+  currentEndpoint.value = getSandboxEndpoint()
+
+  // 监听配置变化事件
+  window.addEventListener('site-config-changed', handleConfigChange)
+
+  // 检查连接状态
+  await checkSandboxAvailability()
 })
 
 // 清理事件监听器
 onUnmounted(() => {
-  document.removeEventListener('keydown', handleEscKey)
+  window.removeEventListener('keydown', handleEscKey)
+  window.removeEventListener('site-config-changed', handleConfigChange)
   stopProgressPolling()
 })
 </script>
