@@ -50,6 +50,16 @@ const DATASETS = [
 ]
 
 /**
+ * 检查是否是用户取消操作（ESC 或 Ctrl+C）
+ * enquirer 可能抛出空字符串错误或包含 'cancel' 的消息
+ */
+function isUserCancel(error) {
+  return !error.message ||
+         error.message === '' ||
+         error.message.includes('cancel')
+}
+
+/**
  * 显示 Banner
  */
 function showBanner() {
@@ -455,7 +465,7 @@ async function downloadDatasets() {
   console.log(chalk.green('所有选中的数据集已处理完成'))
   } catch (error) {
     // 用户按 ESC 或 Ctrl+C 取消
-    if (error.message && error.message.includes('cancel')) {
+    if (isUserCancel(error)) {
       console.log(chalk.gray('返回上一级'))
       return
     }
@@ -615,49 +625,101 @@ export async function runDataTUI() {
     console.log(chalk.yellow(`数据目录不存在: ${dataPath}`))
     console.log()
 
-    const { create } = await prompt({
-      type: 'confirm',
-      name: 'create',
-      message: '是否创建数据目录?',
-      initial: true
-    })
+    try {
+      const { create } = await prompt({
+        type: 'confirm',
+        name: 'create',
+        message: '是否创建数据目录?',
+        initial: true
+      })
 
-    if (create) {
-      ensureDataDirStructure(dataPath)
-      console.log(chalk.green(`数据目录已创建: ${dataPath}`))
+      if (create) {
+        ensureDataDirStructure(dataPath)
+        console.log(chalk.green(`数据目录已创建: ${dataPath}`))
+      }
+    } catch (error) {
+      if (isUserCancel(error)) {
+        console.log(chalk.gray('已退出数据管理'))
+        console.log()
+        return
+      }
+      throw error
     }
   }
 
   // 主循环
   while (true) {
     console.log()
-    const action = await showMainMenu(dataPath)
+    try {
+      const action = await showMainMenu(dataPath)
 
-    switch (action) {
-      case 1:
-        await mountPath()
-        break
-      case 2:
-        await downloadDatasets()
-        break
-      case 3:
-        listDatasets()
-        break
-      case 4:
-        await clearData()
-        break
-      case 5:
-        await removeData()
-        break
-      case 6:
+      switch (action) {
+        case 1:
+          try {
+            await mountPath()
+          } catch (error) {
+            if (isUserCancel(error)) {
+              console.log(chalk.gray('返回主菜单'))
+            } else {
+              throw error
+            }
+          }
+          break
+        case 2:
+          try {
+            await downloadDatasets()
+          } catch (error) {
+            if (isUserCancel(error)) {
+              console.log(chalk.gray('返回主菜单'))
+            } else {
+              throw error
+            }
+          }
+          break
+        case 3:
+          listDatasets()
+          break
+        case 4:
+          try {
+            await clearData()
+          } catch (error) {
+            if (isUserCancel(error)) {
+              console.log(chalk.gray('返回主菜单'))
+            } else {
+              throw error
+            }
+          }
+          break
+        case 5:
+          try {
+            await removeData()
+          } catch (error) {
+            if (isUserCancel(error)) {
+              console.log(chalk.gray('返回主菜单'))
+            } else {
+              throw error
+            }
+          }
+          break
+        case 6:
+          console.log()
+          console.log(chalk.gray('已退出数据管理'))
+          console.log()
+          return
+      }
+
+      // 刷新路径（可能在操作中修改了）
+      dataPath = getDataVolumePath()
+    } catch (error) {
+      // 主菜单按 ESC 取消 -> 退出程序
+      if (isUserCancel(error)) {
         console.log()
         console.log(chalk.gray('已退出数据管理'))
         console.log()
         return
+      }
+      throw error
     }
-
-    // 刷新路径（可能在操作中修改了）
-    dataPath = getDataVolumePath()
   }
 }
 
