@@ -609,7 +609,7 @@ async function downloadDataset(dataPath, dataset) {
 export async function runDataTUI() {
   showBanner()
 
-  const dataPath = getDataVolumePath()
+  let dataPath = getDataVolumePath()
 
   // 确保配置目录存在
   if (!fs.existsSync(DMLA_CONFIG_DIR)) {
