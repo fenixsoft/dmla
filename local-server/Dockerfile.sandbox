@@ -74,6 +74,9 @@ COPY local-server/src/kernel_runner.py /workspace/kernel_runner.py
 COPY local-server/src/cuda_compat_check.py /workspace/cuda_compat_check.py
 COPY local-server/src/dmla_progress.py /workspace/dmla_progress.py
 
+# 复制共享模块到 /workspace/shared（与 PYTHONPATH=/workspace 配合）
+COPY local-server/shared_modules /workspace/shared
+
 # 创建数据目录结构
 RUN mkdir -p /data/datasets \
              /data/datasets/custom \

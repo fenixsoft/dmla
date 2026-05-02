@@ -43,6 +43,9 @@ RUN pip install --no-cache-dir \
 # 复制 Kernel 执行器
 COPY local-server/src/kernel_runner.py /workspace/kernel_runner.py
 
+# 复制共享模块到 /workspace/shared（与 PYTHONPATH=/workspace 配合）
+COPY local-server/shared_modules /workspace/shared
+
 # 配置 matplotlib 中文字体支持（包括 sans-serif 和 monospace）
 RUN mkdir -p /root/.config/matplotlib && \
     printf "font.family: sans-serif\nfont.sans-serif: WenQuanYi Micro Hei, DejaVu Sans\nfont.monospace: WenQuanYi Micro Hei, DejaVu Sans Mono\naxes.unicode_minus: False\n" > /root/.config/matplotlib/matplotlibrc && \
