@@ -208,9 +208,8 @@ async function showMainMenu(dataPath) {
     { name: '2', message: '下载数据集' },
     { name: '3', message: '查看数据集列表' },
     { name: '4', message: '清空数据内容' },
-    { name: '5', message: '显示实际路径' },
-    { name: '6', message: '删除数据卷' },
-    { name: '7', message: '退出' }
+    { name: '5', message: '删除数据卷' },
+    { name: '6', message: '退出' }
   ]
 
   const { action } = await prompt({
@@ -275,35 +274,6 @@ async function mountPath() {
 
   console.log(chalk.green(`挂载路径已更新: ${resolvedPath}`))
   console.log(chalk.yellow('提示: 需要重启沙箱服务才能生效 (dmla stop && dmla start)'))
-}
-
-/**
- * 显示实际路径
- */
-function showPath() {
-  const dataPath = getDataVolumePath()
-  const stats = getDirectoryStats(dataPath)
-
-  console.log()
-  console.log(chalk.bold('数据卷信息'))
-  console.log()
-  console.log(chalk.gray(`挂载路径: ${dataPath}`))
-  console.log(chalk.gray(`存在状态: ${fs.existsSync(dataPath) ? '已创建' : '未创建'}`))
-  console.log(chalk.gray(`数据集数量: ${stats.datasets}`))
-  console.log(chalk.gray(`模型数量: ${stats.models}`))
-  console.log()
-
-  // 显示子目录
-  if (fs.existsSync(dataPath)) {
-    console.log(chalk.bold('目录结构:'))
-    const subDirs = ['datasets', 'models', 'outputs', 'cache']
-    for (const dir of subDirs) {
-      const fullPath = path.join(dataPath, dir)
-      const exists = fs.existsSync(fullPath)
-      console.log(chalk.gray(`  ${dir}/ ${exists ? '(已存在)' : '(不存在)'}`))
-    }
-  }
-  console.log()
 }
 
 /**
@@ -431,39 +401,48 @@ async function downloadDatasets() {
   // 构建选项列表
   const choices = DATASETS.map((dataset, index) => {
     const downloaded = isDatasetDownloaded(dataPath, dataset.id)
+    const isMnist = dataset.id === 'mnist'
+
+    let message = `${dataset.name} (${dataset.size})`
+    if (downloaded) {
+      message += ' [已下载]'
+    } else if (isMnist) {
+      message += ' [训练时自动下载]'
+    }
+
     return {
       name: index.toString(),
-      message: `${dataset.name} (${dataset.size})${downloaded ? ' [已下载]' : ''}`,
-      disabled: downloaded || dataset.id === 'mnist'
+      message,
+      disabled: downloaded || isMnist
     }
   })
 
-  // MNIST 特殊提示
-  console.log(chalk.gray('提示: MNIST 数据集将在训练时通过 torchvision 自动下载'))
-  console.log(chalk.gray('操作: 上下键选择，空格勾选/取消，回车确认下载'))
+  // 操作提示
+  console.log(chalk.gray('操作: 上下键移动，空格勾选/取消，回车确认，ESC 返回'))
   console.log()
 
-  const { selected } = await prompt({
-    type: 'multiselect',
-    name: 'selected',
-    message: '选择要下载的数据集',
-    choices,
-    hint: '空格选择，回车确认',
-    warn: '已下载或不可选'
-  })
+  try {
+    const { selected } = await prompt({
+      type: 'multiselect',
+      name: 'selected',
+      message: '选择要下载的数据集',
+      choices,
+      hint: '空格选择，回车确认下载',
+      warn: '已下载或自动下载类型'
+    })
 
-  if (!selected || selected.length === 0) {
-    console.log(chalk.yellow('未选择任何数据集'))
-    return
-  }
+    if (!selected || selected.length === 0) {
+      console.log(chalk.yellow('未选择任何数据集'))
+      return
+    }
 
-  // 下载选中的数据集
-  for (const indexStr of selected) {
-    const index = parseInt(indexStr)
-    const dataset = DATASETS[index]
+    // 下载选中的数据集
+    for (const indexStr of selected) {
+      const index = parseInt(indexStr)
+      const dataset = DATASETS[index]
 
-    console.log()
-    console.log(chalk.cyan(`────────────────────────────────────`))
+      console.log()
+      console.log(chalk.cyan(`────────────────────────────────────`))
 
     // MNIST 特殊处理
     if (dataset.id === 'mnist') {
@@ -483,6 +462,14 @@ async function downloadDatasets() {
   console.log()
   console.log(chalk.cyan(`────────────────────────────────────`))
   console.log(chalk.green('所有选中的数据集已处理完成'))
+  } catch (error) {
+    // 用户按 ESC 或 Ctrl+C 取消
+    if (error.message && error.message.includes('cancel')) {
+      console.log(chalk.gray('返回上一级'))
+      return
+    }
+    throw error
+  }
 }
 
 /**
@@ -669,12 +656,9 @@ export async function runDataTUI() {
         await clearData()
         break
       case 5:
-        showPath()
-        break
-      case 6:
         await removeData()
         break
-      case 7:
+      case 6:
         console.log()
         console.log(chalk.gray('已退出数据管理'))
         console.log()

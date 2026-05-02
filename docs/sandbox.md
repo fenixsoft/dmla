@@ -11,9 +11,10 @@
 
 - 已经部署好了 [Docker 环境](https://docs.docker.com/engine/install)。
 - 已经部署好了 [NodeJS 20.x+ 环境](https://nodejs.org/en/download)。
-- 可选：如需使用 GPU 训练，应具备 NVIDIA GPU 且已经安装了 [NVIDIA 驱动](https://www.nvidia.com/en-us/drivers/) 、满足 CUDA 12.8 GA 驱动版本要求：
-    - Linux: >= 570.26
-    - Windows: >= 570.65 
+- 可选：模型训练的内容需使用 GPU，应具备 NVIDIA GPU 且已经安装了 [NVIDIA 驱动](https://www.nvidia.com/en-us/drivers/) 、满足 CUDA 12.8 GA 驱动版本、磁盘空间等要求，具体为：
+    - 驱动版本要求：Linux >= 570.26，Windows: >= 570.65。
+    - 磁盘空间要求：GPU 镜像约 7.03 GB，此外宿主机中还应预留 >20GB 空间存放数据集与模型。
+    - [Git](https://git-scm.com/install/)LFS 要求：模型训练/评估的数据集使用需使用 Git LFS 下载。
 - 其余依赖（如 Jupyter Notebook Kernel、Python、Numpy、PyTorch、CUDA 等）均通过 Docker 镜像来使用，不需要单独安装。
 
 ## 快速开始
@@ -84,12 +85,12 @@
 ```
 ~/dmla-data/
 ├── datasets/                          # 数据集目录
-│   ├── tiny-imagenet-200/             # Tiny ImageNet (200 类)
+│   ├── tiny-imagenet-200/             # Tiny ImageNet-200
 │   ├── cifar-10/                      # CIFAR-10
 │   ├── cifar-100/                     # CIFAR-100
 │   ├── mnist/                         # MNIST
-│   └── ……
 │   └── custom/                        # 用户自定义数据集
+│   └── ……
 │
 ├── models/                            # 模型目录
 │   ├── alexnet/                       # AlexNet 相关模型
