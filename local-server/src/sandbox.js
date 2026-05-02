@@ -417,10 +417,12 @@ export async function runPythonCode(code, useGpu = false, imageOverride = null, 
     console.log(`[Sandbox] 提示: 运行 'dmla data' 创建数据目录`)
   }
 
-  // 挂载共享模块
+  // 挂载共享模块到 /workspace/shared（而非 site-packages）
+  // 原因：PYTHONPATH=/workspace，这样 Python 可以直接导入 shared.xxx
+  // 避免 Windows Docker 的 site-packages 路径兼容性问题
   if (useMount && sharedModulesPath && fs.existsSync(sharedModulesPath)) {
-    binds.push(`${sharedModulesPath}:/usr/local/lib/python3.11/site-packages/shared:ro`)
-    console.log(`[Sandbox] 共享模块 Volume Mount: ${sharedModulesPath}`)
+    binds.push(`${sharedModulesPath}:/workspace/shared:ro`)
+    console.log(`[Sandbox] 共享模块 Volume Mount: ${sharedModulesPath} -> /workspace/shared`)
   } else if (useMount && sharedModulesPath) {
     console.warn(`[Sandbox] 警告: 共享模块目录不存在: ${sharedModulesPath}`)
   }
