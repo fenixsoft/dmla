@@ -6,6 +6,7 @@ import Docker from 'dockerode'
 import path from 'path'
 import { fileURLToPath } from 'url'
 import fs from 'fs'
+import os from 'os'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -63,6 +64,34 @@ const SANDBOX_CONFIG = {
   memory: 4 * 1024 * 1024 * 1024  // 4GB 内存
 }
 
+// DMLA 配置文件路径
+const DMLA_CONFIG_DIR = path.join(os.homedir(), '.dmla')
+const DMLA_CONFIG_FILE = path.join(DMLA_CONFIG_DIR, 'config.json')
+const DEFAULT_DATA_DIR = path.join(os.homedir(), 'dmla-data')
+
+/**
+ * 读取 DMLA 配置文件
+ */
+function readDmlaConfig() {
+  try {
+    if (fs.existsSync(DMLA_CONFIG_FILE)) {
+      const content = fs.readFileSync(DMLA_CONFIG_FILE, 'utf8')
+      return JSON.parse(content)
+    }
+  } catch (error) {
+    log(`配置文件读取失败: ${error.message}`)
+  }
+  return { dataVolumePath: DEFAULT_DATA_DIR }
+}
+
+/**
+ * 获取数据卷路径
+ */
+function getDataVolumePath() {
+  const config = readDmlaConfig()
+  return config.dataVolumePath || DEFAULT_DATA_DIR
+}
+
 /**
  * 获取共享模块路径
  */
@@ -86,6 +115,21 @@ function getKernelRunnerPath() {
   // 开发模式下的默认路径
   return DEFAULT_KERNEL_RUNNER_PATH
 }
+
+/**
+ * 获取 dmla_progress.py 路径（开发模式挂载）
+ */
+function getProgressReporterPath() {
+  if (process.env.PROGRESS_REPORTER_PATH) {
+    return process.env.PROGRESS_REPORTER_PATH
+  }
+  return DEFAULT_PROGRESS_REPORTER_PATH
+}
+
+// dmla_progress.py 默认路径
+const DEFAULT_PROGRESS_REPORTER_PATH = PROJECT_ROOT
+  ? path.join(PROJECT_ROOT, 'local-server', 'src', 'dmla_progress.py')
+  : null
 
 /**
  * 检查是否启用 Volume Mount
@@ -270,12 +314,18 @@ print(json.dumps(result))
  * @param {string} code - Python 代码
  * @param {boolean} useGpu - 是否启用 GPU 设备
  * @param {string|null} imageOverride - 可选，指定使用的镜像名称（覆盖默认选择）
+ * @param {number|null} timeoutOverride - 可选，超时时间（秒），null 表示 unlimited
  * @returns {Promise<{success: boolean, outputs: Array, executionTime: number, gpuUsed: boolean}>}
  */
-export async function runPythonCode(code, useGpu = false, imageOverride = null) {
+export async function runPythonCode(code, useGpu = false, imageOverride = null, timeoutOverride = null) {
   const startTime = Date.now()
 
-  log(`runPythonCode called, useGpu=${useGpu}, code length=${code.length}, imageOverride=${imageOverride}`)
+  // 计算实际超时时间
+  const actualTimeout = timeoutOverride === null
+    ? null  // unlimited
+    : (timeoutOverride || Math.floor(SANDBOX_CONFIG.timeout / 1000))
+
+  log(`runPythonCode called, useGpu=${useGpu}, code length=${code.length}, imageOverride=${imageOverride}, timeout=${actualTimeout === null ? 'unlimited' : actualTimeout}`)
 
   // 选择镜像：优先使用指定的镜像，否则根据 useGpu 选择
   const image = imageOverride || (useGpu ? SANDBOX_CONFIG.imageGpu : SANDBOX_CONFIG.imageCpu)
@@ -329,17 +379,21 @@ export async function runPythonCode(code, useGpu = false, imageOverride = null) 
   }
 
   // 创建容器配置 - 使用 kernel_runner.py 执行代码
+  const timeoutSeconds = actualTimeout === null ? 86400 : actualTimeout  // unlimited 使用 24 小时
   const containerConfig = {
     Image: image,
-    Cmd: ['python3', '/workspace/kernel_runner.py', '--code', code, '--timeout', String(Math.floor(SANDBOX_CONFIG.timeout / 1000))],
+    Cmd: ['python3', '/workspace/kernel_runner.py', '--code', code, '--timeout', String(timeoutSeconds)],
     HostConfig: {
       Memory: SANDBOX_CONFIG.memory,
       AutoRemove: false  // 手动移除以获取日志
     },
+    // matplotlib 使用 IPython Kernel 的 inline 后端，自动发送 display_data
+    // PYTHONPATH 添加 /workspace 以支持导入 volume-mounted 的模块
     Env: [
-      'PYTHONUNBUFFERED=1'
-      // matplotlib 使用 IPython Kernel 的 inline 后端，自动发送 display_data
-    ]
+      'PYTHONUNBUFFERED=1',
+      'PYTHONPATH=/workspace',
+      actualTimeout === null ? 'DMLA_NO_TIMEOUT=1' : ''
+    ].filter(e => e)  // 过滤空字符串
   }
 
   log('Container config created')
@@ -352,6 +406,16 @@ export async function runPythonCode(code, useGpu = false, imageOverride = null) 
 
   // 收集所有需要挂载的路径
   const binds = []
+
+  // 挂载数据目录
+  const dataVolumePath = getDataVolumePath()
+  if (dataVolumePath && fs.existsSync(dataVolumePath)) {
+    binds.push(`${dataVolumePath}:/data`)
+    console.log(`[Sandbox] 数据目录 Volume Mount: ${dataVolumePath}`)
+  } else if (dataVolumePath) {
+    console.warn(`[Sandbox] 警告: 数据目录不存在: ${dataVolumePath}`)
+    console.log(`[Sandbox] 提示: 运行 'dmla data' 创建数据目录`)
+  }
 
   // 挂载共享模块
   if (useMount && sharedModulesPath && fs.existsSync(sharedModulesPath)) {
@@ -367,6 +431,15 @@ export async function runPythonCode(code, useGpu = false, imageOverride = null) 
     console.log(`[Sandbox] kernel_runner.py Volume Mount: ${kernelRunnerPath}`)
   } else if (mountKernelRunner && kernelRunnerPath) {
     console.warn(`[Sandbox] 警告: kernel_runner.py 不存在: ${kernelRunnerPath}`)
+  }
+
+  // 挂载 dmla_progress.py（开发模式新增文件，无需重建镜像）
+  const progressReporterPath = getProgressReporterPath()
+  if (mountKernelRunner && progressReporterPath && fs.existsSync(progressReporterPath)) {
+    binds.push(`${progressReporterPath}:/workspace/dmla_progress.py:ro`)
+    console.log(`[Sandbox] dmla_progress.py Volume Mount: ${progressReporterPath}`)
+  } else if (mountKernelRunner && progressReporterPath) {
+    console.warn(`[Sandbox] 警告: dmla_progress.py 不存在: ${progressReporterPath}`)
   }
 
   // 设置 Binds

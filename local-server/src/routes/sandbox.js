@@ -36,10 +36,10 @@ router.get('/health', async (req, res) => {
 /**
  * 执行代码
  * POST /api/sandbox/run
- * Body: { code: string, useGpu?: boolean }
+ * Body: { code: string, useGpu?: boolean, timeout?: number|null }
  */
 router.post('/run', async (req, res) => {
-  const { code, useGpu = false } = req.body
+  const { code, useGpu = false, timeout = null } = req.body
 
   // 验证请求
   if (!code || typeof code !== 'string') {
@@ -55,6 +55,16 @@ router.post('/run', async (req, res) => {
       success: false,
       error: 'Code too long (max 100KB)'
     })
+  }
+
+  // 验证 timeout 参数
+  if (timeout !== null && timeout !== undefined) {
+    if (typeof timeout !== 'number' || timeout < 0 || timeout > 86400) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid timeout parameter (must be null or number 0-86400)'
+      })
+    }
   }
 
   try {
@@ -96,7 +106,7 @@ router.post('/run', async (req, res) => {
     }
 
     // 执行代码（使用确定后的镜像）
-    const result = await runPythonCode(code, actualUseGpu, actualImage)
+    const result = await runPythonCode(code, actualUseGpu, actualImage, timeout)
 
     res.json(result)
 
@@ -125,6 +135,63 @@ router.get('/gpu', async (req, res) => {
       available: false,
       error: error.message
     })
+  }
+})
+
+/**
+ * 进度查询
+ * GET /api/sandbox/progress
+ * 用于长时间任务的进度轮询
+ */
+router.get('/progress', async (req, res) => {
+  try {
+    // 进度文件在容器内的 /workspace/progress.json
+    // 需要通过 docker exec 读取
+    const Docker = require('dockerode').default || require('dockerode')
+    const docker = new Docker()
+
+    // 查找运行中的沙箱容器
+    const containers = await docker.listContainers({ filters: { status: ['running'] } })
+    const sandboxContainer = containers.find(c =>
+      c.Names.some(name => name.includes('dmla')) ||
+      c.Image.includes('dmla-sandbox')
+    )
+
+    if (!sandboxContainer) {
+      return res.json({ status: 'no_task', message: 'No running task' })
+    }
+
+    // 在容器内读取进度文件
+    const container = docker.getContainer(sandboxContainer.Id)
+    const exec = await container.exec({
+      Cmd: ['cat', '/workspace/progress.json'],
+      AttachStdout: true
+    })
+
+    const stream = await exec.start()
+    const chunks = []
+    stream.on('data', chunk => chunks.push(chunk))
+
+    await new Promise(resolve => stream.on('end', resolve))
+
+    const output = Buffer.concat(chunks).toString()
+
+    // 解析进度 JSON
+    try {
+      // 去除 Docker exec 的头部信息
+      const jsonStart = output.indexOf('{')
+      if (jsonStart !== -1) {
+        const progressData = JSON.parse(output.substring(jsonStart))
+        return res.json(progressData)
+      }
+    } catch {
+      // JSON 解析失败
+    }
+
+    return res.json({ status: 'no_progress', message: 'Progress file not found' })
+
+  } catch (error) {
+    res.json({ status: 'error', message: error.message })
   }
 })
 

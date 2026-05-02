@@ -11,7 +11,7 @@
 
 - 已经部署好了 [Docker 环境](https://docs.docker.com/engine/install)。
 - 已经部署好了 [NodeJS 20.x+ 环境](https://nodejs.org/en/download)。
-- 可选：如需使用 GPU 训练，应具备 NVIDIA GPU 且已经安装了 [NVIDIA 驱动](https://www.nvidia.com/en-us/drivers/) ，且满足 CUDA 12.8 GA 驱动版本要求：
+- 可选：如需使用 GPU 训练，应具备 NVIDIA GPU 且已经安装了 [NVIDIA 驱动](https://www.nvidia.com/en-us/drivers/) 、满足 CUDA 12.8 GA 驱动版本要求：
     - Linux: >= 570.26
     - Windows: >= 570.65 
 - 其余依赖（如 Jupyter Notebook Kernel、Python、Numpy、PyTorch、CUDA 等）均通过 Docker 镜像来使用，不需要单独安装。
@@ -43,7 +43,11 @@
 
     # 环境诊断
     dmla doctor
+
+    # 数据管理
+    dmla data                    # 进入数据管理 TUI
     ```
+
 - 如果你使用的是源码部署（[https://github.com/fenixsoft/dmla](https://github.com/fenixsoft/dmla)），除`DMLA-CLI`外，也可以直接拉取或者编译 Docker 镜像：
     ``` shell
     # 启动沙箱
@@ -72,6 +76,42 @@
 - 对于深度学习及之后的内容，有部分实验需要有 GPU 异构计算环境的支持，当前 Docker 镜像使用的是 PyTorch with [CUDA 12.8](https://developer.nvidia.com/cuda-12-8-0-download-archive)，支持 20/30/40/50 系显卡，A100/A800/H100/H800 专业计算卡。如果你的硬件不在此范畴，需要自行下载代码，调整 PyTorch 版本后重新编译镜像。
 - 沙箱环境默认端口为 3001，如果你选择了其他端口，或者非本机的沙箱（如云服务），请点击文档右上角设置图标 <a href="javascript:document.getElementsByTagName('button')[0].click()"><svg data-v-9eec72c3="" class="settings-icon" style="width:18px; height:18px; color:#000" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle data-v-9eec72c3="" cx="12" cy="12" r="3"></circle><path data-v-9eec72c3="" d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg></a> 手动填入沙箱地址。
 - 包括大语言模型的完整训练在内，本文档所有练习都可以在 16G 级别的 NVIDIA 显卡上顺利完成。如本地硬件不满足要求，也可考虑以按用量付费方式，通过云服务商的 GPU 异构计算服务部署沙箱来完成练习（按 GeForce RTX 3090 GPU / 2 元 / 小时，成本在 10 元以内）。
+
+## 数据管理
+
+为便于观察大型实验的数据、复用训练记录，本项目提供数据持久化功能，支持自动/手动数据集下载、模型保存等。默认数据目录为宿主机的 `~/dmla-data` 目录，可通过 `dmla data mount` 自定义。以下为该目录的完整数据结构（目录均会按需自动创建，无需手动处理）：
+
+```
+~/dmla-data/
+├── datasets/                          # 数据集目录
+│   ├── tiny-imagenet-200/             # Tiny ImageNet (200 类)
+│   ├── cifar-10/                      # CIFAR-10
+│   ├── cifar-100/                     # CIFAR-100
+│   ├── mnist/                         # MNIST
+│   └── ……
+│   └── custom/                        # 用户自定义数据集
+│
+├── models/                            # 模型目录
+│   ├── alexnet/                       # AlexNet 相关模型
+│   │   ├── checkpoints/               # 训练中间 checkpoint
+│   │   └── final/                     # 最终模型
+│   ├── vgg/                           # VGG 系列模型
+│   ├── resnet/                        # ResNet 系列模型
+│   ├── gan/                           # GAN 模型
+│   ├── llm/                           # 大语言模型
+│   └── pretrained/                    # 预训练模型下载
+│   └── ……
+│
+├── outputs/                           # 输出目录
+│   ├── training_logs/                 # 训练日志
+│   ├── visualizations/                # 可视化结果
+│   └── exports/                       # 导出文件 (ONNX等)
+│
+└── cache/                             # 缓存目录
+    ├── downloads/                     # 数据集下载临时文件
+    ├── preprocessing/                 # 预处理缓存
+    └── torch_hub/                     # torch hub 缓存
+```
 
 ## 检查环境
 

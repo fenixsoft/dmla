@@ -43,6 +43,71 @@
 - **数据库迁移优先：** 遇到数据库结构问题时，应通过数据迁移脚本（如 `DataMigrationService`）修复，而非删除数据库。
 - **备份优先原则：** 如确需对数据库进行高风险操作，必须先备份现有数据库文件，并征得用户确认后方可执行。
 
+### 镜像开发约束（Volume Mount 机制）
+
+Docker 沙箱镜像高达 7GB，编译耗时约 15-30 分钟。为避免频繁重编译，**所有涉及镜像内容的改动必须先用 Volume Mount 机制验证通过后才能触发编译**。
+
+**Volume Mount 机制说明**：
+
+开发模式下，以下文件通过 Volume Mount 自动挂载到容器，修改无需重建镜像：
+- `kernel_runner.py`: 挂载到 `/workspace/kernel_runner.py`
+- `dmla_progress.py`: 挂载到 `/workspace/dmla_progress.py`
+- `shared_modules/`: 挂载到 `/usr/local/lib/python3.11/site-packages/shared`
+
+**验证流程**：
+
+1. **修改 Python 文件**：编辑 `local-server/src/kernel_runner.py`、`dmla_progress.py` 或 `shared_modules/` 下的文件
+2. **启动服务测试**：运行 `npm run server` 或 `cd local-server && npm start`
+3. **验证功能正确**：通过 API 或前端执行代码块，确认新功能正常工作
+4. **更新 tasks.md**：标记验证通过的子任务
+5. **触发镜像编译**：**仅在所有验证通过后**执行 `npm run build:sandbox:gpu`
+
+**环境变量控制**：
+
+```bash
+# 默认启用 Volume Mount（开发模式）
+MOUNT_KERNEL_RUNNER=true    # 挂载 kernel_runner.py
+MOUNT_SHARED_MODULES=true   # 挂载共享模块
+
+# 禁用挂载（生产模式，使用镜像内置文件）
+MOUNT_KERNEL_RUNNER=false
+MOUNT_SHARED_MODULES=false
+```
+
+**适用范围**：
+
+必须先验证后编译的改动类型：
+- 新增 Python 模块（如 `dmla_progress.py`）
+- 修改 `kernel_runner.py` 执行逻辑
+- 修改 `shared_modules/` 下的共享类
+- 修改 Dockerfile 中的 Python 脚本引用
+- 新增数据目录挂载点
+
+无需验证可直接编译的改动：
+- 修改系统依赖（apt 包）
+- 修改 Python 版本
+- 修改 PyTorch/CUDA 版本
+- 修改基础镜像（FROM 指令）
+
+**验证检查清单**：
+
+```bash
+# 1. 确认服务启动时 Volume Mount 生效
+# 日志应显示：
+# [Sandbox] kernel_runner.py Volume Mount: /path/to/local-server/src/kernel_runner.py
+# [Sandbox] dmla_progress.py Volume Mount: /path/to/local-server/src/dmla_progress.py
+
+# 2. 测试新模块导入
+curl -s -X POST http://localhost:3001/api/sandbox/run \
+  -H "Content-Type: application/json" \
+  -d '{"code": "from dmla_progress import ProgressReporter\nprint(\"OK\")"}'
+
+# 3. 测试共享模块导入
+curl -s -X POST http://localhost:3001/api/sandbox/run \
+  -H "Content-Type: application/json" \
+  -d '{"code": "from shared.linear.logistic_regression import LogisticRegression\nprint(\"OK\")"}'
+```
+
 ## 第三部分：项目概览
 - **设计文档**: `/docs/arch/design.md`
 - **技术栈**: VuePress v2 + Vue 3 + Express + Docker
@@ -128,6 +193,12 @@ dmla update --registry acr
 
 # 环境诊断
 dmla doctor
+
+# 数据管理（TUI 菜单）
+dmla data                    # 进入数据管理 TUI
+dmla data path               # 显示数据卷路径
+dmla data mount <path>       # 设置挂载路径
+dmla data download           # 下载数据集
 ```
 
 ### 共享模块（可复用 Python 类）
@@ -164,6 +235,52 @@ npm run build:sandbox:gpu
 
 **开发模式**：Volume Mount 自动启用，修改代码无需重建镜像
 **生产模式**：设置 `MOUNT_SHARED_MODULES=false` 禁用挂载
+
+### 数据目录结构
+
+用户宿主机数据目录（默认 `~/dmla-data`，可通过 `dmla data mount` 自定义）：
+
+```
+~/dmla-data/
+├── datasets/                          # 数据集目录
+│   ├── tiny-imagenet-200/             # Tiny ImageNet (200 类)
+│   ├── cifar-10/                      # CIFAR-10
+│   ├── cifar-100/                     # CIFAR-100
+│   ├── mnist/                         # MNIST
+│   └── custom/                        # 用户自定义数据集
+│
+├── models/                            # 模型目录
+│   ├── alexnet/                       # AlexNet 相关模型
+│   │   ├── checkpoints/               # 训练中间 checkpoint
+│   │   └── final/                     # 最终模型
+│   ├── vgg/                           # VGG 系列模型
+│   ├── resnet/                        # ResNet 系列模型
+│   ├── gan/                           # GAN 模型 (预留)
+│   ├── llm/                           # 大语言模型 (预留)
+│   └── pretrained/                    # 预训练模型下载
+│
+├── outputs/                           # 输出目录
+│   ├── training_logs/                 # 训练日志
+│   ├── visualizations/                # 可视化结果
+│   └── exports/                       # 导出文件 (ONNX等)
+│
+└── cache/                             # 缓存目录
+    ├── downloads/                     # 数据集下载临时文件
+    ├── preprocessing/                 # 预处理缓存
+    └── torch_hub/                     # torch hub 缓存
+```
+
+**使用方式**：
+- 容器内访问：`/data/` 目录映射到宿主机数据目录
+- 代码中保存模型：`torch.save(model, '/data/models/alexnet/final/model.pth')`
+- 代码中加载数据集：`torchvision.datasets.ImageFolder('/data/datasets/tiny-imagenet-200/train')`
+
+**数据集下载**：
+运行 `dmla data` 进入 TUI 菜单，选择"下载数据集"，支持：
+- Tiny ImageNet 200 (250MB)
+- CIFAR-10 (170MB)
+- CIFAR-100 (170MB)
+- MNIST (11MB，通过 torchvision 自动下载)
 
 ### 端口说明
 

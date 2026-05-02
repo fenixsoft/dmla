@@ -188,8 +188,9 @@ export default {
             children: [
               { text: 'CNN 基础原理', link: '/deep-learning/convolutional-neural-network/cnn-basics' },
               { text: 'AlexNet 与 CNN 复兴', link: '/deep-learning/convolutional-neural-network/alexnet' },
-              // { text: 'VGG 与 GoogLeNet', link: '/deep-learning/convolutional-neural-network/vgg-inception' },
+              { text: 'VGG 与 GoogLeNet', link: '/deep-learning/convolutional-neural-network/vgg-inception' },
               // { text: 'ResNet 残差网络', link: '/deep-learning/convolutional-neural-network/resnet' },
+              { text: '训练实验：AlexNet 图像分类', link: '/deep-learning/convolutional-neural-network/alexnet-experiment' },
             ]
           },
         ]

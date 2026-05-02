@@ -447,6 +447,7 @@ function initCodeBlock(block) {
 
   // 绑定运行按钮事件
   const runButtons = block.querySelectorAll('.run-btn')
+  const timeout = block.dataset.timeout || null
   runButtons.forEach(btn => {
     btn.addEventListener('click', async (e) => {
       const outputArea = block.querySelector('.output-area')
@@ -470,7 +471,11 @@ function initCodeBlock(block) {
         const response = await fetch(endpoint, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ code, useGpu })
+          body: JSON.stringify({
+            code,
+            useGpu,
+            timeout: timeout === 'unlimited' ? null : (timeout ? parseInt(timeout, 10) : null)
+          })
         })
 
         // 解析响应内容，即使 HTTP 状态码不是 200

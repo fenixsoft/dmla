@@ -63,6 +63,30 @@ RUN pip install --no-cache-dir \
 # 复制执行器和诊断脚本
 COPY local-server/src/kernel_runner.py /workspace/kernel_runner.py
 COPY local-server/src/cuda_compat_check.py /workspace/cuda_compat_check.py
+COPY local-server/src/dmla_progress.py /workspace/dmla_progress.py
+
+# 创建数据目录结构
+RUN mkdir -p /data/datasets \
+             /data/datasets/custom \
+             /data/models \
+             /data/models/alexnet/checkpoints \
+             /data/models/alexnet/final \
+             /data/models/vgg \
+             /data/models/resnet \
+             /data/models/gan \
+             /data/models/llm \
+             /data/models/pretrained \
+             /data/outputs \
+             /data/outputs/training_logs \
+             /data/outputs/visualizations \
+             /data/outputs/exports \
+             /data/cache \
+             /data/cache/downloads \
+             /data/cache/preprocessing \
+             /data/cache/torch_hub
+
+# 设置环境变量
+ENV TORCH_HOME=/data/cache/torch_hub
 
 # 配置 matplotlib 中文字体支持（包括 sans-serif 和 monospace）
 RUN mkdir -p /root/.config/matplotlib && \

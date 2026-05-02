@@ -39,7 +39,25 @@
       }"
     >
       <template v-if="isRunning">
-        执行中...
+        <!-- 进度条显示 -->
+        <template v-if="showProgress && progress">
+          <div class="progress-bar">
+            <div class="progress-header">{{ progress.description || '执行中...' }}</div>
+            <div class="progress-track">
+              <div class="progress-fill" :style="{ width: `${progress.percent || 0}%` }"></div>
+            </div>
+            <div class="progress-info">
+              <span>{{ progress.message || `${progress.current_step || 0}/${progress.total_steps || 0}` }}</span>
+              <span v-if="progress.elapsed_seconds">
+                {{ formatTime(progress.elapsed_seconds) }}
+                <template v-if="progress.estimated_remaining"> / {{ formatTime(progress.estimated_remaining) }}</template>
+              </span>
+            </div>
+          </div>
+        </template>
+        <template v-else>
+          执行中...
+        </template>
       </template>
       <template v-else-if="outputs.length > 0">
         <!-- 渲染每个输出项 -->
@@ -144,10 +162,28 @@ const props = defineProps({
     type: Boolean,
     default: false
   },
+  timeout: {
+    type: String,
+    default: null  // null, 数字字符串, 或 'unlimited'
+  },
   apiEndpoint: {
     type: String,
     default: ''  // 留空则使用配置的端点
   }
+})
+
+// 计算超时值（用于 API）
+const timeoutValue = computed(() => {
+  if (!props.timeout) return null
+  if (props.timeout === 'unlimited') return null
+  return parseInt(props.timeout, 10)
+})
+
+// 是否启用进度显示（timeout > 60 或 unlimited）
+const showProgress = computed(() => {
+  if (!props.timeout) return false
+  if (props.timeout === 'unlimited') return true
+  return parseInt(props.timeout, 10) > 60
 })
 
 // 获取 API 端点
@@ -162,6 +198,10 @@ const hasError = ref(false)
 const executionTime = ref(null)
 const sandboxAvailable = ref(true)
 
+// 进度状态
+const progress = ref(null)  // { percent, message, status, elapsed_seconds, estimated_remaining }
+const progressInterval = ref(null)
+
 // 图片模态框状态
 const showImageModal = ref(false)
 const modalImageData = ref('')
@@ -172,6 +212,12 @@ async function runCode(useGpu = false) {
   outputs.value = []
   hasError.value = false
   executionTime.value = null
+  progress.value = null
+
+  // 启动进度轮询（如果启用）
+  if (showProgress.value) {
+    startProgressPolling()
+  }
 
   try {
     const response = await fetch(resolvedEndpoint.value, {
@@ -179,7 +225,8 @@ async function runCode(useGpu = false) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         code: props.code,
-        useGpu
+        useGpu,
+        timeout: timeoutValue.value
       })
     })
 
@@ -211,6 +258,28 @@ async function runCode(useGpu = false) {
     }
   } finally {
     isRunning.value = false
+    stopProgressPolling()
+  }
+}
+
+// 进度轮询
+function startProgressPolling() {
+  progressInterval.value = setInterval(async () => {
+    try {
+      const response = await fetch(resolvedEndpoint.value.replace('/run', '/progress'))
+      if (response.ok) {
+        progress.value = await response.json()
+      }
+    } catch {
+      // 进度获取失败时忽略
+    }
+  }, 2000)
+}
+
+function stopProgressPolling() {
+  if (progressInterval.value) {
+    clearInterval(progressInterval.value)
+    progressInterval.value = null
   }
 }
 
@@ -251,6 +320,13 @@ function handleEscKey(event) {
   }
 }
 
+// 格式化时间（秒转为 mm:ss）
+function formatTime(seconds) {
+  const mins = Math.floor(seconds / 60)
+  const secs = seconds % 60
+  return `${mins}:${secs.toString().padStart(2, '0')}`
+}
+
 // 检查沙箱可用性
 onMounted(async () => {
   try {
@@ -266,6 +342,7 @@ onMounted(async () => {
 // 清理事件监听器
 onUnmounted(() => {
   document.removeEventListener('keydown', handleEscKey)
+  stopProgressPolling()
 })
 </script>
 
@@ -439,6 +516,40 @@ onUnmounted(() => {
   margin-top: 8px;
   padding-top: 8px;
   border-top: 1px solid #333;
+  color: #888;
+  font-size: 12px;
+}
+
+/* 进度条 */
+.progress-bar {
+  margin-bottom: 1rem;
+}
+
+.progress-header {
+  color: #4ec9b0;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+}
+
+.progress-track {
+  width: 100%;
+  height: 8px;
+  background: #333;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #3eaf7c, #4abf8a);
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+.progress-info {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 0.5rem;
   color: #888;
   font-size: 12px;
 }

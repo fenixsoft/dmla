@@ -32,8 +32,12 @@ export const runnableCodePlugin = (options = {}) => {
         // 检查是否为 runnable 代码块
         if (info.includes('runnable')) {
           const infoLower = info.toLowerCase()
-          const language = info.replace(/runnable|gpu|extract-class="[^"]*"/gi, '').trim() || 'python'
+          const language = info.replace(/runnable|gpu|timeout=\S+|extract-class="[^"]*"/gi, '').trim() || 'python'
           const useGpu = infoLower.includes('gpu')
+
+          // 解析 timeout 参数
+          const timeoutMatch = info.match(/timeout=(\d+|unlimited)/i)
+          const timeout = timeoutMatch ? timeoutMatch[1] : null
 
           // 解析 extract-class 参数
           const extractMatch = info.match(/extract-class="([^"]+)"/i)
@@ -56,6 +60,7 @@ export const runnableCodePlugin = (options = {}) => {
           const dataAttrs = [
             `data-lang="${language}"`,
             `data-gpu="${useGpu}"`,
+            timeout ? `data-timeout="${timeout}"` : '',
             extractClass ? `data-extract-class="${extractClass}"` : ''
           ].filter(Boolean).join(' ')
 

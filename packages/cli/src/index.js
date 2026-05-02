@@ -9,6 +9,7 @@ import { fileURLToPath } from 'url'
 import fs from 'fs'
 import { startServer, startServerSync, stopServer, getStatus } from './commands/server.js'
 import { runDoctor } from './commands/manage.js'
+import { runDataTUI, runDataCommand } from './commands/data.js'
 import { runInstallTUI } from '@icyfenix-dmla/install'
 
 // 从 package.json 读取版本号
@@ -153,6 +154,21 @@ program
   .action(async () => {
     console.log(chalk.blue('DMLA 环境诊断'))
     await runDoctor()
+  })
+
+// ─────────────────────────────────────────────────────────────
+// data 命令
+// ─────────────────────────────────────────────────────────────
+program
+  .command('data [subcommand]')
+  .description('数据管理（挂载、下载、清理等）')
+  .option('-p, --path <path>', '设置挂载路径')
+  .action(async (subcommand, options) => {
+    if (subcommand) {
+      await runDataCommand(subcommand, options)
+    } else {
+      await runDataTUI()
+    }
   })
 
 program.parse()
