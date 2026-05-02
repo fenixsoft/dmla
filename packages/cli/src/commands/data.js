@@ -10,6 +10,7 @@ import path from 'path'
 import os from 'os'
 import { spawn } from 'child_process'
 import { execSync } from 'child_process'
+import AdmZip from 'adm-zip'
 
 // 配置文件路径
 const DMLA_CONFIG_DIR = path.join(os.homedir(), '.dmla')
@@ -27,7 +28,11 @@ const DATASETS = [
     size: '247MB',
     format: 'git',
     targetDir: 'datasets/tiny-imagenet-200',
-    source: 'ModelScope (icyfenix)'
+    source: 'ModelScope (icyfenix)',
+    // git clone 后需要解压的 zip 文件
+    zipFile: 'tiny-imagenet-200.zip',
+    // zip 内部的顶层目录名（解压后需要将此目录内容移到上层）
+    zipInnerDir: 'tiny-imagenet-200'
   },
   {
     id: 'cifar-10',
@@ -526,6 +531,58 @@ async function downloadDataset(dataPath, dataset) {
       console.log()
       console.log(chalk.green('下载完成'))
 
+      // 解压数据集内的 zip 文件（如果有）
+      if (dataset.zipFile) {
+        const zipPath = path.join(targetDir, dataset.zipFile)
+
+        if (fs.existsSync(zipPath)) {
+          console.log()
+          console.log(chalk.gray(`解压 ${dataset.zipFile}...`))
+
+          try {
+            const zip = new AdmZip(zipPath)
+
+            // 解压到临时目录
+            const tempDir = path.join(targetDir, '_extract_temp')
+            zip.extractAllTo(tempDir, true)
+
+            // 将 zip 内部目录内容移到目标目录
+            const innerDir = dataset.zipInnerDir
+              ? path.join(tempDir, dataset.zipInnerDir)
+              : tempDir
+
+            if (fs.existsSync(innerDir)) {
+              // 移动内部目录的所有内容到目标目录
+              const items = fs.readdirSync(innerDir)
+              for (const item of items) {
+                const srcPath = path.join(innerDir, item)
+                const destPath = path.join(targetDir, item)
+
+                // 如果目标已存在且不是 zip 文件，跳过
+                if (fs.existsSync(destPath) && item !== dataset.zipFile) {
+                  continue
+                }
+
+                fs.cpSync(srcPath, destPath, { recursive: true, force: true })
+              }
+
+              // 清理临时目录
+              fs.rmSync(tempDir, { recursive: true, force: true })
+
+              // 删除 zip 文件
+              fs.rmSync(zipPath, { force: true })
+
+              console.log(chalk.green('解压完成'))
+            } else {
+              console.log(chalk.yellow(`  ⚠ zip 内部目录 ${dataset.zipInnerDir} 不存在`))
+            }
+          } catch (err) {
+            console.log(chalk.red(`解压失败: ${err.message}`))
+            console.log(chalk.yellow(`请手动解压: ${zipPath}`))
+          }
+        }
+      }
+
     } else {
       // 原有的 curl/wget 下载逻辑（保留兼容性）
       const cacheDir = path.join(dataPath, 'cache', 'downloads')
@@ -569,17 +626,17 @@ async function downloadDataset(dataPath, dataset) {
       console.log(chalk.gray('正在解压...'))
 
       if (dataset.format === 'zip') {
-        const unzipDir = path.join(cacheDir, dataset.id)
-        fs.mkdirSync(unzipDir, { recursive: true })
-        execSync(`unzip -o "${downloadFile}" -d "${unzipDir}"`, { stdio: 'inherit' })
-
-        const extractedDir = path.join(unzipDir, dataset.id)
-        if (fs.existsSync(extractedDir)) {
-          fs.cpSync(extractedDir, targetDir, { recursive: true })
-          fs.rmSync(unzipDir, { recursive: true, force: true })
+        try {
+          const zip = new AdmZip(downloadFile)
+          zip.extractAllTo(targetDir, true)  // overwrite = true
+          console.log(chalk.green('解压完成'))
+        } catch (err) {
+          console.log(chalk.red(`解压失败: ${err.message}`))
+          throw err
         }
 
       } else if (dataset.format === 'tar.gz') {
+        // tar.gz 文件仍使用系统命令（adm-zip 不支持）
         execSync(`tar -xzf "${downloadFile}" -C "${path.join(dataPath, 'datasets')}"`, { stdio: 'inherit' })
       }
 

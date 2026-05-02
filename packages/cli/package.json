@@ -22,13 +22,14 @@
     "README.md"
   ],
   "dependencies": {
-    "commander": "^12.1.0",
+    "@icyfenix-dmla/install": "*",
+    "adm-zip": "^0.5.17",
     "chalk": "^5.3.0",
-    "enquirer": "^2.4.1",
-    "dockerode": "^5.0.0",
-    "express": "^4.21.2",
+    "commander": "^12.1.0",
     "cors": "^2.8.5",
-    "@icyfenix-dmla/install": "*"
+    "dockerode": "^5.0.0",
+    "enquirer": "^2.4.1",
+    "express": "^4.21.2"
   },
   "devDependencies": {
     "jest": "^29.7.0"
@@ -36,8 +37,13 @@
   "jest": {
     "testEnvironment": "node",
     "transform": {},
-    "moduleFileExtensions": ["js", "mjs"],
-    "testMatch": ["**/tests/**/*.test.js"]
+    "moduleFileExtensions": [
+      "js",
+      "mjs"
+    ],
+    "testMatch": [
+      "**/tests/**/*.test.js"
+    ]
   },
   "engines": {
     "node": ">=18.0.0"
