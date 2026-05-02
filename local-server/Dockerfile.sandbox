@@ -30,7 +30,16 @@ RUN sed -i 's|http://archive.ubuntu.com|http://mirrors.aliyun.com|g' /etc/apt/so
     curl \
     fonts-wqy-microhei \
     fonts-noto-cjk \
-    && add-apt-repository ppa:deadsnakes/ppa \
+    # 添加重试逻辑应对 Launchpad PPA 服务器超时（最多重试 5 次，每次等待 10 秒）
+    && for i in 1 2 3 4 5; do \
+        if add-apt-repository ppa:deadsnakes/ppa; then \
+            echo "PPA added successfully on attempt $i"; \
+            break; \
+        else \
+            echo "Attempt $i failed, waiting 10 seconds..."; \
+            sleep 10; \
+        fi; \
+    done \
     && apt-get update && apt-get install -y \
     python3.11 \
     python3.11-venv \

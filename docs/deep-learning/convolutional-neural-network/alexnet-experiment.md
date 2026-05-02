@@ -4,7 +4,7 @@
 
 ## 实验准备
 
-在开始实验之前，请确保已挂载数据目录并下载 Tiny ImageNet 数据集。
+在开始实验之前，请确保已挂载[数据目录](../../sandbox.md)并下载 Tiny ImageNet 数据集。
 ```bash
 # 选择 "下载数据集" -> 选择 "Tiny ImageNet 200"
 dmla data
@@ -12,12 +12,12 @@ dmla data
 
 ## 第一阶段：数据准备
 
-首先，我们验证数据集是否已正确下载，并检查其结构。
+首先，我们验证数据集是否已正确下载，并检查其结构。Tiny ImageNet 包含 200 个类别，共 12 万张图像。训练前需要确认数据集完整下载、目录结构正确，否则后续 DataLoader 会因为找不到文件而报错。
 
 ```python runnable gpu
 import os
 
-# 检查数据目录是否存在
+# 检查数据目录是否存在（/data/ 是 Docker 沙箱中挂载宿主机数据卷的固定路径）
 data_dir = '/data/datasets/tiny-imagenet-200'
 
 if os.path.exists(data_dir):
@@ -39,73 +39,25 @@ else:
     print("数据集未下载，请运行 'dmla data' 下载数据集")
 ```
 
-如果数据集未下载，以下代码块可以自动下载并解压（需要约 5 分钟）：
-
-```python runnable gpu timeout=300
-import os
-import urllib.request
-import zipfile
-from tqdm import tqdm
-
-data_dir = '/data/datasets/tiny-imagenet-200'
-cache_dir = '/data/cache/downloads'
-
-# 如果数据集已存在，跳过下载
-if os.path.exists(data_dir) and os.path.exists(os.path.join(data_dir, 'train')):
-    print("数据集已存在，跳过下载")
-else:
-    # 创建缓存目录
-    os.makedirs(cache_dir, exist_ok=True)
-    
-    # 下载 Tiny ImageNet
-    url = 'https://cs231n.stanford.edu/tiny-imagenet-200.zip'
-    zip_path = os.path.join(cache_dir, 'tiny-imagenet-200.zip')
-    
-    print(f"开始下载 Tiny ImageNet...")
-    print(f"URL: {url}")
-    print(f"目标: {zip_path}")
-    
-    # 下载文件
-    class DownloadProgress:
-        def __init__(self):
-            self.total = 0
-            self.downloaded = 0
-        def update(self, block_num, block_size, total_size):
-            self.total = total_size
-            self.downloaded = block_num * block_size
-            percent = self.downloaded / total_size * 100 if total_size > 0 else 0
-            print(f"下载进度: {percent:.1f}% ({self.downloaded/1024/1024:.1f}MB / {total_size/1024/1024:.1f}MB)")
-    
-    progress = DownloadProgress()
-    urllib.request.urlretrieve(url, zip_path, progress.update)
-    
-    print("\n下载完成，开始解压...")
-    
-    # 解压
-    with zipfile.ZipFile(zip_path, 'r') as zip_ref:
-        zip_ref.extractall(cache_dir)
-    
-    # 移动到目标目录
-    extracted_dir = os.path.join(cache_dir, 'tiny-imagenet-200')
-    if os.path.exists(extracted_dir):
-        os.makedirs(data_dir, exist_ok=True)
-        for item in os.listdir(extracted_dir):
-            src = os.path.join(extracted_dir, item)
-            dst = os.path.join(data_dir, item)
-            if os.path.exists(dst):
-                os.remove(dst) if os.path.isfile(dst) else os.rmdir(dst)
-            os.rename(src, dst)
-        os.rmdir(extracted_dir)
-    
-    # 清理 zip 文件
-    os.remove(zip_path)
-    
-    print(f"\n数据集已准备完毕: {data_dir}")
-```
-
 ## 第二阶段：数据预处理
 
 接下来，我们创建 PyTorch DataLoader，对图像进行预处理和数据增强。
+
+> **目的：** PyTorch 训练需要 `Dataset` 和 `DataLoader` 两个组件。`Dataset` 负责把磁盘上的图像文件和标签映射成 `(图像, 标签)` 对，`DataLoader` 负责批量加载、打乱顺序、多线程读取。
+>
+> **为什么需要数据增强：** Tiny ImageNet 每个类别只有 500 张训练图，数据量有限。通过随机翻转、裁剪、颜色抖动等变换，可以人工增加训练数据的多样性，防止模型过拟合。
+>
+> **代码做了什么：**
+> 1. **`TinyImageNetDataset` 类：** 继承 `torch.utils.data.Dataset`。训练集按类别子目录读取（每个文件夹名就是类别标签），验证集从 `val_annotations.txt` 中解析标签（验证集所有图片混放在一个目录中，标签写在标注文件里）
+> 2. **`train_transform`（训练集预处理）：**
+>    - `Resize(224, 224)`：AlexNet 要求输入为 224×224 的图像
+>    - `RandomHorizontalFlip`：50% 概率水平翻转，增加姿态变化
+>    - `RandomCrop(224, padding=4)`：先四周各填充 4 像素再随机裁剪 224×224，模拟尺度变化
+>    - `ColorJitter`：随机调整亮度和对比度，增强对光照变化的鲁棒性
+>    - `ToTensor`：将 PIL 图像转为 PyTorch Tensor（像素值从 [0, 255] 缩放到 [0, 1]）
+>    - `Normalize`：使用 ImageNet 的统计均值和标准差进行标准化，使输入分布与预训练权重一致（便于后续迁移学习）
+> 3. **`val_transform`（验证集预处理）：** 仅做 Resize + ToTensor + Normalize，不做数据增强（验证集需要保持稳定，才能客观评估模型性能）
+> 4. **`DataLoader`：** `batch_size=64` 表示每批读取 64 张图，`shuffle=True` 在训练时打乱顺序以避免模型记住数据顺序
 
 ```python runnable gpu timeout=120
 import torch
@@ -216,6 +168,14 @@ except Exception as e:
 
 下面实现 AlexNet 网络结构，适配 Tiny ImageNet 的 200 个类别（而非原始的 1000 类）。
 
+> **背景：** AlexNet 是 2012 年 ImageNet 竞赛冠军网络，包含 5 个卷积层和 3 个全连接层，共约 6000 万参数。它的成功证明了深度 CNN 在大规模图像分类上的强大能力。
+>
+> **代码做了什么：**
+> 1. **`features`（特征提取层）：** 5 个卷积层交替叠加，逐层提取从低级（边缘、纹理）到高级（物体部件）的特征。卷积层之间的 `MaxPool2d` 负责下采样，逐步缩小空间尺寸。`AdaptiveAvgPool2d((6, 6))` 确保无论输入图像经过前面的卷积池化后尺寸如何，输出始终固定为 6×6，这样后续全连接层的输入维度就固定了
+> 2. **`classifier`（分类层）：** 3 个全连接层。前两层使用 `Dropout(p=0.5)` 随机丢弃 50% 的神经元激活，防止过拟合（AlexNet 的标志性设计）。最后将 4096 维特征映射到 200 个类别的 logits
+> 3. **为什么要改成 200 类：** 原始 AlexNet 最后一层输出 1000 类（对应完整 ImageNet），Tiny ImageNet 只有 200 类，所以 `num_classes=200`
+> 4. **测试前向传播：** 用随机输入 `torch.randn(1, 3, 224, 224)` 跑一遍网络，验证输出形状为 `[1, 200]`，确认网络结构没有维度错误
+
 ```python runnable gpu extract-class="AlexNet"
 import torch
 import torch.nn as nn
@@ -300,6 +260,19 @@ print(f"输出形状: {output.shape}")
 ## 第四阶段：模型训练
 
 本阶段执行完整的训练流程，使用 ProgressReporter 报告进度。
+
+> **目的：** 这是整个实验的核心，模型通过多轮（epoch）迭代学习，逐步提升分类准确率。
+>
+> **训练流程概述：** 每个 epoch 中，模型遍历全部训练数据（前向传播 → 计算损失 → 反向传播 → 更新权重），然后在验证集上评估泛化能力。
+>
+> **代码做了什么：**
+> 1. **设备选择：** 检测 GPU 是否可用，GPU 训练速度比 CPU 快 10-100 倍
+> 2. **损失函数 `CrossEntropyLoss`：** 多分类任务的标准损失函数，对 logits 计算 softmax 后与真实标签求交叉熵
+> 3. **优化器 `SGD`：** 随机梯度下降，`lr=0.01` 是初始学习率，`momentum=0.9` 加速收敛并抑制震荡，`weight_decay=0.0005`（L2 正则化）防止过拟合
+> 4. **学习率调度 `StepLR`：** 每 10 个 epoch 将学习率乘以 0.1。训练初期用大学习率快速下降，后期用小学习率精细调优
+> 5. **`train_one_epoch`：** 一个 epoch 的训练逻辑。每个 batch 执行 `zero_grad() → forward → loss → backward() → step()` 的标准反向传播流程
+> 6. **`validate`：** 在验证集上评估模型，使用 `torch.no_grad()` 关闭梯度计算以节省显存和计算量
+> 7. **模型保存策略：** 保存验证准确率最高的模型（`best_model.pth`），并每 5 个 epoch 保存一次 checkpoint，防止训练中断后可恢复
 
 ```python runnable gpu timeout=unlimited
 import torch
@@ -449,6 +422,19 @@ except Exception as e:
 
 使用训练好的模型对新图像进行分类预测。
 
+> **目的：** 训练完成后，验证模型的实际分类效果，展示模型"学到了什么"。
+>
+> **代码做了什么：**
+> 1. **模型加载：** 优先加载验证准确率最高的 checkpoint（`best_model.pth`），其次加载最终模型。如果都找不到，则使用未训练的随机权重模型（仅供测试，预测结果无意义）
+> 2. **`model.eval()`：** 切换到推理模式，关闭 Dropout 和 BatchNorm 的训练行为，确保每次推理结果一致
+> 3. **推理预处理：** 与验证集预处理相同（Resize → ToTensor → Normalize），不做数据增强。输入图像的预处理方式必须与训练时一致
+> 4. **类别名称映射：** Tiny ImageNet 的类别标签是 WordNet ID（如 `n01675725`），通过 `wnids.txt` 和 `words.txt` 映射为可读的英文描述（如 `turtle, tortoise`）
+> 5. **`predict_image` 函数：**
+>    - 读取图像 → 预处理 → 送入模型
+>    - 使用 `softmax` 将 logits 转为概率（0-100%）
+>    - `topk(5)` 取概率最高的 5 个类别，输出 Top-5 预测结果
+>    - Top-5 是图像分类常用的评估指标：只要正确答案在前 5 个预测中，就认为模型"猜对了"
+
 ```python runnable gpu
 import torch
 import torch.nn as nn
@@ -573,10 +559,3 @@ print("使用方法: predict_image('/data/datasets/custom/your_image.jpg', model
 - `/data/models/alexnet/checkpoints/best_model.pth` - 最佳验证准确率的模型
 - `/data/models/alexnet/checkpoints/epoch_*.pth` - 每 5 epoch 的 checkpoint
 - `/data/models/alexnet/final/alexnet_tiny_imagenet.pth` - 最终模型权重
-
-### 下一步探索
-
-1. 调整超参数（学习率、batch size）观察训练效果变化
-2. 尝试不同的数据增强策略
-3. 使用预训练权重进行迁移学习
-4. 尝试其他 CNN 架构（VGG、ResNet）
