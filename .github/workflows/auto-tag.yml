@@ -5,11 +5,13 @@ on:
     branches:
       - main
     paths:
-      # 仅这些路径变化触发自动打 Tag
+      # Dockerfile 变化触发自动打 Tag
       - 'local-server/Dockerfile.sandbox'
       - 'local-server/Dockerfile.sandbox.cpu'
-      # - 'local-server/shared_modules/**'
+      # 镜像内置的 Python 代码变化也触发
+      - 'local-server/shared_modules/**'
       - 'local-server/src/kernel_runner.py'
+      - 'local-server/src/dmla_progress.py'
   workflow_dispatch:
     # 支持手动触发用于测试
 
