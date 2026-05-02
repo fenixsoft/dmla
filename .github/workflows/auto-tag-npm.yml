@@ -27,7 +27,9 @@ jobs:
         uses: actions/checkout@v5
         with:
           fetch-depth: 0
-          token: ${{ secrets.GITHUB_TOKEN }}
+          # 使用 WORKFLOW_TOKEN (PAT) 而非 GITHUB_TOKEN
+          # PAT 具有 workflow 权限，可以触发其他工作流
+          token: ${{ secrets.WORKFLOW_TOKEN }}
 
       - name: Generate npm timestamp tag
         id: generate_tag
