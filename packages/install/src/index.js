@@ -102,6 +102,21 @@ export async function runInstallTUI() {
 
     console.log(chalk.green(`✔ Node.js ${env.nodeVersion} 已安装`))
 
+    // Git 检测
+    if (env.git) {
+      console.log(chalk.green(`✔ Git ${env.gitVersion || ''} 已安装`))
+    } else {
+      console.log(chalk.yellow('⚠️  Git 未安装'))
+      console.log(chalk.gray('   下载数据集功能需要 Git，建议安装'))
+    }
+
+    // Git LFS 检测
+    if (env.gitLfs) {
+      console.log(chalk.green(`✔ Git LFS ${env.gitLfsVersion || ''} 已安装`))
+    } else {
+      console.log(chalk.gray('   Git LFS: 未安装 (部分大型数据集可能需要)'))
+    }
+
     // GPU 信息显示（仅当 Docker 可用时）
     if (dockerAvailable && env.gpu) {
       console.log(chalk.green(`✔ GPU: ${env.gpuInfo || '检测到'}`))

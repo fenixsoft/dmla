@@ -419,54 +419,70 @@ async function downloadDatasets() {
     return
   }
 
-  // 显示可用数据集
-  console.log('可用数据集:')
-  console.log()
-
-  for (let i = 0; i < DATASETS.length; i++) {
-    const dataset = DATASETS[i]
-    const downloaded = isDatasetDownloaded(dataPath, dataset.id)
-    const status = downloaded ? chalk.green('[x]') : chalk.gray('[ ]')
-    const downloadedTag = downloaded ? chalk.gray(' (已下载)') : chalk.gray(` (${dataset.size})`)
-    console.log(`  ${i + 1}. ${status} ${dataset.name}${downloadedTag}`)
+  // 检查 Git 环境
+  try {
+    execSync('git --version', { stdio: 'pipe' })
+  } catch {
+    console.log(chalk.red('❌ Git 未安装'))
+    console.log(chalk.yellow('下载数据集需要 Git，请先安装: https://git-scm.com/downloads'))
+    return
   }
 
-  console.log()
-  console.log(chalk.gray('提示: 输入序号选择数据集，q 返回'))
-  console.log()
-
-  const { selection } = await prompt({
-    type: 'input',
-    name: 'selection',
-    message: '选择要下载的数据集序号'
+  // 构建选项列表
+  const choices = DATASETS.map((dataset, index) => {
+    const downloaded = isDatasetDownloaded(dataPath, dataset.id)
+    return {
+      name: index.toString(),
+      message: `${dataset.name} (${dataset.size})${downloaded ? ' [已下载]' : ''}`,
+      disabled: downloaded || dataset.id === 'mnist'
+    }
   })
 
-  if (selection.toLowerCase() === 'q') {
+  // MNIST 特殊提示
+  console.log(chalk.gray('提示: MNIST 数据集将在训练时通过 torchvision 自动下载'))
+  console.log(chalk.gray('操作: 上下键选择，空格勾选/取消，回车确认下载'))
+  console.log()
+
+  const { selected } = await prompt({
+    type: 'multiselect',
+    name: 'selected',
+    message: '选择要下载的数据集',
+    choices,
+    hint: '空格选择，回车确认',
+    warn: '已下载或不可选'
+  })
+
+  if (!selected || selected.length === 0) {
+    console.log(chalk.yellow('未选择任何数据集'))
     return
   }
 
-  const index = parseInt(selection) - 1
-  if (index < 0 || index >= DATASETS.length) {
-    console.log(chalk.yellow('无效的选择'))
-    return
+  // 下载选中的数据集
+  for (const indexStr of selected) {
+    const index = parseInt(indexStr)
+    const dataset = DATASETS[index]
+
+    console.log()
+    console.log(chalk.cyan(`────────────────────────────────────`))
+
+    // MNIST 特殊处理
+    if (dataset.id === 'mnist') {
+      console.log(chalk.yellow('MNIST 数据集将在训练时通过 torchvision 自动下载'))
+      continue
+    }
+
+    // 检查是否已下载
+    if (isDatasetDownloaded(dataPath, dataset.id)) {
+      console.log(chalk.yellow(`${dataset.name} 已下载，跳过`))
+      continue
+    }
+
+    await downloadDataset(dataPath, dataset)
   }
 
-  const dataset = DATASETS[index]
-
-  // 检查是否已下载
-  if (isDatasetDownloaded(dataPath, dataset.id)) {
-    console.log(chalk.yellow(`${dataset.name} 已下载`))
-    return
-  }
-
-  // MNIST 使用特殊处理
-  if (dataset.id === 'mnist') {
-    console.log(chalk.yellow('MNIST 数据集将在训练时通过 torchvision 自动下载'))
-    return
-  }
-
-  // 开始下载
-  await downloadDataset(dataPath, dataset)
+  console.log()
+  console.log(chalk.cyan(`────────────────────────────────────`))
+  console.log(chalk.green('所有选中的数据集已处理完成'))
 }
 
 /**

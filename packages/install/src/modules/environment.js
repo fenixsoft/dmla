@@ -46,6 +46,52 @@ function checkNode() {
 }
 
 /**
+ * 检查 Git 环境
+ */
+function checkGit() {
+  try {
+    const version = execSync('git --version', {
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'ignore']
+    }).trim()
+    // git version 2.x.x -> 2.x.x
+    const versionMatch = version.match(/git version (\d+\.\d+\.\d+)/)
+    return {
+      installed: true,
+      version: versionMatch ? versionMatch[1] : version.replace('git version ', '')
+    }
+  } catch {
+    return {
+      installed: false,
+      version: null
+    }
+  }
+}
+
+/**
+ * 检查 Git LFS 环境
+ */
+function checkGitLfs() {
+  try {
+    const version = execSync('git lfs version', {
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'ignore']
+    }).trim()
+    // git-lfs/3.x.x -> 3.x.x
+    const versionMatch = version.match(/git-lfs\/(\d+\.\d+\.\d+)/)
+    return {
+      installed: true,
+      version: versionMatch ? versionMatch[1] : version
+    }
+  } catch {
+    return {
+      installed: false,
+      version: null
+    }
+  }
+}
+
+/**
  * 检查 GPU 环境
  * @returns {{ available: boolean, info: string|null, driverVersion: string|null }}
  */
@@ -108,6 +154,8 @@ function checkPort(port) {
 export async function checkEnvironment() {
   const dockerEnv = await checkDocker()
   const nodeEnv = checkNode()
+  const gitEnv = checkGit()
+  const gitLfsEnv = checkGitLfs()
   const gpuEnv = checkGPU()
 
   return {
@@ -115,6 +163,10 @@ export async function checkEnvironment() {
     dockerVersion: dockerEnv.version,
     node: nodeEnv.installed,
     nodeVersion: nodeEnv.version,
+    git: gitEnv.installed,
+    gitVersion: gitEnv.version,
+    gitLfs: gitLfsEnv.installed,
+    gitLfsVersion: gitLfsEnv.version,
     gpu: gpuEnv.available,
     gpuInfo: gpuEnv.info,
     gpuDriverVersion: gpuEnv.driverVersion,
