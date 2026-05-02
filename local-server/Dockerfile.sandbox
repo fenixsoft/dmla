@@ -21,6 +21,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV DMLA_CUDA_COMPAT=unknown
+ENV PYTHONPATH=/workspace
 
 # 替换为阿里云镜像源
 RUN sed -i 's|http://archive.ubuntu.com|http://mirrors.aliyun.com|g' /etc/apt/sources.list \
