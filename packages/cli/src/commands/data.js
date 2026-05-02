@@ -401,19 +401,16 @@ async function downloadDatasets() {
   // 构建选项列表
   const choices = DATASETS.map((dataset, index) => {
     const downloaded = isDatasetDownloaded(dataPath, dataset.id)
-    const isMnist = dataset.id === 'mnist'
 
     let message = `${dataset.name} (${dataset.size})`
     if (downloaded) {
       message += ' [已下载]'
-    } else if (isMnist) {
-      message += ' [训练时自动下载]'
     }
 
     return {
       name: index.toString(),
       message,
-      disabled: downloaded || isMnist
+      disabled: downloaded
     }
   })
 
@@ -428,7 +425,7 @@ async function downloadDatasets() {
       message: '选择要下载的数据集',
       choices,
       hint: '空格选择，回车确认下载',
-      warn: '已下载或自动下载类型'
+      warn: '已下载'
     })
 
     if (!selected || selected.length === 0) {
@@ -443,12 +440,6 @@ async function downloadDatasets() {
 
       console.log()
       console.log(chalk.cyan(`────────────────────────────────────`))
-
-    // MNIST 特殊处理
-    if (dataset.id === 'mnist') {
-      console.log(chalk.yellow('MNIST 数据集将在训练时通过 torchvision 自动下载'))
-      continue
-    }
 
     // 检查是否已下载
     if (isDatasetDownloaded(dataPath, dataset.id)) {
