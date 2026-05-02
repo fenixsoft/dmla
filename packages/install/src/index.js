@@ -83,14 +83,16 @@ export async function runInstallTUI() {
     console.log()
 
     const env = await checkEnvironment()
+    let dockerAvailable = true
 
     if (!env.docker) {
-      console.log(chalk.red('❌ Docker 未安装或未运行'))
-      console.log(chalk.yellow('请先安装 Docker: https://docs.docker.com/get-docker/'))
-      process.exit(1)
+      dockerAvailable = false
+      console.log(chalk.yellow('⚠️  Docker 未安装或未运行'))
+      console.log(chalk.gray('   CLI 工具可先安装，稍后在有 Docker 的环境中使用'))
+      console.log(chalk.gray('   Docker 安装指南: https://docs.docker.com/get-docker/'))
+    } else {
+      console.log(chalk.green(`✔ Docker ${env.dockerVersion || ''} 已安装`))
     }
-
-    console.log(chalk.green(`✔ Docker ${env.dockerVersion || ''} 已安装`))
 
     if (!env.node) {
       console.log(chalk.red('❌ Node.js 未安装'))
@@ -100,8 +102,8 @@ export async function runInstallTUI() {
 
     console.log(chalk.green(`✔ Node.js ${env.nodeVersion} 已安装`))
 
-    // GPU 信息显示
-    if (env.gpu) {
+    // GPU 信息显示（仅当 Docker 可用时）
+    if (dockerAvailable && env.gpu) {
       console.log(chalk.green(`✔ GPU: ${env.gpuInfo || '检测到'}`))
 
       // 显示驱动版本和 CUDA 兼容上限
@@ -122,6 +124,8 @@ export async function runInstallTUI() {
         console.log(chalk.yellow(`   GPU 镜像: 不兼容 (需要驱动 >= ${minDriverForGpuImage})`))
         console.log(chalk.yellow(`   💡 建议：升级 NVIDIA 驱动到 ${minDriverForGpuImage}+ 或使用 CPU 模式`))
       }
+    } else if (!dockerAvailable) {
+      console.log(chalk.gray('   GPU: 检测已跳过（Docker 不可用）'))
     } else {
       console.log(chalk.gray('   GPU: 未检测到'))
     }
@@ -131,32 +135,45 @@ export async function runInstallTUI() {
     // ─────────────────────────────────────────────────────────────
     // 步骤 2: 选择镜像仓库（或跳过拉取）
     // ─────────────────────────────────────────────────────────────
-    const registryChoice = await prompt({
-      type: 'select',
-      name: 'registry',
-      message: '请选择镜像仓库',
-      initial: 0,  // 默认选择 'auto'（第一项）
-      choices: [
-        { name: 'auto', message: '自动选择 (根据网络延迟)' },
-        { name: 'dockerhub', message: 'Docker Hub (全球访问)' },
-        { name: 'acr', message: '阿里云 ACR (国内加速)' },
-        { name: 'skip', message: '暂不拉取镜像 (仅安装 CLI)' }
-      ]
-    })
 
-    let registry = registryChoice.registry
-    let skipPull = false
+    // Docker 不可用时，强制跳过镜像拉取
+    let registry = 'skip'
+    let skipPull = true
 
-    if (registry === 'skip') {
-      skipPull = true
-      console.log(chalk.gray('   将仅安装 CLI 工具'))
-    } else if (registry === 'auto') {
-      console.log(chalk.gray('   检测网络延迟...'))
-      registry = 'acr'
-      console.log(chalk.gray(`   已选择: ${registry === 'acr' ? '阿里云 ACR' : 'Docker Hub'}`))
+    if (!dockerAvailable) {
+      console.log(chalk.bold('镜像安装'))
+      console.log()
+      console.log(chalk.gray('   Docker 未安装，将仅安装 CLI 工具'))
+      console.log(chalk.gray('   稍后可在有 Docker 的环境中运行: dmla install'))
+      console.log()
+    } else {
+      const registryChoice = await prompt({
+        type: 'select',
+        name: 'registry',
+        message: '请选择镜像仓库',
+        initial: 0,  // 默认选择 'auto'（第一项）
+        choices: [
+          { name: 'auto', message: '自动选择 (根据网络延迟)' },
+          { name: 'dockerhub', message: 'Docker Hub (全球访问)' },
+          { name: 'acr', message: '阿里云 ACR (国内加速)' },
+          { name: 'skip', message: '暂不拉取镜像 (仅安装 CLI)' }
+        ]
+      })
+
+      registry = registryChoice.registry
+      skipPull = false
+
+      if (registry === 'skip') {
+        skipPull = true
+        console.log(chalk.gray('   将仅安装 CLI 工具'))
+      } else if (registry === 'auto') {
+        console.log(chalk.gray('   检测网络延迟...'))
+        registry = 'acr'
+        console.log(chalk.gray(`   已选择: ${registry === 'acr' ? '阿里云 ACR' : 'Docker Hub'}`))
+      }
+
+      console.log()
     }
-
-    console.log()
 
     // ─────────────────────────────────────────────────────────────
     // 步骤 3: 选择镜像类型（如果需要拉取）
