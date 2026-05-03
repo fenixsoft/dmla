@@ -471,12 +471,13 @@ export async function runPythonCode(code, useGpu = false, imageOverride = null, 
     container = await docker.createContainer(containerConfig)
     log(`Container created: ${container.id}`)
 
-    // 设置超时
+    // 设置超时（使用动态计算的超时时间，unlimited 时为 24 小时）
+    const containerTimeoutMs = timeoutSeconds * 1000 + 10000  // 转换为毫秒，额外 10 秒用于清理
     const timeoutPromise = new Promise((_, reject) => {
       timeoutId = setTimeout(() => {
         log('Execution timeout triggered')
         reject(new Error('Execution timeout'))
-      }, SANDBOX_CONFIG.timeout + 10000)  // 额外 10 秒用于清理
+      }, containerTimeoutMs)
     })
 
     // 启动容器

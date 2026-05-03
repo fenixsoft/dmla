@@ -2,9 +2,11 @@
  * 沙箱 API 路由
  */
 import { Router } from 'express'
+import Docker from 'dockerode'
 import sandbox, { runPythonCode, checkImageExists, checkGPUAvailable, checkCUDACompatibility } from '../sandbox.js'
 
 const { SANDBOX_CONFIG } = sandbox
+const docker = new Docker()
 
 const router = Router()
 
@@ -147,8 +149,6 @@ router.get('/progress', async (req, res) => {
   try {
     // 进度文件在容器内的 /workspace/progress.json
     // 需要通过 docker exec 读取
-    const Docker = require('dockerode').default || require('dockerode')
-    const docker = new Docker()
 
     // 查找运行中的沙箱容器
     const containers = await docker.listContainers({ filters: { status: ['running'] } })

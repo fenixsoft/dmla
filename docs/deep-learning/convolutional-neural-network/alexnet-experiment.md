@@ -58,12 +58,15 @@ else:
 3. **`val_transform`（验证集预处理）：** 仅做 Resize + ToTensor + Normalize，不做数据增强，验证集需要保持稳定，才能客观评估模型性能
 4. **`DataLoader`：** `batch_size=64` 表示每批读取 64 张图，`shuffle=True` 在训练时打乱顺序以避免模型记住数据顺序
 
-```python runnable gpu extract-class="TinyImageNetDataset" timeout=120
+```python runnable gpu extract-class="TinyImageNetDataset" timeout=unlimited
 import torch
 from torch.utils.data import DataLoader, Dataset
 from torchvision import transforms
 import os
 from PIL import Image
+
+# 导入进度报告模块
+from dmla_progress import ProgressReporter
 
 class TinyImageNetDataset(Dataset):
     """
@@ -72,7 +75,7 @@ class TinyImageNetDataset(Dataset):
     训练集按类别子目录读取，验证集从标注文件解析标签。
     支持自定义预处理变换，适配 AlexNet 训练需求。
     """
-    def __init__(self, root_dir, transform=None, is_train=True):
+    def __init__(self, root_dir, transform=None, is_train=True, progress=None):
         self.root_dir = root_dir
         self.transform = transform
         self.is_train = is_train
@@ -85,7 +88,11 @@ class TinyImageNetDataset(Dataset):
             self.classes = sorted(os.listdir(train_dir))
             self.class_to_idx = {cls: idx for idx, cls in enumerate(self.classes)}
 
-            for cls in self.classes:
+            # 扫描训练集文件（约 100000 张图像）
+            total_classes = len(self.classes)
+            files_scanned = 0
+
+            for cls_idx, cls in enumerate(self.classes):
                 cls_dir = os.path.join(train_dir, cls)
                 images_dir = os.path.join(cls_dir, 'images')
                 if os.path.exists(images_dir):
@@ -95,24 +102,55 @@ class TinyImageNetDataset(Dataset):
                                 os.path.join(images_dir, img_name),
                                 self.class_to_idx[cls]
                             ))
+                            files_scanned += 1
+
+                # 每扫描完一个类别更新进度
+                if progress:
+                    progress.update(
+                        cls_idx + 1,
+                        message=f"扫描类别 {cls_idx+1}/{total_classes}: 已收集 {files_scanned} 个样本"
+                    )
+
+            if progress:
+                progress.update(
+                    total_classes,
+                    message=f"训练集扫描完成: 共 {files_scanned} 个样本"
+                )
         else:
             val_dir = os.path.join(root_dir, 'val')
             val_images_dir = os.path.join(val_dir, 'images')
             val_annotations = os.path.join(val_dir, 'val_annotations.txt')
 
             if os.path.exists(val_annotations):
+                # 读取验证集标注文件
                 with open(val_annotations, 'r') as f:
-                    for line in f:
-                        parts = line.strip().split('\t')
-                        if len(parts) >= 2:
-                            img_name = parts[0]
-                            cls = parts[1]
-                            if cls not in self.classes:
-                                self.classes.append(cls)
-                            self.samples.append((
-                                os.path.join(val_images_dir, img_name),
-                                self.classes.index(cls)
-                            ))
+                    lines = f.readlines()
+
+                total_lines = len(lines)
+                for line_idx, line in enumerate(lines):
+                    parts = line.strip().split('\t')
+                    if len(parts) >= 2:
+                        img_name = parts[0]
+                        cls = parts[1]
+                        if cls not in self.classes:
+                            self.classes.append(cls)
+                        self.samples.append((
+                            os.path.join(val_images_dir, img_name),
+                            self.classes.index(cls)
+                        ))
+
+                    # 每扫描 500 行更新进度
+                    if progress and (line_idx + 1) % 500 == 0:
+                        progress.update(
+                            line_idx + 1,
+                            message=f"解析验证集标注 {line_idx+1}/{total_lines}"
+                        )
+
+                if progress:
+                    progress.update(
+                        total_lines,
+                        message=f"验证集扫描完成: 共 {len(self.samples)} 个样本"
+                    )
 
     def __len__(self):
         return len(self.samples)
@@ -125,6 +163,9 @@ class TinyImageNetDataset(Dataset):
             image = self.transform(image)
 
         return image, label
+
+# 创建进度报告器（扫描 200 个类别）
+progress = ProgressReporter(total_steps=200, description="扫描 Tiny ImageNet 数据集")
 
 # 数据预处理和增强配置
 train_transform = transforms.Compose([
@@ -141,6 +182,18 @@ val_transform = transforms.Compose([
     transforms.ToTensor(),
     transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
 ])
+
+# 测试数据集加载
+data_dir = '/data/datasets/tiny-imagenet-200'
+print("开始扫描训练集...")
+train_dataset = TinyImageNetDataset(data_dir, transform=train_transform, is_train=True, progress=progress)
+print(f"训练集: {len(train_dataset)} 样本, {len(train_dataset.classes)} 类别")
+
+print("\n开始扫描验证集...")
+val_dataset = TinyImageNetDataset(data_dir, transform=val_transform, is_train=False, progress=progress)
+print(f"验证集: {len(val_dataset)} 样本")
+
+progress.complete(message=f"数据集扫描完成: 训练集 {len(train_dataset)} + 验证集 {len(val_dataset)}")
 ```
 
 ## 第三阶段：模型定义
@@ -310,31 +363,43 @@ num_epochs = 20
 save_dir = '/data/models/alexnet/checkpoints'
 os.makedirs(save_dir, exist_ok=True)
 
-# 创建进度报告器
-progress = ProgressReporter(total_steps=num_epochs, description="训练 AlexNet on Tiny ImageNet")
+# 创建进度报告器（按 batch 计算，便于实时反馈）
+total_batches = len(train_loader)
+progress = ProgressReporter(total_steps=num_epochs * total_batches, description="训练 AlexNet on Tiny ImageNet")
+current_batch = 0
 
-# 训练函数
-def train_one_epoch(model, train_loader, criterion, optimizer, device):
+# 训练函数（内联，便于实时更新进度）
+def train_one_epoch(model, train_loader, criterion, optimizer, device, epoch, progress, current_batch, total_batches, num_epochs):
     model.train()
     running_loss = 0.0
     correct = 0
     total = 0
-    
+    batch_count = 0
+
     for batch_idx, (inputs, targets) in enumerate(train_loader):
         inputs, targets = inputs.to(device), targets.to(device)
-        
+
         optimizer.zero_grad()
         outputs = model(inputs)
         loss = criterion(outputs, targets)
         loss.backward()
         optimizer.step()
-        
+
         running_loss += loss.item()
         _, predicted = outputs.max(1)
         total += targets.size(0)
         correct += predicted.eq(targets).sum().item()
-    
-    return running_loss / len(train_loader), 100. * correct / total
+        batch_count += 1
+
+        # 每个 batch 更新进度（提供实时反馈）
+        current_batch += 1
+        batch_acc = 100. * correct / total if total > 0 else 0
+        progress.update(
+            current_batch,
+            message=f"Epoch {epoch+1}/{num_epochs} Batch {batch_idx+1}/{total_batches}: Loss={loss.item():.4f}, Acc={batch_acc:.2f}%"
+        )
+
+    return running_loss / batch_count, 100. * correct / total, current_batch
 
 # 验证函数
 def validate(model, val_loader, criterion, device):
@@ -363,29 +428,26 @@ best_acc = 0.0
 try:
     for epoch in range(num_epochs):
         epoch_start = time.time()
-        
-        # 训练一个 epoch
-        train_loss, train_acc = train_one_epoch(model, train_loader, criterion, optimizer, device)
-        
+
+        # 训练一个 epoch（实时更新进度）
+        train_loss, train_acc, current_batch = train_one_epoch(
+            model, train_loader, criterion, optimizer, device,
+            epoch, progress, current_batch, total_batches, num_epochs
+        )
+
         # 验证
         val_loss, val_acc = validate(model, val_loader, criterion, device)
-        
-        # 更学习率
+
+        # 更新学习率
         scheduler.step()
-        
+
         epoch_time = time.time() - epoch_start
-        
-        # 打印进度
+
+        # 打印 epoch 结果
         print(f"Epoch [{epoch+1}/{num_epochs}] "
               f"Train Loss: {train_loss:.4f} Acc: {train_acc:.2f}% "
               f"Val Loss: {val_loss:.4f} Acc: {val_acc:.2f}% "
               f"Time: {epoch_time:.1f}s")
-        
-        # 更新进度报告
-        progress.update(
-            epoch + 1,
-            message=f"Epoch {epoch+1}: Train Acc={train_acc:.2f}%, Val Acc={val_acc:.2f}%"
-        )
         
         # 保存最佳模型
         if val_acc > best_acc:
