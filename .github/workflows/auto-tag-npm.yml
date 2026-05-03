@@ -7,6 +7,12 @@ on:
     paths:
       - 'packages/cli/**'
       - 'packages/install/**'
+      # local-server 源代码变更也触发 npm 发布（构建时会复制到 CLI 包）
+      - 'local-server/src/*.js'
+      - 'local-server/src/routes/*.js'
+      - 'local-server/shared_modules/**'
+      - 'local-server/src/kernel_runner.py'
+      - 'local-server/src/dmla_progress.py'
   workflow_dispatch:
 
 permissions:
