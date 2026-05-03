@@ -156,18 +156,19 @@ def enrich_cuda_error(error_dict: dict) -> dict:
     return error_dict
 
 
-def run_code(code: str, timeout: int = DEFAULT_TIMEOUT) -> dict:
+def run_code(code: str, timeout: int = DEFAULT_TIMEOUT, stream: bool = False) -> dict:
     """
     使用 IPython Kernel 执行代码
 
     Args:
         code: 要执行的 Python 代码
         timeout: 执行超时时间（秒）
+        stream: 是否启用流式输出模式（实时输出每个消息）
 
     Returns:
-        包含 success, outputs, executionTime 的字典
+        包含 success, outputs, executionTime 的字典（stream 模式下返回空字典）
     """
-    log_debug(f'run_code called, code length={len(code)}, timeout={timeout}')
+    log_debug(f'run_code called, code length={len(code)}, timeout={timeout}, stream={stream}')
 
     # 注意：不再在执行期间抑制 stdout
     # stdout 只在导入阶段抑制（避免 matplotlib 等导入输出污染结果）
@@ -179,9 +180,11 @@ def run_code(code: str, timeout: int = DEFAULT_TIMEOUT) -> dict:
     deadline = start_time + timeout
     km = None
     kc = None
-    outputs = []
+    outputs = []  # stream 模式下不使用，保留用于非流式模式
     timed_out = False
     msg_count = 0
+    has_error = False
+    final_outputs = []  # 用于最终 result 消息的 outputs 汇总
 
     try:
         # 1. 启动 Kernel（抑制 stdout 避免启动输出污染）
@@ -248,28 +251,48 @@ def run_code(code: str, timeout: int = DEFAULT_TIMEOUT) -> dict:
 
             # 处理不同类型的输出
             if msg_type == 'stream':
-                outputs.append({
+                stream_output = {
                     'type': 'stream',
                     'name': content.get('name', 'stdout'),
                     'text': content.get('text', '')
-                })
+                }
+
+                if stream:
+                    # 流式模式：立即输出
+                    print(json.dumps(stream_output, ensure_ascii=False), flush=True)
+                else:
+                    outputs.append(stream_output)
                 log_debug(f'Stream output: {content.get("name")} len={len(content.get("text", ""))}')
 
             elif msg_type == 'display_data':
-                outputs.append({
+                display_output = {
                     'type': 'display_data',
                     'data': content.get('data', {}),
                     'metadata': content.get('metadata', {})
-                })
+                }
+
+                if stream:
+                    # 流式模式：立即输出
+                    print(json.dumps(display_output, ensure_ascii=False), flush=True)
+                else:
+                    outputs.append(display_output)
+                final_outputs.append(display_output)  # 汇总到最终结果
                 log_debug(f'Display data: keys={list(content.get("data", {}).keys())}')
 
             elif msg_type == 'execute_result':
-                outputs.append({
+                result_output = {
                     'type': 'execute_result',
                     'data': content.get('data', {}),
                     'metadata': content.get('metadata', {}),
                     'execution_count': content.get('execution_count')
-                })
+                }
+
+                if stream:
+                    # 流式模式：立即输出
+                    print(json.dumps(result_output, ensure_ascii=False), flush=True)
+                else:
+                    outputs.append(result_output)
+                final_outputs.append(result_output)  # 汇总到最终结果
                 log_debug(f'Execute result: keys={list(content.get("data", {}).keys())}')
 
             elif msg_type == 'error':
@@ -286,7 +309,14 @@ def run_code(code: str, timeout: int = DEFAULT_TIMEOUT) -> dict:
                     error_output = enrich_cuda_error(error_output)
                     log_debug(f'Detected CUDA compatibility error, enriched output')
 
-                outputs.append(error_output)
+                has_error = True
+
+                if stream:
+                    # 流式模式：立即输出
+                    print(json.dumps(error_output, ensure_ascii=False), flush=True)
+                else:
+                    outputs.append(error_output)
+                final_outputs.append(error_output)  # 汇总到最终结果
                 log_debug(f'Error: {content.get("ename")}: {content.get("evalue")}')
 
             elif msg_type == 'clear_output':
@@ -306,7 +336,7 @@ def run_code(code: str, timeout: int = DEFAULT_TIMEOUT) -> dict:
             log_debug(f'Suppressed output preview: {suppressed_content[:500]}')
 
         if timed_out:
-            return {
+            timeout_result = {
                 'success': False,
                 'outputs': [{
                     'type': 'error',
@@ -316,9 +346,33 @@ def run_code(code: str, timeout: int = DEFAULT_TIMEOUT) -> dict:
                 }],
                 'executionTime': round(execution_time, 3)
             }
+            if stream:
+                # 流式模式：输出超时消息
+                print(json.dumps({'type': 'error', 'ename': 'TimeoutError',
+                                  'evalue': f'Execution timed out after {timeout} seconds',
+                                  'traceback': [f'Execution timed out after {timeout} seconds']},
+                                 ensure_ascii=False), flush=True)
+                print(json.dumps({'type': 'result', 'success': False,
+                                  'executionTime': round(execution_time, 3)},
+                                 ensure_ascii=False), flush=True)
+                return {}
+            return timeout_result
+
+        success = not has_error
+
+        if stream:
+            # 流式模式：输出最终结果消息
+            result_msg = {
+                'type': 'result',
+                'success': success,
+                'outputs': final_outputs,
+                'executionTime': round(execution_time, 3)
+            }
+            print(json.dumps(result_msg, ensure_ascii=False), flush=True)
+            return {}
 
         return {
-            'success': True,
+            'success': success,
             'outputs': outputs,
             'executionTime': round(execution_time, 3)
         }
@@ -340,6 +394,15 @@ def run_code(code: str, timeout: int = DEFAULT_TIMEOUT) -> dict:
         if is_cuda_compat_error(str(e)):
             error_output = enrich_cuda_error(error_output)
             log_debug(f'Detected CUDA compatibility error in exception, enriched output')
+
+        if stream:
+            # 流式模式：输出错误消息和结果消息
+            print(json.dumps(error_output, ensure_ascii=False), flush=True)
+            print(json.dumps({'type': 'result', 'success': False,
+                              'outputs': [error_output],
+                              'executionTime': round(execution_time, 3)},
+                             ensure_ascii=False), flush=True)
+            return {}
 
         return {
             'success': False,
@@ -428,6 +491,7 @@ def main():
     parser.add_argument('--code', type=str, required=True, help='要执行的 Python 代码')
     parser.add_argument('--timeout', type=int, default=DEFAULT_TIMEOUT, help='执行超时时间（秒）')
     parser.add_argument('--check-cuda', action='store_true', help='仅检查 CUDA 兼容性')
+    parser.add_argument('--stream', action='store_true', help='启用流式输出模式（实时输出每个消息）')
 
     args = parser.parse_args()
 
@@ -437,13 +501,14 @@ def main():
         print(json.dumps(result, ensure_ascii=False))
         return
 
-    result = run_code(args.code, args.timeout)
+    result = run_code(args.code, args.timeout, stream=args.stream)
 
-    # 输出 JSON 结果到 stdout
-    output_json = json.dumps(result, ensure_ascii=False)
-    log_debug(f'Final JSON output length: {len(output_json)}')
-    log_debug(f'Final JSON preview: {output_json[:500]}')
-    print(output_json)
+    # 非流式模式：输出 JSON 结果到 stdout
+    if not args.stream:
+        output_json = json.dumps(result, ensure_ascii=False)
+        log_debug(f'Final JSON output length: {len(output_json)}')
+        log_debug(f'Final JSON preview: {output_json[:500]}')
+        print(output_json)
 
 
 if __name__ == '__main__':

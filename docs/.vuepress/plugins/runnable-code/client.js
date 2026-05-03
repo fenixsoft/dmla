@@ -288,9 +288,18 @@ if (typeof document !== 'undefined' && !document.getElementById(styleId)) {
   font-size: inherit;
 }
 
+/* 进度条容器（固定在顶部，与文本输出分开） */
+.runnable-code-block .progress-container {
+  padding: 12px 16px;
+  background: #1e1e1e;
+  border-bottom: 1px solid #333;
+  display: grid;
+}
+
 /* 进度条 */
 .runnable-code-block .progress-bar {
-  margin-bottom: 1rem;
+  // margin-bottom: 1rem;
+  display: grid;
 }
 
 .runnable-code-block .progress-header {
@@ -305,6 +314,7 @@ if (typeof document !== 'undefined' && !document.getElementById(styleId)) {
   background: #333;
   border-radius: 4px;
   overflow: hidden;
+  display: flex;
 }
 
 .runnable-code-block .progress-fill {
@@ -502,69 +512,201 @@ function initCodeBlock(block) {
   const runButtons = block.querySelectorAll('.run-btn')
   const timeout = block.dataset.timeout || null
 
-  // 是否启用进度显示（timeout > 60 或 unlimited）
-  const showProgress = timeout === 'unlimited' || (timeout && parseInt(timeout, 10) > 60)
+  // 格式化时间（秒转为 mm:ss）
+  function formatTime(seconds) {
+    const mins = Math.floor(seconds / 60)
+    const secs = seconds % 60
+    return `${mins}:${secs.toString().padStart(2, '0')}`
+  }
 
-  // 进度轮询定时器
-  let progressInterval = null
-
-  // 进度轮询函数
-  function startProgressPolling(outputArea) {
-    if (!showProgress) return
-
-    progressInterval = setInterval(async () => {
-      try {
-        const progressEndpoint = getSandboxEndpoint() + '/api/sandbox/progress'
-        const response = await fetch(progressEndpoint)
-        if (response.ok) {
-          const data = await response.json()
-          // 只有 running/starting/complete 状态才更新进度
-          if (data.status === 'running' || data.status === 'starting' || data.status === 'complete') {
-            renderProgress(outputArea, data)
+  // 处理流式消息（进度条和文本输出分开）
+  function handleStreamMessage(msg, progressContainer, textOutput) {
+    switch (msg.type) {
+      case 'status':
+        // 状态消息（starting/running/complete）
+        if (msg.status === 'starting') {
+          progressContainer.innerHTML = `
+            <div class="progress-bar">
+              <div class="progress-header">${msg.message || '正在启动容器...'}</div>
+            </div>
+          `
+          textOutput.className = 'output-area loading'
+          textOutput.textContent = ''
+        } else if (msg.status === 'running') {
+          // 运行中状态，清除加载提示
+          textOutput.className = 'output-area'
+          if (textOutput.textContent === '执行中...' || textOutput.textContent === '正在启动容器...') {
+            textOutput.innerHTML = ''
           }
         }
-      } catch {
-        // 进度获取失败时忽略
-      }
-    }, 2000)  // 每 2 秒轮询一次
-  }
+        break
 
-  // 停止进度轮询
-  function stopProgressPolling() {
-    if (progressInterval) {
-      clearInterval(progressInterval)
-      progressInterval = null
+      case 'progress':
+        // 进度更新消息 - 只更新进度条区域
+        const percent = msg.percent || 0
+        const elapsed = msg.elapsed_seconds || 0
+        const remaining = msg.estimated_remaining || null
+
+        progressContainer.innerHTML = `
+          <div class="progress-bar">
+            <div class="progress-header">${msg.description || '执行中...'}</div>
+            <div class="progress-track">
+              <div class="progress-fill" style="width: ${percent}%"></div>
+            </div>
+            <div class="progress-info">
+              <span>${msg.message || `${msg.current_step || 0}/${msg.total_steps || 0}`}</span>
+              <span>${formatTime(elapsed)}${remaining ? ' / ' + formatTime(remaining) : ''}</span>
+            </div>
+          </div>
+        `
+        // 清除文本区域的加载提示
+        textOutput.className = 'output-area'
+        if (textOutput.textContent === '执行中...' || textOutput.textContent === '正在启动容器...') {
+          textOutput.innerHTML = ''
+        }
+        break
+
+      case 'stream':
+        // 文本流输出 - 只追加到文本区域，不影响进度条
+        textOutput.className = 'output-area'
+        if (textOutput.textContent === '执行中...' || textOutput.textContent === '正在启动容器...') {
+          textOutput.innerHTML = ''
+        }
+
+        // 检查是否是嵌套的 progress JSON（来自 dmla_progress.py）
+        const text = msg.text || ''
+        if (text.trim().startsWith('{') && (text.includes('"type": "progress"') || text.includes('"type":"progress"'))) {
+          try {
+            const progressData = JSON.parse(text.trim())
+            if (progressData.type === 'progress') {
+              // 更新进度条区域，不追加到文本区域
+              const pgPercent = progressData.percent || 0
+              const pgElapsed = progressData.elapsed_seconds || 0
+              const pgRemaining = progressData.estimated_remaining || null
+
+              progressContainer.innerHTML = `
+                <div class="progress-bar">
+                  <div class="progress-header">${progressData.description || '执行中...'}</div>
+                  <div class="progress-track">
+                    <div class="progress-fill" style="width: ${pgPercent}%"></div>
+                  </div>
+                  <div class="progress-info">
+                    <span>${progressData.message || `${progressData.current_step || 0}/${progressData.total_steps || 0}`}</span>
+                    <span>${formatTime(pgElapsed)}${pgRemaining ? ' / ' + formatTime(pgRemaining) : ''}</span>
+                  </div>
+                </div>
+              `
+              break  // 不追加到文本区域
+            }
+          } catch (parseError) {
+            // 解析失败，作为普通文本输出
+          }
+        }
+
+        // 普通文本输出 - 追加到文本区域
+        const pre = document.createElement('pre')
+        pre.className = `output-stream ${msg.name || 'stdout'}`
+        pre.textContent = msg.text || ''
+        textOutput.appendChild(pre)
+        break
+
+      case 'display_data':
+        // 富输出（图片、HTML 等）- 追加到文本区域
+        textOutput.className = 'output-area'
+        if (textOutput.textContent === '执行中...' || textOutput.textContent === '正在启动容器...') {
+          textOutput.innerHTML = ''
+        }
+
+        if (msg.data && msg.data['image/png']) {
+          const img = document.createElement('img')
+          img.className = 'output-image'
+          img.src = 'data:image/png;base64,' + msg.data['image/png']
+          img.style.maxWidth = '100%'
+          img.style.borderRadius = '8px'
+          img.style.margin = '0.5rem 0'
+          img.style.cursor = 'pointer'
+          img.addEventListener('click', () => {
+            openImageModal(msg.data['image/png'])
+          })
+          textOutput.appendChild(img)
+        } else if (msg.data && msg.data['text/html']) {
+          const htmlDiv = document.createElement('div')
+          htmlDiv.className = 'output-html'
+          htmlDiv.innerHTML = msg.data['text/html']
+          textOutput.appendChild(htmlDiv)
+        } else if (msg.data && msg.data['application/json']) {
+          const pre = document.createElement('pre')
+          pre.className = 'output-json'
+          pre.textContent = JSON.stringify(msg.data['application/json'], null, 2)
+          textOutput.appendChild(pre)
+        }
+        break
+
+      case 'execute_result':
+        // 执行结果 - 追加到文本区域
+        textOutput.className = 'output-area'
+        if (textOutput.textContent === '执行中...' || textOutput.textContent === '正在启动容器...') {
+          textOutput.innerHTML = ''
+        }
+
+        if (msg.data && msg.data['text/html']) {
+          const htmlDiv = document.createElement('div')
+          htmlDiv.className = 'output-html'
+          htmlDiv.innerHTML = msg.data['text/html']
+          textOutput.appendChild(htmlDiv)
+        } else if (msg.data && msg.data['image/png']) {
+          const img = document.createElement('img')
+          img.className = 'output-image'
+          img.src = 'data:image/png;base64,' + msg.data['image/png']
+          img.style.maxWidth = '100%'
+          img.style.borderRadius = '8px'
+          img.style.margin = '0.5rem 0'
+          img.style.cursor = 'pointer'
+          img.addEventListener('click', () => {
+            openImageModal(msg.data['image/png'])
+          })
+          textOutput.appendChild(img)
+        } else if (msg.data && msg.data['text/plain']) {
+          const pre = document.createElement('pre')
+          pre.className = 'output-result'
+          pre.textContent = msg.data['text/plain']
+          textOutput.appendChild(pre)
+        }
+        break
+
+      case 'error':
+        // 错误输出 - 追加到文本区域
+        textOutput.className = 'output-area error'
+        if (outputArea.textContent === '执行中...' || outputArea.textContent === '正在启动容器...') {
+          outputArea.innerHTML = ''
+        }
+
+        const errorDiv = document.createElement('div')
+        errorDiv.className = 'output-error'
+        errorDiv.innerHTML = `<div class="error-header">${msg.ename}: ${msg.evalue}</div>`
+        if (msg.traceback && msg.traceback.length) {
+          const tracebackPre = document.createElement('pre')
+          tracebackPre.className = 'error-traceback'
+          tracebackPre.textContent = Array.isArray(msg.traceback)
+            ? msg.traceback.join('\n')
+            : String(msg.traceback)
+          errorDiv.appendChild(tracebackPre)
+        }
+        textOutput.appendChild(errorDiv)
+        break
+
+      case 'result':
+        // 最终结果汇总 - 追加到文本区域
+        if (msg.executionTime) {
+          const timeDiv = document.createElement('div')
+          timeDiv.className = 'execution-time'
+          timeDiv.textContent = `--- 执行时间: ${msg.executionTime.toFixed(3)}s`
+          textOutput.appendChild(timeDiv)
+        }
+        // 保留进度条显示在 100% 完成状态（不清除）
+        // progressContainer.innerHTML = ''  // 已注释：保持进度条可见
+        break
     }
-  }
-
-  // 渲染进度条
-  function renderProgress(outputArea, progressData) {
-    const percent = progressData.percent || 0
-    const message = progressData.message || `${progressData.current_step || 0}/${progressData.total_steps || 0}`
-    const elapsed = progressData.elapsed_seconds || 0
-    const remaining = progressData.estimated_remaining || null
-
-    // 格式化时间（秒转为 mm:ss）
-    function formatTime(seconds) {
-      const mins = Math.floor(seconds / 60)
-      const secs = seconds % 60
-      return `${mins}:${secs.toString().padStart(2, '0')}`
-    }
-
-    // 构建进度条 HTML
-    outputArea.className = 'output-area loading'
-    outputArea.innerHTML = `
-      <div class="progress-bar">
-        <div class="progress-header">${progressData.description || '执行中...'}</div>
-        <div class="progress-track">
-          <div class="progress-fill" style="width: ${percent}%"></div>
-        </div>
-        <div class="progress-info">
-          <span>${message}</span>
-          <span>${formatTime(elapsed)}${remaining ? ' / ' + formatTime(remaining) : ''}</span>
-        </div>
-      </div>
-    `
   }
 
   runButtons.forEach(btn => {
@@ -588,6 +730,20 @@ function initCodeBlock(block) {
       stopBtn.className = 'stop-btn'
       stopBtn.textContent = 'Stop'
       if (toolbar) toolbar.appendChild(stopBtn)
+
+      // 创建两个独立的容器
+      // 1. 进度条容器（固定在顶部）
+      const progressContainer = document.createElement('div')
+      progressContainer.className = 'progress-container'
+
+      // 2. 文本输出容器（在进度条下方）
+      const textOutput = document.createElement('div')
+      textOutput.className = 'output-area'
+
+      // 清空原有输出区域，插入新结构
+      outputArea.innerHTML = ''
+      outputArea.appendChild(progressContainer)
+      outputArea.appendChild(textOutput)
 
       // 停止按钮点击事件
       stopBtn.addEventListener('click', async () => {
@@ -619,29 +775,25 @@ function initCodeBlock(block) {
           }
         })
 
-        // 停止进度轮询
-        stopProgressPolling()
-
-        // 显示已中止状态（保留已有输出）
-        outputArea.className = 'output-area'
-        if (outputArea.textContent === '执行中...' || outputArea.querySelector('.progress-bar')) {
-          outputArea.textContent = '已中止'
-        } else {
-          const abortedMsg = document.createElement('pre')
-          abortedMsg.className = 'output-stream stdout'
-          abortedMsg.textContent = '\n--- 已中止 ---'
-          outputArea.appendChild(abortedMsg)
-        }
+        // 显示已中止状态
+        progressContainer.innerHTML = ''
+        const abortedMsg = document.createElement('pre')
+        abortedMsg.className = 'output-stream stdout'
+        abortedMsg.textContent = textOutput.textContent ? '\n--- 已中止 ---' : '已中止'
+        textOutput.appendChild(abortedMsg)
       })
 
-      // 显示加载状态（如果启用进度，会很快被进度条覆盖）
-      outputArea.className = 'output-area loading'
-      outputArea.textContent = '执行中...'
+      // 显示初始状态
+      progressContainer.innerHTML = `
+        <div class="progress-bar">
+          <div class="progress-header">正在启动容器...</div>
+        </div>
+      `
+      textOutput.className = 'output-area loading'
+      textOutput.textContent = ''
 
-      // 启动进度轮询
-      startProgressPolling(outputArea)
-
-      const endpoint = getSandboxEndpoint() + '/api/sandbox/run'
+      // 使用流式端点
+      const endpoint = getSandboxEndpoint() + '/api/sandbox/stream'
 
       try {
         const response = await fetch(endpoint, {
@@ -655,134 +807,71 @@ function initCodeBlock(block) {
           signal: abortController.signal
         })
 
-        // 解析响应内容，即使 HTTP 状态码不是 200
-        const result = await response.json()
-
         if (!response.ok) {
-          // 显示后端返回的具体错误消息
-          outputArea.className = 'output-area error'
-          outputArea.textContent = result.error || `请求失败 (HTTP ${response.status})`
+          // HTTP 错误响应
+          progressContainer.innerHTML = ''
+          textOutput.className = 'output-area error'
+          try {
+            const errorResult = await response.json()
+            textOutput.textContent = errorResult.error || `请求失败 (HTTP ${response.status})`
+          } catch {
+            textOutput.textContent = `请求失败 (HTTP ${response.status})`
+          }
           return
         }
-        const outputs = result.outputs || []
 
-        if (result.success) {
-          outputArea.className = 'output-area'
-          outputArea.innerHTML = ''
+        // 流式读取响应
+        const reader = response.body.getReader()
+        const decoder = new TextDecoder()
 
-          if (outputs.length === 0) {
-            outputArea.textContent = '(无输出)'
-          } else {
-            // 渲染每个输出项
-            outputs.forEach(output => {
-              if (output.type === 'stream') {
-                // 文本流输出
-                const pre = document.createElement('pre')
-                pre.className = `output-stream ${output.name || 'stdout'}`
-                pre.textContent = output.text || ''
-                outputArea.appendChild(pre)
-              } else if (output.type === 'display_data' && output.data && output.data['image/png']) {
-                // 图片输出
-                const img = document.createElement('img')
-                img.className = 'output-image'
-                img.src = 'data:image/png;base64,' + output.data['image/png']
-                img.style.maxWidth = '100%'
-                img.style.borderRadius = '8px'
-                img.style.margin = '0.5rem 0'
-                img.style.cursor = 'pointer'
-                // 点击放大
-                img.addEventListener('click', () => {
-                  openImageModal(output.data['image/png'])
-                })
-                outputArea.appendChild(img)
-              } else if (output.type === 'display_data' && output.data && output.data['text/html']) {
-                // HTML 输出（如 pandas DataFrame 表格）
-                const htmlDiv = document.createElement('div')
-                htmlDiv.className = 'output-html'
-                htmlDiv.innerHTML = output.data['text/html']
-                outputArea.appendChild(htmlDiv)
-              } else if (output.type === 'display_data' && output.data && output.data['application/json']) {
-                // JSON 输出
-                const pre = document.createElement('pre')
-                pre.className = 'output-json'
-                pre.textContent = JSON.stringify(output.data['application/json'], null, 2)
-                outputArea.appendChild(pre)
-              } else if (output.type === 'execute_result') {
-                // 执行结果 - 检查是否有富输出格式
-                if (output.data && output.data['text/html']) {
-                  // HTML 表格输出（如 pandas DataFrame）
-                  const htmlDiv = document.createElement('div')
-                  htmlDiv.className = 'output-html'
-                  htmlDiv.innerHTML = output.data['text/html']
-                  outputArea.appendChild(htmlDiv)
-                } else if (output.data && output.data['image/png']) {
-                  // 图片输出
-                  const img = document.createElement('img')
-                  img.className = 'output-image'
-                  img.src = 'data:image/png;base64,' + output.data['image/png']
-                  img.style.maxWidth = '100%'
-                  img.style.borderRadius = '8px'
-                  img.style.margin = '0.5rem 0'
-                  img.style.cursor = 'pointer'
-                  img.addEventListener('click', () => {
-                    openImageModal(output.data['image/png'])
-                  })
-                  outputArea.appendChild(img)
-                } else {
-                  // 默认文本输出
-                  const pre = document.createElement('pre')
-                  pre.className = 'output-result'
-                  pre.textContent = output.data && output.data['text/plain']
-                    ? output.data['text/plain']
-                    : JSON.stringify(output.data, null, 2)
-                  outputArea.appendChild(pre)
-                }
-              } else if (output.type === 'error') {
-                // 错误输出
-                const errorDiv = document.createElement('div')
-                errorDiv.className = 'output-error'
-                errorDiv.innerHTML = `<div class="error-header">${output.ename}: ${output.evalue}</div>`
-                if (output.traceback && output.traceback.length) {
-                  const tracebackPre = document.createElement('pre')
-                  tracebackPre.className = 'error-traceback'
-                  tracebackPre.textContent = Array.isArray(output.traceback)
-                    ? output.traceback.join('\n')
-                    : String(output.traceback)
-                  errorDiv.appendChild(tracebackPre)
-                }
-                outputArea.appendChild(errorDiv)
-              }
-            })
+        let buffer = ''
+
+        while (true) {
+          const { done, value } = await reader.read()
+          if (done) break
+
+          buffer += decoder.decode(value, { stream: true })
+
+          // 按行分割并处理
+          const lines = buffer.split('\n')
+          buffer = lines.pop() || ''  // 保留不完整的行
+
+          for (const line of lines) {
+            if (!line.trim()) continue
+            try {
+              const msg = JSON.parse(line)
+              handleStreamMessage(msg, progressContainer, textOutput)
+            } catch (parseError) {
+              // JSON 解析错误，可能是非标准输出，作为普通文本处理
+              console.warn('Failed to parse JSON line:', line.substring(0, 100))
+            }
           }
-        } else {
-          outputArea.className = 'output-area error'
-          outputArea.textContent = result.error || '执行失败'
         }
 
-        if (result.executionTime) {
-          const timeDiv = document.createElement('div')
-          timeDiv.className = 'execution-time'
-          timeDiv.textContent = `--- 执行时间: ${result.executionTime.toFixed(3)}s`
-          outputArea.appendChild(timeDiv)
+        // 处理剩余的 buffer
+        if (buffer.trim()) {
+          try {
+            const msg = JSON.parse(buffer)
+            handleStreamMessage(msg, progressContainer, textOutput)
+          } catch (parseError) {
+            // 忽略
+          }
         }
 
       } catch (error) {
         // 处理中止错误
         if (error.name === 'AbortError') {
           // 中止不是错误，输出已由停止按钮处理
-          // 这里不需要额外处理
         } else {
-          outputArea.className = 'output-area error'
+          progressContainer.innerHTML = ''
+          textOutput.className = 'output-area error'
           if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
-            outputArea.textContent = '⚠️ 无法连接到沙箱服务\n\n请确保沙箱服务正在运行，或在设置中检查沙箱地址配置'
+            textOutput.textContent = '⚠️ 无法连接到沙箱服务\n\n请确保沙箱服务正在运行，或在设置中检查沙箱地址配置'
           } else {
-            outputArea.textContent = `❌ 错误: ${error.message}`
+            textOutput.textContent = `❌ 错误: ${error.message}`
           }
         }
       } finally {
-        // 停止进度轮询
-        stopProgressPolling()
-
         // 移除停止按钮（如果还存在）
         const existingStopBtn = toolbar.querySelector('.stop-btn')
         if (existingStopBtn) {

@@ -46,7 +46,10 @@
 ### 进程管理规则
 - **禁止广泛杀进程：** 严禁使用 `killall node`、`pkill -f node`、`killall python` 等广泛匹配的命令终止进程。这些命令会误杀 VSCode 远程连接进程、其他用户的进程或系统关键服务。
 - **精确进程管理：** 需要终止进程时，必须使用精确匹配方式：
-  1. 通过端口定位：`lsof -ti:3001 | xargs kill`（仅终止占用特定端口的进程）
+  1. **通过端口定位（监听状态）**：`lsof -ti:<PORT> -sTCP:LISTEN | xargs kill`（仅终止监听端口的进程，不杀连接状态的进程）
+     - **重要**：8080 端口必须加 `-sTCP:LISTEN` 参数！VSCode Server 的端口转发功能会连接到 8080，若不加此参数会误杀 VSCode 远程连接
+     - 正确命令：`lsof -ti:8080 -sTCP:LISTEN | xargs kill 2>/dev/null`
+     - 错误命令：`lsof -ti:8080 | xargs kill`（会误杀 VSCode Server）
   2. 通过 PID 文件：如果服务有 PID 文件，读取后精确 kill
   3. 通过进程名全路径匹配：`pkill -f "local-server/src/index.js"`（包含完整路径）
 - **服务管理优先：** 优先使用服务自带的停止命令（如 `npm run stop`）而非直接 kill 进程。

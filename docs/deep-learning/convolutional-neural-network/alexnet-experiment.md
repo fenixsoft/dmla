@@ -164,35 +164,86 @@ def preprocess_and_cache():
     val_images = []
     val_labels = []
     
-    for line_idx, line in enumerate(val_lines):
-        parts = line.strip().split('\t')
-        if len(parts) >= 2:
-            img_name = parts[0]
-            cls = parts[1]
-            img_path = os.path.join(val_images_dir, img_name)
+    try:
+        for line_idx, line in enumerate(val_lines):
+            parts = line.strip().split('\t')
+            if len(parts) >= 2:
+                img_name = parts[0]
+                cls = parts[1]
+                img_path = os.path.join(val_images_dir, img_name)
+                
+                if os.path.exists(img_path):
+                    img = Image.open(img_path).convert('RGB')
+                    img_tensor = base_transform(img)
+                    val_images.append(img_tensor)
+                    val_labels.append(class_to_idx.get(cls, 0))
             
-            if os.path.exists(img_path):
-                img = Image.open(img_path).convert('RGB')
-                img_tensor = base_transform(img)
-                val_images.append(img_tensor)
-                val_labels.append(class_to_idx.get(cls, 0))
+            # 每 100 张图片更新进度
+            if (line_idx + 1) % 100 == 0 or line_idx == total_val - 1:
+                progress.update(
+                    line_idx + 1,
+                    message=f"预处理验证集 {line_idx+1}/{total_val} 张图片"
+                )
         
-        # 每 100 张图片更新进度
-        if (line_idx + 1) % 100 == 0 or line_idx == total_val - 1:
-            progress.update(
-                line_idx + 1,
-                message=f"预处理验证集 {line_idx+1}/{total_val} 张图片"
-            )
-    
-    # 保存验证集
-    val_data = {
-        'images': torch.stack(val_images),
-        'labels': torch.tensor(val_labels)
-    }
-    torch.save(val_data, VAL_CACHE)
-    
-    elapsed = time.time() - start_time
-    progress.complete(message=f"预处理完成: 训练集 {total_samples} 张, 验证集 {len(val_images)} 张, 耗时 {elapsed:.1f}s")
+        # 分段保存验证集（避免一次性处理过大数据）
+        # 将10000张图片分成5个批次保存，每个批次2000张
+        print(f"验证集处理完成，开始分段保存...")
+        num_batches = 5
+        batch_size = len(val_images) // num_batches
+        
+        val_cache_dir = os.path.join(CACHE_DIR, 'val')
+        os.makedirs(val_cache_dir, exist_ok=True)
+        
+        for batch_idx in range(num_batches):
+            start_idx = batch_idx * batch_size
+            end_idx = min((batch_idx + 1) * batch_size, len(val_images))
+            
+            batch_images = val_images[start_idx:end_idx]
+            batch_labels = val_labels[start_idx:end_idx]
+            
+            if batch_images:
+                batch_data = {
+                    'images': torch.stack(batch_images),
+                    'labels': torch.tensor(batch_labels)
+                }
+                batch_path = os.path.join(val_cache_dir, f'batch_{batch_idx}.pt')
+                torch.save(batch_data, batch_path)
+                print(f"保存批次 {batch_idx+1}/{num_batches}: {len(batch_images)} 张图片")
+        
+        # 合并所有批次并保存最终文件
+        print("合并验证集批次...")
+        all_batch_images = []
+        all_batch_labels = []
+        
+        for batch_idx in range(num_batches):
+            batch_path = os.path.join(val_cache_dir, f'batch_{batch_idx}.pt')
+            if os.path.exists(batch_path):
+                batch_data = torch.load(batch_path)
+                all_batch_images.append(batch_data['images'])
+                all_batch_labels.append(batch_data['labels'])
+        
+        if all_batch_images:
+            val_data = {
+                'images': torch.cat(all_batch_images, dim=0),
+                'labels': torch.cat(all_batch_labels, dim=0)
+            }
+            torch.save(val_data, VAL_CACHE)
+            print(f"验证集保存完成: {val_data['images'].shape[0]} 张图片")
+        
+        # 清理临时批次文件
+        for batch_idx in range(num_batches):
+            batch_path = os.path.join(val_cache_dir, f'batch_{batch_idx}.pt')
+            if os.path.exists(batch_path):
+                os.remove(batch_path)
+        os.rmdir(val_cache_dir)
+        
+        elapsed = time.time() - start_time
+        progress.complete(message=f"预处理完成: 训练集 {total_samples} 张, 验证集 {len(val_images)} 张, 耗时 {elapsed:.1f}s")
+        
+    except Exception as e:
+        progress.error(message=f"验证集处理出错: {str(e)}")
+        print(f"验证集处理出错: {e}")
+        raise
     
     return total_samples, len(val_images)
 

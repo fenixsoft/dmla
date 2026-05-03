@@ -130,7 +130,7 @@
 }
 
 .runnable-code-block .gpu-btn:hover:not(:disabled) {
-  background: #3B82F6;
+  background: #3b82f6 !important;
 }
 
 .runnable-code-block .sandbox-status {

@@ -3,7 +3,7 @@
  */
 import { Router } from 'express'
 import Docker from 'dockerode'
-import sandbox, { runPythonCode, checkImageExists, checkGPUAvailable, checkCUDACompatibility, abortExecution } from '../sandbox.js'
+import sandbox, { runPythonCode, runPythonCodeStreaming, checkImageExists, checkGPUAvailable, checkCUDACompatibility, abortExecution } from '../sandbox.js'
 
 const { SANDBOX_CONFIG } = sandbox
 const docker = new Docker()
@@ -118,6 +118,92 @@ router.post('/run', async (req, res) => {
       success: false,
       error: error.message || 'Internal sandbox error'
     })
+  }
+})
+
+/**
+ * 流式执行代码
+ * POST /api/sandbox/stream
+ * Body: { code: string, useGpu?: boolean, timeout?: number|null }
+ * 响应: JSON Lines 流式输出
+ */
+router.post('/stream', async (req, res) => {
+  const { code, useGpu = false, timeout = null } = req.body
+
+  // 验证请求
+  if (!code || typeof code !== 'string') {
+    return res.status(400).json({
+      success: false,
+      error: 'Missing or invalid code parameter'
+    })
+  }
+
+  // 代码长度限制
+  if (code.length > 100000) {
+    return res.status(400).json({
+      success: false,
+      error: 'Code too long (max 100KB)'
+    })
+  }
+
+  // 验证 timeout 参数
+  if (timeout !== null && timeout !== undefined) {
+    if (typeof timeout !== 'number' || timeout < 0 || timeout > 86400) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid timeout parameter (must be null or number 0-86400)'
+      })
+    }
+  }
+
+  try {
+    // 检查镜像是否存在，智能降级
+    let actualUseGpu = useGpu
+    let actualImage = null
+    let imageExists = await checkImageExists(useGpu)
+
+    if (!imageExists && !useGpu) {
+      const gpuImageExists = await checkImageExists(true)
+      if (gpuImageExists) {
+        imageExists = true
+        actualUseGpu = false
+        actualImage = SANDBOX_CONFIG.imageGpu
+        console.log('[Sandbox Stream] CPU镜像不存在，使用GPU镜像执行')
+      }
+    }
+
+    if (!imageExists) {
+      return res.status(503).json({
+        success: false,
+        error: useGpu
+          ? 'GPU 镜像未安装。请运行 npm run build:sandbox:gpu 或 dmla install --gpu'
+          : '沙箱镜像未安装。请运行 npm run build:sandbox:cpu 或 dmla install --cpu'
+      })
+    }
+
+    // 如果请求 GPU，检查 GPU 是否可用
+    if (actualUseGpu) {
+      const gpuAvailable = await checkGPUAvailable()
+      if (!gpuAvailable) {
+        return res.status(503).json({
+          success: false,
+          error: 'GPU 硬件不可用。请确保系统安装了 NVIDIA GPU 驱动和 nvidia-container-toolkit。'
+        })
+      }
+    }
+
+    // 流式执行代码
+    await runPythonCodeStreaming(code, actualUseGpu, res, actualImage, timeout)
+
+  } catch (error) {
+    console.error('Sandbox stream error:', error)
+    // 如果响应头已发送，无法发送状态码
+    if (!res.headersSent) {
+      res.status(500).json({
+        success: false,
+        error: error.message || 'Internal sandbox error'
+      })
+    }
   }
 })
 

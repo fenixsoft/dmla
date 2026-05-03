@@ -36,7 +36,8 @@ class ProgressReporter:
         self,
         total_steps: int,
         description: str = "",
-        start_step: int = 0
+        start_step: int = 0,
+        clear_existing: bool = True
     ):
         """
         初始化进度报告器
@@ -45,11 +46,16 @@ class ProgressReporter:
             total_steps: 总步数（如 epoch 数）
             description: 任务描述
             start_step: 起始步数（默认 0）
+            clear_existing: 是否清除已存在的进度文件（默认 True）
         """
         self.total_steps = total_steps
         self.description = description
         self.current_step = start_step
         self.start_time = time.time()
+
+        # 清除旧的进度文件，避免显示上一个任务的进度
+        if clear_existing:
+            clear_progress()
 
         # 计算初始百分比
         initial_percent = (start_step / total_steps) * 100 if total_steps > 0 else 0
@@ -180,7 +186,7 @@ class ProgressReporter:
         extra_data: Optional[dict] = None
     ):
         """
-        写入进度文件
+        写入进度信息（stdout + 文件双模式）
 
         Args:
             step: 当前步数
@@ -192,6 +198,7 @@ class ProgressReporter:
             extra_data: 额外数据
         """
         data = {
+            "type": "progress",  # 流式消息类型标识
             "description": self.description,
             "total_steps": self.total_steps,
             "current_step": step,
@@ -207,7 +214,17 @@ class ProgressReporter:
         if extra_data:
             data["extra_data"] = extra_data
 
-        # 写入文件
+        # 1. stderr 输出（用于流式 HTTP 响应，与 stdout 分开避免合并）
+        # Jupyter kernel 会将 stdout 和 stderr 分到不同的 stream 消息
+        try:
+            import sys
+            sys.stderr.write(json.dumps(data, ensure_ascii=False) + '\n')
+            sys.stderr.flush()
+        except Exception as e:
+            # stderr 输出失败不影响训练，仅打印警告
+            print(f"Warning: Failed to output progress to stderr: {e}")
+
+        # 2. 文件写入（作为降级/备用方案）
         try:
             PROGRESS_FILE.write_text(json.dumps(data, ensure_ascii=False))
         except Exception as e:

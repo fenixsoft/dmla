@@ -709,6 +709,318 @@ export async function runPythonCode(code, useGpu = false, imageOverride = null, 
 }
 
 /**
+ * 流式执行 Python 代码
+ * 使用 Docker logs follow 模式实时转发容器输出到 HTTP 响应
+ * @param {string} code - Python 代码
+ * @param {boolean} useGpu - 是否启用 GPU 设备
+ * @param {object} res - Express 响应对象
+ * @param {string|null} imageOverride - 可选，指定使用的镜像名称
+ * @param {number|null} timeoutOverride - 可选，超时时间（秒）
+ * @returns {Promise<void>}
+ */
+export async function runPythonCodeStreaming(code, useGpu = false, res, imageOverride = null, timeoutOverride = null) {
+  const startTime = Date.now()
+
+  // 生成唯一执行 ID
+  const executionId = generateExecutionId()
+
+  // 计算实际超时时间
+  const actualTimeout = timeoutOverride === null
+    ? null  // unlimited
+    : (timeoutOverride || Math.floor(SANDBOX_CONFIG.timeout / 1000))
+
+  log(`runPythonCodeStreaming called, executionId=${executionId}, useGpu=${useGpu}, code length=${code.length}`)
+
+  // 设置流式响应头
+  res.setHeader('Content-Type', 'application/x-ndjson')
+  res.setHeader('Transfer-Encoding', 'chunked')
+  res.setHeader('X-Accel-Buffering', 'no')  // 禁用 nginx 缓冲
+  res.setHeader('Cache-Control', 'no-cache')
+  res.setHeader('Connection', 'keep-alive')
+
+  // 选择镜像
+  const image = imageOverride || (useGpu ? SANDBOX_CONFIG.imageGpu : SANDBOX_CONFIG.imageCpu)
+  log(`Using image: ${image}`)
+
+  // GPU 兼容性预检查
+  if (useGpu) {
+    log('GPU mode: running CUDA compatibility pre-check...')
+    const compatResult = await checkCUDACompatibility()
+    log(`CUDA compatibility check result: ${JSON.stringify(compatResult)}`)
+
+    if (!compatResult.compatible) {
+      log('CUDA compatibility check failed')
+      // 输出错误消息
+      const errorMsg = {
+        type: 'error',
+        ename: 'CUDACompatError',
+        evalue: 'CUDA 兼容性错误',
+        traceback: ['PyTorch CUDA 版本与您的 GPU 不兼容，请使用 CPU 模式运行']
+      }
+      res.write(JSON.stringify(errorMsg) + '\n')
+      const resultMsg = {
+        type: 'result',
+        success: false,
+        executionTime: (Date.now() - startTime) / 1000
+      }
+      res.write(JSON.stringify(resultMsg) + '\n')
+      res.end()
+      return
+    }
+    log('CUDA compatibility check passed')
+  }
+
+  // 创建容器配置
+  const timeoutSeconds = actualTimeout === null ? 86400 : actualTimeout
+  const containerConfig = {
+    Image: image,
+    Cmd: ['python3', '/workspace/kernel_runner.py', '--code', code, '--timeout', String(timeoutSeconds), '--stream'],
+    HostConfig: {
+      Memory: SANDBOX_CONFIG.memory,
+      AutoRemove: false
+    },
+    Env: [
+      'PYTHONUNBUFFERED=1',
+      'PYTHONPATH=/workspace',
+      actualTimeout === null ? 'DMLA_NO_TIMEOUT=1' : ''
+    ].filter(e => e)
+  }
+
+  log('Container config created for streaming')
+
+  // Volume Mount 配置（与 runPythonCode 相同）
+  const useMount = shouldMountSharedModules()
+  const sharedModulesPath = getSharedModulesPath()
+  const mountKernelRunner = shouldMountKernelRunner()
+  const kernelRunnerPath = getKernelRunnerPath()
+  const binds = []
+
+  // 挂数据目录
+  const dataVolumePath = getDataVolumePath()
+  if (dataVolumePath && fs.existsSync(dataVolumePath)) {
+    binds.push(`${dataVolumePath}:/data`)
+  }
+
+  // 挂共享模块
+  if (useMount && sharedModulesPath && fs.existsSync(sharedModulesPath)) {
+    binds.push(`${sharedModulesPath}:/workspace/shared:ro`)
+  }
+
+  // 挂 kernel_runner.py
+  if (mountKernelRunner && kernelRunnerPath && fs.existsSync(kernelRunnerPath)) {
+    binds.push(`${kernelRunnerPath}:/workspace/kernel_runner.py:ro`)
+  }
+
+  // 挂 dmla_progress.py
+  const progressReporterPath = getProgressReporterPath()
+  if (mountKernelRunner && progressReporterPath && fs.existsSync(progressReporterPath)) {
+    binds.push(`${progressReporterPath}:/workspace/dmla_progress.py:ro`)
+  }
+
+  if (binds.length > 0) {
+    containerConfig.HostConfig.Binds = binds
+  }
+
+  // GPU 配置
+  if (useGpu) {
+    containerConfig.HostConfig.DeviceRequests = [{
+      Driver: 'nvidia',
+      Count: -1,
+      Capabilities: [['gpu']]
+    }]
+  }
+
+  let container = null
+
+  try {
+    // 创建容器
+    log('Creating container for streaming...')
+    container = await docker.createContainer(containerConfig)
+    log(`Container created: ${container.id}`)
+
+    // 注册到活跃容器列表
+    registerContainer(executionId, container)
+
+    // 输出启动状态消息
+    const statusMsg = {
+      type: 'status',
+      status: 'starting',
+      message: '正在启动容器...',
+      executionId
+    }
+    res.write(JSON.stringify(statusMsg) + '\n')
+
+    // 启动容器
+    log('Starting container...')
+    await container.start()
+    log('Container started')
+
+    // 输出运行状态消息
+    const runningMsg = {
+      type: 'status',
+      status: 'running',
+      message: '代码执行中...'
+    }
+    res.write(JSON.stringify(runningMsg) + '\n')
+
+    // 获取实时日志流
+    log('Starting log stream...')
+    const logStream = await container.logs({
+      stdout: true,
+      stderr: true,
+      follow: true,  // 实时跟踪
+      timestamps: false,
+      tail: 0  // 从当前位置开始
+    })
+
+    // 处理日志流数据
+    logStream.on('data', (chunk) => {
+      if (Buffer.isBuffer(chunk)) {
+        // 解析 Docker 日志格式
+        const lines = parseDockerLogLines(chunk)
+        for (const { streamType, text } of lines) {
+          if (text && text.trim()) {
+            log(`Stream output (${streamType}): ${text.substring(0, 100)}...`)
+            // kernel_runner.py 已经输出 JSON 格式消息，直接转发
+            // 检查是否已经是 JSON 格式（stream, result, progress 等消息）
+            if (text.trim().startsWith('{') && text.includes('"type":')) {
+              res.write(text + '\n')
+            } else {
+              // 非 JSON 内容（如容器启动日志），包装为 stream 消息
+              res.write(JSON.stringify({
+                type: 'stream',
+                name: streamType,
+                text: text
+              }) + '\n')
+            }
+          }
+        }
+      } else {
+        // 字符串格式（fallback）
+        const textLines = chunk.toString().split('\n').filter(l => l.trim())
+        for (const line of textLines) {
+          if (line.trim().startsWith('{') && line.includes('"type":')) {
+            res.write(line + '\n')
+          } else {
+            res.write(JSON.stringify({
+              type: 'stream',
+              name: 'stdout',
+              text: line
+            }) + '\n')
+          }
+        }
+      }
+    })
+
+    logStream.on('error', (err) => {
+      log(`Log stream error: ${err.message}`)
+      const errorMsg = {
+        type: 'error',
+        ename: 'StreamError',
+        evalue: err.message,
+        traceback: [err.message]
+      }
+      res.write(JSON.stringify(errorMsg) + '\n')
+    })
+
+    // 等待容器结束
+    log('Waiting for container to finish...')
+    await container.wait()
+    log('Container finished')
+
+    // 等待日志流结束
+    await new Promise((resolve) => {
+      logStream.on('end', resolve)
+      // 确保流已结束（可能已经结束）
+      if (logStream.destroyed || logStream.readableEnded) {
+        resolve()
+      }
+    })
+
+    log('Log stream ended')
+
+  } catch (error) {
+    log(`Streaming execution error: ${error.message}`)
+    log(`Error stack: ${error.stack}`)
+
+    const errorMsg = {
+      type: 'error',
+      ename: error.name || 'ExecutionError',
+      evalue: error.message || 'Unknown error',
+      traceback: [error.message || 'Unknown error']
+    }
+    res.write(JSON.stringify(errorMsg) + '\n')
+
+    const resultMsg = {
+      type: 'result',
+      success: false,
+      executionTime: (Date.now() - startTime) / 1000
+    }
+    res.write(JSON.stringify(resultMsg) + '\n')
+
+  } finally {
+    // 从活跃列表移除
+    unregisterContainer(executionId)
+
+    // 清理容器
+    log('Cleaning up container...')
+    if (container) {
+      try {
+        await container.remove({ force: true })
+        log('Container removed')
+      } catch (e) {
+        log(`Container cleanup error: ${e.message}`)
+      }
+    }
+
+    // 结束响应
+    res.end()
+    log('Streaming response ended')
+  }
+}
+
+/**
+ * 解析 Docker 日志流中的多行数据
+ * Docker 日志格式: [8字节头][数据]
+ * @param {Buffer} buffer - Docker 日志 buffer
+ * @returns {string[]} - 解析后的行数组
+ */
+function parseDockerLogLines(buffer) {
+  if (!Buffer.isBuffer(buffer) || buffer.length === 0) return []
+
+  const lines = []
+  let offset = 0
+
+  while (offset < buffer.length) {
+    // 检查是否有完整的头部
+    if (offset + 8 > buffer.length) break
+
+    const streamType = buffer[offset]  // 1=stdout, 2=stderr
+    const length = buffer.readUInt32BE(offset + 4)
+
+    offset += 8
+
+    // 检查是否有完整的数据
+    if (offset + length > buffer.length) break
+
+    const chunk = buffer.slice(offset, offset + length).toString('utf8')
+    offset += length
+
+    // 按行分割（一个 Docker 消息可能包含多行）
+    const chunkLines = chunk.split('\n').filter(l => l.trim())
+    for (const line of chunkLines) {
+      // 返回包含 streamType 的对象
+      lines.push({
+        streamType: streamType === 1 ? 'stdout' : 'stderr',
+        text: line
+      })
+    }
+  }
+
+  return lines
+}
+
+/**
  * 解析 Docker 日志输出
  * Docker 日志格式: [8字节头][数据]
  */
@@ -826,6 +1138,7 @@ export async function pullImage(useGpu = false) {
 
 export default {
   runPythonCode,
+  runPythonCodeStreaming,
   checkGPUAvailable,
   checkCUDACompatibility,
   checkImageExists,
