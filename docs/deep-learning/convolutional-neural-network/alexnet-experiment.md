@@ -313,16 +313,14 @@ import time
 # 导入进度报告模块（提前导入，在数据集加载前显示进度）
 from dmla_progress import ProgressReporter
 
-# 创建初始进度报告器，显示"正在准备数据"状态
+# 创建进度报告器，第一阶段：准备训练环境
 progress = ProgressReporter(total_steps=100, description="准备训练环境")
 progress.update(0, message="正在导入模块...")
 
-print("C")
 # 导入共享模块
 from shared.cnn.alex_net import AlexNet
 from shared.cnn.tiny_imagenet_dataset import TinyImageNetDataset
 
-print("B")
 # 数据预处理配置（与第二阶段相同）
 train_transform = transforms.Compose([
     transforms.Resize((224, 224)),
@@ -339,21 +337,16 @@ val_transform = transforms.Compose([
     transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
 ])
 
-# 创建 DataLoader
-
-print("0")
-
+# 加载训练集数据
 progress.update(5, message="正在加载训练集数据...")
 data_dir = '/data/datasets/tiny-imagenet-200'
 train_dataset = TinyImageNetDataset(data_dir, transform=train_transform, is_train=True)
 
 progress.update(30, message="正在加载验证集数据...")
 val_dataset = TinyImageNetDataset(data_dir, transform=val_transform, is_train=False)
-print("1")
 
 progress.update(50, message="正在创建 DataLoader...")
 train_loader = DataLoader(train_dataset, batch_size=64, shuffle=True, num_workers=0)
-print("2")
 val_loader = DataLoader(val_dataset, batch_size=64, shuffle=False, num_workers=0)
 
 progress.update(60, message=f"数据加载完成: {len(train_dataset)} 训练样本, {len(val_dataset)} 验证样本")
@@ -382,10 +375,10 @@ criterion = nn.CrossEntropyLoss()
 optimizer = optim.SGD(model.parameters(), lr=0.01, momentum=0.9, weight_decay=0.0005)
 scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.1)
 
-progress.update(90, message="准备开始训练...")
-# 重新创建进度报告器（按 batch 计算，便于实时反馈训练进度）
+# 准备阶段完成，切换到训练阶段（使用 reset 方法更新进度参数）
+progress.update(95, message="准备阶段完成，开始训练...")
 total_batches = len(train_loader)
-progress = ProgressReporter(total_steps=num_epochs * total_batches, description="训练 AlexNet on Tiny ImageNet")
+progress.reset(total_steps=num_epochs * total_batches, description="训练 AlexNet on Tiny ImageNet")
 current_batch = 0
 
 # 训练函数（内联，便于实时更新进度）

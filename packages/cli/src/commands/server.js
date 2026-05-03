@@ -327,6 +327,25 @@ function findServerPath() {
 }
 
 /**
+ * 查找 kernel_runner.py 路径
+ * --dev 模式下需要挂载此文件
+ */
+function findKernelRunnerPath() {
+  // 开发环境路径：packages/cli/src/commands -> ../../../local-server/src/kernel_runner.py
+  const devPath = path.resolve(__dirname, '../../../local-server/src/kernel_runner.py')
+  // npm 包路径：packages/cli/src/commands -> ../server/kernel_runner.py（构建后）
+  const npmPath = path.resolve(__dirname, '../server/kernel_runner.py')
+
+  if (fs.existsSync(devPath)) {
+    return devPath
+  }
+  if (fs.existsSync(npmPath)) {
+    return npmPath
+  }
+  return null
+}
+
+/**
  * 查找共享模块目录
  * --dev 模式下需要挂载此目录
  */
@@ -427,9 +446,16 @@ export async function startServerSync(port, useGpu = false, dev = false) {
 
   // 查找共享模块路径（--dev 模式需要）
   const sharedModulesPath = dev ? findSharedModulesPath() : null
+  // 查找 kernel_runner.py 路径（--dev 模式需要）
+  const kernelRunnerPath = dev ? findKernelRunnerPath() : null
+
   if (dev && !sharedModulesPath) {
     console.log(chalk.yellow('⚠️ --dev 模式需要共享模块目录'))
     console.log(chalk.gray('   未找到 shared_modules，将仅使用镜像内置模块'))
+  }
+  if (dev && !kernelRunnerPath) {
+    console.log(chalk.yellow('⚠️ --dev 模式需要 kernel_runner.py'))
+    console.log(chalk.gray('   未找到 kernel_runner.py，将仅使用镜像内置版本'))
   }
 
   console.log(chalk.gray(`   镜像类型: ${imageResolution.message}`))
@@ -437,6 +463,9 @@ export async function startServerSync(port, useGpu = false, dev = false) {
   console.log(chalk.gray(`   服务入口: ${actualServerPath}`))
   if (dev && sharedModulesPath) {
     console.log(chalk.gray(`   共享模块: ${sharedModulesPath}`))
+  }
+  if (dev && kernelRunnerPath) {
+    console.log(chalk.gray(`   执行器: ${kernelRunnerPath}`))
   }
   console.log()
 
@@ -451,6 +480,9 @@ export async function startServerSync(port, useGpu = false, dev = false) {
     process.env.MOUNT_KERNEL_RUNNER = 'true'
     if (sharedModulesPath) {
       process.env.SHARED_MODULES_PATH = sharedModulesPath
+    }
+    if (kernelRunnerPath) {
+      process.env.KERNEL_RUNNER_PATH = kernelRunnerPath
     }
   }
 
@@ -542,8 +574,14 @@ export async function startServer(port, useGpu = false, dev = false) {
 
     // 查找共享模块路径（--dev 模式需要）
     const sharedModulesPath = dev ? findSharedModulesPath() : null
+    // 查找 kernel_runner.py 路径（--dev 模式需要）
+    const kernelRunnerPath = dev ? findKernelRunnerPath() : null
+
     if (dev && sharedModulesPath) {
       console.log(chalk.gray(`   共享模块: ${sharedModulesPath}`))
+    }
+    if (dev && kernelRunnerPath) {
+      console.log(chalk.gray(`   执行器: ${kernelRunnerPath}`))
     }
 
     // 日志文件路径
@@ -573,6 +611,9 @@ export async function startServer(port, useGpu = false, dev = false) {
       env.MOUNT_KERNEL_RUNNER = 'true'
       if (sharedModulesPath) {
         env.SHARED_MODULES_PATH = sharedModulesPath
+      }
+      if (kernelRunnerPath) {
+        env.KERNEL_RUNNER_PATH = kernelRunnerPath
       }
     }
 

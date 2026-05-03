@@ -208,6 +208,11 @@ function getProgressReporterPath() {
   if (process.env.PROGRESS_REPORTER_PATH) {
     return process.env.PROGRESS_REPORTER_PATH
   }
+  // --dev 模式下，尝试从 KERNEL_RUNNER_PATH 推断（同一目录）
+  if (process.env.KERNEL_RUNNER_PATH) {
+    const kernelDir = path.dirname(process.env.KERNEL_RUNNER_PATH)
+    return path.join(kernelDir, 'dmla_progress.py')
+  }
   return DEFAULT_PROGRESS_REPORTER_PATH
 }
 
@@ -225,9 +230,15 @@ function shouldMountSharedModules() {
 
 /**
  * 检查是否挂载本地 kernel_runner.py（开发模式）
+ * 条件1: MOUNT_KERNEL_RUNNER 不是 'false'（默认启用）
+ * 条件2: 有可用的路径（PROJECT_ROOT 或环境变量指定）
  */
 function shouldMountKernelRunner() {
-  return process.env.MOUNT_KERNEL_RUNNER !== 'false' && PROJECT_ROOT !== null
+  if (process.env.MOUNT_KERNEL_RUNNER === 'false') {
+    return false
+  }
+  // 有环境变量指定的路径，或者有 PROJECT_ROOT
+  return process.env.KERNEL_RUNNER_PATH || PROJECT_ROOT !== null
 }
 
 /**

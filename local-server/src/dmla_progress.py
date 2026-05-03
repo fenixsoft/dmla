@@ -95,6 +95,35 @@ class ProgressReporter:
             extra_data=extra_data
         )
 
+    def reset(
+        self,
+        total_steps: Optional[int] = None,
+        description: Optional[str] = None,
+        keep_start_time: bool = False
+    ):
+        """
+        重置进度报告器参数（用于阶段切换）
+
+        Args:
+            total_steps: 新的总步数（如不提供则保持原值）
+            description: 新的任务描述（如不提供则保持原值）
+            keep_start_time: 是否保持起始时间（默认重置）
+        """
+        if total_steps is not None:
+            self.total_steps = total_steps
+        if description is not None:
+            self.description = description
+        if not keep_start_time:
+            self.start_time = time.time()
+        self.current_step = 0
+
+        # 写入新阶段的初始状态
+        self._write_progress(
+            step=0,
+            status="starting",
+            message=self.description
+        )
+
     def complete(self, message: str = "", extra_data: Optional[dict] = None):
         """
         标记任务完成

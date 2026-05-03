@@ -246,16 +246,25 @@ async function runCode(useGpu = false) {
   outputs.value = []
   hasError.value = false
   executionTime.value = null
-  progress.value = null
+  // 设置初始进度状态（显示"正在启动容器..."）
+  progress.value = {
+    description: '正在启动容器',
+    total_steps: 100,
+    current_step: 0,
+    percent: 0,
+    message: '正在创建 Docker 容器，请稍候...',
+    status: 'starting',
+    elapsed_seconds: 0
+  }
   aborted.value = false
 
-  // 创建 AbortController 用于中止 fetch 请求
-  const abortController = new AbortController()
-
-  // 启动进度轮询（如果启用）
+  // 启动进度轮询（在 fetch 之前启动，确保能捕获早期进度）
   if (showProgress.value) {
     startProgressPolling()
   }
+
+  // 创建 AbortController 用于中止 fetch 请求
+  const abortController = new AbortController()
 
   try {
     const response = await fetch(resolvedEndpoint.value, {
@@ -351,21 +360,27 @@ async function stopExecution() {
 
 // 进度轮询
 function startProgressPolling() {
-  progressInterval.value = setInterval(async () => {
-    try {
-      const response = await fetch(resolvedEndpoint.value.replace('/run', '/progress'))
-      if (response.ok) {
-        const data = await response.json()
-        // 只有 running/starting/complete 状态才更新进度
-        // no_progress/no_task/error 状态不更新，避免显示无效进度
-        if (data.status === 'running' || data.status === 'starting' || data.status === 'complete') {
-          progress.value = data
-        }
+  // 立即执行第一次轮询（不等待 setInterval）
+  pollProgress()
+
+  // 然后每 1 秒轮询一次（缩短间隔以更快捕获早期进度）
+  progressInterval.value = setInterval(pollProgress, 1000)
+}
+
+async function pollProgress() {
+  try {
+    const response = await fetch(resolvedEndpoint.value.replace('/run', '/progress'))
+    if (response.ok) {
+      const data = await response.json()
+      // 只有 running/starting/complete 状态才更新进度
+      // no_progress/no_task/error 状态不更新，避免显示无效进度
+      if (data.status === 'running' || data.status === 'starting' || data.status === 'complete') {
+        progress.value = data
       }
-    } catch {
-      // 进度获取失败时忽略
     }
-  }, 2000)
+  } catch {
+    // 进度获取失败时忽略
+  }
 }
 
 function stopProgressPolling() {
@@ -515,11 +530,12 @@ onUnmounted(() => {
   opacity: 0.6;
 }
 
-.gpu-btn {
+/* GPU按钮 - 提高特异性确保覆盖run-btn样式 */
+.run-btn.gpu-btn {
   background: #2563eb;
 }
 
-.gpu-btn:hover:not(:disabled) {
+.run-btn.gpu-btn:hover:not(:disabled) {
   background: #3b82f6;
 }
 

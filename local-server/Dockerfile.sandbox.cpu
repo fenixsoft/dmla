@@ -41,8 +41,9 @@ RUN pip install --no-cache-dir -i https://pypi.tuna.tsinghua.edu.cn/simple \
 RUN pip install --no-cache-dir \
     torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
 
-# 复制 Kernel 执行器
+# 复制执行器和进度报告模块
 COPY local-server/src/kernel_runner.py /workspace/kernel_runner.py
+COPY local-server/src/dmla_progress.py /workspace/dmla_progress.py
 
 # 复制共享模块到 /workspace/shared（与 PYTHONPATH=/workspace 配合）
 COPY local-server/shared_modules /workspace/shared
