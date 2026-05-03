@@ -310,13 +310,19 @@ from torchvision import transforms
 import os
 import time
 
+# 导入进度报告模块（提前导入，在数据集加载前显示进度）
+from dmla_progress import ProgressReporter
+
+# 创建初始进度报告器，显示"正在准备数据"状态
+progress = ProgressReporter(total_steps=100, description="准备训练环境")
+progress.update(0, message="正在导入模块...")
+
+print("C")
 # 导入共享模块
 from shared.cnn.alex_net import AlexNet
 from shared.cnn.tiny_imagenet_dataset import TinyImageNetDataset
 
-# 导入进度报告模块
-from dmla_progress import ProgressReporter
-
+print("B")
 # 数据预处理配置（与第二阶段相同）
 train_transform = transforms.Compose([
     transforms.Resize((224, 224)),
@@ -334,12 +340,23 @@ val_transform = transforms.Compose([
 ])
 
 # 创建 DataLoader
+
+print("0")
+
+progress.update(5, message="正在加载训练集数据...")
 data_dir = '/data/datasets/tiny-imagenet-200'
 train_dataset = TinyImageNetDataset(data_dir, transform=train_transform, is_train=True)
+
+progress.update(30, message="正在加载验证集数据...")
 val_dataset = TinyImageNetDataset(data_dir, transform=val_transform, is_train=False)
+print("1")
+
+progress.update(50, message="正在创建 DataLoader...")
 train_loader = DataLoader(train_dataset, batch_size=64, shuffle=True, num_workers=0)
+print("2")
 val_loader = DataLoader(val_dataset, batch_size=64, shuffle=False, num_workers=0)
 
+progress.update(60, message=f"数据加载完成: {len(train_dataset)} 训练样本, {len(val_dataset)} 验证样本")
 print(f"数据加载完成: 训练集 {len(train_dataset)} 样本, 验证集 {len(val_dataset)} 样本")
 
 # 检查 CUDA 可用性
@@ -350,20 +367,23 @@ if device.type == 'cuda':
     print(f"GPU: {torch.cuda.get_device_name(0)}")
     print(f"显存: {torch.cuda.get_device_properties(0).total_memory / 1024 / 1024} MB")
 
-# 创建模型
-model = AlexNet(num_classes=200).to(device)
-
-# 定义损失函数和优化器
-criterion = nn.CrossEntropyLoss()
-optimizer = optim.SGD(model.parameters(), lr=0.01, momentum=0.9, weight_decay=0.0005)
-scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.1)
-
 # 训练参数
 num_epochs = 20
 save_dir = '/data/models/alexnet/checkpoints'
 os.makedirs(save_dir, exist_ok=True)
 
-# 创建进度报告器（按 batch 计算，便于实时反馈）
+progress.update(70, message="正在创建模型...")
+# 创建模型
+model = AlexNet(num_classes=200).to(device)
+
+progress.update(80, message="正在配置优化器...")
+# 定义损失函数和优化器
+criterion = nn.CrossEntropyLoss()
+optimizer = optim.SGD(model.parameters(), lr=0.01, momentum=0.9, weight_decay=0.0005)
+scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.1)
+
+progress.update(90, message="准备开始训练...")
+# 重新创建进度报告器（按 batch 计算，便于实时反馈训练进度）
 total_batches = len(train_loader)
 progress = ProgressReporter(total_steps=num_epochs * total_batches, description="训练 AlexNet on Tiny ImageNet")
 current_batch = 0

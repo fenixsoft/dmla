@@ -169,9 +169,9 @@ def run_code(code: str, timeout: int = DEFAULT_TIMEOUT) -> dict:
     """
     log_debug(f'run_code called, code length={len(code)}, timeout={timeout}')
 
-    # 在执行过程中抑制 stdout，避免 kernel 启动输出污染结果
-    suppress_stdout()
-    log_debug('stdout suppressed for kernel execution')
+    # 注意：不再在执行期间抑制 stdout
+    # stdout 只在导入阶段抑制（避免 matplotlib 等导入输出污染结果）
+    # 执行代码阶段需要恢复 stdout，让 print 输出实时发送到 iopub channel
 
     from jupyter_client import KernelManager
 
@@ -184,8 +184,11 @@ def run_code(code: str, timeout: int = DEFAULT_TIMEOUT) -> dict:
     msg_count = 0
 
     try:
-        # 1. 启动 Kernel
+        # 1. 启动 Kernel（抑制 stdout 避免启动输出污染）
         log_debug('Creating KernelManager')
+        suppress_stdout()
+        log_debug('stdout suppressed for kernel startup')
+
         km = KernelManager()
         log_debug('Starting kernel')
         km.start_kernel()
@@ -200,12 +203,17 @@ def run_code(code: str, timeout: int = DEFAULT_TIMEOUT) -> dict:
         kc.wait_for_ready(timeout=ready_timeout)
         log_debug('Kernel ready')
 
-        # 2. 执行代码
+        # 2. 恢复 stdout，开始执行代码
+        # 重要：恢复 stdout 后，print 输出可以实时发送到 iopub channel
+        restore_stdout()
+        log_debug('stdout restored for code execution')
+
+        # 3. 执行代码
         log_debug('Executing code')
         msg_id = kc.execute(code, allow_stdin=False)
         log_debug(f'Code execution started, msg_id={msg_id}')
 
-        # 3. 收集输出
+        # 4. 收集输出
         log_debug('Collecting outputs')
         while True:
             # 检查是否已超时
@@ -287,7 +295,7 @@ def run_code(code: str, timeout: int = DEFAULT_TIMEOUT) -> dict:
         execution_time = time.time() - start_time
         log_debug(f'Execution finished, time={execution_time:.3f}s, outputs={len(outputs)}, timed_out={timed_out}')
 
-        # 执行完成后恢复 stdout，准备输出 JSON
+        # 确保 stdout 已恢复（已在执行前恢复，这里是防御性调用）
         restore_stdout()
         log_debug('stdout restored for JSON output')
 

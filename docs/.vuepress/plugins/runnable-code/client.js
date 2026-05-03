@@ -270,6 +270,40 @@ if (typeof document !== 'undefined' && !document.getElementById(styleId)) {
   font-family: inherit;
   font-size: inherit;
 }
+
+/* 进度条 */
+.runnable-code-block .progress-bar {
+  margin-bottom: 1rem;
+}
+
+.runnable-code-block .progress-header {
+  color: #4ec9b0;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+}
+
+.runnable-code-block .progress-track {
+  width: 100%;
+  height: 8px;
+  background: #333;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.runnable-code-block .progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #3eaf7c, #4abf8a);
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+.runnable-code-block .progress-info {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 0.5rem;
+  color: #888;
+  font-size: 12px;
+}
 `
   document.head.appendChild(style)
 }
@@ -448,6 +482,72 @@ function initCodeBlock(block) {
   // 绑定运行按钮事件
   const runButtons = block.querySelectorAll('.run-btn')
   const timeout = block.dataset.timeout || null
+
+  // 是否启用进度显示（timeout > 60 或 unlimited）
+  const showProgress = timeout === 'unlimited' || (timeout && parseInt(timeout, 10) > 60)
+
+  // 进度轮询定时器
+  let progressInterval = null
+
+  // 进度轮询函数
+  function startProgressPolling(outputArea) {
+    if (!showProgress) return
+
+    progressInterval = setInterval(async () => {
+      try {
+        const progressEndpoint = getSandboxEndpoint() + '/api/sandbox/progress'
+        const response = await fetch(progressEndpoint)
+        if (response.ok) {
+          const data = await response.json()
+          // 只有 running/starting/complete 状态才更新进度
+          if (data.status === 'running' || data.status === 'starting' || data.status === 'complete') {
+            renderProgress(outputArea, data)
+          }
+        }
+      } catch {
+        // 进度获取失败时忽略
+      }
+    }, 2000)  // 每 2 秒轮询一次
+  }
+
+  // 停止进度轮询
+  function stopProgressPolling() {
+    if (progressInterval) {
+      clearInterval(progressInterval)
+      progressInterval = null
+    }
+  }
+
+  // 渲染进度条
+  function renderProgress(outputArea, progressData) {
+    const percent = progressData.percent || 0
+    const message = progressData.message || `${progressData.current_step || 0}/${progressData.total_steps || 0}`
+    const elapsed = progressData.elapsed_seconds || 0
+    const remaining = progressData.estimated_remaining || null
+
+    // 格式化时间（秒转为 mm:ss）
+    function formatTime(seconds) {
+      const mins = Math.floor(seconds / 60)
+      const secs = seconds % 60
+      return `${mins}:${secs.toString().padStart(2, '0')}`
+    }
+
+    // 构建进度条 HTML
+    outputArea.className = 'output-area loading'
+    outputArea.innerHTML = `
+      <div class="progress-bar">
+        <div class="progress-header">${progressData.description || '执行中...'}</div>
+        <div class="progress-track">
+          <div class="progress-fill" style="width: ${percent}%"></div>
+        </div>
+        <div class="progress-info">
+          <span>${message}</span>
+          <span>${formatTime(elapsed)}${remaining ? ' / ' + formatTime(remaining) : ''}</span>
+        </div>
+      </div>
+    `
+  }
+
   runButtons.forEach(btn => {
     btn.addEventListener('click', async (e) => {
       const outputArea = block.querySelector('.output-area')
@@ -461,9 +561,12 @@ function initCodeBlock(block) {
         b.textContent = 'Running...'
       })
 
-      // 显示加载状态
+      // 显示加载状态（如果启用进度，会很快被进度条覆盖）
       outputArea.className = 'output-area loading'
       outputArea.textContent = '执行中...'
+
+      // 启动进度轮询
+      startProgressPolling(outputArea)
 
       const endpoint = getSandboxEndpoint() + '/api/sandbox/run'
 
@@ -597,6 +700,9 @@ function initCodeBlock(block) {
           outputArea.textContent = `❌ 错误: ${error.message}`
         }
       } finally {
+        // 停止进度轮询
+        stopProgressPolling()
+
         runButtons.forEach(b => {
           b.disabled = false
           if (b.classList.contains('gpu-btn')) {
