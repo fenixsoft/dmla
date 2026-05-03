@@ -18,11 +18,60 @@ DMLA 进度报告模块
 
 import json
 import time
+import sys
+import threading
+import queue
 from pathlib import Path
 from typing import Optional
 
 # 进度文件路径
 PROGRESS_FILE = Path('/workspace/progress.json')
+
+# stderr 异步写入队列（避免管道阻塞）
+_stderr_queue: queue.Queue = queue.Queue()
+_stderr_thread: Optional[threading.Thread] = None
+
+
+def _start_stderr_writer():
+    """启动后台 stderr 写入线程（daemon 线程，随主线程退出）"""
+    global _stderr_thread
+    if _stderr_thread is None or not _stderr_thread.is_alive():
+        _stderr_thread = threading.Thread(target=_stderr_writer_loop, daemon=True)
+        _stderr_thread.start()
+
+
+def _stderr_writer_loop():
+    """后台线程循环：从队列读取数据并写入 stderr"""
+    while True:
+        try:
+            item = _stderr_queue.get(timeout=1.0)
+            if item is None:  # 停止信号
+                break
+            sys.stderr.write(item)
+            sys.stderr.flush()
+        except queue.Empty:
+            continue  # 队列空，继续等待
+        except Exception:
+            pass  # 写入失败，忽略（不影响主线程）
+
+
+def _write_stderr_async(data: str):
+    """
+    异步写入 stderr（非阻塞）
+
+    将数据放入队列，由后台线程处理写入。
+    如果队列积压过多（>100 条），则丢弃旧数据，避免内存爆炸。
+    """
+    _start_stderr_writer()
+
+    # 如果队列积压过多，清空部分旧数据
+    while _stderr_queue.qsize() > 100:
+        try:
+            _stderr_queue.get_nowait()
+        except queue.Empty:
+            break
+
+    _stderr_queue.put(data)
 
 
 class ProgressReporter:
@@ -214,22 +263,22 @@ class ProgressReporter:
         if extra_data:
             data["extra_data"] = extra_data
 
-        # 1. stderr 输出（用于流式 HTTP 响应，与 stdout 分开避免合并）
-        # Jupyter kernel 会将 stdout 和 stderr 分到不同的 stream 消息
-        try:
-            import sys
-            sys.stderr.write(json.dumps(data, ensure_ascii=False) + '\n')
-            sys.stderr.flush()
-        except Exception as e:
-            # stderr 输出失败不影响训练，仅打印警告
-            print(f"Warning: Failed to output progress to stderr: {e}")
-
-        # 2. 文件写入（作为降级/备用方案）
+        # 1. 文件写入（优先，确保进度数据持久化）
+        # 文件写入是可靠的，不受管道阻塞影响
         try:
             PROGRESS_FILE.write_text(json.dumps(data, ensure_ascii=False))
         except Exception as e:
             # 写入失败不影响训练，仅打印警告
             print(f"Warning: Failed to write progress file: {e}")
+
+        # 2. stderr 异步输出（用于流式 HTTP 响应）
+        # 使用后台线程异步写入，避免管道阻塞主线程
+        # Windows Docker 环境下管道缓冲区满时会导致阻塞
+        try:
+            _write_stderr_async(json.dumps(data, ensure_ascii=False) + '\n')
+        except Exception as e:
+            # stderr 输出失败不影响训练
+            print(f"Warning: Failed to output progress to stderr: {e}")
 
 
 def get_progress() -> Optional[dict]:

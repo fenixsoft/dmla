@@ -146,7 +146,8 @@ const SANDBOX_CONFIG = {
   imageCpu: 'dmla-sandbox:cpu',
   imageGpu: 'dmla-sandbox:gpu',
   timeout: 60000,           // 60 秒超时
-  memory: 4 * 1024 * 1024 * 1024  // 4GB 内存
+  memoryCpu: 4 * 1024 * 1024 * 1024,  // CPU 容器 4GB 内存限制
+  memoryGpu: 0   // GPU 容器不限制内存（让 GPU 显存独立管理）
 }
 
 // DMLA 配置文件路径
@@ -480,11 +481,14 @@ export async function runPythonCode(code, useGpu = false, imageOverride = null, 
 
   // 创建容器配置 - 使用 kernel_runner.py 执行代码
   const timeoutSeconds = actualTimeout === null ? 86400 : actualTimeout  // unlimited 使用 24 小时
+
+  // GPU 容器不限制内存，CPU 容器限制 4GB
+  const memoryLimit = useGpu ? SANDBOX_CONFIG.memoryGpu : SANDBOX_CONFIG.memoryCpu
+
   const containerConfig = {
     Image: image,
     Cmd: ['python3', '/workspace/kernel_runner.py', '--code', code, '--timeout', String(timeoutSeconds)],
     HostConfig: {
-      Memory: SANDBOX_CONFIG.memory,
       AutoRemove: false  // 手动移除以获取日志
     },
     // matplotlib 使用 IPython Kernel 的 inline 后端，自动发送 display_data
@@ -494,6 +498,11 @@ export async function runPythonCode(code, useGpu = false, imageOverride = null, 
       'PYTHONPATH=/workspace',
       actualTimeout === null ? 'DMLA_NO_TIMEOUT=1' : ''
     ].filter(e => e)  // 过滤空字符串
+  }
+
+  // 仅对 CPU 容器设置内存限制（GPU 容器不限制）
+  if (memoryLimit > 0) {
+    containerConfig.HostConfig.Memory = memoryLimit
   }
 
   log('Container config created')
@@ -772,11 +781,14 @@ export async function runPythonCodeStreaming(code, useGpu = false, res, imageOve
 
   // 创建容器配置
   const timeoutSeconds = actualTimeout === null ? 86400 : actualTimeout
+
+  // GPU 容器不限制内存，CPU 容器限制 4GB
+  const memoryLimit = useGpu ? SANDBOX_CONFIG.memoryGpu : SANDBOX_CONFIG.memoryCpu
+
   const containerConfig = {
     Image: image,
     Cmd: ['python3', '/workspace/kernel_runner.py', '--code', code, '--timeout', String(timeoutSeconds), '--stream'],
     HostConfig: {
-      Memory: SANDBOX_CONFIG.memory,
       AutoRemove: false
     },
     Env: [
@@ -784,6 +796,11 @@ export async function runPythonCodeStreaming(code, useGpu = false, res, imageOve
       'PYTHONPATH=/workspace',
       actualTimeout === null ? 'DMLA_NO_TIMEOUT=1' : ''
     ].filter(e => e)
+  }
+
+  // 仅对 CPU 容器设置内存限制（GPU 容器不限制）
+  if (memoryLimit > 0) {
+    containerConfig.HostConfig.Memory = memoryLimit
   }
 
   log('Container config created for streaming')
