@@ -21,6 +21,15 @@
           {{ isRunning ? 'Running...' : 'GPU' }}
         </button>
 
+        <!-- 停止按钮 - 仅运行时显示 -->
+        <button
+          v-if="isRunning"
+          class="stop-btn"
+          @click="stopExecution"
+        >
+          Stop
+        </button>
+
         <span v-if="!sandboxAvailable" class="sandbox-notice">
           ⚠️
         </span>
@@ -147,7 +156,7 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { getSandboxEndpoint } from './sandbox-config.js'
+import { getSandboxEndpoint, globalRunningState, startExecution, endExecution, abortCurrentExecution } from './sandbox-config.js'
 
 const props = defineProps({
   code: {
@@ -200,6 +209,7 @@ const outputs = ref([])
 const hasError = ref(false)
 const executionTime = ref(null)
 const sandboxAvailable = ref(true)
+const aborted = ref(false)  // 新增：中止标记
 
 // 进度状态
 const progress = ref(null)  // { percent, message, status, elapsed_seconds, estimated_remaining }
@@ -220,11 +230,27 @@ function handleConfigChange(event) {
 
 // 运行代码
 async function runCode(useGpu = false) {
+  // 检查全局运行状态（防止并发执行）
+  if (globalRunningState.isRunning) {
+    outputs.value = [{
+      type: 'error',
+      ename: 'ConcurrencyError',
+      evalue: '已有任务在运行，请先中止当前任务',
+      traceback: ['点击 Stop 按钮中止当前正在运行的任务']
+    }]
+    hasError.value = true
+    return
+  }
+
   isRunning.value = true
   outputs.value = []
   hasError.value = false
   executionTime.value = null
   progress.value = null
+  aborted.value = false
+
+  // 创建 AbortController 用于中止 fetch 请求
+  const abortController = new AbortController()
 
   // 启动进度轮询（如果启用）
   if (showProgress.value) {
@@ -239,7 +265,8 @@ async function runCode(useGpu = false) {
         code: props.code,
         useGpu,
         timeout: timeoutValue.value
-      })
+      }),
+      signal: abortController.signal  // 关联 AbortController
     })
 
     if (!response.ok) {
@@ -248,29 +275,77 @@ async function runCode(useGpu = false) {
 
     const result = await response.json()
 
+    // 注册到全局状态（执行成功后不需要，因为已经结束）
     outputs.value = result.outputs || []
     hasError.value = !result.success || outputs.value.some(o => o.type === 'error')
     executionTime.value = result.executionTime
 
-  } catch (error) {
-    hasError.value = true
-    outputs.value = [{
-      type: 'error',
-      ename: 'ConnectionError',
-      evalue: error.message.includes('Failed to fetch') || error.message.includes('NetworkError')
-        ? '无法连接到沙箱服务'
-        : error.message,
-      traceback: error.message.includes('Failed to fetch') || error.message.includes('NetworkError')
-        ? ['请确保沙箱服务正在运行，或在设置中检查沙箱地址配置']
-        : [error.message]
-    }]
+    // 保存 executionId 用于可能的中止（但此时任务已完成）
+    // result.executionId 可用于日志记录
 
-    if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
-      sandboxAvailable.value = false
+  } catch (error) {
+    // 处理中止错误
+    if (error.name === 'AbortError') {
+      aborted.value = true
+      // 显示已中止（如果已有输出则保留）
+      if (outputs.value.length === 0) {
+        outputs.value = [{ type: 'stream', name: 'stdout', text: '已中止' }]
+      } else {
+        outputs.value.push({ type: 'stream', name: 'stdout', text: '\n--- 已中止 ---' })
+      }
+      hasError.value = false  // 中止不是错误
+    } else {
+      hasError.value = true
+      outputs.value = [{
+        type: 'error',
+        ename: 'ConnectionError',
+        evalue: error.message.includes('Failed to fetch') || error.message.includes('NetworkError')
+          ? '无法连接到沙箱服务'
+          : error.message,
+        traceback: error.message.includes('Failed to fetch') || error.message.includes('NetworkError')
+          ? ['请确保沙箱服务正在运行，或在设置中检查沙箱地址配置']
+          : [error.message]
+      }]
+
+      if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+        sandboxAvailable.value = false
+      }
     }
   } finally {
     isRunning.value = false
     stopProgressPolling()
+    // 清理全局状态（如果已注册）
+    if (globalRunningState.abortController === abortController) {
+      endExecution()
+    }
+  }
+}
+
+// 停止执行
+async function stopExecution() {
+  if (!isRunning.value) return
+
+  try {
+    // 调用全局中止函数
+    await abortCurrentExecution(currentEndpoint.value)
+    aborted.value = true
+    isRunning.value = false
+    stopProgressPolling()
+
+    // 显示已中止（如果已有输出则保留）
+    if (outputs.value.length === 0) {
+      outputs.value = [{ type: 'stream', name: 'stdout', text: '已中止' }]
+    } else {
+      outputs.value.push({ type: 'stream', name: 'stdout', text: '\n--- 已中止 ---' })
+    }
+  } catch (error) {
+    outputs.value = [{
+      type: 'error',
+      ename: 'AbortError',
+      evalue: '中止失败',
+      traceback: [error.message]
+    }]
+    hasError.value = true
   }
 }
 
@@ -280,7 +355,12 @@ function startProgressPolling() {
     try {
       const response = await fetch(resolvedEndpoint.value.replace('/run', '/progress'))
       if (response.ok) {
-        progress.value = await response.json()
+        const data = await response.json()
+        // 只有 running/starting/complete 状态才更新进度
+        // no_progress/no_task/error 状态不更新，避免显示无效进度
+        if (data.status === 'running' || data.status === 'starting' || data.status === 'complete') {
+          progress.value = data
+        }
       }
     } catch {
       // 进度获取失败时忽略
@@ -441,6 +521,26 @@ onUnmounted(() => {
 
 .gpu-btn:hover:not(:disabled) {
   background: #3b82f6;
+}
+
+/* 停止按钮 */
+.stop-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #fff;
+  background: #dc2626;  /* 红色 */
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.stop-btn:hover {
+  background: #ef4444;
 }
 
 .sandbox-notice {

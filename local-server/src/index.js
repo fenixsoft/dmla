@@ -7,6 +7,7 @@ import cors from 'cors'
 import { fileURLToPath } from 'url'
 import { resolve } from 'path'
 import sandboxRouter from './routes/sandbox.js'
+import { cleanupAllContainers } from './sandbox.js'
 
 export const app = express()
 const PORT = process.env.PORT || 3001
@@ -76,14 +77,26 @@ process.on('unhandledRejection', (reason, promise) => {
   log(`UNHANDLED REJECTION: ${reason}`)
 })
 
-// 捕获进程信号
-process.on('SIGTERM', () => {
-  log('Received SIGTERM')
+// 捕获进程信号 - 优雅退出，清理所有容器
+process.on('SIGTERM', async () => {
+  log('Received SIGTERM, cleaning up containers...')
+  try {
+    await cleanupAllContainers()
+    log('All containers cleaned up')
+  } catch (e) {
+    log(`Cleanup error: ${e.message}`)
+  }
   process.exit(0)
 })
 
-process.on('SIGINT', () => {
-  log('Received SIGINT')
+process.on('SIGINT', async () => {
+  log('Received SIGINT (Ctrl+C), cleaning up containers...')
+  try {
+    await cleanupAllContainers()
+    log('All containers cleaned up')
+  } catch (e) {
+    log(`Cleanup error: ${e.message}`)
+  }
   process.exit(0)
 })
 

@@ -3,7 +3,7 @@
  */
 import { Router } from 'express'
 import Docker from 'dockerode'
-import sandbox, { runPythonCode, checkImageExists, checkGPUAvailable, checkCUDACompatibility } from '../sandbox.js'
+import sandbox, { runPythonCode, checkImageExists, checkGPUAvailable, checkCUDACompatibility, abortExecution } from '../sandbox.js'
 
 const { SANDBOX_CONFIG } = sandbox
 const docker = new Docker()
@@ -228,6 +228,33 @@ router.get('/cuda-compat', async (req, res) => {
       status: 'error',
       compatible: false,
       error: error.message
+    })
+  }
+})
+
+/**
+ * 中止执行
+ * POST /api/sandbox/abort
+ * Body: { executionId?: string }  // 可选，不传则中止所有
+ */
+router.post('/abort', async (req, res) => {
+  const { executionId = null } = req.body
+
+  try {
+    const result = await abortExecution(executionId)
+
+    res.json({
+      success: result.success,
+      stopped: result.stopped,
+      message: result.stopped > 0
+        ? `已中止 ${result.stopped} 个执行任务`
+        : '没有正在运行的任务'
+    })
+  } catch (error) {
+    console.error('[Sandbox] Abort error:', error)
+    res.status(500).json({
+      success: false,
+      error: error.message || '中止失败'
     })
   }
 })

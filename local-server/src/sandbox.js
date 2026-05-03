@@ -20,6 +20,91 @@ function log(message) {
 // 启动时记录
 log('Sandbox module initialized')
 
+// ==================== 全局容器追踪 ====================
+// 用于追踪所有活跃的容器，支持中止操作和优雅退出清理
+const activeContainers = new Map()
+
+/**
+ * 生成唯一的执行 ID
+ * 格式: exec-{时间戳}-{随机后缀}
+ */
+function generateExecutionId() {
+  return `exec-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`
+}
+
+/**
+ * 注册容器到活跃列表
+ * @param {string} executionId - 执行 ID
+ * @param {Docker.Container} container - Docker 容器实例
+ */
+function registerContainer(executionId, container) {
+  activeContainers.set(executionId, container)
+  log(`Container registered: ${executionId} -> ${container.id}`)
+}
+
+/**
+ * 从活跃列表移除容器
+ * @param {string} executionId - 执行 ID
+ */
+function unregisterContainer(executionId) {
+  activeContainers.delete(executionId)
+  log(`Container unregistered: ${executionId}`)
+}
+
+/**
+ * 清理所有活跃容器
+ * 用于中止操作和进程退出时清理
+ * @returns {Promise<number>} 清理的容器数量
+ */
+export async function cleanupAllContainers() {
+  const count = activeContainers.size
+  log(`Cleaning up ${count} active containers...`)
+
+  for (const [executionId, container] of activeContainers) {
+    try {
+      await container.stop({ t: 5 })  // 5秒优雅停止
+      await container.remove({ force: true })
+      log(`Container stopped and removed: ${executionId}`)
+    } catch (e) {
+      log(`Failed to cleanup container ${executionId}: ${e.message}`)
+    }
+  }
+
+  activeContainers.clear()
+  log(`All containers cleaned up: ${count}`)
+  return count
+}
+
+/**
+ * 中止指定执行或所有执行
+ * @param {string|null} executionId - 执行 ID，null 表示中止所有
+ * @returns {Promise<{success: boolean, stopped: number}>}
+ */
+export async function abortExecution(executionId = null) {
+  const containersToStop = executionId
+    ? [activeContainers.get(executionId)].filter(c => c)
+    : Array.from(activeContainers.values())
+
+  log(`Aborting ${containersToStop.length} containers (executionId: ${executionId || 'all'})`)
+
+  let stopped = 0
+  for (const [id, container] of containersToStop.map(c => [activeContainers.entries().find(([k, v]) => v === c)?.[0], c])) {
+    if (container) {
+      try {
+        await container.stop({ t: 5 })
+        await container.remove({ force: true })
+        activeContainers.delete(id)
+        stopped++
+        log(`Container aborted: ${id}`)
+      } catch (e) {
+        log(`Failed to abort container ${id}: ${e.message}`)
+      }
+    }
+  }
+
+  return { success: true, stopped }
+}
+
 // 检测运行模式并计算正确的路径
 // 开发模式: 从 local-server/src 运行，项目根目录在上两级
 // 独立模式: 从 packages/cli/src/server 运行，无 shared_modules 目录
@@ -320,12 +405,15 @@ print(json.dumps(result))
 export async function runPythonCode(code, useGpu = false, imageOverride = null, timeoutOverride = null) {
   const startTime = Date.now()
 
+  // 生成唯一执行 ID
+  const executionId = generateExecutionId()
+
   // 计算实际超时时间
   const actualTimeout = timeoutOverride === null
     ? null  // unlimited
     : (timeoutOverride || Math.floor(SANDBOX_CONFIG.timeout / 1000))
 
-  log(`runPythonCode called, useGpu=${useGpu}, code length=${code.length}, imageOverride=${imageOverride}, timeout=${actualTimeout === null ? 'unlimited' : actualTimeout}`)
+  log(`runPythonCode called, executionId=${executionId}, useGpu=${useGpu}, code length=${code.length}, imageOverride=${imageOverride}, timeout=${actualTimeout === null ? 'unlimited' : actualTimeout}`)
 
   // 选择镜像：优先使用指定的镜像，否则根据 useGpu 选择
   const image = imageOverride || (useGpu ? SANDBOX_CONFIG.imageGpu : SANDBOX_CONFIG.imageCpu)
@@ -372,7 +460,8 @@ export async function runPythonCode(code, useGpu = false, imageOverride = null, 
           traceback: [errorMessage]
         }],
         executionTime,
-        gpuUsed: false
+        gpuUsed: false,
+        executionId
       }
     }
     log('CUDA compatibility check passed')
@@ -471,6 +560,9 @@ export async function runPythonCode(code, useGpu = false, imageOverride = null, 
     container = await docker.createContainer(containerConfig)
     log(`Container created: ${container.id}`)
 
+    // 注册到活跃容器列表
+    registerContainer(executionId, container)
+
     // 设置超时（使用动态计算的超时时间，unlimited 时为 24 小时）
     const containerTimeoutMs = timeoutSeconds * 1000 + 10000  // 转换为毫秒，额外 10 秒用于清理
     const timeoutPromise = new Promise((_, reject) => {
@@ -528,7 +620,8 @@ export async function runPythonCode(code, useGpu = false, imageOverride = null, 
           traceback: [stdout.substring(0, 1000)]
         }],
         executionTime,
-        gpuUsed: useGpu
+        gpuUsed: useGpu,
+        executionId
       }
     }
 
@@ -553,7 +646,8 @@ export async function runPythonCode(code, useGpu = false, imageOverride = null, 
           traceback: [rawOutput]
         }],
         executionTime,
-        gpuUsed: useGpu
+        gpuUsed: useGpu,
+        executionId
       }
     }
 
@@ -561,7 +655,8 @@ export async function runPythonCode(code, useGpu = false, imageOverride = null, 
       success: parsedResult.success,
       outputs: parsedResult.outputs || [],
       executionTime: parsedResult.executionTime || (Date.now() - startTime) / 1000,
-      gpuUsed: useGpu
+      gpuUsed: useGpu,
+      executionId
     }
 
   } catch (error) {
@@ -581,10 +676,14 @@ export async function runPythonCode(code, useGpu = false, imageOverride = null, 
         traceback: [error.message || 'Unknown error']
       }],
       executionTime,
-      gpuUsed: useGpu
+      gpuUsed: useGpu,
+      executionId
     }
 
   } finally {
+    // 从活跃列表移除
+    unregisterContainer(executionId)
+
     // 清理容器
     log('Cleaning up container...')
     if (container) {
@@ -720,5 +819,7 @@ export default {
   checkCUDACompatibility,
   checkImageExists,
   pullImage,
+  cleanupAllContainers,
+  abortExecution,
   SANDBOX_CONFIG
 }

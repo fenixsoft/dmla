@@ -118,8 +118,25 @@ if (typeof document !== 'undefined' && !document.getElementById(styleId)) {
   background: #2563eb;
 }
 
-.runnable-code-block .run-btn.gpu-btn:hover:not(:disabled) {
-  background: #3b82f6;
+/* 停止按钮样式 */
+.runnable-code-block .stop-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 12px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #fff;
+  background: #dc2626;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin: 7px 3px 0 0;
+}
+
+.runnable-code-block .stop-btn:hover {
+  background: #ef4444;
 }
 
 /* 输出区域 */
@@ -393,6 +410,8 @@ function initCodeBlock(block) {
   const codeArea = block.querySelector('.code-area')
   if (!codeArea) return
 
+  const toolbar = block.querySelector('.floating-toolbar')  // 工具栏（用于添加停止按钮）
+
   const preElement = codeArea.querySelector('pre')
   const codeElement = preElement?.querySelector('code')
 
@@ -561,6 +580,60 @@ function initCodeBlock(block) {
         b.textContent = 'Running...'
       })
 
+      // 创建 AbortController 用于中止请求
+      const abortController = new AbortController()
+
+      // 创建停止按钮
+      const stopBtn = document.createElement('button')
+      stopBtn.className = 'stop-btn'
+      stopBtn.textContent = 'Stop'
+      if (toolbar) toolbar.appendChild(stopBtn)
+
+      // 停止按钮点击事件
+      stopBtn.addEventListener('click', async () => {
+        // 中止 fetch 请求
+        abortController.abort()
+
+        // 调用后端中止 API
+        try {
+          const abortEndpoint = getSandboxEndpoint() + '/api/sandbox/abort'
+          await fetch(abortEndpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({})
+          })
+        } catch {
+          // 忽略中止 API 错误
+        }
+
+        // 移除停止按钮
+        stopBtn.remove()
+
+        // 恢复按钮状态
+        runButtons.forEach(b => {
+          b.disabled = false
+          if (b.classList.contains('gpu-btn')) {
+            b.textContent = '▶ Run on GPU'
+          } else {
+            b.textContent = '▶ Run'
+          }
+        })
+
+        // 停止进度轮询
+        stopProgressPolling()
+
+        // 显示已中止状态（保留已有输出）
+        outputArea.className = 'output-area'
+        if (outputArea.textContent === '执行中...' || outputArea.querySelector('.progress-bar')) {
+          outputArea.textContent = '已中止'
+        } else {
+          const abortedMsg = document.createElement('pre')
+          abortedMsg.className = 'output-stream stdout'
+          abortedMsg.textContent = '\n--- 已中止 ---'
+          outputArea.appendChild(abortedMsg)
+        }
+      })
+
       // 显示加载状态（如果启用进度，会很快被进度条覆盖）
       outputArea.className = 'output-area loading'
       outputArea.textContent = '执行中...'
@@ -578,7 +651,8 @@ function initCodeBlock(block) {
             code,
             useGpu,
             timeout: timeout === 'unlimited' ? null : (timeout ? parseInt(timeout, 10) : null)
-          })
+          }),
+          signal: abortController.signal
         })
 
         // 解析响应内容，即使 HTTP 状态码不是 200
@@ -693,15 +767,27 @@ function initCodeBlock(block) {
         }
 
       } catch (error) {
-        outputArea.className = 'output-area error'
-        if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
-          outputArea.textContent = '⚠️ 无法连接到沙箱服务\n\n请确保沙箱服务正在运行，或在设置中检查沙箱地址配置'
+        // 处理中止错误
+        if (error.name === 'AbortError') {
+          // 中止不是错误，输出已由停止按钮处理
+          // 这里不需要额外处理
         } else {
-          outputArea.textContent = `❌ 错误: ${error.message}`
+          outputArea.className = 'output-area error'
+          if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+            outputArea.textContent = '⚠️ 无法连接到沙箱服务\n\n请确保沙箱服务正在运行，或在设置中检查沙箱地址配置'
+          } else {
+            outputArea.textContent = `❌ 错误: ${error.message}`
+          }
         }
       } finally {
         // 停止进度轮询
         stopProgressPolling()
+
+        // 移除停止按钮（如果还存在）
+        const existingStopBtn = toolbar.querySelector('.stop-btn')
+        if (existingStopBtn) {
+          existingStopBtn.remove()
+        }
 
         runButtons.forEach(b => {
           b.disabled = false
