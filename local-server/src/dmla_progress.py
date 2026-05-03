@@ -51,11 +51,15 @@ class ProgressReporter:
         self.current_step = start_step
         self.start_time = time.time()
 
-        # 写入初始状态
+        # 计算初始百分比
+        initial_percent = (start_step / total_steps) * 100 if total_steps > 0 else 0
+
+        # 写入初始状态（包含 percent）
         self._write_progress(
             step=start_step,
             status="starting",
-            message=description
+            message=description,
+            percent=initial_percent
         )
 
     def update(
@@ -117,11 +121,12 @@ class ProgressReporter:
             self.start_time = time.time()
         self.current_step = 0
 
-        # 写入新阶段的初始状态
+        # 写入新阶段的初始状态（包含 percent=0）
         self._write_progress(
             step=0,
             status="starting",
-            message=self.description
+            message=self.description,
+            percent=0.0
         )
 
     def complete(self, message: str = "", extra_data: Optional[dict] = None):
