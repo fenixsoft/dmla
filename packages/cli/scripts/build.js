@@ -49,11 +49,11 @@ function copyDir(src, dest, filter = null) {
   return true
 }
 
-// 复制服务器代码（只复制 .js 文件）
+// 复制服务器代码（复制 .js 和 .py 文件）
 console.log('\n📋 复制服务器代码...')
 console.log(`   源目录: ${localServerSrc}`)
 console.log(`   目标目录: ${cliServerDest}`)
-copyDir(localServerSrc, cliServerDest, (name) => name.endsWith('.js'))
+copyDir(localServerSrc, cliServerDest, (name) => name.endsWith('.js') || name.endsWith('.py'))
 
 // 复制共享模块（复制所有 .py 文件和 __init__.py）
 console.log('\n📋 复制共享模块...')
