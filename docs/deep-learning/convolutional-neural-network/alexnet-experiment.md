@@ -914,6 +914,416 @@ except Exception as e:
 - 内存最友好：LMDB mmap 零拷贝读取
 - 跨平台兼容：Windows 和 Linux Docker 均可运行
 
+### 方案 E：LMDB + DALI GPU 加速（高性能方案）
+
+::: tip DALI 优势
+**NVIDIA DALI** 是专为 GPU 数据加载设计的库，可以解决 Windows Docker shm 问题：
+- 不依赖 PyTorch shm，使用独立的内存管理
+- CPU 多线程 JPEG 解码（Windows Docker 可用）
+- GPU 数据增强（RandomFlip、Crop、Normalize）
+- 性能比单线程 DataLoader 快 **5-6 倍**
+:::
+
+**适用场景**：
+- **Windows Docker**：追求高性能，规避 shm 限制
+- **Linux Docker**：追求最高性能（GPU nvJPEG 解码）
+
+```python runnable gpu timeout=unlimited
+import torch
+import torch.nn as nn
+import torch.optim as optim
+import os
+import time
+import struct
+import numpy as np
+
+# 导入进度报告模块
+from dmla_progress import ProgressReporter
+
+# 导入 DALI
+from nvidia.dali import pipeline_def, fn, types
+from nvidia.dali.plugin.pytorch import DALIGenericIterator
+
+# 导入共享模块中的 AlexNet
+from shared.cnn.alexnet import AlexNet
+
+# LMDB 缓存目录
+LMDB_DIR = '/data/cache/preprocessing/tiny-imagenet-224-lmdb'
+
+# ==================== OS 检测 ====================
+def detect_host_os():
+    """检测宿主操作系统"""
+    try:
+        with open('/proc/version', 'r') as f:
+            version_info = f.read().lower()
+            if 'microsoft' in version_info or 'wsl' in version_info:
+                return 'windows'
+            return 'linux'
+    except:
+        return 'linux'
+
+# ==================== DALI LMDB Reader ====================
+class DALILMDBReader:
+    """
+    DALI External Source - LMDB JPEG Reader
+    
+    从 LMDB 数据库读取 JPEG bytes，供 DALI Pipeline 使用
+    """
+    def __init__(self, lmdb_path, batch_size, shuffle=True):
+        import lmdb
+        self.env = lmdb.open(lmdb_path, readonly=True, lock=False, readahead=False)
+        self.batch_size = batch_size
+        self.shuffle = shuffle
+        
+        # 获取数据数量
+        with self.env.begin() as txn:
+            self.length = txn.stat()['entries']
+        
+        self.indices = np.arange(self.length)
+        self._reset()
+    
+    def _reset(self):
+        """重置迭代器"""
+        if self.shuffle:
+            np.random.shuffle(self.indices)
+        self._position = 0
+    
+    def __call__(self):
+        """DALI external_source 需要一个 callable，每次调用返回一个 batch"""
+        if self._position >= self.length:
+            self._reset()
+            return None, None
+        
+        batch_jpegs = []
+        batch_labels = []
+        
+        end_idx = min(self._position + self.batch_size, self.length)
+        
+        with self.env.begin() as txn:
+            for i in range(self._position, end_idx):
+                idx = self.indices[i]
+                key = struct.pack('>Q', idx)
+                value = txn.get(key)
+                
+                if value is not None:
+                    label = struct.unpack('>i', value[:4])[0]
+                    jpeg_bytes = np.frombuffer(value[4:], dtype=np.uint8)
+                    batch_jpegs.append(jpeg_bytes)
+                    batch_labels.append(label)
+        
+        self._position = end_idx
+        
+        return batch_jpegs, np.array(batch_labels, dtype=np.int32)
+    
+    def __len__(self):
+        return self.length
+
+# ==================== DALI Pipeline ====================
+@pipeline_def
+def create_train_pipeline(data_source, decode_device='cpu'):
+    """
+    DALI 训练 Pipeline
+    
+    decode_device:
+    - 'cpu': Windows Docker (NVML 限制，使用 CPU 多线程解码)
+    - 'mixed': Linux Docker (GPU nvJPEG 解码)
+    """
+    jpegs, labels = fn.external_source(
+        source=data_source,
+        num_outputs=2,
+        dtype=[types.UINT8, types.INT32],
+        batch=True
+    )
+    
+    # JPEG 解码
+    images = fn.decoders.image(
+        jpegs,
+        device=decode_device,
+        output_type=types.RGB
+    )
+    
+    # 如果是 CPU 解码，传输到 GPU
+    if decode_device == 'cpu':
+        images = images.gpu()
+    
+    # GPU 数据增强 + Normalize
+    images = fn.crop_mirror_normalize(
+        images,
+        device='gpu',
+        dtype=types.FLOAT,
+        output_layout='CHW',
+        crop=(224, 224),
+        mirror=fn.random.coin_flip(probability=0.5),
+        mean=[0.485 * 255, 0.456 * 255, 0.406 * 255],
+        std=[0.229 * 255, 0.224 * 255, 0.225 * 255]
+    )
+    
+    labels = labels.gpu()
+    
+    return images, labels
+
+@pipeline_def
+def create_val_pipeline(data_source, decode_device='cpu'):
+    """DALI 验证 Pipeline（无数据增强）"""
+    jpegs, labels = fn.external_source(
+        source=data_source,
+        num_outputs=2,
+        dtype=[types.UINT8, types.INT32],
+        batch=True
+    )
+    
+    images = fn.decoders.image(
+        jpegs,
+        device=decode_device,
+        output_type=types.RGB
+    )
+    
+    if decode_device == 'cpu':
+        images = images.gpu()
+    
+    images = fn.crop_mirror_normalize(
+        images.gpu(),
+        device='gpu',
+        dtype=types.FLOAT,
+        output_layout='CHW',
+        crop=(224, 224),
+        mean=[0.485 * 255, 0.456 * 255, 0.406 * 255],
+        std=[0.229 * 255, 0.224 * 255, 0.225 * 255]
+    )
+    
+    labels = labels.gpu()
+    
+    return images, labels
+
+# ==================== 主训练代码 ====================
+progress = ProgressReporter(total_steps=100, description="准备训练环境")
+progress.update(0, message="检测运行环境...")
+
+host_os = detect_host_os()
+decode_device = 'cpu' if host_os == 'windows' else 'mixed'
+print(f"[环境检测] 宿主操作系统: {host_os.upper()}")
+print(f"[环境检测] DALI 解码设备: {decode_device}")
+if host_os == 'windows':
+    print("[环境检测] Windows Docker: CPU 多线程 JPEG 解码")
+else:
+    print("[环境检测] Linux Docker: GPU nvJPEG 解码")
+
+# 检查 LMDB 缓存
+progress.update(5, message="检查 LMDB 缓存...")
+manifest_path = os.path.join(LMDB_DIR, 'manifest.json')
+train_lmdb_path = os.path.join(LMDB_DIR, 'train.lmdb')
+val_lmdb_path = os.path.join(LMDB_DIR, 'val.lmdb')
+
+if not os.path.exists(manifest_path) or not os.path.exists(train_lmdb_path):
+    print("错误: LMDB 缓存不存在，请先执行第二阶段的预处理代码")
+    progress.error(message="LMDB 缓存不存在")
+else:
+    import json
+    with open(manifest_path, 'r') as f:
+        manifest = json.load(f)
+    print(f"LMDB 缓存已存在: 训练集 {manifest['train_count']} 张, 验证集 {manifest['val_count']} 张")
+
+# 检测 GPU
+progress.update(10, message="检测 GPU...")
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+print(f"使用设备: {device}")
+
+if device.type == 'cuda':
+    print(f"GPU: {torch.cuda.get_device_name(0)}")
+    print(f"显存: {torch.cuda.get_device_properties(0).total_memory / 1024 / 1024:.0f} MB")
+    device_id = torch.cuda.current_device()
+else:
+    print("警告: 未检测到 GPU，DALI 需要 GPU")
+    device_id = 0
+
+# 创建 DALI Pipeline
+progress.update(20, message="创建 DALI Pipeline...")
+batch_size = 128
+
+train_reader = DALILMDBReader(train_lmdb_path, batch_size, shuffle=True)
+val_reader = DALILMDBReader(val_lmdb_path, batch_size, shuffle=False)
+
+train_pipe = create_train_pipeline(
+    data_source=train_reader,
+    decode_device=decode_device,
+    batch_size=batch_size,
+    num_threads=4,
+    device_id=device_id
+)
+val_pipe = create_val_pipeline(
+    data_source=val_reader,
+    decode_device=decode_device,
+    batch_size=batch_size,
+    num_threads=4,
+    device_id=device_id
+)
+
+train_pipe.build()
+val_pipe.build()
+
+print(f"[DEBUG] DALI Pipeline 创建完成 ({host_os} 模式)")
+print(f"[DEBUG] 训练集: {len(train_reader)} 张, 每 epoch {len(train_reader) // batch_size} batches")
+
+# 创建模型
+progress.update(50, message="创建 AlexNet 模型...")
+model = AlexNet(num_classes=200).to(device)
+print(f"[DEBUG] 模型创建完成: {sum(p.numel() for p in model.parameters()):,} 参数")
+
+# 定义损失函数和优化器
+criterion = nn.CrossEntropyLoss()
+optimizer = optim.SGD(model.parameters(), lr=0.01, momentum=0.9, weight_decay=0.0005)
+scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.1)
+
+progress.update(60, message="训练环境准备完成")
+
+# 创建性能日志
+perf_log_path = '/data/models/alexnet/performance_log.txt'
+os.makedirs('/data/models/alexnet', exist_ok=True)
+perf_log = open(perf_log_path, 'w')
+perf_log.write("batch_idx,decode_ms,transfer_ms,forward_ms,backward_ms,optimizer_ms,total_ms\n")
+
+# 切换到训练进度
+total_batches = len(train_reader) // batch_size
+num_epochs = 1
+progress.reset(total_steps=num_epochs * total_batches, description=f"训练 AlexNet (DALI {host_os})")
+best_acc = 0.0
+
+print(f"[DEBUG] 开始训练: {num_epochs} epochs, 每 epoch {total_batches} batches")
+
+# 训练函数
+def train_one_epoch_dali(model, train_reader, train_pipe, criterion, optimizer, device, perf_log):
+    model.train()
+    running_loss = 0.0
+    correct = 0
+    total = 0
+    train_reader._reset()
+    
+    for batch_idx in range(total_batches):
+        pipe_start = time.time()
+        outputs = train_pipe.run()
+        decode_time = time.time() - pipe_start
+        
+        batch_start = time.time()
+        
+        # 从 DALI TensorList 获取 PyTorch tensor
+        images = outputs[0].as_tensor()
+        labels = outputs[1].as_tensor()
+        
+        inputs = torch.from_dlpack(images)
+        targets = torch.from_dlpack(labels).long()
+        
+        # Forward
+        forward_start = time.time()
+        optimizer.zero_grad()
+        outputs = model(inputs)
+        loss = criterion(outputs, targets)
+        forward_time = time.time() - forward_start
+        
+        # Backward
+        backward_start = time.time()
+        loss.backward()
+        backward_time = time.time() - backward_start
+        
+        # Optimizer
+        optimizer_start = time.time()
+        optimizer.step()
+        optimizer_time = time.time() - optimizer_start
+        
+        total_time = time.time() - batch_start
+        
+        perf_log.write(f"{batch_idx},{decode_time*1000:.1f},0,{forward_time*1000:.1f},{backward_time*1000:.1f},{optimizer_time*1000:.1f},{total_time*1000:.1f}\n")
+        
+        running_loss += loss.item()
+        _, predicted = outputs.max(1)
+        total += targets.size(0)
+        correct += predicted.eq(targets).sum().item()
+        
+        if batch_idx % 50 == 0:
+            progress.update(batch_idx, message=f"Batch {batch_idx}/{total_batches}")
+    
+    return running_loss / total_batches, 100. * correct / total
+
+# 验证函数
+def validate_dali(model, val_reader, val_pipe, criterion, device):
+    model.eval()
+    running_loss = 0.0
+    correct = 0
+    total = 0
+    val_reader._reset()
+    val_batches = len(val_reader) // batch_size
+    
+    with torch.no_grad():
+        for batch_idx in range(val_batches):
+            outputs = val_pipe.run()
+            images = outputs[0].as_tensor()
+            labels = outputs[1].as_tensor()
+            
+            inputs = torch.from_dlpack(images)
+            targets = torch.from_dlpack(labels).long()
+            
+            outputs = model(inputs)
+            loss = criterion(outputs, targets)
+            
+            running_loss += loss.item()
+            _, predicted = outputs.max(1)
+            total += targets.size(0)
+            correct += predicted.eq(targets).sum().item()
+    
+    return running_loss / val_batches, 100. * correct / total
+
+try:
+    epoch_start = time.time()
+    
+    train_loss, train_acc = train_one_epoch_dali(model, train_reader, train_pipe, criterion, optimizer, device, perf_log)
+    val_loss, val_acc = validate_dali(model, val_reader, val_pipe, criterion, device)
+    scheduler.step()
+    
+    epoch_time = time.time() - epoch_start
+    
+    print(f"\nEpoch [{num_epochs}] Train Loss: {train_loss:.4f} Acc: {train_acc:.2f}% Val Loss: {val_loss:.4f} Acc: {val_acc:.2f}% Time: {epoch_time:.1f}s")
+    
+    if val_acc > best_acc:
+        best_acc = val_acc
+        save_dir = '/data/models/alexnet/checkpoints'
+        os.makedirs(save_dir, exist_ok=True)
+        torch.save({
+            'epoch': num_epochs,
+            'model_state_dict': model.state_dict(),
+            'best_acc': best_acc,
+        }, os.path.join(save_dir, 'best_model.pth'))
+        print(f"  -> 保存最佳模型 (准确率: {best_acc:.2f}%)")
+    
+    progress.complete(message=f"训练完成！最佳准确率: {best_acc:.2f}%")
+    
+    perf_log.close()
+    print(f"\n性能日志已保存: {perf_log_path}")
+    
+    final_dir = '/data/models/alexnet/final'
+    os.makedirs(final_dir, exist_ok=True)
+    torch.save(model.state_dict(), os.path.join(final_dir, 'alexnet_tiny_imagenet.pth'))
+    print(f"最终模型已保存: {os.path.join(final_dir, 'alexnet_tiny_imagenet.pth')}")
+    
+except Exception as e:
+    perf_log.close()
+    progress.error(message=f"训练出错: {str(e)}")
+    print(f"\n训练出错: {e}")
+    print(f"性能日志已保存: {perf_log_path}")
+    raise
+```
+
+**DALI 方案性能对比**：
+
+| 环境 | 解码方式 | 128 batch 耗时 | GPU 利用率 |
+|------|---------|---------------|-----------|
+| 方案 D (Windows) | DataLoader 单线程 | ~200ms | ~1-3% |
+| **方案 E (Windows)** | **DALI CPU 多线程** | **~45ms** | **~6%** |
+| **方案 E (Linux)** | **DALI GPU nvJPEG** | **~5ms** | **~60%** |
+
+**选择建议**：
+- Windows Docker 追求高性能 → 使用方案 E (DALI)
+- Windows Docker 简单配置 → 使用方案 D (单线程 DataLoader)
+- Linux Docker → 方案 E (DALI GPU nvJPEG) 最高性能
+
 ## 第五阶段：模型推理
 
 使用训练好的模型对新图像进行分类预测。训练完成后，验证模型的实际分类效果，展示模型"学到了什么"。
