@@ -198,12 +198,9 @@ CACHE_DIR = '/data/cache/preprocessing/tiny-imagenet-224-minimal'
 
 class MinimalPreprocessCache:
     """
-    最小缓存策略：只执行 Resize，保存为 JPEG 格式
-    
-    缓存大小：约 600MB（而非原方案的 60GB）
-    内存需求：训练时约 4GB（而非原方案的 67GB）
+    最小缓存策略：执行 64*64 -> 224*224 Resize，保存为 JPEG 格式
+    缓存大小：约 600MB，训练时约 4GB 内存
     """
-    
     def __init__(self, data_dir, cache_dir):
         self.data_dir = data_dir
         self.cache_dir = cache_dir
@@ -230,7 +227,7 @@ class MinimalPreprocessCache:
         return 0, 0
     
     def _preprocess_train_set(self, progress):
-        """预处理训练集（支持断点续传）"""
+        """预处理训练集"""
         train_dir = os.path.join(self.data_dir, 'train')
         classes = sorted(os.listdir(train_dir))
         
@@ -240,7 +237,7 @@ class MinimalPreprocessCache:
         for cls_idx, cls in enumerate(classes):
             cls_cache_dir = os.path.join(self.train_cache, cls)
             
-            # 断点续传：检查已存在的类别目录
+            # 中断恢复：检查已存在的类别目录
             if os.path.exists(cls_cache_dir):
                 existing_files = [f for f in os.listdir(cls_cache_dir) if f.endswith('.JPEG')]
                 if len(existing_files) >= 500:
@@ -272,7 +269,7 @@ class MinimalPreprocessCache:
         return total_count
     
     def _preprocess_val_set(self, progress):
-        """预处理验证集（支持断点续传）"""
+        """预处理验证集"""
         val_dir = os.path.join(self.data_dir, 'val')
         val_images_dir = os.path.join(val_dir, 'images')
         val_annotations = os.path.join(val_dir, 'val_annotations.txt')
@@ -290,10 +287,9 @@ class MinimalPreprocessCache:
         
         os.makedirs(self.val_cache, exist_ok=True)
         
-        # 断点续传
+        # 中断恢复
         existing_files = [f for f in os.listdir(self.val_cache) if f.endswith('.JPEG')]
         start_idx = len(existing_files)
-        
         if start_idx >= total_val:
             progress.update(total_val, message=f"验证集已缓存: {total_val} 张")
             return total_val, []
@@ -307,7 +303,6 @@ class MinimalPreprocessCache:
                 img_name = parts[0]
                 img_path = os.path.join(val_images_dir, img_name)
                 save_path = os.path.join(self.val_cache, f'val_{line_idx}.JPEG')
-                
                 if os.path.exists(img_path):
                     try:
                         self.preprocess_image(img_path, save_path)
@@ -324,7 +319,6 @@ class MinimalPreprocessCache:
         """执行预处理（支持断点续传）"""
         start_time = time.time()
         os.makedirs(self.cache_dir, exist_ok=True)
-        
         train_count = self._preprocess_train_set(progress)
         val_count, val_labels = self._preprocess_val_set(progress)
         
@@ -332,7 +326,6 @@ class MinimalPreprocessCache:
         manifest = {
             'train_count': train_count,
             'val_count': val_count,
-            'cache_size_mb': self._estimate_cache_size(),
             'val_labels': val_labels if val_labels else self._load_existing_val_labels()
         }
         with open(self.manifest_path, 'w') as f:
@@ -343,15 +336,6 @@ class MinimalPreprocessCache:
         
         return train_count, val_count
     
-    def _estimate_cache_size(self):
-        """估算缓存大小（MB）"""
-        total_size = 0
-        for root, dirs, files in os.walk(self.cache_dir):
-            for f in files:
-                if f.endswith('.JPEG'):
-                    total_size += os.path.getsize(os.path.join(root, f))
-        return total_size / 1024 / 1024
-    
     def _load_existing_val_labels(self):
         """加载已有的验证集标签"""
         if os.path.exists(self.manifest_path):
@@ -359,8 +343,6 @@ class MinimalPreprocessCache:
                 manifest = json.load(f)
                 return manifest.get('val_labels', [])
         return []
-
-# ========== 主执行逻辑 ==========
 
 preprocessor = MinimalPreprocessCache(DATA_DIR, CACHE_DIR)
 
@@ -374,7 +356,6 @@ if preprocessor.check_cache_exists():
     print(f"缓存已存在，跳过预处理")
     print(f"训练集缓存: {train_count} 张图片")
     print(f"验证集缓存: {val_count} 张图片")
-    print(f"缓存大小: 约 {preprocessor._estimate_cache_size():.0f} MB")
 else:
     if not os.path.exists(DATA_DIR):
         print("错误: 数据集未下载，请先运行 'dmla data' 下载数据集")
@@ -382,7 +363,6 @@ else:
         progress = ProgressReporter(total_steps=200, description="预处理训练集")
         train_count, val_count = preprocessor.run(progress)
         print(f"预处理完成: 训练集 {train_count} 张, 验证集 {val_count} 张")
-        print(f"缓存大小: 约 {preprocessor._estimate_cache_size():.0f} MB")
 ```
 
 ### 数据缓存结构（方案 B：最小缓存）
