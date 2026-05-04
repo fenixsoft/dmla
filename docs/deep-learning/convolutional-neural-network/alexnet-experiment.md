@@ -1,10 +1,10 @@
 # AlexNet 训练实验
 
-本节笔者将与你一同使用现代深度学习框架（PyTorch）来复现完整的 AlexNet 训练流程，从数据准备到预处理、从模型训练到推理，进行端到端的深度学习实验，通过实践来理解经典 CNN 架构与现代机器学习框架如何结合，如何开发一个机器学习应用。
+本次工程实训中，笔者将与你一同使用现代深度学习框架（PyTorch）来复现完整的 AlexNet 训练流程，从数据准备到预处理增强、从模型训练到推理，通过实践来理解经典 CNN 架构与现代机器学习框架如何结合，并讨论在工程上如何权衡考量机器学习应用的性能、鲁棒、环境约束、资源消耗等因素。
 
 ## 实验准备
 
-在开始实验之前，请确保已[挂载数据目录](../../sandbox.md#数据管理)并下载 Tiny ImageNet 200 数据集，你可以通过 `DMLA-CLI` 工具自动完成该工作：
+在开始实验之前，请确保已[挂载数据目录](../../sandbox.md#数据管理)并下载好 Tiny ImageNet 200 数据集，你可以通过 `DMLA-CLI` 工具自动完成该工作：
 ```bash
 # 选择 "下载数据集" -> 选择 "Tiny ImageNet 200"
 dmla data
@@ -39,7 +39,7 @@ else:
     print("数据集未下载，请运行 'dmla data' 下载数据集")
 ```
 
-## 第二阶段：数据预处理与缓存
+## 第二阶段：数据预处理
 
 ### 三种缓存策略对比
 
@@ -180,12 +180,24 @@ RuntimeError: unable to allocate shared memory(shm)
 5. **训练时实时执行：** ToTensor、RandomFlip、RandomCrop、ColorJitter、Normalize
 
 ::: tip 缓存大小对比
-| 对比项 | 原方案（全量缓存） | 新方案（最小缓存） |
+| 对比项 | 原方案（全量缓存） | 新方案（LMDB 存储） |
 |--------|------------------|------------------|
 | 存储格式 | float32 tensor | JPEG（压缩） |
 | 单张大小 | ~600 KB | ~6 KB |
-| 总磁盘占用 | **~60 GB** | **~600 MB** |
-| 内存需求 | ~67 GB | ~4 GB |
+| 实际数据量 | **~60 GB** | **~660 MB** |
+| LMDB 文件大小 | N/A | **~2.3 GB**（预分配） |
+
+**注意**：LMDB 使用内存映射文件（mmap），需要预先分配最大容量空间：
+- `train.lmdb`: 预分配 2GB（实际数据 ~600MB）
+- `val.lmdb`: 预分配 256MB（实际数据 ~60MB）
+- 文件大小显示的是预分配空间，实际数据量远小于此
+
+如果之前生成的缓存文件过大（如 20GB），可以删除后重新生成：
+```bash
+# 在容器内执行（或通过 dmla data 命令）
+rm -rf /data/cache/preprocessing/tiny-imagenet-224-lmdb
+# 然后重新运行预处理代码块
+```
 :::
 
 ```python runnable gpu timeout=unlimited extract-class="LMDBPreprocessCache"
@@ -217,10 +229,10 @@ class LMDBPreprocessCache:
     - 键：图片索引（uint64，8字节）
     - 值：label（int32，4字节） + JPEG bytes
     """
-    def __init__(self, data_dir, cache_dir, map_size=10*1024*1024*1024):
+    def __init__(self, data_dir, cache_dir, map_size=2*1024*1024*1024):
         self.data_dir = data_dir
         self.cache_dir = cache_dir
-        self.map_size = map_size  # LMDB 最大容量（10GB）
+        self.map_size = map_size  # LMDB 最大容量（2GB，足够存储 600MB JPEG）
         self.train_lmdb_path = os.path.join(cache_dir, 'train.lmdb')
         self.val_lmdb_path = os.path.join(cache_dir, 'val.lmdb')
         self.manifest_path = os.path.join(cache_dir, 'manifest.json')
@@ -318,10 +330,10 @@ class LMDBPreprocessCache:
         # 重置进度条用于验证集处理
         progress.reset(total_steps=total_val, description="预处理验证集")
         
-        # 创建 LMDB 环境
+        # 创建 LMDB 环境（验证集使用较小的 map_size）
         env = lmdb.open(
             self.val_lmdb_path,
-            map_size=self.map_size,
+            map_size=256*1024*1024,  # 256MB（验证集约 60MB）
             writemap=True,
             lock=True
         )
