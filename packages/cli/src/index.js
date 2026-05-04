@@ -11,6 +11,7 @@ import { startServer, startServerSync, stopServer, getStatus } from './commands/
 import { runDoctor } from './commands/manage.js'
 import { runDataTUI, runDataCommand } from './commands/data.js'
 import { runInstallTUI } from '@icyfenix-dmla/install'
+import { runUpdate } from './commands/update.js'
 
 // 从 package.json 读取版本号
 const __filename = fileURLToPath(import.meta.url)
@@ -174,6 +175,16 @@ program
     } else {
       await runDataTUI()
     }
+  })
+
+// ─────────────────────────────────────────────────────────────
+// update 命令
+// ─────────────────────────────────────────────────────────────
+program
+  .command('update')
+  .description('更新程序（npm 自动更新）')
+  .action(async () => {
+    await runUpdate()
   })
 
 program.parse()

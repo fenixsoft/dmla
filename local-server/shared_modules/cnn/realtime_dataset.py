@@ -3,10 +3,25 @@
 
 import os
 import json
+import time
 from PIL import Image
 import torch
 from torch.utils.data import Dataset
 from torchvision import transforms
+
+# 性能日志文件（全局）
+PERF_LOG_PATH = '/data/models/alexnet/dataset_perf_log.txt'
+_perf_log_file = None
+_perf_counter = 0
+
+def _get_perf_log():
+    """获取性能日志文件（懒加载）"""
+    global _perf_log_file
+    if _perf_log_file is None:
+        os.makedirs('/data/models/alexnet', exist_ok=True)
+        _perf_log_file = open(PERF_LOG_PATH, 'w')
+        _perf_log_file.write("idx,jpeg_decode_ms,to_tensor_ms,augment_ms,total_ms\n")
+    return _perf_log_file
 
 
 class RealtimeAugmentDataset(Dataset):
@@ -71,46 +86,68 @@ class RealtimeAugmentDataset(Dataset):
                             self.image_paths.append(os.path.join(cls_dir, img_name))
                             self.labels.append(class_to_idx.get(cls, cls_idx))
 
-        # CPU 数据增强（训练集）
+        # CPU 数据增强（训练集）- 分离各个变换以便测量耗时
         if augment:
-            self.transform = transforms.Compose([
-                transforms.ToTensor(),
+            self.to_tensor = transforms.ToTensor()
+            self.augment_transform = transforms.Compose([
                 transforms.RandomHorizontalFlip(p=0.5),
                 transforms.RandomCrop(224, padding=4),
                 transforms.ColorJitter(brightness=0.2, contrast=0.2),
             ])
         else:
             # 验证集预处理（无增强）
-            self.transform = transforms.Compose([
-                transforms.ToTensor(),
-            ])
+            self.to_tensor = transforms.ToTensor()
+            self.augment_transform = None
 
         # Normalize（可在 CPU 或 GPU 执行）
-        if not normalize_on_gpu:
-            self.transform = transforms.Compose([
-                self.transform,
-                transforms.Normalize(mean=self.MEAN, std=self.STD)
-            ])
+        self.normalize = None if normalize_on_gpu else transforms.Normalize(mean=self.MEAN, std=self.STD)
 
     def __len__(self):
         return len(self.image_paths)
 
     def __getitem__(self, idx):
         """
-        获取单张图片
+        获取单张图片（带详细耗时测量）
 
         Returns:
             image: tensor [3, 224, 224]
             label: int
         """
+        global _perf_counter
+
+        start_time = time.time()
         img_path = self.image_paths[idx]
         label = self.labels[idx]
 
-        # 从缓存读取 JPEG
+        # 1. JPEG 解码耗时
+        jpeg_start = time.time()
         image = Image.open(img_path).convert('RGB')
+        jpeg_time = time.time() - jpeg_start
 
-        # 执行变换
-        image = self.transform(image)
+        # 2. ToTensor 耗时
+        to_tensor_start = time.time()
+        image = self.to_tensor(image)
+        to_tensor_time = time.time() - to_tensor_start
+
+        # 3. 数据增强耗时（如果有）
+        augment_time = 0.0
+        if self.augment_transform:
+            augment_start = time.time()
+            image = self.augment_transform(image)
+            augment_time = time.time() - augment_start
+
+        # 4. Normalize 耗时（如果在 CPU 执行）
+        if self.normalize:
+            image = self.normalize(image)
+
+        total_time = time.time() - start_time
+
+        # 采样记录日志（每100张记录一次，避免日志过大）
+        _perf_counter += 1
+        if _perf_counter % 100 == 0:
+            log = _get_perf_log()
+            log.write(f"{idx},{jpeg_time*1000:.1f},{to_tensor_time*1000:.1f},{augment_time*1000:.1f},{total_time*1000:.1f}\n")
+            log.flush()
 
         return image, label
 

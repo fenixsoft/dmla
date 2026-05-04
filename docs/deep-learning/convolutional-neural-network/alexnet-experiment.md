@@ -621,6 +621,13 @@ scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.1)
 
 progress.update(60, message="训练环境准备完成")
 
+# 创建性能日志文件
+perf_log_path = '/data/models/alexnet/performance_log.txt'
+os.makedirs('/data/models/alexnet', exist_ok=True)
+perf_log = open(perf_log_path, 'w')
+perf_log.write("batch_idx,data_load_ms,transfer_ms,normalize_ms,forward_ms,backward_ms,optimizer_ms,total_ms\n")
+print(f"[DEBUG] 性能日志文件: {perf_log_path}")
+
 # 切换到训练阶段进度
 total_batches = len(train_loader)
 num_epochs = 20
@@ -630,23 +637,59 @@ best_acc = 0.0
 
 print(f"[DEBUG] 开始训练: {num_epochs} epochs, 每 epoch {total_batches} batches")
 
-# 训练函数
-def train_one_epoch(model, train_loader, criterion, optimizer, device, epoch, progress, current_batch):
+# 训练函数（带详细耗时日志）
+def train_one_epoch(model, train_loader, criterion, optimizer, device, epoch, progress, current_batch, perf_log):
     model.train()
     running_loss = 0.0
     correct = 0
     total = 0
     
     for batch_idx, (inputs, targets) in enumerate(train_loader):
-        # Normalize 在 GPU 执行
-        inputs = normalize_batch(inputs.to(device))
-        targets = targets.to(device)
+        batch_start = time.time()
         
+        # 1. 测量数据传输耗时
+        transfer_start = time.time()
+        inputs_cpu = inputs  # 数据已经在CPU（从DataLoader获取）
+        targets_cpu = targets
+        transfer_time = time.time() - transfer_start
+        
+        # 2. 测量传输到GPU耗时
+        gpu_transfer_start = time.time()
+        inputs_gpu = inputs_cpu.to(device)
+        targets_gpu = targets_cpu.to(device)
+        gpu_transfer_time = time.time() - gpu_transfer_start
+        
+        # 3. 测量Normalize耗时（在GPU执行）
+        normalize_start = time.time()
+        inputs_norm = normalize_batch(inputs_gpu)
+        normalize_time = time.time() - normalize_start
+        
+        # 4. 测量前向传播耗时
+        forward_start = time.time()
         optimizer.zero_grad()
-        outputs = model(inputs)
-        loss = criterion(outputs, targets)
+        outputs = model(inputs_norm)
+        forward_time = time.time() - forward_start
+        
+        # 5. 测量损失计算耗时
+        loss_start = time.time()
+        loss = criterion(outputs, targets_gpu)
+        loss_time = time.time() - loss_start
+        
+        # 6. 测量反向传播耗时
+        backward_start = time.time()
         loss.backward()
+        backward_time = time.time() - backward_start
+        
+        # 7. 测量优化器step耗时
+        optimizer_start = time.time()
         optimizer.step()
+        optimizer_time = time.time() - optimizer_start
+        
+        batch_total = time.time() - batch_start
+        
+        # 写入日志（每10个batch写一次，避免文件太大）
+        if batch_idx % 10 == 0:
+            perf_log.write(f"{batch_idx},0.0,{gpu_transfer_time*1000:.1f},{normalize_time*1000:.1f},{forward_time*1000:.1f},{backward_time*1000:.1f},{optimizer_time*1000:.1f},{batch_total*1000:.1f}\n")
         
         running_loss += loss.item()
         _, predicted = outputs.max(1)
@@ -700,7 +743,7 @@ try:
         
         train_loss, train_acc, current_batch = train_one_epoch(
             model, train_loader, criterion, optimizer, device,
-            epoch, progress, current_batch // 10
+            epoch, progress, current_batch // 10, perf_log
         )
         
         val_loss, val_acc = validate(model, val_loader, criterion, device)
@@ -734,14 +777,22 @@ try:
     
     progress.complete(message=f"训练完成！最佳验证准确率: {best_acc:.2f}%")
     
+    # 关闭性能日志
+    perf_log.close()
+    print(f"\n性能日志已保存: {perf_log_path}")
+    print(f"Dataset 日志已保存: /data/models/alexnet/dataset_perf_log.txt")
+    
     final_dir = '/data/models/alexnet/final'
     os.makedirs(final_dir, exist_ok=True)
     torch.save(model.state_dict(), os.path.join(final_dir, 'alexnet_tiny_imagenet.pth'))
     print(f"\n最终模型已保存: {os.path.join(final_dir, 'alexnet_tiny_imagenet.pth')}")
     
 except Exception as e:
+    # 确保日志关闭
+    perf_log.close()
     progress.error(message=f"训练出错: {str(e)}")
     print(f"\n训练出错: {e}")
+    print(f"\n性能日志已保存: {perf_log_path}（可用于分析瓶颈）")
     raise
 ```
 
