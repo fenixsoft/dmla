@@ -277,36 +277,68 @@ ${importsSection}${classCode}
   return { path: modulePath, content };
 }
 
-// 更新 __init__.py
+// 更新 __init__.py（完全重新生成，扫描目录中所有 .py 文件）
 function updateInitPy(moduleDir, classNames) {
   const initPath = path.join(SHARED_MODULES_DIR, moduleDir, '__init__.py');
+  const moduleFullPath = path.join(SHARED_MODULES_DIR, moduleDir);
 
   if (!fs.existsSync(initPath)) {
     return;
   }
 
-  let content = fs.readFileSync(initPath, 'utf-8');
+  // 扫描目录下所有 .py 文件（排除 __init__.py 和 __pycache__）
+  const existingFiles = fs.readdirSync(moduleFullPath)
+    .filter(f => f.endsWith('.py') && f !== '__init__.py');
 
-  // 添加导入语句
-  for (const className of classNames) {
-    const importLine = `from .${classNameToFileName(className)} import ${className}`;
-    if (!content.includes(importLine)) {
-      // 在 __all__ = [] 之前添加 import
-      content = content.replace(
-        /(__all__\s*=\s*\[)/,
-        `${importLine}\n$1`
-      );
-      // 添加到 __all__
-      content = content.replace(
-        /(__all__\s*=\s*\[)([^\]]*)(\])/,
-        `$1$2, '${className}'$3`
-      );
-      // 清理多余的逗号
-      content = content.replace(/,(\s*])/, '$1');  // 末尾逗号
-      content = content.replace(/,\s*,/g, ',');    // 连续逗号
-      content = content.replace(/\[,/, '[');       // 开头逗号
+  // 从 .py 文件内容中提取类名，并映射到实际文件名
+  const fileClassMap = {};  // 文件名 -> 类名列表
+  const allClassNames = [];
+
+  for (const file of existingFiles) {
+    const filePath = path.join(moduleFullPath, file);
+    const content = fs.readFileSync(filePath, 'utf-8');
+    const classMatches = content.match(/^class\s+(\w+)/gm);
+    const classes = classMatches ? classMatches.map(m => m.replace('class ', '')) : [];
+
+    if (classes.length > 0) {
+      fileClassMap[file] = classes;
+      allClassNames.push(...classes);
     }
   }
+
+  // 合并新提取的类名
+  allClassNames.push(...classNames);
+  const uniqueClassNames = [...new Set(allClassNames)];
+
+  // 生成导入语句
+  // 对于已有文件中的类，使用实际文件名；对于新类，使用推断的文件名
+  const imports = [];
+  for (const className of uniqueClassNames) {
+    // 查找类所在的实际文件
+    let actualFileName = null;
+    for (const [file, classes] of Object.entries(fileClassMap)) {
+      if (classes.includes(className)) {
+        actualFileName = file.replace('.py', '');
+        break;
+      }
+    }
+
+    // 如果没找到，使用推断的文件名
+    if (!actualFileName) {
+      actualFileName = classNameToFileName(className);
+    }
+
+    imports.push(`from .${actualFileName} import ${className}`);
+  }
+
+  // 生成 __all__ 列表
+  const allList = uniqueClassNames.map(n => `'${n}'`).join(', ');
+
+  const content = `# ${moduleDir.toUpperCase()} 模块
+${imports.join('\n')}
+
+__all__ = [${allList}]
+`;
 
   fs.writeFileSync(initPath, content);
 }
@@ -327,7 +359,9 @@ function main() {
   // 遍历 docs 下的所有子目录
   const categories = fs.readdirSync(DOCS_DIR).filter(f => {
     const fullPath = path.join(DOCS_DIR, f);
-    return fs.statSync(fullPath).isDirectory() && !f.startsWith('.');
+    return fs.statSync(fullPath).isDirectory() &&
+           !f.startsWith('.') &&
+           f !== 'superpowers';  // 排除 superpowers（内部文档）
   });
 
   for (const category of categories) {
@@ -388,25 +422,27 @@ function main() {
     console.log(`  ✓ ${moduleDir}/__init__.py`);
   }
 
-  // 更新顶层 __init__.py
+  // 更新顶层 __init__.py（完全重新生成）
   const topInitPath = path.join(SHARED_MODULES_DIR, '__init__.py');
   if (fs.existsSync(topInitPath)) {
-    let content = fs.readFileSync(topInitPath, 'utf-8');
-    const allImports = [];
+    // 获取所有子模块目录（排除 __pycache__）
+    const subModules = fs.readdirSync(SHARED_MODULES_DIR).filter(f => {
+      const fullPath = path.join(SHARED_MODULES_DIR, f);
+      return fs.statSync(fullPath).isDirectory() &&
+             !f.startsWith('.') &&
+             f !== '__pycache__';
+    });
 
-    for (const [moduleDir, classNames] of Object.entries(moduleClasses)) {
-      for (const className of classNames) {
-        const importLine = `from .${moduleDir}.${classNameToFileName(className)} import ${className}`;
-        if (!content.includes(importLine)) {
-          allImports.push(importLine);
-        }
-      }
-    }
+    // 生成简洁的 __init__.py：只使用 from .xxx import * 模式
+    const imports = subModules.map(m => `from .${m} import *`).join('\n');
+    const content = `# shared 模块包初始化
+# 包含统计学习系列文档中可复用的类定义
 
-    if (allImports.length > 0) {
-      content = allImports.join('\n') + '\n' + content;
-      fs.writeFileSync(topInitPath, content);
-    }
+${imports}
+`;
+
+    fs.writeFileSync(topInitPath, content);
+    console.log('  ✓ shared_modules/__init__.py');
   }
 
   console.log('\n✓ 提取完成！');
