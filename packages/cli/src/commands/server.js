@@ -399,8 +399,9 @@ function findSharedModulesPath() {
  * @param {number} port - 服务端口
  * @param {boolean} useGpu - 是否使用 GPU（可选，自动检测）
  * @param {boolean} dev - 开发模式（挂载本地代码）
+ * @param {number} shmSize - Docker 共享内存大小（MB）
  */
-export async function startServerSync(port, useGpu = false, dev = false) {
+export async function startServerSync(port, useGpu = false, dev = false, shmSize = 64) {
   // 检查端口
   const portAvailable = await checkPortAvailable(port)
   if (!portAvailable) {
@@ -501,6 +502,7 @@ export async function startServerSync(port, useGpu = false, dev = false) {
   process.env.PORT = port.toString()
   process.env.USE_GPU = resolvedUseGpu ? 'true' : 'false'
   process.env.DMLA_SYNC_MODE = 'true'  // 标记同步模式，让服务器在 import 时启动
+  process.env.DMLA_SHM_SIZE = shmSize.toString()  // Docker 共享内存大小（MB）
 
   // --dev 模式：启用 Volume Mount
   if (dev) {
@@ -534,8 +536,9 @@ export async function startServerSync(port, useGpu = false, dev = false) {
  * @param {number} port - 服务端口
  * @param {boolean} useGpu - 是否使用 GPU（可选，自动检测）
  * @param {boolean} dev - 开发模式（挂载本地代码）
+ * @param {number} shmSize - Docker 共享内存大小（MB）
  */
-export async function startServer(port, useGpu = false, dev = false) {
+export async function startServer(port, useGpu = false, dev = false, shmSize = 64) {
   // 检查端口
   const portAvailable = await checkPortAvailable(port)
   if (!portAvailable) {

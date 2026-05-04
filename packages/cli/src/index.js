@@ -96,15 +96,20 @@ program
   .option('--gpu', '使用 GPU 镜像')
   .option('--sync', '同步模式：在当前进程运行，日志直接输出（用于调试）')
   .option('--dev', '开发模式：挂载本地代码到容器，无需重建镜像')
+  .option('--shm-size <size>', 'Docker 共享内存大小（MB），用于 DataLoader 多线程。GPU 模式默认 1024MB，CPU 模式默认 64MB')
   .action(async (options) => {
     const port = parseInt(options.port, 10)
     const useGpu = options.gpu
     const sync = options.sync
     const dev = options.dev
+    // GPU 模式默认 1GB shm，CPU 模式默认 64MB
+    const defaultShm = useGpu ? 1024 : 64
+    const shmSize = options.shmSize ? parseInt(options.shmSize, 10) : defaultShm
 
     console.log(chalk.blue('启动 DMLA 沙箱服务...'))
     console.log(chalk.gray(`   端口: ${port}`))
     console.log(chalk.gray(`   请求类型: ${useGpu ? 'GPU' : '自动选择'}`))
+    console.log(chalk.gray(`   共享内存: ${shmSize}MB（DataLoader 多线程需要足够 shm）`))
     if (sync) {
       console.log(chalk.yellow(`   模式: 同步（调试模式）`))
     }
@@ -113,9 +118,9 @@ program
     }
 
     if (sync) {
-      await startServerSync(port, useGpu, dev)
+      await startServerSync(port, useGpu, dev, shmSize)
     } else {
-      await startServer(port, useGpu, dev)
+      await startServer(port, useGpu, dev, shmSize)
     }
   })
 
