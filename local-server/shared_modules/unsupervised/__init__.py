@@ -1,4 +1,4 @@
-# Unsupervised 模块
+# UNSUPERVISED 模块
 from .kmeans import KMeans
 from .pca import PCA
 

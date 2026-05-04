@@ -1,6 +1,6 @@
-# Tree 模块
+# TREE 模块
+from .ada_boost import AdaBoost
 from .decision_tree_classifier import DecisionTreeClassifier
 from .random_forest_classifier import RandomForestClassifier
-from .ada_boost import AdaBoost
 
-__all__ = ['DecisionTreeClassifier', 'RandomForestClassifier', 'AdaBoost']
+__all__ = ['AdaBoost', 'DecisionTreeClassifier', 'RandomForestClassifier']
