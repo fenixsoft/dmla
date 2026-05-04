@@ -64,11 +64,15 @@ RUN pip install --no-cache-dir -i https://pypi.tuna.tsinghua.edu.cn/simple \
     pillow \
     opencv-python-headless \
     ipykernel \
-    jupyter_client
+    jupyter_client \
+    lmdb
 
 # 安装 PyTorch (GPU 版本，CUDA 12.8)
 RUN pip install --no-cache-dir \
     torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu128
+
+# 安装 NVIDIA DALI（GPU 数据加载库，CUDA 12.x 版本）
+RUN pip install --no-cache-dir nvidia-dali-cuda120
 
 # 复制执行器和诊断脚本
 COPY local-server/src/kernel_runner.py /workspace/kernel_runner.py
