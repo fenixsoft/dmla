@@ -556,6 +556,14 @@ export function getSharedModulesPath() {
 }
 
 /**
+ * 获取服务端 Python 路径（kernel_runner.py 和 dmla_progress.py 所在目录）
+ * @returns {string}
+ */
+export function getServerPythonPath() {
+  return path.resolve(__dirname)
+}
+
+/**
  * 获取 kernel_runner.py 路径
  * @returns {string}
  */
@@ -585,6 +593,7 @@ export default {
   getCachedEnvironment,
   clearCache,
   getSharedModulesPath,
+  getServerPythonPath,
   getKernelRunnerPath,
   getDataPath,
   getProgressPath,
