@@ -442,6 +442,7 @@ export async function runPythonCodeStreamingNative(code, useGpu = false, res, ti
   // Windows 下使用临时文件传递代码，避免 shell 参数解析问题
   let codeFile = null
   let procArgs = []
+  let proc = null
 
   if (process.platform === 'win32') {
     // 创建临时代码文件
