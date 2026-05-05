@@ -18,6 +18,20 @@ import time
 import traceback
 from typing import Optional
 
+
+def output_json(data):
+    """
+    输出 JSON 到 stdout（原子输出，防止大 JSON 被分割）
+    使用 sys.stdout.write 确保一次性输出，避免 Python print 的分割问题
+    """
+    try:
+        json_str = json.dumps(data, ensure_ascii=False)
+        sys.stdout.write(json_str + '\n')
+        sys.stdout.flush()
+    except Exception as e:
+        # 输出失败，尝试打印警告
+        print(f"Warning: Failed to output JSON: {e}")
+
 # 调试日志文件（容器内路径）
 DEBUG_LOG = '/tmp/kernel_runner.log'
 
@@ -258,8 +272,8 @@ def run_code(code: str, timeout: int = DEFAULT_TIMEOUT, stream: bool = False) ->
                 }
 
                 if stream:
-                    # 流式模式：立即输出
-                    print(json.dumps(stream_output, ensure_ascii=False), flush=True)
+                    # 流式模式：立即输出（使用原子输出防止大 JSON 被分割）
+                    output_json(stream_output)
                 else:
                     outputs.append(stream_output)
                 log_debug(f'Stream output: {content.get("name")} len={len(content.get("text", ""))}')
@@ -272,8 +286,8 @@ def run_code(code: str, timeout: int = DEFAULT_TIMEOUT, stream: bool = False) ->
                 }
 
                 if stream:
-                    # 流式模式：立即输出
-                    print(json.dumps(display_output, ensure_ascii=False), flush=True)
+                    # 流式模式：立即输出（使用原子输出防止大 JSON 被分割）
+                    output_json(display_output)
                 else:
                     outputs.append(display_output)
                 final_outputs.append(display_output)  # 汇总到最终结果
@@ -288,8 +302,8 @@ def run_code(code: str, timeout: int = DEFAULT_TIMEOUT, stream: bool = False) ->
                 }
 
                 if stream:
-                    # 流式模式：立即输出
-                    print(json.dumps(result_output, ensure_ascii=False), flush=True)
+                    # 流式模式：立即输出（使用原子输出防止大 JSON 被分割）
+                    output_json(result_output)
                 else:
                     outputs.append(result_output)
                 final_outputs.append(result_output)  # 汇总到最终结果
@@ -312,8 +326,8 @@ def run_code(code: str, timeout: int = DEFAULT_TIMEOUT, stream: bool = False) ->
                 has_error = True
 
                 if stream:
-                    # 流式模式：立即输出
-                    print(json.dumps(error_output, ensure_ascii=False), flush=True)
+                    # 流式模式：立即输出（使用原子输出防止大 JSON 被分割）
+                    output_json(error_output)
                 else:
                     outputs.append(error_output)
                 final_outputs.append(error_output)  # 汇总到最终结果
@@ -347,28 +361,26 @@ def run_code(code: str, timeout: int = DEFAULT_TIMEOUT, stream: bool = False) ->
                 'executionTime': round(execution_time, 3)
             }
             if stream:
-                # 流式模式：输出超时消息
-                print(json.dumps({'type': 'error', 'ename': 'TimeoutError',
-                                  'evalue': f'Execution timed out after {timeout} seconds',
-                                  'traceback': [f'Execution timed out after {timeout} seconds']},
-                                 ensure_ascii=False), flush=True)
-                print(json.dumps({'type': 'result', 'success': False,
-                                  'executionTime': round(execution_time, 3)},
-                                 ensure_ascii=False), flush=True)
+                # 流式模式：输出超时消息（使用原子输出）
+                output_json({'type': 'error', 'ename': 'TimeoutError',
+                             'evalue': f'Execution timed out after {timeout} seconds',
+                             'traceback': [f'Execution timed out after {timeout} seconds']})
+                output_json({'type': 'result', 'success': False,
+                             'executionTime': round(execution_time, 3)})
                 return {}
             return timeout_result
 
         success = not has_error
 
         if stream:
-            # 流式模式：输出最终结果消息
+            # 流式模式：输出最终结果消息（使用原子输出）
             result_msg = {
                 'type': 'result',
                 'success': success,
                 'outputs': final_outputs,
                 'executionTime': round(execution_time, 3)
             }
-            print(json.dumps(result_msg, ensure_ascii=False), flush=True)
+            output_json(result_msg)
             return {}
 
         return {
@@ -396,12 +408,11 @@ def run_code(code: str, timeout: int = DEFAULT_TIMEOUT, stream: bool = False) ->
             log_debug(f'Detected CUDA compatibility error in exception, enriched output')
 
         if stream:
-            # 流式模式：输出错误消息和结果消息
-            print(json.dumps(error_output, ensure_ascii=False), flush=True)
-            print(json.dumps({'type': 'result', 'success': False,
-                              'outputs': [error_output],
-                              'executionTime': round(execution_time, 3)},
-                             ensure_ascii=False), flush=True)
+            # 流式模式：输出错误消息和结果消息（使用原子输出）
+            output_json(error_output)
+            output_json({'type': 'result', 'success': False,
+                         'outputs': [error_output],
+                         'executionTime': round(execution_time, 3)})
             return {}
 
         return {
@@ -488,12 +499,48 @@ def check_cuda_compatibility():
 
 def main():
     parser = argparse.ArgumentParser(description='IPython Kernel 执行器')
-    parser.add_argument('--code', type=str, required=True, help='要执行的 Python 代码')
+    parser.add_argument('--code', type=str, help='要执行的 Python 代码')
+    parser.add_argument('--code-file', type=str, help='从文件读取要执行的 Python 代码（Windows 推荐）')
     parser.add_argument('--timeout', type=int, default=DEFAULT_TIMEOUT, help='执行超时时间（秒）')
     parser.add_argument('--check-cuda', action='store_true', help='仅检查 CUDA 兼容性')
     parser.add_argument('--stream', action='store_true', help='启用流式输出模式（实时输出每个消息）')
 
     args = parser.parse_args()
+
+    # 获取代码（优先从文件读取）
+    code = None
+    if args.code_file:
+        try:
+            with open(args.code_file, 'r', encoding='utf-8') as f:
+                code = f.read()
+        except Exception as e:
+            result = {
+                'success': False,
+                'outputs': [{
+                    'type': 'error',
+                    'ename': 'FileReadError',
+                    'evalue': str(e),
+                    'traceback': [f'无法读取代码文件: {args.code_file}']
+                }],
+                'executionTime': 0
+            }
+            print(json.dumps(result, ensure_ascii=False))
+            return
+    elif args.code:
+        code = args.code
+    else:
+        result = {
+            'success': False,
+            'outputs': [{
+                'type': 'error',
+                'ename': 'ArgumentError',
+                'evalue': '缺少代码参数',
+                'traceback': ['请提供 --code 或 --code-file 参数']
+            }],
+            'executionTime': 0
+        }
+        print(json.dumps(result, ensure_ascii=False))
+        return
 
     # CUDA 兼容性检查模式
     if args.check_cuda:
@@ -501,7 +548,7 @@ def main():
         print(json.dumps(result, ensure_ascii=False))
         return
 
-    result = run_code(args.code, args.timeout, stream=args.stream)
+    result = run_code(code, args.timeout, stream=args.stream)
 
     # 非流式模式：输出 JSON 结果到 stdout
     if not args.stream:

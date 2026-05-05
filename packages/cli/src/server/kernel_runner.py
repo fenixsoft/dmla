@@ -499,12 +499,48 @@ def check_cuda_compatibility():
 
 def main():
     parser = argparse.ArgumentParser(description='IPython Kernel 执行器')
-    parser.add_argument('--code', type=str, required=True, help='要执行的 Python 代码')
+    parser.add_argument('--code', type=str, help='要执行的 Python 代码')
+    parser.add_argument('--code-file', type=str, help='从文件读取要执行的 Python 代码（Windows 推荐）')
     parser.add_argument('--timeout', type=int, default=DEFAULT_TIMEOUT, help='执行超时时间（秒）')
     parser.add_argument('--check-cuda', action='store_true', help='仅检查 CUDA 兼容性')
     parser.add_argument('--stream', action='store_true', help='启用流式输出模式（实时输出每个消息）')
 
     args = parser.parse_args()
+
+    # 获取代码（优先从文件读取）
+    code = None
+    if args.code_file:
+        try:
+            with open(args.code_file, 'r', encoding='utf-8') as f:
+                code = f.read()
+        except Exception as e:
+            result = {
+                'success': False,
+                'outputs': [{
+                    'type': 'error',
+                    'ename': 'FileReadError',
+                    'evalue': str(e),
+                    'traceback': [f'无法读取代码文件: {args.code_file}']
+                }],
+                'executionTime': 0
+            }
+            print(json.dumps(result, ensure_ascii=False))
+            return
+    elif args.code:
+        code = args.code
+    else:
+        result = {
+            'success': False,
+            'outputs': [{
+                'type': 'error',
+                'ename': 'ArgumentError',
+                'evalue': '缺少代码参数',
+                'traceback': ['请提供 --code 或 --code-file 参数']
+            }],
+            'executionTime': 0
+        }
+        print(json.dumps(result, ensure_ascii=False))
+        return
 
     # CUDA 兼容性检查模式
     if args.check_cuda:
@@ -512,7 +548,7 @@ def main():
         print(json.dumps(result, ensure_ascii=False))
         return
 
-    result = run_code(args.code, args.timeout, stream=args.stream)
+    result = run_code(code, args.timeout, stream=args.stream)
 
     # 非流式模式：输出 JSON 结果到 stdout
     if not args.stream:

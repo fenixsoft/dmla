@@ -3,7 +3,7 @@
  *
  * 通过子进程直接在本机执行 Python 代码，无需 Docker
  */
-import { spawn } from 'child_process'
+import { spawn, exec } from 'child_process'
 import path from 'path'
 import { fileURLToPath } from 'url'
 import os from 'os'
@@ -193,18 +193,32 @@ export async function runPythonCodeNative(code, useGpu = false, timeoutOverride 
     }
   }
 
-  // Windows 下 spawn 需要使用 shell 才能通过 PATH 查找命令
-  const spawnOptions = process.platform === 'win32'
-    ? { env, shell: true, windowsVerbatimArguments: true }
-    : { env }
+  // Windows 下使用临时文件传递代码，避免 shell 参数解析问题
+  let codeFile = null
+  let procArgs = []
 
-  try {
-    // 创建子进程
-    proc = spawn(pythonCmd, [
+  if (process.platform === 'win32') {
+    // 创建临时代码文件
+    codeFile = path.join(getDataPath(), `.code_${executionId}.py`)
+    fs.writeFileSync(codeFile, code, { encoding: 'utf-8' })
+    procArgs = [
+      kernelRunnerPath,
+      '--code-file', codeFile,
+      '--timeout', String(timeoutSeconds)
+    ]
+    log(`Windows mode: writing code to temp file ${codeFile}`)
+  } else {
+    // Linux/macOS 直接传递代码参数
+    procArgs = [
       kernelRunnerPath,
       '--code', code,
       '--timeout', String(timeoutSeconds)
-    ], spawnOptions)
+    ]
+  }
+
+  try {
+    // 创建子进程（Windows 不使用 shell，直接用完整路径或已检测的命令）
+    proc = spawn(pythonCmd, procArgs, { env })
 
     registerProcess(executionId, proc)
 
@@ -321,6 +335,15 @@ export async function runPythonCodeNative(code, useGpu = false, timeoutOverride 
 
   } finally {
     unregisterProcess(executionId)
+    // Windows 下清理临时代码文件
+    if (codeFile && fs.existsSync(codeFile)) {
+      try {
+        fs.unlinkSync(codeFile)
+        log(`Cleaned up temp code file: ${codeFile}`)
+      } catch (e) {
+        log(`Failed to clean up temp file: ${e.message}`)
+      }
+    }
     if (proc) {
       try {
         // 确保进程已终止
@@ -416,18 +439,32 @@ export async function runPythonCodeStreamingNative(code, useGpu = false, res, ti
     return
   }
 
-  // Windows 下 spawn 需要使用 shell 才能通过 PATH 查找命令
-  const spawnOptions = process.platform === 'win32'
-    ? { env, shell: true, windowsVerbatimArguments: true }
-    : { env }
+  // Windows 下使用临时文件传递代码，避免 shell 参数解析问题
+  let codeFile = null
+  let procArgs = []
 
-  try {
-    proc = spawn(pythonCmd, [
+  if (process.platform === 'win32') {
+    // 创建临时代码文件
+    codeFile = path.join(getDataPath(), `.code_${executionId}.py`)
+    fs.writeFileSync(codeFile, code, { encoding: 'utf-8' })
+    procArgs = [
+      kernelRunnerPath,
+      '--code-file', codeFile,
+      '--timeout', String(timeoutSeconds),
+      '--stream'
+    ]
+  } else {
+    // Linux/macOS 直接传递代码参数
+    procArgs = [
       kernelRunnerPath,
       '--code', code,
       '--timeout', String(timeoutSeconds),
       '--stream'
-    ], spawnOptions)
+    ]
+  }
+
+  try {
+    proc = spawn(pythonCmd, procArgs, { env })
 
     registerProcess(executionId, proc)
 
@@ -546,6 +583,15 @@ export async function runPythonCodeStreamingNative(code, useGpu = false, res, ti
     }) + '\n')
   } finally {
     unregisterProcess(executionId)
+    // Windows 下清理临时代码文件
+    if (codeFile && fs.existsSync(codeFile)) {
+      try {
+        fs.unlinkSync(codeFile)
+        log(`Cleaned up temp code file: ${codeFile}`)
+      } catch (e) {
+        log(`Failed to clean up temp file: ${e.message}`)
+      }
+    }
     res.end()
     log('Streaming response ended')
   }

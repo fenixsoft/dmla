@@ -3,13 +3,13 @@
  *
  * 通过子进程直接在本机执行 Python 代码，无需 Docker
  */
-import { spawn } from 'child_process'
+import { spawn, exec } from 'child_process'
 import path from 'path'
 import { fileURLToPath } from 'url'
 import os from 'os'
 import fs from 'fs'
 import chalk from 'chalk'
-import { getCachedEnvironment, getKernelRunnerPath, getSharedModulesPath, getDataPath, getProgressPath } from './native_env_check.js'
+import { getCachedEnvironment, getKernelRunnerPath, getSharedModulesPath, getDataPath, getProgressPath, getPythonCommand, detectPythonCommand } from './native_env_check.js'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -175,13 +175,50 @@ export async function runPythonCodeNative(code, useGpu = false, timeoutOverride 
   let proc = null
   let timeoutId = null
 
-  try {
-    // 创建子进程
-    proc = spawn('python3', [
+  // 确保 Python 命令已检测（跨平台兼容）
+  const pythonCmd = getPythonCommand() || await detectPythonCommand()
+  if (!pythonCmd) {
+    log('Python command not detected')
+    return {
+      success: false,
+      outputs: [{
+        type: 'error',
+        ename: 'EnvironmentError',
+        evalue: 'Python 未安装或不在 PATH 中',
+        traceback: ['请安装 Python 3.x']
+      }],
+      executionTime: (Date.now() - startTime) / 1000,
+      gpuUsed: false,
+      executionId
+    }
+  }
+
+  // Windows 下使用临时文件传递代码，避免 shell 参数解析问题
+  let codeFile = null
+  let procArgs = []
+
+  if (process.platform === 'win32') {
+    // 创建临时代码文件
+    codeFile = path.join(getDataPath(), `.code_${executionId}.py`)
+    fs.writeFileSync(codeFile, code, { encoding: 'utf-8' })
+    procArgs = [
+      kernelRunnerPath,
+      '--code-file', codeFile,
+      '--timeout', String(timeoutSeconds)
+    ]
+    log(`Windows mode: writing code to temp file ${codeFile}`)
+  } else {
+    // Linux/macOS 直接传递代码参数
+    procArgs = [
       kernelRunnerPath,
       '--code', code,
       '--timeout', String(timeoutSeconds)
-    ], { env })
+    ]
+  }
+
+  try {
+    // 创建子进程（Windows 不使用 shell，直接用完整路径或已检测的命令）
+    proc = spawn(pythonCmd, procArgs, { env })
 
     registerProcess(executionId, proc)
 
@@ -298,6 +335,15 @@ export async function runPythonCodeNative(code, useGpu = false, timeoutOverride 
 
   } finally {
     unregisterProcess(executionId)
+    // Windows 下清理临时代码文件
+    if (codeFile && fs.existsSync(codeFile)) {
+      try {
+        fs.unlinkSync(codeFile)
+        log(`Cleaned up temp code file: ${codeFile}`)
+      } catch (e) {
+        log(`Failed to clean up temp file: ${e.message}`)
+      }
+    }
     if (proc) {
       try {
         // 确保进程已终止
@@ -375,15 +421,50 @@ export async function runPythonCodeStreamingNative(code, useGpu = false, res, ti
     executionId
   }) + '\n')
 
-  let proc = null
+  // 确保 Python 命令已检测（跨平台兼容）
+  const pythonCmd = getPythonCommand() || await detectPythonCommand()
+  if (!pythonCmd) {
+    res.write(JSON.stringify({
+      type: 'error',
+      ename: 'EnvironmentError',
+      evalue: 'Python 未安装或不在 PATH 中',
+      traceback: ['请安装 Python 3.x']
+    }) + '\n')
+    res.write(JSON.stringify({
+      type: 'result',
+      success: false,
+      executionTime: 0
+    }) + '\n')
+    res.end()
+    return
+  }
 
-  try {
-    proc = spawn('python3', [
+  // Windows 下使用临时文件传递代码，避免 shell 参数解析问题
+  let codeFile = null
+  let procArgs = []
+
+  if (process.platform === 'win32') {
+    // 创建临时代码文件
+    codeFile = path.join(getDataPath(), `.code_${executionId}.py`)
+    fs.writeFileSync(codeFile, code, { encoding: 'utf-8' })
+    procArgs = [
+      kernelRunnerPath,
+      '--code-file', codeFile,
+      '--timeout', String(timeoutSeconds),
+      '--stream'
+    ]
+  } else {
+    // Linux/macOS 直接传递代码参数
+    procArgs = [
       kernelRunnerPath,
       '--code', code,
       '--timeout', String(timeoutSeconds),
       '--stream'
-    ], { env })
+    ]
+  }
+
+  try {
+    proc = spawn(pythonCmd, procArgs, { env })
 
     registerProcess(executionId, proc)
 
@@ -394,10 +475,21 @@ export async function runPythonCodeStreamingNative(code, useGpu = false, res, ti
       message: '代码执行中...'
     }) + '\n')
 
+    // stdout 缓冲区（处理跨 chunk 的 JSON）
+    let stdoutBuffer = ''
+
     // 实时转发 stdout
     proc.stdout.on('data', (data) => {
-      const lines = data.toString().split('\n').filter(l => l.trim())
+      stdoutBuffer += data.toString()
+
+      // 按行分割并处理
+      const lines = stdoutBuffer.split('\n')
+      // 保留最后一个可能不完整的行在缓冲区
+      stdoutBuffer = lines.pop() || ''
+
       for (const line of lines) {
+        if (!line.trim()) continue
+
         // kernel_runner.py 输出的已经是 JSON 格式，直接转发
         if (line.trim().startsWith('{')) {
           res.write(line + '\n')
@@ -412,10 +504,20 @@ export async function runPythonCodeStreamingNative(code, useGpu = false, res, ti
       }
     })
 
+    // stderr 缓冲区
+    let stderrBuffer = ''
+
     // 实时转发 stderr（进度信息）
     proc.stderr.on('data', (data) => {
-      const lines = data.toString().split('\n').filter(l => l.trim())
+      stderrBuffer += data.toString()
+
+      // 按行分割并处理
+      const lines = stderrBuffer.split('\n')
+      stderrBuffer = lines.pop() || ''
+
       for (const line of lines) {
+        if (!line.trim()) continue
+
         // 进度消息是 JSON 格式
         if (line.trim().startsWith('{') && line.includes('"type":')) {
           res.write(line + '\n')
@@ -444,6 +546,31 @@ export async function runPythonCodeStreamingNative(code, useGpu = false, res, ti
       proc.on('close', resolve)
     })
 
+    // 处理缓冲区剩余内容
+    if (stdoutBuffer.trim()) {
+      if (stdoutBuffer.trim().startsWith('{')) {
+        res.write(stdoutBuffer.trim() + '\n')
+      } else {
+        res.write(JSON.stringify({
+          type: 'stream',
+          name: 'stdout',
+          text: stdoutBuffer.trim()
+        }) + '\n')
+      }
+    }
+
+    if (stderrBuffer.trim()) {
+      if (stderrBuffer.trim().startsWith('{') && stderrBuffer.includes('"type":')) {
+        res.write(stderrBuffer.trim() + '\n')
+      } else {
+        res.write(JSON.stringify({
+          type: 'stream',
+          name: 'stderr',
+          text: stderrBuffer.trim()
+        }) + '\n')
+      }
+    }
+
     log('Streaming execution finished')
 
   } catch (error) {
@@ -456,6 +583,15 @@ export async function runPythonCodeStreamingNative(code, useGpu = false, res, ti
     }) + '\n')
   } finally {
     unregisterProcess(executionId)
+    // Windows 下清理临时代码文件
+    if (codeFile && fs.existsSync(codeFile)) {
+      try {
+        fs.unlinkSync(codeFile)
+        log(`Cleaned up temp code file: ${codeFile}`)
+      } catch (e) {
+        log(`Failed to clean up temp file: ${e.message}`)
+      }
+    }
     res.end()
     log('Streaming response ended')
   }

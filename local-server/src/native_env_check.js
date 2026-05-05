@@ -3,7 +3,7 @@
  *
  * 检测 Python、PyTorch、CUDA 环境，自动安装软依赖
  */
-import { spawn } from 'child_process'
+import { spawn, exec } from 'child_process'
 import chalk from 'chalk'
 import path from 'path'
 import { fileURLToPath } from 'url'
@@ -44,67 +44,36 @@ export async function detectPythonCommand() {
     return cachedPythonCommand
   }
 
-  // Windows 下 spawn 需要使用 shell 才能通过 PATH 查找命令
+  // Windows 下需要使用 shell 才能通过 PATH 查找命令
   const spawnOptions = process.platform === 'win32'
-    ? { timeout: 5000, shell: true, windowsVerbatimArguments: true }
+    ? { timeout: 5000, shell: true }
     : { timeout: 5000 }
 
-  console.log(`[DEBUG] Platform: ${process.platform}, spawnOptions: ${JSON.stringify(spawnOptions)}`)
-
   // 先尝试 python3（Linux/macOS 常用）
-  console.log('[DEBUG] Trying python3 --version...')
   const tryPython3 = await new Promise((resolve) => {
     const proc = spawn('python3', ['--version'], spawnOptions)
-    let stdout = ''
-    let stderr = ''
-
-    proc.stdout.on('data', (data) => stdout += data.toString())
-    proc.stderr.on('data', (data) => stderr += data.toString())
-
-    proc.on('close', (code) => {
-      console.log(`[DEBUG] python3 exit code: ${code}, stdout: "${stdout.trim()}", stderr: "${stderr.trim()}"`)
-      resolve(code === 0)
-    })
-    proc.on('error', (err) => {
-      console.log(`[DEBUG] python3 error: ${err.message}`)
-      resolve(false)
-    })
+    proc.on('close', (code) => resolve(code === 0))
+    proc.on('error', () => resolve(false))
   })
 
   if (tryPython3) {
     cachedPythonCommand = 'python3'
-    console.log('[DEBUG] Detected: python3')
     return cachedPythonCommand
   }
 
   // 再尝试 python（Windows 常用）
-  console.log('[DEBUG] Trying python --version...')
   const tryPython = await new Promise((resolve) => {
     const proc = spawn('python', ['--version'], spawnOptions)
-    let stdout = ''
-    let stderr = ''
-
-    proc.stdout.on('data', (data) => stdout += data.toString())
-    proc.stderr.on('data', (data) => stderr += data.toString())
-
-    proc.on('close', (code) => {
-      console.log(`[DEBUG] python exit code: ${code}, stdout: "${stdout.trim()}", stderr: "${stderr.trim()}"`)
-      resolve(code === 0)
-    })
-    proc.on('error', (err) => {
-      console.log(`[DEBUG] python error: ${err.message}`)
-      resolve(false)
-    })
+    proc.on('close', (code) => resolve(code === 0))
+    proc.on('error', () => resolve(false))
   })
 
   if (tryPython) {
     cachedPythonCommand = 'python'
-    console.log('[DEBUG] Detected: python')
     return cachedPythonCommand
   }
 
   // 都不可用
-  console.log('[DEBUG] No Python command detected')
   return null
 }
 
@@ -118,10 +87,31 @@ async function detectPipCommand() {
     return cachedPipCommand
   }
 
-  // Windows 下 spawn 需要使用 shell 才能通过 PATH 查找命令
-  const spawnOptions = process.platform === 'win32'
-    ? { timeout: 5000, shell: true, windowsVerbatimArguments: true }
-    : { timeout: 5000 }
+  // Windows 下使用 exec 正确检测 pip
+  if (process.platform === 'win32') {
+    const tryPip = await new Promise((resolve) => {
+      exec('pip --version', { timeout: 5000 }, (error) => {
+        resolve(!error)
+      })
+    })
+
+    if (tryPip) {
+      cachedPipCommand = 'pip'
+      return cachedPipCommand
+    }
+
+    // 尝试 python -m pip（Windows 常用）
+    const pythonCmd = await detectPythonCommand()
+    if (pythonCmd) {
+      cachedPipCommand = `${pythonCmd} -m pip`
+      return cachedPipCommand
+    }
+
+    return null
+  }
+
+  // Linux/macOS 使用 spawn
+  const spawnOptions = { timeout: 5000 }
 
   // 先尝试 pip
   const tryPip = await new Promise((resolve) => {
@@ -178,13 +168,41 @@ async function runPythonCommand(args, timeout = 10000) {
     }
   }
 
-  // Windows 下 spawn 需要使用 shell 才能通过 PATH 查找命令
-  const spawnOptions = process.platform === 'win32'
-    ? { timeout, shell: true, windowsVerbatimArguments: true }
-    : { timeout }
+  // Windows 下使用 exec 正确处理 -c 参数中的代码字符串
+  // 因为 spawn + shell 会将参数直接拼接，导致 -c 后的代码被 shell 解析错误
+  if (process.platform === 'win32') {
+    // 构建完整的命令字符串，-c 参数需要用双引号包裹代码
+    const argsStr = args.map(arg => {
+      // 如果参数包含空格或特殊字符，用双引号包裹
+      if (arg.includes(' ') || arg.includes(';') || arg.includes('\n')) {
+        return `"${arg.replace(/"/g, '\\"')}"`
+      }
+      return arg
+    }).join(' ')
+    const fullCmd = `${pythonCmd} ${argsStr}`
 
+    return new Promise((resolve) => {
+      exec(fullCmd, { timeout }, (error, stdout, stderr) => {
+        if (error) {
+          resolve({
+            success: false,
+            output: stdout.trim(),
+            error: stderr.trim() || error.message
+          })
+        } else {
+          resolve({
+            success: true,
+            output: stdout.trim(),
+            error: stderr.trim()
+          })
+        }
+      })
+    })
+  }
+
+  // Linux/macOS 使用 spawn
   return new Promise((resolve) => {
-    const proc = spawn(pythonCmd, args, spawnOptions)
+    const proc = spawn(pythonCmd, args, { timeout })
     let stdout = ''
     let stderr = ''
 
@@ -221,18 +239,29 @@ async function runPipCommand(args) {
     return { success: false, output: 'pip 未安装或不在 PATH 中' }
   }
 
+  // Windows 下使用 exec，正确处理命令
+  if (process.platform === 'win32') {
+    const fullCmd = `${pipCmd} ${args.join(' ')}`
+
+    return new Promise((resolve) => {
+      exec(fullCmd, { stdio: 'inherit' }, (error) => {
+        if (error) {
+          resolve({ success: false, output: error.message })
+        } else {
+          resolve({ success: true, output: '' })
+        }
+      })
+    })
+  }
+
+  // Linux/macOS 使用 spawn
   // 处理 'python -m pip' 形式
   const cmdParts = pipCmd.split(' ')
   const pipArgs = cmdParts.length > 1 ? [...cmdParts.slice(1), ...args] : args
   const pipBin = cmdParts[0]
 
-  // Windows 下 spawn 需要使用 shell 才能通过 PATH 查找命令
-  const spawnOptions = process.platform === 'win32'
-    ? { stdio: 'inherit', shell: true, windowsVerbatimArguments: true }
-    : { stdio: 'inherit' }
-
   return new Promise((resolve) => {
-    const proc = spawn(pipBin, pipArgs, spawnOptions)
+    const proc = spawn(pipBin, pipArgs, { stdio: 'inherit' })
 
     proc.on('close', (code) => {
       resolve({ success: code === 0, output: '' })
