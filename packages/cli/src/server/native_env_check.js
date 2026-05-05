@@ -49,31 +49,62 @@ async function detectPythonCommand() {
     ? { timeout: 5000, shell: true, windowsVerbatimArguments: true }
     : { timeout: 5000 }
 
+  console.log(`[DEBUG] Platform: ${process.platform}, spawnOptions: ${JSON.stringify(spawnOptions)}`)
+
   // 先尝试 python3（Linux/macOS 常用）
+  console.log('[DEBUG] Trying python3 --version...')
   const tryPython3 = await new Promise((resolve) => {
     const proc = spawn('python3', ['--version'], spawnOptions)
-    proc.on('close', (code) => resolve(code === 0))
-    proc.on('error', () => resolve(false))
+    let stdout = ''
+    let stderr = ''
+
+    proc.stdout.on('data', (data) => stdout += data.toString())
+    proc.stderr.on('data', (data) => stderr += data.toString())
+
+    proc.on('close', (code) => {
+      console.log(`[DEBUG] python3 exit code: ${code}, stdout: "${stdout.trim()}", stderr: "${stderr.trim()}"`)
+      resolve(code === 0)
+    })
+    proc.on('error', (err) => {
+      console.log(`[DEBUG] python3 error: ${err.message}`)
+      resolve(false)
+    })
   })
 
   if (tryPython3) {
     cachedPythonCommand = 'python3'
+    console.log('[DEBUG] Detected: python3')
     return cachedPythonCommand
   }
 
   // 再尝试 python（Windows 常用）
+  console.log('[DEBUG] Trying python --version...')
   const tryPython = await new Promise((resolve) => {
     const proc = spawn('python', ['--version'], spawnOptions)
-    proc.on('close', (code) => resolve(code === 0))
-    proc.on('error', () => resolve(false))
+    let stdout = ''
+    let stderr = ''
+
+    proc.stdout.on('data', (data) => stdout += data.toString())
+    proc.stderr.on('data', (data) => stderr += data.toString())
+
+    proc.on('close', (code) => {
+      console.log(`[DEBUG] python exit code: ${code}, stdout: "${stdout.trim()}", stderr: "${stderr.trim()}"`)
+      resolve(code === 0)
+    })
+    proc.on('error', (err) => {
+      console.log(`[DEBUG] python error: ${err.message}`)
+      resolve(false)
+    })
   })
 
   if (tryPython) {
     cachedPythonCommand = 'python'
+    console.log('[DEBUG] Detected: python')
     return cachedPythonCommand
   }
 
   // 都不可用
+  console.log('[DEBUG] No Python command detected')
   return null
 }
 
