@@ -17,6 +17,7 @@ DMLA 进度报告模块
 """
 
 import json
+import os
 import time
 import sys
 import threading
@@ -24,8 +25,40 @@ import queue
 from pathlib import Path
 from typing import Optional
 
-# 进度文件路径
-PROGRESS_FILE = Path('/workspace/progress.json')
+
+def get_progress_file_path() -> Path:
+    """
+    动态检测进度文件路径
+
+    优先级：
+    1. DMLA_PROGRESS_PATH 环境变量（最高优先级，由 Native 模式设置）
+    2. Docker 路径 /workspace/progress.json（如果父目录存在）
+    3. Native 路径 ~/dmla-data/progress.json（默认）
+
+    Returns:
+        进度文件 Path 对象
+    """
+    # 1. 环境变量优先（Native 模式）
+    env_path = os.environ.get('DMLA_PROGRESS_PATH')
+    if env_path:
+        return Path(env_path)
+
+    # 2. Docker 路径（如果 /workspace 目录存在）
+    docker_path = Path('/workspace/progress.json')
+    if docker_path.parent.exists():
+        return docker_path
+
+    # 3. Native 路径（默认，使用 DMLA_DATA_PATH 或 ~/dmla-data）
+    data_path = os.environ.get('DMLA_DATA_PATH')
+    if data_path:
+        return Path(data_path) / 'progress.json'
+
+    # 最终 fallback：用户主目录下的 dmla-data
+    return Path(os.path.expanduser('~')) / 'dmla-data' / 'progress.json'
+
+
+# 进度文件路径（动态检测）
+PROGRESS_FILE = get_progress_file_path()
 
 # stderr 异步写入队列（避免管道阻塞）
 _stderr_queue: queue.Queue = queue.Queue()

@@ -1,13 +1,23 @@
 /**
  * Design Machine Learning Applications 本地服务
  * 提供 Python 代码沙箱执行 API
+ *
+ * 支持两种模式：
+ * - Docker 模式（默认）：通过 Docker 容器执行代码
+ * - Native 模式（DMLA_MODE=native）：直接在本机执行代码
  */
 import express from 'express'
 import cors from 'cors'
 import { fileURLToPath } from 'url'
 import { resolve } from 'path'
 import sandboxRouter from './routes/sandbox.js'
+import nativeRouter from './routes/native.js'
 import { cleanupAllContainers } from './sandbox.js'
+import { cleanupAllProcesses } from './native_executor.js'
+import { checkNativeEnvironment } from './native_env_check.js'
+
+// 检测运行模式
+const isNativeMode = process.env.DMLA_MODE === 'native'
 
 export const app = express()
 const PORT = process.env.PORT || 3001
@@ -23,6 +33,7 @@ log('Server initializing...')
 log(`PORT: ${PORT}`)
 log(`NODE_VERSION: ${process.version}`)
 log(`PLATFORM: ${process.platform}`)
+log(`DMLA_MODE: ${isNativeMode ? 'native' : 'docker'}`)
 log(`DMLA_SYNC_MODE: ${process.env.DMLA_SYNC_MODE || 'false'}`)
 
 // 中间件
@@ -52,8 +63,14 @@ app.post('/api/shutdown', (req, res) => {
   }, 100)
 })
 
-// 沙箱 API
-app.use('/api/sandbox', sandboxRouter)
+// 沙箱 API（根据模式选择路由）
+if (isNativeMode) {
+  log('Using Native sandbox router')
+  app.use('/api/sandbox', nativeRouter)
+} else {
+  log('Using Docker sandbox router')
+  app.use('/api/sandbox', sandboxRouter)
+}
 
 // 错误处理
 app.use((err, req, res, next) => {
@@ -77,12 +94,17 @@ process.on('unhandledRejection', (reason, promise) => {
   log(`UNHANDLED REJECTION: ${reason}`)
 })
 
-// 捕获进程信号 - 优雅退出，清理所有容器
+// 捕获进程信号 - 优雅退出
 process.on('SIGTERM', async () => {
-  log('Received SIGTERM, cleaning up containers...')
+  log('Received SIGTERM, cleaning up...')
   try {
-    await cleanupAllContainers()
-    log('All containers cleaned up')
+    if (isNativeMode) {
+      await cleanupAllProcesses()
+      log('All processes cleaned up')
+    } else {
+      await cleanupAllContainers()
+      log('All containers cleaned up')
+    }
   } catch (e) {
     log(`Cleanup error: ${e.message}`)
   }
@@ -90,10 +112,15 @@ process.on('SIGTERM', async () => {
 })
 
 process.on('SIGINT', async () => {
-  log('Received SIGINT (Ctrl+C), cleaning up containers...')
+  log('Received SIGINT (Ctrl+C), cleaning up...')
   try {
-    await cleanupAllContainers()
-    log('All containers cleaned up')
+    if (isNativeMode) {
+      await cleanupAllProcesses()
+      log('All processes cleaned up')
+    } else {
+      await cleanupAllContainers()
+      log('All containers cleaned up')
+    }
   } catch (e) {
     log(`Cleanup error: ${e.message}`)
   }
@@ -110,6 +137,35 @@ const shouldStart = __filename === entryPoint || process.env.DMLA_SYNC_MODE === 
 log(`Entry point check: __filename=${__filename}, entryPoint=${entryPoint}, match=${__filename === entryPoint}`)
 
 if (shouldStart) {
+  // Native 模式：等待环境检测完成后再启动服务
+  if (isNativeMode) {
+    checkNativeEnvironment().then(envResult => {
+      if (!envResult.success) {
+        log('Environment check failed!')
+        console.log(envResult.error)
+        process.exit(1)
+      }
+      log('Environment check passed')
+      log(`Python: ${envResult.pythonVersion}`)
+      log(`PyTorch: ${envResult.pytorchVersion}`)
+      log(`GPU: ${envResult.gpuCapable ? 'available' : 'not available (CPU-only)'}`)
+
+      // 环境检测通过，启动服务
+      startServer()
+    }).catch(err => {
+      log(`Environment check error: ${err.message}`)
+      process.exit(1)
+    })
+  } else {
+    // Docker 模式：直接启动服务
+    startServer()
+  }
+} else {
+  log('Skipping server start (imported as module)')
+}
+
+// 启动服务函数
+function startServer() {
   const server = app.listen(PORT, () => {
     log('Server started successfully')
     log(`API: http://localhost:${PORT}`)
@@ -123,8 +179,6 @@ if (shouldStart) {
   server.on('close', () => {
     log('Server closed')
   })
-} else {
-  log('Skipping server start (imported as module)')
 }
 
 export default app

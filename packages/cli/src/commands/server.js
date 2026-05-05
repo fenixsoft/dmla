@@ -730,10 +730,10 @@ export async function startServer(port, useGpu = false, dev = false, shmSize = 6
 
 /**
  * 停止服务
+ * @param {number} port - 服务端口
  */
-export async function stopServer() {
+export async function stopServer(port = CONFIG.defaultPort) {
   // 首先尝试通过 API 停止服务
-  const port = CONFIG.defaultPort
   const running = await checkServiceRunning(port)
 
   if (running) {
@@ -791,8 +791,26 @@ export async function stopServer() {
   } else if (!running) {
     console.log(chalk.gray('   服务未运行'))
   } else {
-    console.log(chalk.yellow('⚠️ 无法停止服务'))
-    console.log(chalk.gray('   提示: 手动终止端口 3001 上的进程'))
+    // API 停止失败，尝试直接 kill 进程
+    console.log(chalk.yellow('⚠️ API 停止失败，尝试强制终止进程...'))
+    try {
+      // 查找监听该端口的进程
+      const result = execSync(`lsof -ti:${port} -sTCP:LISTEN 2>/dev/null || echo ""`, { encoding: 'utf8' })
+      const pids = result.trim().split('\n').filter(p => p)
+      if (pids.length > 0) {
+        for (const pid of pids) {
+          execSync(`kill -9 ${pid} 2>/dev/null || true`)
+          console.log(chalk.gray(`   已终止进程 PID: ${pid}`))
+        }
+        console.log(chalk.green('✅ 进程已强制终止'))
+      } else {
+        console.log(chalk.yellow('⚠️ 无法找到监听端口的进程'))
+        console.log(chalk.gray(`   提示: 手动终止端口 ${port} 上的进程`))
+      }
+    } catch (e) {
+      console.log(chalk.yellow('⚠️ 无法停止服务'))
+      console.log(chalk.gray(`   提示: 手动终止端口 ${port} 上的进程`))
+    }
   }
 }
 
@@ -868,4 +886,179 @@ export async function getStatus() {
     console.log(chalk.gray('   服务未运行'))
     console.log(chalk.yellow('   提示: 运行 dmla start 启动服务'))
   }
+}
+
+// ==================== Native 模式 ====================
+
+/**
+ * 同步启动 Native 服务（在当前进程运行，用于调试）
+ * @param {number} port - 服务端口
+ */
+export async function startNativeServerSync(port) {
+  // 检查端口
+  const portAvailable = await checkPortAvailable(port)
+  if (!portAvailable) {
+    console.log(chalk.red(`❌ 端口 ${port} 已被占用`))
+    console.log(chalk.yellow('提示: 使用 --port 选项指定其他端口'))
+    return
+  }
+
+  // 检查服务是否已运行
+  const alreadyRunning = await checkServiceRunning(port)
+  if (alreadyRunning) {
+    console.log(chalk.green(`✅ 服务已在端口 ${port} 运行`))
+    return
+  }
+
+  // 查找服务器入口文件（Native 模式使用相同的服务入口）
+  const serverPath = findNativeServerPath()
+  if (!serverPath) {
+    console.log(chalk.red('❌ 找不到服务入口文件'))
+    console.log(chalk.yellow('提示: 确保正确安装了 @icyfenix-dmla/cli'))
+    return
+  }
+
+  console.log(chalk.gray('   同步模式启动...'))
+  console.log(chalk.gray(`   服务入口: ${serverPath}`))
+  console.log()
+
+  // 设置环境变量（标记 Native 模式）
+  process.env.PORT = port.toString()
+  process.env.DMLA_MODE = 'native'
+  process.env.DMLA_SYNC_MODE = 'true'
+
+  // 动态 import 服务器模块
+  try {
+    const serverURL = pathToFileURL(serverPath).href
+    await import(serverURL)
+  } catch (error) {
+    console.log(chalk.red(`❌ 服务启动失败: ${error.message}`))
+    console.log(chalk.gray(error.stack))
+  }
+}
+
+/**
+ * 启动 Native 服务（异步模式，spawn 子进程）
+ * @param {number} port - 服务端口
+ */
+export async function startNativeServer(port) {
+  // 检查端口
+  const portAvailable = await checkPortAvailable(port)
+  if (!portAvailable) {
+    console.log(chalk.red(`❌ 端口 ${port} 已被占用`))
+    console.log(chalk.yellow('提示: 使用 --port 选项指定其他端口'))
+    return
+  }
+
+  // 检查服务是否已运行
+  const alreadyRunning = await checkServiceRunning(port)
+  if (alreadyRunning) {
+    console.log(chalk.green(`✅ 服务已在端口 ${port} 运行`))
+    return
+  }
+
+  // 查找服务器入口文件
+  const serverPath = findNativeServerPath()
+  if (!serverPath) {
+    console.log(chalk.red('❌ 找不到服务入口文件'))
+    console.log(chalk.yellow('提示: 确保正确安装了 @icyfenix-dmla/cli'))
+    return
+  }
+
+  console.log(chalk.gray('   正在启动...'))
+
+  try {
+    // 日志文件路径
+    const logDir = path.resolve(__dirname, '../../logs')
+    if (!fs.existsSync(logDir)) {
+      fs.mkdirSync(logDir, { recursive: true })
+    }
+    const logFile = path.join(logDir, 'native-server.log')
+    const errorLogFile = path.join(logDir, 'native-server-error.log')
+
+    console.log(chalk.gray(`   日志文件: ${logFile}`))
+
+    // 创建日志文件流
+    const logStream = fs.openSync(logFile, 'a')
+    const errorLogStream = fs.openSync(errorLogFile, 'a')
+
+    const env = {
+      ...process.env,
+      PORT: port.toString(),
+      DMLA_MODE: 'native',
+      DMLA_LOG_FILE: logFile
+    }
+
+    // 写入启动日志
+    const timestamp = new Date().toISOString()
+    fs.writeSync(logStream, `[${timestamp}] Native Server starting...\n`)
+    fs.writeSync(logStream, `[${timestamp}] Server path: ${serverPath}\n`)
+    fs.writeSync(logStream, `[${timestamp}] Port: ${port}\n`)
+    fs.writeSync(logStream, `[${timestamp}] Mode: native\n`)
+
+    // 使用 spawn 启动 server 进程
+    const serverProcess = spawn('node', [serverPath], {
+      env,
+      stdio: ['ignore', logStream, errorLogStream],
+      detached: true,
+      windowsHide: true
+    })
+
+    // 监听子进程事件
+    serverProcess.on('error', (err) => {
+      fs.writeSync(errorLogStream, `[${new Date().toISOString()}] Spawn error: ${err.message}\n`)
+    })
+
+    serverProcess.on('exit', (code, signal) => {
+      const msg = `[${new Date().toISOString()}] Process exited: code=${code}, signal=${signal}\n`
+      fs.writeSync(logStream, msg)
+      fs.writeSync(errorLogStream, msg)
+    })
+
+    serverProcess.unref()
+
+    // 关闭父进程中的文件描述符
+    fs.closeSync(logStream)
+    fs.closeSync(errorLogStream)
+
+    // 等待服务启动
+    console.log(chalk.gray('   等待服务就绪...'))
+    let attempts = 0
+    const maxAttempts = 30
+
+    while (attempts < maxAttempts) {
+      const running = await checkServiceRunning(port)
+      if (running) {
+        console.log(chalk.green(`✅ 服务已启动: http://localhost:${port}`))
+        console.log(chalk.gray(`   健康检查: http://localhost:${port}/api/sandbox/health`))
+        console.log(chalk.gray(`   日志查看: ${logFile}`))
+        console.log(chalk.cyan('   模式: Native（本机执行）'))
+        return
+      }
+      await new Promise(resolve => setTimeout(resolve, 500))
+      attempts++
+    }
+
+    console.log(chalk.yellow('⚠️ 服务启动超时'))
+    console.log(chalk.gray(`   请查看日志: ${logFile}`))
+    console.log(chalk.gray(`   或使用 --sync 模式调试`))
+  } catch (error) {
+    console.log(chalk.red(`❌ 启动失败: ${error.message}`))
+    console.log(chalk.gray(error.stack))
+  }
+}
+
+/**
+ * 查找 Native 服务入口文件
+ */
+function findNativeServerPath() {
+  // Native 模式使用相同的服务入口，只是路由不同
+  // packages/cli/src/commands -> ../server/index.js
+  const serverPath = path.resolve(__dirname, '../server/index.js')
+
+  if (fs.existsSync(serverPath)) {
+    return serverPath
+  }
+
+  return null
 }

@@ -7,7 +7,7 @@ import chalk from 'chalk'
 import path from 'path'
 import { fileURLToPath } from 'url'
 import fs from 'fs'
-import { startServer, startServerSync, stopServer, getStatus } from './commands/server.js'
+import { startServer, startServerSync, stopServer, getStatus, startNativeServer, startNativeServerSync } from './commands/server.js'
 import { runDoctor } from './commands/manage.js'
 import { runDataTUI, runDataCommand } from './commands/data.js'
 import { runImagesTUI } from './commands/images.js'
@@ -93,12 +93,14 @@ program
   .command('start')
   .description('启动沙箱服务')
   .option('-p, --port <number>', '服务端口', '3001')
-  .option('--gpu', '使用 GPU 镜像')
+  .option('--native', 'Native 模式：直接在本机执行 Python 代码，无需 Docker')
+  .option('--gpu', '使用 GPU 镜像（仅 Docker 模式）')
   .option('--sync', '同步模式：在当前进程运行，日志直接输出（用于调试）')
-  .option('--dev', '开发模式：挂载本地代码到容器，无需重建镜像')
+  .option('--dev', '开发模式：挂载本地代码到容器，无需重建镜像（仅 Docker 模式）')
   .option('--shm-size <size>', 'Docker 共享内存大小（MB），用于 DataLoader 多线程。GPU 模式默认 1024MB，CPU 模式默认 64MB')
   .action(async (options) => {
     const port = parseInt(options.port, 10)
+    const native = options.native
     const useGpu = options.gpu
     const sync = options.sync
     const dev = options.dev
@@ -108,6 +110,25 @@ program
 
     console.log(chalk.blue('启动 DMLA 沙箱服务...'))
     console.log(chalk.gray(`   端口: ${port}`))
+
+    // Native 模式
+    if (native) {
+      console.log(chalk.cyan(`   模式: Native（本机执行）`))
+      // Native 模式忽略 --gpu/--dev/--shm-size
+      if (useGpu || dev || options.shmSize) {
+        console.log(chalk.yellow(`   提示: --native 模式下 --gpu/--dev/--shm-size 参数无效`))
+      }
+
+      if (sync) {
+        console.log(chalk.yellow(`   子模式: 同步（调试模式）`))
+        await startNativeServerSync(port)
+      } else {
+        await startNativeServer(port)
+      }
+      return
+    }
+
+    // Docker 模式（现有逻辑）
     console.log(chalk.gray(`   请求类型: ${useGpu ? 'GPU' : '自动选择'}`))
     console.log(chalk.gray(`   共享内存: ${shmSize}MB（DataLoader 多线程需要足够 shm）`))
     if (sync) {
@@ -130,9 +151,12 @@ program
 program
   .command('stop')
   .description('停止运行中的沙箱服务')
-  .action(async () => {
+  .option('-p, --port <number>', '指定停止的端口', '3001')
+  .action(async (options) => {
+    const port = parseInt(options.port, 10)
     console.log(chalk.blue('停止 DMLA 沙箱服务...'))
-    await stopServer()
+    console.log(chalk.gray(`   端口: ${port}`))
+    await stopServer(port)
   })
 
 // ─────────────────────────────────────────────────────────────

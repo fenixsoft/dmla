@@ -158,6 +158,7 @@ function ensureDataDirStructure(dataPath) {
 function getDirectoryStats(dataPath) {
   const stats = {
     datasets: 0,
+    incompleteDatasets: 0,
     models: 0,
     totalSize: 0
   }
@@ -170,7 +171,16 @@ function getDirectoryStats(dataPath) {
         const fullPath = path.join(datasetsPath, d)
         return fs.statSync(fullPath).isDirectory() && d !== 'custom'
       })
-      stats.datasets = dirs.length
+
+      for (const dir of dirs) {
+        // 检查是否有 LFS 不完整标记
+        const incompleteMarker = path.join(datasetsPath, dir, '.lfs-incomplete')
+        if (fs.existsSync(incompleteMarker)) {
+          stats.incompleteDatasets++
+        } else {
+          stats.datasets++
+        }
+      }
     }
 
     // 统计模型文件数量
@@ -200,14 +210,47 @@ function getDirectoryStats(dataPath) {
 }
 
 /**
- * 检查数据集是否已下载
+ * 检查数据集是否已下载（且完整可用）
  */
 function isDatasetDownloaded(dataPath, datasetId) {
   const dataset = DATASETS.find(d => d.id === datasetId)
   if (!dataset) return false
 
   const targetPath = path.join(dataPath, dataset.targetDir)
+  if (!fs.existsSync(targetPath)) return false
+
+  // 检查是否有 LFS 不完整标记文件
+  const incompleteMarker = path.join(targetPath, '.lfs-incomplete')
+  if (fs.existsSync(incompleteMarker)) {
+    return false
+  }
+
+  return true
+}
+
+/**
+ * 检查数据集是否已存在（不管是否完整）
+ */
+function isDatasetExists(dataPath, datasetId) {
+  const dataset = DATASETS.find(d => d.id === datasetId)
+  if (!dataset) return false
+
+  const targetPath = path.join(dataPath, dataset.targetDir)
   return fs.existsSync(targetPath)
+}
+
+/**
+ * 检查数据集是否不完整（LFS 未拉取）
+ */
+function isDatasetIncomplete(dataPath, datasetId) {
+  const dataset = DATASETS.find(d => d.id === datasetId)
+  if (!dataset) return false
+
+  const targetPath = path.join(dataPath, dataset.targetDir)
+  if (!fs.existsSync(targetPath)) return false
+
+  const incompleteMarker = path.join(targetPath, '.lfs-incomplete')
+  return fs.existsSync(incompleteMarker)
 }
 
 /**
@@ -217,7 +260,11 @@ async function showMainMenu(dataPath) {
   const stats = getDirectoryStats(dataPath)
 
   console.log(chalk.gray(`当前挂载路径: ${dataPath}`))
-  console.log(chalk.gray(`数据集: ${stats.datasets} 个已下载`))
+  if (stats.incompleteDatasets > 0) {
+    console.log(chalk.gray(`数据集: ${stats.datasets} 个可用, ${chalk.red(`${stats.incompleteDatasets} 个不完整`)}`))
+  } else {
+    console.log(chalk.gray(`数据集: ${stats.datasets} 个已下载`))
+  }
   console.log(chalk.gray(`模型: ${stats.models} 个已保存`))
   console.log()
   console.log(chalk.gray('------------------------------------'))
@@ -384,13 +431,23 @@ function listDatasets() {
   const dataPath = getDataVolumePath()
 
   console.log()
-  console.log(chalk.bold('已下载的数据集'))
+  console.log(chalk.bold('数据集列表'))
   console.log()
 
   for (const dataset of DATASETS) {
     const downloaded = isDatasetDownloaded(dataPath, dataset.id)
-    const status = downloaded ? chalk.green('[已下载]') : chalk.gray('[未下载]')
-    console.log(`${status} ${dataset.name} (${dataset.size})`)
+    const exists = isDatasetExists(dataPath, dataset.id)
+    const incomplete = isDatasetIncomplete(dataPath, dataset.id)
+
+    if (downloaded) {
+      console.log(`${chalk.green('[可用]')} ${dataset.name} (${dataset.size})`)
+    } else if (incomplete) {
+      console.log(`${chalk.red('[不完整]')} ${dataset.name} (${dataset.size}) - 请安装 Git LFS 后执行 git lfs pull`)
+    } else if (exists) {
+      console.log(`${chalk.yellow('[存在]')} ${dataset.name} (${dataset.size}) - 状态未知`)
+    } else {
+      console.log(`${chalk.gray('[未下载]')} ${dataset.name} (${dataset.size})`)
+    }
   }
 
   console.log()
@@ -425,16 +482,19 @@ async function downloadDatasets() {
   // 构建选项列表
   const choices = DATASETS.map((dataset, index) => {
     const downloaded = isDatasetDownloaded(dataPath, dataset.id)
+    const incomplete = isDatasetIncomplete(dataPath, dataset.id)
 
     let message = `${dataset.name} (${dataset.size})`
     if (downloaded) {
       message += ' [已下载]'
+    } else if (incomplete) {
+      message += ' [不完整-可重新下载]'
     }
 
     return {
       name: index.toString(),
       message,
-      disabled: downloaded
+      disabled: downloaded  // 完整下载的才禁用，不完整的可以重新下载
     }
   })
 
@@ -469,10 +529,17 @@ async function downloadDatasets() {
       console.log()
       console.log(chalk.cyan(`────────────────────────────────────`))
 
-    // 检查是否已下载
+    // 检查是否已完整下载
     if (isDatasetDownloaded(dataPath, dataset.id)) {
-      console.log(chalk.yellow(`${dataset.name} 已下载，跳过`))
+      console.log(chalk.yellow(`${dataset.name} 已完整下载，跳过`))
       continue
+    }
+
+    // 检查是否有不完整的数据，需要先删除
+    if (isDatasetIncomplete(dataPath, dataset.id)) {
+      console.log(chalk.yellow(`${dataset.name} 存在不完整数据，将删除后重新下载...`))
+      const targetDir = path.join(dataPath, dataset.targetDir)
+      fs.rmSync(targetDir, { recursive: true, force: true })
     }
 
     await downloadDataset(dataPath, dataset)
@@ -523,8 +590,44 @@ async function downloadDataset(dataPath, dataset) {
         execSync('git lfs install', { stdio: 'pipe' })
         hasGitLfs = true
       } catch {
-        console.log(chalk.yellow('⚠ Git LFS 未安装，可能无法下载大文件'))
-        console.log(chalk.yellow('建议安装: https://git-lfs.github.com/'))
+        console.log(chalk.red('❌ Git LFS 未安装'))
+        console.log(chalk.yellow('数据集使用 Git LFS 存储大文件，未安装 LFS 时只能下载指针文件'))
+        console.log(chalk.yellow('数据集将不可用！'))
+        console.log()
+        console.log(chalk.yellow('建议安装 Git LFS 后重新下载:'))
+        console.log(chalk.gray('  Ubuntu/Debian: sudo apt install git-lfs'))
+        console.log(chalk.gray('  macOS: brew install git-lfs'))
+        console.log(chalk.gray('  Windows: https://git-lfs.github.com/'))
+        console.log()
+
+        // 提供选项：继续下载（留待后续手动拉取）或中止
+        const { choice } = await prompt({
+          type: 'select',
+          name: 'choice',
+          message: '如何处理?',
+          choices: [
+            '中止下载（删除不完整数据）',
+            '继续下载（安装 LFS 后手动拉取: git lfs pull）'
+          ],
+          styles: {
+            primary: chalk.cyan.bold
+          }
+        })
+
+        if (choice === '中止下载（删除不完整数据）') {
+          console.log(chalk.yellow('下载已中止'))
+          // 创建目标目录以便后续重试（标记为不完整）
+          if (!fs.existsSync(targetDir)) {
+            fs.mkdirSync(targetDir, { recursive: true })
+          }
+          // 写入标记文件，表明数据不完整
+          fs.writeFileSync(path.join(targetDir, '.lfs-incomplete'), 'Git LFS 未安装，数据不完整')
+          return
+        }
+
+        console.log(chalk.gray('继续下载指针文件...'))
+        console.log(chalk.yellow('⚠ 提醒: 下载完成后需安装 Git LFS 并执行 git lfs pull 才能使用数据集'))
+        console.log()
       }
 
       // 执行 git clone
@@ -545,10 +648,12 @@ async function downloadDataset(dataPath, dataset) {
       })
 
       console.log()
-      console.log(chalk.green('下载完成'))
 
-      // 拉取 Git LFS 文件（如果已安装）
+      // 根据 LFS 状态显示不同提示
       if (hasGitLfs) {
+        console.log(chalk.green('下载完成'))
+
+        // 拉取 Git LFS 文件
         console.log()
         console.log(chalk.gray('拉取 LFS 大文件...'))
         try {
@@ -556,59 +661,83 @@ async function downloadDataset(dataPath, dataset) {
           console.log(chalk.green('LFS 文件拉取完成'))
         } catch (lfsError) {
           console.log(chalk.yellow(`⚠ LFS 拉取失败: ${lfsError.message}`))
-          console.log(chalk.yellow('数据集可能包含未下载的大文件'))
+          console.log(chalk.yellow('数据集可能包含未下载的大文件，请手动执行: git lfs pull'))
         }
+      } else {
+        console.log(chalk.yellow('指针文件下载完成（数据不完整）'))
+        console.log()
+        console.log(chalk.red('⚠ 数据集当前不可用！'))
+        console.log(chalk.yellow('请按以下步骤完成下载:'))
+        console.log(chalk.gray(`  1. 安装 Git LFS`))
+        console.log(chalk.gray(`  2. 进入目录: cd ${targetDir}`))
+        console.log(chalk.gray(`  3. 拉取数据: git lfs pull`))
+        console.log()
       }
 
-      // 解压数据集内的 zip 文件（如果有）
-      if (dataset.zipFile) {
+      // 解压数据集内的 zip 文件（仅在 LFS 正常时执行）
+      if (dataset.zipFile && hasGitLfs) {
         const zipPath = path.join(targetDir, dataset.zipFile)
 
         if (fs.existsSync(zipPath)) {
-          console.log()
-          console.log(chalk.gray(`解压 ${dataset.zipFile}...`))
+          // 检查 zip 文件是否是真正的 zip（而非 LFS 指针文件）
+          const zipStat = fs.statSync(zipPath)
+          if (zipStat.size < 1000) {
+            // 小于 1KB 的文件很可能是 LFS 指针文件
+            console.log()
+            console.log(chalk.yellow(`⚠ ${dataset.zipFile} 可能是 LFS 指针文件，跳过解压`))
+            console.log(chalk.yellow('请确保 git lfs pull 成功后再手动解压'))
+          } else {
+            console.log()
+            console.log(chalk.gray(`解压 ${dataset.zipFile}...`))
 
-          try {
-            const zip = new AdmZip(zipPath)
+            try {
+              const zip = new AdmZip(zipPath)
 
-            // 解压到临时目录
-            const tempDir = path.join(targetDir, '_extract_temp')
-            zip.extractAllTo(tempDir, true)
+              // 解压到临时目录
+              const tempDir = path.join(targetDir, '_extract_temp')
+              zip.extractAllTo(tempDir, true)
 
-            // 将 zip 内部目录内容移到目标目录
-            const innerDir = dataset.zipInnerDir
-              ? path.join(tempDir, dataset.zipInnerDir)
-              : tempDir
+              // 将 zip 内部目录内容移到目标目录
+              const innerDir = dataset.zipInnerDir
+                ? path.join(tempDir, dataset.zipInnerDir)
+                : tempDir
 
-            if (fs.existsSync(innerDir)) {
-              // 移动内部目录的所有内容到目标目录
-              const items = fs.readdirSync(innerDir)
-              for (const item of items) {
-                const srcPath = path.join(innerDir, item)
-                const destPath = path.join(targetDir, item)
+              if (fs.existsSync(innerDir)) {
+                // 移动内部目录的所有内容到目标目录
+                const items = fs.readdirSync(innerDir)
+                for (const item of items) {
+                  const srcPath = path.join(innerDir, item)
+                  const destPath = path.join(targetDir, item)
 
-                // 如果目标已存在且不是 zip 文件，跳过
-                if (fs.existsSync(destPath) && item !== dataset.zipFile) {
-                  continue
+                  // 如果目标已存在且不是 zip 文件，跳过
+                  if (fs.existsSync(destPath) && item !== dataset.zipFile) {
+                    continue
+                  }
+
+                  fs.cpSync(srcPath, destPath, { recursive: true, force: true })
                 }
 
-                fs.cpSync(srcPath, destPath, { recursive: true, force: true })
+                // 清理临时目录
+                fs.rmSync(tempDir, { recursive: true, force: true })
+
+                // 删除 zip 文件
+                fs.rmSync(zipPath, { force: true })
+
+                console.log(chalk.green('解压完成'))
+              } else {
+                console.log(chalk.yellow(`  ⚠ zip 内部目录 ${dataset.zipInnerDir} 不存在`))
               }
-
-              // 清理临时目录
-              fs.rmSync(tempDir, { recursive: true, force: true })
-
-              // 删除 zip 文件
-              fs.rmSync(zipPath, { force: true })
-
-              console.log(chalk.green('解压完成'))
-            } else {
-              console.log(chalk.yellow(`  ⚠ zip 内部目录 ${dataset.zipInnerDir} 不存在`))
+            } catch (err) {
+              console.log(chalk.red(`解压失败: ${err.message}`))
+              console.log(chalk.yellow(`请手动解压: ${zipPath}`))
             }
-          } catch (err) {
-            console.log(chalk.red(`解压失败: ${err.message}`))
-            console.log(chalk.yellow(`请手动解压: ${zipPath}`))
           }
+        }
+      } else if (dataset.zipFile && !hasGitLfs) {
+        // LFS 未安装时，检查是否有 zip 文件需要提醒用户
+        const zipPath = path.join(targetDir, dataset.zipFile)
+        if (fs.existsSync(zipPath)) {
+          console.log(chalk.gray(`注意: ${dataset.zipFile} 需在 git lfs pull 后手动解压`))
         }
       }
 
@@ -673,8 +802,14 @@ async function downloadDataset(dataPath, dataset) {
       fs.rmSync(downloadFile, { force: true })
     }
 
-    console.log()
-    console.log(chalk.green(`数据集已保存到 ${targetDir}`))
+    // 根据 LFS 状态显示不同的完成提示
+    if (hasGitLfs) {
+      console.log()
+      console.log(chalk.green(`数据集已保存到 ${targetDir}`))
+    } else {
+      console.log()
+      console.log(chalk.yellow(`数据集目录: ${targetDir} (数据不完整，暂不可用)`))
+    }
 
     // 更新配置
     const config = readConfig()
@@ -683,6 +818,13 @@ async function downloadDataset(dataPath, dataset) {
     }
     if (!config.installedDatasets.includes(dataset.id)) {
       config.installedDatasets.push(dataset.id)
+    }
+    // 如果 LFS 未安装，标记数据集状态为不完整
+    if (!hasGitLfs) {
+      config.incompleteDatasets = config.incompleteDatasets || []
+      if (!config.incompleteDatasets.includes(dataset.id)) {
+        config.incompleteDatasets.push(dataset.id)
+      }
     }
     writeConfig(config)
 
@@ -848,5 +990,10 @@ export default {
   runDataTUI,
   runDataCommand,
   getDataVolumePath,
-  DATASETS
+  DATASETS,
+  // 导出辅助函数供测试使用
+  isDatasetDownloaded,
+  isDatasetExists,
+  isDatasetIncomplete,
+  getDirectoryStats
 }
