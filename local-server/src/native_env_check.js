@@ -30,6 +30,137 @@ const SOFT_DEPS = [
 // 环境检测结果缓存
 let cachedResult = null
 
+// Python/Pip 命令名缓存（跨平台兼容）
+let cachedPythonCommand = null
+let cachedPipCommand = null
+
+/**
+ * 检测可用的 Python 命令名
+ * Windows 下通常只有 'python'，Linux/macOS 通常有 'python3'
+ * @returns {Promise<string>}
+ */
+export async function detectPythonCommand() {
+  if (cachedPythonCommand) {
+    return cachedPythonCommand
+  }
+
+  // Windows 下 spawn 需要使用 shell 才能通过 PATH 查找命令
+  const spawnOptions = process.platform === 'win32'
+    ? { timeout: 5000, shell: true, windowsVerbatimArguments: true }
+    : { timeout: 5000 }
+
+  console.log(`[DEBUG] Platform: ${process.platform}, spawnOptions: ${JSON.stringify(spawnOptions)}`)
+
+  // 先尝试 python3（Linux/macOS 常用）
+  console.log('[DEBUG] Trying python3 --version...')
+  const tryPython3 = await new Promise((resolve) => {
+    const proc = spawn('python3', ['--version'], spawnOptions)
+    let stdout = ''
+    let stderr = ''
+
+    proc.stdout.on('data', (data) => stdout += data.toString())
+    proc.stderr.on('data', (data) => stderr += data.toString())
+
+    proc.on('close', (code) => {
+      console.log(`[DEBUG] python3 exit code: ${code}, stdout: "${stdout.trim()}", stderr: "${stderr.trim()}"`)
+      resolve(code === 0)
+    })
+    proc.on('error', (err) => {
+      console.log(`[DEBUG] python3 error: ${err.message}`)
+      resolve(false)
+    })
+  })
+
+  if (tryPython3) {
+    cachedPythonCommand = 'python3'
+    console.log('[DEBUG] Detected: python3')
+    return cachedPythonCommand
+  }
+
+  // 再尝试 python（Windows 常用）
+  console.log('[DEBUG] Trying python --version...')
+  const tryPython = await new Promise((resolve) => {
+    const proc = spawn('python', ['--version'], spawnOptions)
+    let stdout = ''
+    let stderr = ''
+
+    proc.stdout.on('data', (data) => stdout += data.toString())
+    proc.stderr.on('data', (data) => stderr += data.toString())
+
+    proc.on('close', (code) => {
+      console.log(`[DEBUG] python exit code: ${code}, stdout: "${stdout.trim()}", stderr: "${stderr.trim()}"`)
+      resolve(code === 0)
+    })
+    proc.on('error', (err) => {
+      console.log(`[DEBUG] python error: ${err.message}`)
+      resolve(false)
+    })
+  })
+
+  if (tryPython) {
+    cachedPythonCommand = 'python'
+    console.log('[DEBUG] Detected: python')
+    return cachedPythonCommand
+  }
+
+  // 都不可用
+  console.log('[DEBUG] No Python command detected')
+  return null
+}
+
+/**
+ * 检测可用的 pip 命令名
+ * Windows 下可能需要使用 'python -m pip'
+ * @returns {Promise<string>}
+ */
+async function detectPipCommand() {
+  if (cachedPipCommand) {
+    return cachedPipCommand
+  }
+
+  // Windows 下 spawn 需要使用 shell 才能通过 PATH 查找命令
+  const spawnOptions = process.platform === 'win32'
+    ? { timeout: 5000, shell: true, windowsVerbatimArguments: true }
+    : { timeout: 5000 }
+
+  // 先尝试 pip
+  const tryPip = await new Promise((resolve) => {
+    const proc = spawn('pip', ['--version'], spawnOptions)
+    proc.on('close', (code) => resolve(code === 0))
+    proc.on('error', () => resolve(false))
+  })
+
+  if (tryPip) {
+    cachedPipCommand = 'pip'
+    return cachedPipCommand
+  }
+
+  // 尝试 python -m pip（Windows 常用）
+  const pythonCmd = await detectPythonCommand()
+  if (pythonCmd) {
+    cachedPipCommand = `${pythonCmd} -m pip`
+    return cachedPipCommand
+  }
+
+  return null
+}
+
+/**
+ * 获取已缓存的 Python 命令名
+ * @returns {string|null}
+ */
+export function getPythonCommand() {
+  return cachedPythonCommand
+}
+
+/**
+ * 获取已缓存的 Pip 命令名
+ * @returns {string|null}
+ */
+export function getPipCommand() {
+  return cachedPipCommand
+}
+
 /**
  * 执行 Python 命令并获取输出
  * @param {string[]} args - Python 命令参数
@@ -37,8 +168,23 @@ let cachedResult = null
  * @returns {Promise<{success: boolean, output: string, error: string}>}
  */
 async function runPythonCommand(args, timeout = 10000) {
+  // 确保 Python 命令已检测
+  const pythonCmd = await detectPythonCommand()
+  if (!pythonCmd) {
+    return {
+      success: false,
+      output: '',
+      error: 'Python 未安装或不在 PATH 中'
+    }
+  }
+
+  // Windows 下 spawn 需要使用 shell 才能通过 PATH 查找命令
+  const spawnOptions = process.platform === 'win32'
+    ? { timeout, shell: true, windowsVerbatimArguments: true }
+    : { timeout }
+
   return new Promise((resolve) => {
-    const proc = spawn('python3', args, { timeout })
+    const proc = spawn(pythonCmd, args, spawnOptions)
     let stdout = ''
     let stderr = ''
 
@@ -69,8 +215,24 @@ async function runPythonCommand(args, timeout = 10000) {
  * @returns {Promise<{success: boolean, output: string}>}
  */
 async function runPipCommand(args) {
+  // 确保 pip 命令已检测
+  const pipCmd = await detectPipCommand()
+  if (!pipCmd) {
+    return { success: false, output: 'pip 未安装或不在 PATH 中' }
+  }
+
+  // 处理 'python -m pip' 形式
+  const cmdParts = pipCmd.split(' ')
+  const pipArgs = cmdParts.length > 1 ? [...cmdParts.slice(1), ...args] : args
+  const pipBin = cmdParts[0]
+
+  // Windows 下 spawn 需要使用 shell 才能通过 PATH 查找命令
+  const spawnOptions = process.platform === 'win32'
+    ? { stdio: 'inherit', shell: true, windowsVerbatimArguments: true }
+    : { stdio: 'inherit' }
+
   return new Promise((resolve) => {
-    const proc = spawn('pip', args, { stdio: 'inherit' })
+    const proc = spawn(pipBin, pipArgs, spawnOptions)
 
     proc.on('close', (code) => {
       resolve({ success: code === 0, output: '' })
@@ -373,5 +535,8 @@ export default {
   getSharedModulesPath,
   getKernelRunnerPath,
   getDataPath,
-  getProgressPath
+  getProgressPath,
+  getPythonCommand,
+  getPipCommand,
+  detectPythonCommand
 }

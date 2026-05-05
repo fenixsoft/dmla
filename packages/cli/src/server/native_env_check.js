@@ -39,7 +39,7 @@ let cachedPipCommand = null
  * Windows 下通常只有 'python'，Linux/macOS 通常有 'python3'
  * @returns {Promise<string>}
  */
-async function detectPythonCommand() {
+export async function detectPythonCommand() {
   if (cachedPythonCommand) {
     return cachedPythonCommand
   }
