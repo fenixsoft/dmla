@@ -44,9 +44,14 @@ async function detectPythonCommand() {
     return cachedPythonCommand
   }
 
+  // Windows 下 spawn 需要使用 shell 才能通过 PATH 查找命令
+  const spawnOptions = process.platform === 'win32'
+    ? { timeout: 5000, shell: true, windowsVerbatimArguments: true }
+    : { timeout: 5000 }
+
   // 先尝试 python3（Linux/macOS 常用）
   const tryPython3 = await new Promise((resolve) => {
-    const proc = spawn('python3', ['--version'], { timeout: 5000 })
+    const proc = spawn('python3', ['--version'], spawnOptions)
     proc.on('close', (code) => resolve(code === 0))
     proc.on('error', () => resolve(false))
   })
@@ -58,7 +63,7 @@ async function detectPythonCommand() {
 
   // 再尝试 python（Windows 常用）
   const tryPython = await new Promise((resolve) => {
-    const proc = spawn('python', ['--version'], { timeout: 5000 })
+    const proc = spawn('python', ['--version'], spawnOptions)
     proc.on('close', (code) => resolve(code === 0))
     proc.on('error', () => resolve(false))
   })
@@ -82,9 +87,14 @@ async function detectPipCommand() {
     return cachedPipCommand
   }
 
+  // Windows 下 spawn 需要使用 shell 才能通过 PATH 查找命令
+  const spawnOptions = process.platform === 'win32'
+    ? { timeout: 5000, shell: true, windowsVerbatimArguments: true }
+    : { timeout: 5000 }
+
   // 先尝试 pip
   const tryPip = await new Promise((resolve) => {
-    const proc = spawn('pip', ['--version'], { timeout: 5000 })
+    const proc = spawn('pip', ['--version'], spawnOptions)
     proc.on('close', (code) => resolve(code === 0))
     proc.on('error', () => resolve(false))
   })
@@ -137,8 +147,13 @@ async function runPythonCommand(args, timeout = 10000) {
     }
   }
 
+  // Windows 下 spawn 需要使用 shell 才能通过 PATH 查找命令
+  const spawnOptions = process.platform === 'win32'
+    ? { timeout, shell: true, windowsVerbatimArguments: true }
+    : { timeout }
+
   return new Promise((resolve) => {
-    const proc = spawn(pythonCmd, args, { timeout })
+    const proc = spawn(pythonCmd, args, spawnOptions)
     let stdout = ''
     let stderr = ''
 
@@ -180,8 +195,13 @@ async function runPipCommand(args) {
   const pipArgs = cmdParts.length > 1 ? [...cmdParts.slice(1), ...args] : args
   const pipBin = cmdParts[0]
 
+  // Windows 下 spawn 需要使用 shell 才能通过 PATH 查找命令
+  const spawnOptions = process.platform === 'win32'
+    ? { stdio: 'inherit', shell: true, windowsVerbatimArguments: true }
+    : { stdio: 'inherit' }
+
   return new Promise((resolve) => {
-    const proc = spawn(pipBin, pipArgs, { stdio: 'inherit' })
+    const proc = spawn(pipBin, pipArgs, spawnOptions)
 
     proc.on('close', (code) => {
       resolve({ success: code === 0, output: '' })

@@ -193,13 +193,18 @@ export async function runPythonCodeNative(code, useGpu = false, timeoutOverride 
     }
   }
 
+  // Windows 下 spawn 需要使用 shell 才能通过 PATH 查找命令
+  const spawnOptions = process.platform === 'win32'
+    ? { env, shell: true, windowsVerbatimArguments: true }
+    : { env }
+
   try {
     // 创建子进程
     proc = spawn(pythonCmd, [
       kernelRunnerPath,
       '--code', code,
       '--timeout', String(timeoutSeconds)
-    ], { env })
+    ], spawnOptions)
 
     registerProcess(executionId, proc)
 
@@ -411,13 +416,18 @@ export async function runPythonCodeStreamingNative(code, useGpu = false, res, ti
     return
   }
 
+  // Windows 下 spawn 需要使用 shell 才能通过 PATH 查找命令
+  const spawnOptions = process.platform === 'win32'
+    ? { env, shell: true, windowsVerbatimArguments: true }
+    : { env }
+
   try {
     proc = spawn(pythonCmd, [
       kernelRunnerPath,
       '--code', code,
       '--timeout', String(timeoutSeconds),
       '--stream'
-    ], { env })
+    ], spawnOptions)
 
     registerProcess(executionId, proc)
 
