@@ -44,14 +44,39 @@ export async function detectPythonCommand() {
     return cachedPythonCommand
   }
 
-  // Windows 下需要使用 shell 才能通过 PATH 查找命令
-  const spawnOptions = process.platform === 'win32'
-    ? { timeout: 5000, shell: true }
-    : { timeout: 5000 }
+  // Windows 下使用 exec，避免 shell + args 的安全警告
+  if (process.platform === 'win32') {
+    // 先尝试 python3
+    const tryPython3 = await new Promise((resolve) => {
+      exec('python3 --version', { timeout: 5000 }, (error) => {
+        resolve(!error)
+      })
+    })
 
+    if (tryPython3) {
+      cachedPythonCommand = 'python3'
+      return cachedPythonCommand
+    }
+
+    // 再尝试 python
+    const tryPython = await new Promise((resolve) => {
+      exec('python --version', { timeout: 5000 }, (error) => {
+        resolve(!error)
+      })
+    })
+
+    if (tryPython) {
+      cachedPythonCommand = 'python'
+      return cachedPythonCommand
+    }
+
+    return null
+  }
+
+  // Linux/macOS 使用 spawn
   // 先尝试 python3（Linux/macOS 常用）
   const tryPython3 = await new Promise((resolve) => {
-    const proc = spawn('python3', ['--version'], spawnOptions)
+    const proc = spawn('python3', ['--version'], { timeout: 5000 })
     proc.on('close', (code) => resolve(code === 0))
     proc.on('error', () => resolve(false))
   })
@@ -63,7 +88,7 @@ export async function detectPythonCommand() {
 
   // 再尝试 python（Windows 常用）
   const tryPython = await new Promise((resolve) => {
-    const proc = spawn('python', ['--version'], spawnOptions)
+    const proc = spawn('python', ['--version'], { timeout: 5000 })
     proc.on('close', (code) => resolve(code === 0))
     proc.on('error', () => resolve(false))
   })
