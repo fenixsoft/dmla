@@ -359,16 +359,8 @@ async function checkPyTorch() {
  * @returns {Promise<{available: boolean, version: string|null, deviceName: string|null}>}
  */
 async function checkCUDA() {
-  const code = `
-import torch
-import json
-result = {
-    'available': torch.cuda.is_available(),
-    'version': str(torch.version.cuda) if torch.cuda.is_available() else None,
-    'device_name': torch.cuda.get_device_name(0) if torch.cuda.is_available() else None
-}
-print(json.dumps(result))
-`
+  // 使用单行代码，避免 Windows exec 多行字符串问题
+  const code = 'import torch,json; r={"available":torch.cuda.is_available(),"version":str(torch.version.cuda) if torch.cuda.is_available() else None,"device_name":torch.cuda.get_device_name(0) if torch.cuda.is_available() else None}; print(json.dumps(r))'
   const result = await runPythonCommand(['-c', code])
 
   if (!result.success) {
