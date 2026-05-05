@@ -227,6 +227,48 @@ clear_progress()
 - 写入失败不会影响训练，仅打印警告
 - `extra_data` 可携带自定义指标（loss、accuracy 等）
 
+### 数据路径自动注入（DATA_DIR）
+
+kernel_runner.py 在执行代码前自动注入 `DATA_DIR` 全局变量，兼容 Docker 和 Native 模式。
+
+**注入机制**：
+```python
+import os
+DATA_DIR = os.environ.get('DMLA_DATA_PATH', '/data')
+```
+
+**模式差异**：
+- Docker 模式：`DMLA_DATA_PATH` 未设置 → `DATA_DIR = '/data'`（容器挂载路径）
+- Native 模式：`DMLA_DATA_PATH` 已设置 → `DATA_DIR = '~/dmla-data'`（宿主机数据目录）
+
+**使用方式**：
+```python
+# 在代码中使用 DATA_DIR（无需导入，自动注入）
+dataset_path = os.path.join(DATA_DIR, 'datasets', 'tiny-imagenet-200')
+model_path = os.path.join(DATA_DIR, 'models', 'alexnet', 'final', 'model.pth')
+cache_path = os.path.join(DATA_DIR, 'cache', 'preprocessing', 'lmdb')
+```
+
+**自定义数据路径**（Native 模式）：
+```bash
+# 通过环境变量自定义数据目录
+export DMLA_DATA_PATH=/custom/data/path
+dmla start --dev
+
+# 或在 CLI 启动时指定
+dmla data mount /custom/data/path
+```
+
+**文档代码块适配**：
+文档中的代码块应使用 `DATA_DIR` 变量而非硬编码 `/data` 路径：
+```python
+# 错误（仅 Docker 模式可用）
+data_dir = '/data/datasets/tiny-imagenet-200'
+
+# 正确（Docker 和 Native 模式均可用）
+data_dir = os.path.join(DATA_DIR, 'datasets', 'tiny-imagenet-200')
+```
+
 ## 第三部分：项目概览
 - **设计文档**: `/docs/arch/design.md`
 - **技术栈**: VuePress v2 + Vue 3 + Express + Docker

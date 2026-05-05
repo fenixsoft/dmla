@@ -17,8 +17,9 @@ dmla data
 ```python runnable gpu
 import os
 
-# 检查数据目录是否存在（/data/ 是 Docker 沙箱中挂载宿主机数据卷的固定路径）
-data_dir = '/data/datasets/tiny-imagenet-200'
+# DATA_DIR 由 kernel 自动注入（Docker: /data, Native: ~/dmla-data）
+# 检查数据目录是否存在
+data_dir = os.path.join(DATA_DIR, 'datasets', 'tiny-imagenet-200')
 
 if os.path.exists(data_dir):
     print("数据集目录已存在")
@@ -76,9 +77,10 @@ import time
 # 导入进度报告模块
 from dmla_progress import ProgressReporter
 
-# 数据及缓存目录
-DATA_DIR = '/data/datasets/tiny-imagenet-200'
-CACHE_DIR = '/data/cache/preprocessing/tiny-imagenet-224-lmdb'
+# 数据及缓存目录（DATA_DIR 由 kernel 自动注入）
+# Docker 模式: DATA_DIR='/data', Native 模式: DATA_DIR='~/dmla-data'
+raw_data_dir = os.path.join(DATA_DIR, 'datasets', 'tiny-imagenet-200')
+CACHE_DIR = os.path.join(DATA_DIR, 'cache', 'preprocessing', 'tiny-imagenet-224-lmdb')
 
 class LMDBPreprocessCache:
     """
@@ -381,8 +383,8 @@ from nvidia.dali.plugin.pytorch import DALIGenericIterator
 # 导入共享模块中的 AlexNet
 from shared.cnn.alexnet import AlexNet
 
-# LMDB 缓存目录
-LMDB_DIR = '/data/cache/preprocessing/tiny-imagenet-224-lmdb'
+# LMDB 缓存目录（DATA_DIR 由 kernel 自动注入）
+LMDB_DIR = os.path.join(DATA_DIR, 'cache', 'preprocessing', 'tiny-imagenet-224-lmdb')
 
 def detect_host_os():
     """检测宿主操作系统"""
@@ -600,9 +602,9 @@ scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.1)
 
 progress.update(60, message="训练环境准备完成")
 
-# 创建性能日志
-perf_log_path = '/data/models/alexnet/performance_log.txt'
-os.makedirs('/data/models/alexnet', exist_ok=True)
+# 创建性能日志（DATA_DIR 由 kernel 自动注入）
+perf_log_path = os.path.join(DATA_DIR, 'models', 'alexnet', 'performance_log.txt')
+os.makedirs(os.path.join(DATA_DIR, 'models', 'alexnet'), exist_ok=True)
 perf_log = open(perf_log_path, 'w')
 perf_log.write("batch_idx,decode_ms,transfer_ms,forward_ms,backward_ms,optimizer_ms,total_ms\n")
 
@@ -697,7 +699,7 @@ try:
         
         if val_acc > best_acc:
             best_acc = val_acc
-            save_dir = '/data/models/alexnet/checkpoints'
+            save_dir = os.path.join(DATA_DIR, 'models', 'alexnet', 'checkpoints')
             os.makedirs(save_dir, exist_ok=True)
             torch.save({
                 'epoch': epoch + 1,
@@ -721,7 +723,7 @@ try:
     perf_log.close()
     print(f"\n性能日志已保存: {perf_log_path}")
     
-    final_dir = '/data/models/alexnet/final'
+    final_dir = os.path.join(DATA_DIR, 'models', 'alexnet', 'final')
     os.makedirs(final_dir, exist_ok=True)
     torch.save(model.state_dict(), os.path.join(final_dir, 'alexnet_tiny_imagenet.pth'))
     print(f"最终模型已保存: {os.path.join(final_dir, 'alexnet_tiny_imagenet.pth')}")
@@ -753,9 +755,9 @@ import os
 # 导入共享模块中的 AlexNet
 from shared.cnn.alex_net import AlexNet
 
-# 加载训练好的模型
-model_path = '/data/models/alexnet/final/alexnet_tiny_imagenet.pth'
-checkpoint_path = '/data/models/alexnet/checkpoints/best_model.pth'
+# 加载训练好的模型（DATA_DIR 由 kernel 自动注入）
+model_path = os.path.join(DATA_DIR, 'models', 'alexnet', 'final', 'alexnet_tiny_imagenet.pth')
+checkpoint_path = os.path.join(DATA_DIR, 'models', 'alexnet', 'checkpoints', 'best_model.pth')
 
 # 选择加载路径
 if os.path.exists(checkpoint_path):
@@ -783,8 +785,8 @@ transform = transforms.Compose([
 ])
 
 # 加载类别名称（从 wnids.txt）
-wnids_path = '/data/datasets/tiny-imagenet-200/wnids.txt'
-words_path = '/data/datasets/tiny-imagenet-200/words.txt'
+wnids_path = os.path.join(DATA_DIR, 'datasets', 'tiny-imagenet-200', 'wnids.txt')
+words_path = os.path.join(DATA_DIR, 'datasets', 'tiny-imagenet-200', 'words.txt')
 
 class_names = {}
 if os.path.exists(wnids_path) and os.path.exists(words_path):
@@ -824,7 +826,7 @@ def predict_image(image_path, model, transform, device, class_names, wnids):
     return results
 
 # 使用验证集中的一张图片进行测试
-val_images_dir = '/data/datasets/tiny-imagenet-200/val/images'
+val_images_dir = os.path.join(DATA_DIR, 'datasets', 'tiny-imagenet-200', 'val', 'images')
 
 if os.path.exists(val_images_dir):
     test_images = os.listdir(val_images_dir)[:5]
@@ -847,21 +849,28 @@ else:
 
 # 也可以使用自定义图片
 print("\n" + "=" * 60)
-print("提示: 您可以将自己的图片放到 /data/datasets/custom/ 目录进行测试")
-print("使用方法: predict_image('/data/datasets/custom/your_image.jpg', model, transform, device, class_names, wnids)")
+print(f"提示: 您可以将自己的图片放到 {DATA_DIR}/datasets/custom/ 目录进行测试")
+print(f"使用方法: predict_image('{DATA_DIR}/datasets/custom/your_image.jpg', model, transform, device, class_names, wnids)")
 ```
 
 ## 实验结果
 
 本实验完整展示了 AlexNet 的训练流程，训练完成后，以下生成的文件将保存到数据目录：
 
+::: tip 数据目录路径
+- **Docker 模式**: `/data`（容器内挂载路径）
+- **Native 模式**: `~/dmla-data`（宿主机数据目录，可通过 `DMLA_DATA_PATH` 自定义）
+
+代码中使用 `DATA_DIR` 变量自动适配两种模式。
+:::
+
 - **模型文件**：
-    - `/data/models/alexnet/checkpoints/best_model.pth` - 最佳验证准确率的模型
-    - `/data/models/alexnet/checkpoints/epoch_*.pth` - 每 5 epoch 的 checkpoint
-    - `/data/models/alexnet/final/alexnet_tiny_imagenet.pth` - 最终模型权重
+    - `<DATA_DIR>/models/alexnet/checkpoints/best_model.pth` - 最佳验证准确率的模型
+    - `<DATA_DIR>/models/alexnet/checkpoints/epoch_*.pth` - 每 5 epoch 的 checkpoint
+    - `<DATA_DIR>/models/alexnet/final/alexnet_tiny_imagenet.pth` - 最终模型权重
 - **预处理缓存**：
-    - `/data/cache/preprocessing/tiny-imagenet-224-lmdb/train.lmdb/` - 训练集 LMDB 数据库（约 2GB）
-    - `/data/cache/preprocessing/tiny-imagenet-224-lmdb/val.lmdb/` - 验证集 LMDB 数据库（约 300MB）
-    - `/data/cache/preprocessing/tiny-imagenet-224-lmdb/manifest.json` - 缓存清单（数量、格式说明）
+    - `<DATA_DIR>/cache/preprocessing/tiny-imagenet-224-lmdb/train.lmdb/` - 训练集 LMDB 数据库（约 2GB）
+    - `<DATA_DIR>/cache/preprocessing/tiny-imagenet-224-lmdb/val.lmdb/` - 验证集 LMDB 数据库（约 300MB）
+    - `<DATA_DIR>/cache/preprocessing/tiny-imagenet-224-lmdb/manifest.json` - 缓存清单（数量、格式说明）
 - **性能日志**：
-    - `/data/models/alexnet/performance_log.txt` - 详细耗时日志（用于分析瓶颈）
+    - `<DATA_DIR>/models/alexnet/performance_log.txt` - 详细耗时日志（用于分析瓶颈）

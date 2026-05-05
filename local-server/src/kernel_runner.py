@@ -225,12 +225,36 @@ def run_code(code: str, timeout: int = DEFAULT_TIMEOUT, stream: bool = False) ->
         restore_stdout()
         log_debug('stdout restored for code execution')
 
-        # 3. 执行代码
-        log_debug('Executing code')
+        # 3. 注入全局变量（数据路径兼容）
+        log_debug('Injecting global variables')
+        setup_code = '''
+import os
+DATA_DIR = os.environ.get('DMLA_DATA_PATH', '/data')
+'''
+        kc.execute(setup_code, allow_stdin=False)
+        # 等待 setup 执行完成（读取并丢弃 setup 的输出）
+        setup_start = time.time()
+        while True:
+            # setup 执行超时保护（最多 5 秒）
+            if time.time() - setup_start > 5:
+                log_debug('Setup injection timeout, proceeding anyway')
+                break
+            try:
+                msg = kc.get_iopub_msg(timeout=2)
+                msg_type = msg['header']['msg_type']
+                if msg_type == 'status' and msg['content'].get('execution_state') == 'idle':
+                    log_debug('Setup injection complete')
+                    break
+            except Exception as e:
+                log_debug(f'Setup msg exception: {type(e).__name__}')
+                break
+
+        # 4. 执行用户代码
+        log_debug('Executing user code')
         msg_id = kc.execute(code, allow_stdin=False)
         log_debug(f'Code execution started, msg_id={msg_id}')
 
-        # 4. 收集输出
+        # 5. 收集输出
         log_debug('Collecting outputs')
         while True:
             # 检查是否已超时
