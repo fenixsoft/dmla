@@ -1,26 +1,31 @@
-```python runnable gpu timeout=unlimited
-import time
-from dmla_progress import ProgressReporter
+# Runnable Code 测试页面
 
-progress = ProgressReporter(total_steps=10, description="进度条50%停顿测试")
+## 普通 Run 按钮（无参数）
 
-for i in range(5):
-    time.sleep(1)
-    progress.update(i + 1, message=f"已完成步骤 {i+1}/10")
-    print(f"步骤 {i+1} 完成")
+```python runnable
+print("Hello World - 只有 Run 按钮")
+```
 
-print("进度条停顿在50%位置...")
-time.sleep(3)  # 停顿3秒让用户看到进度条
+## Run + GPU 按钮（gpu 参数）
 
-# 抛出异常测试错误处理
-# raise RuntimeError("测试异常：在50%位置抛出错误")
+```python runnable gpu
+print("Hello GPU - 有 Run 和 GPU 两个按钮")
+```
 
-# 以下代码不会执行
-for i in range(5, 10):
-    time.sleep(1)
-    progress.update(i + 1, message=f"已完成步骤 {i+1}/10")
-    print(f"步骤 {i+1} 完成")
+## 只有 GPU 按钮（gpuonly 参数）
 
-progress.complete(message="进度条测试完成")
-print("测试完成")
+```python runnable gpuonly
+print("Hello GPU Only - 只有 GPU 按钮，没有 Run 按钮")
+```
+
+## GPU + timeout 参数组合
+
+```python runnable gpu timeout=60
+print("GPU + timeout 组合测试")
+```
+
+## gpuonly + timeout 参数组合
+
+```python runnable gpuonly timeout=120
+print("gpuonly + timeout 组合测试 - 只有 GPU 按钮")
 ```

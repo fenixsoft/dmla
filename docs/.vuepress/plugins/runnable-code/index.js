@@ -32,8 +32,10 @@ export const runnableCodePlugin = (options = {}) => {
         // 检查是否为 runnable 代码块
         if (info.includes('runnable')) {
           const infoLower = info.toLowerCase()
-          const language = info.replace(/runnable|gpu|timeout=\S+|extract-class="[^"]*"/gi, '').trim() || 'python'
+          // 移除所有标记参数，提取语言名称
+          const language = info.replace(/runnable|gpu|gpuonly|timeout=\S+|extract-class="[^"]*"/gi, '').trim() || 'python'
           const useGpu = infoLower.includes('gpu')
+          const gpuOnly = infoLower.includes('gpuonly')
 
           // 解析 timeout 参数
           const timeoutMatch = info.match(/timeout=(\d+|unlimited)/i)
@@ -60,20 +62,24 @@ export const runnableCodePlugin = (options = {}) => {
           const dataAttrs = [
             `data-lang="${language}"`,
             `data-gpu="${useGpu}"`,
+            `data-gpu-only="${gpuOnly}"`,
             timeout ? `data-timeout="${timeout}"` : '',
             extractClass ? `data-extract-class="${extractClass}"` : ''
           ].filter(Boolean).join(' ')
+
+          // 渲染按钮：gpuonly 时只显示 GPU 按钮，否则显示普通 Run 按钮（有 gpu 时也显示 GPU 按钮）
+          const runBtn = gpuOnly ? '' : `<button class="run-btn" data-target="${id}">▶ Run</button>`
+          const gpuBtn = (useGpu || gpuOnly) ? `<button class="run-btn gpu-btn" data-target="${id}" data-gpu="true">▶ Run on GPU</button>` : ''
 
           // 返回可编辑的代码块，保留语法高亮
           return `<div class="runnable-code-block" ${dataAttrs}>
   <div class="code-area">
     <div class="floating-toolbar">
-      <button class="run-btn" data-target="${id}">▶ Run</button>
-      ${useGpu ? `<button class="run-btn gpu-btn" data-target="${id}" data-gpu="true">▶ Run on GPU</button>` : ''}
+      ${runBtn}${gpuBtn}
     </div>
     ${codeHtml}
   </div>
-  <div class="output-area" id="${id}">点击 Run 按钮执行代码</div>
+  <div class="output-area output-container" id="${id}">点击 Run 按钮执行代码</div>
 </div>`
         }
 

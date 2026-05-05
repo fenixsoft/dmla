@@ -13,36 +13,15 @@ export async function runUpdate() {
   console.log()
 
   try {
-    // 检查当前版本
-    const currentVersion = execSync('npm list -g @icyfenix-dmla/cli --depth=0 2>/dev/null | grep @icyfenix-dmla/cli', { encoding: 'utf-8' })
-      .trim()
-      .split('@')[2] || '未知'
-
-    console.log(chalk.gray(`当前版本: ${currentVersion}`))
-    console.log()
-
-    // 执行 npm 更新
+    // 直接执行 npm 更新
     console.log(chalk.cyan('正在从 npm 更新...'))
-    const output = execSync('npm update -g @icyfenix-dmla/cli @icyfenix-dmla/install', {
+    execSync('npm update -g @icyfenix-dmla/cli @icyfenix-dmla/install', {
       encoding: 'utf-8',
-      stdio: 'pipe'
+      stdio: 'inherit'
     })
 
-    console.log(output)
-
-    // 检查更新后的版本
-    const newVersion = execSync('npm list -g @icyfenix-dmla/cli --depth=0 2>/dev/null | grep @icyfenix-dmla/cli', { encoding: 'utf-8' })
-      .trim()
-      .split('@')[2] || '未知'
-
-    if (newVersion !== currentVersion) {
-      console.log()
-      console.log(chalk.green(`✓ 更新成功！`))
-      console.log(chalk.gray(`  ${currentVersion} → ${newVersion}`))
-    } else {
-      console.log()
-      console.log(chalk.yellow('已是最新版本'))
-    }
+    console.log()
+    console.log(chalk.green('✓ 更新完成'))
 
     // 提示用户更新 Docker 镜像（可选）
     console.log()

@@ -35,7 +35,8 @@ RUN pip install --no-cache-dir -i https://pypi.tuna.tsinghua.edu.cn/simple \
     pillow \
     opencv-python-headless \
     ipykernel \
-    jupyter_client
+    jupyter_client \
+    lmdb
 
 # 安装 PyTorch (CPU 版本) - 使用 PyTorch 官方镜像
 RUN pip install --no-cache-dir \

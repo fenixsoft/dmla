@@ -69,8 +69,13 @@ function isUserCancel(error) {
  */
 function showBanner() {
   console.log()
-  console.log(chalk.cyan('DMLA 数据管理'))
-  console.log(chalk.cyan('================'))
+  console.log(chalk.cyan(' ______   ____    ____  _____          _       '))
+  console.log(chalk.cyan('|_   _ `.|_   \\  /   _||_   _|        / \\      '))
+  console.log(chalk.cyan('  | | `. \\ |   \\/   |    | |         / _ \\     '))
+  console.log(chalk.cyan('  | |  | | | |\\  /| |    | |   _    / ___ \\    '))
+  console.log(chalk.cyan(' _| |_.\' /_| |_\\/_| |_  _| |__/ | _/ /   \\ \\_  '))
+  console.log(chalk.cyan('|______.\'|_____||_____||________||____| |____| '))
+  console.log(chalk.blue('== Designing Machine Learning Applications =='))
   console.log()
 }
 
@@ -231,7 +236,11 @@ async function showMainMenu(dataPath) {
     type: 'select',
     name: 'action',
     message: '选择操作',
-    choices: choices.map(c => c.message)
+    choices: choices.map(c => c.message),
+    styles: {
+      // 保留颜色变化，移除下划线
+      primary: chalk.cyan.bold
+    }
   })
 
   // 解析选择
@@ -440,7 +449,11 @@ async function downloadDatasets() {
       message: '选择要下载的数据集',
       choices,
       hint: '空格选择，回车确认下载',
-      warn: '已下载'
+      warn: '已下载',
+      styles: {
+        // 保留颜色变化，移除下划线
+        primary: chalk.cyan.bold
+      }
     })
 
     if (!selected || selected.length === 0) {
@@ -504,11 +517,14 @@ async function downloadDataset(dataPath, dataset) {
       console.log(chalk.gray('开始 git clone...'))
       console.log()
 
-      // 先安装 git lfs（如果需要）
+      // 检查并安装 Git LFS
+      let hasGitLfs = false
       try {
         execSync('git lfs install', { stdio: 'pipe' })
+        hasGitLfs = true
       } catch {
-        // git lfs 可能未安装，但大多数数据集不需要
+        console.log(chalk.yellow('⚠ Git LFS 未安装，可能无法下载大文件'))
+        console.log(chalk.yellow('建议安装: https://git-lfs.github.com/'))
       }
 
       // 执行 git clone
@@ -530,6 +546,19 @@ async function downloadDataset(dataPath, dataset) {
 
       console.log()
       console.log(chalk.green('下载完成'))
+
+      // 拉取 Git LFS 文件（如果已安装）
+      if (hasGitLfs) {
+        console.log()
+        console.log(chalk.gray('拉取 LFS 大文件...'))
+        try {
+          execSync('git lfs pull', { cwd: targetDir, stdio: 'inherit' })
+          console.log(chalk.green('LFS 文件拉取完成'))
+        } catch (lfsError) {
+          console.log(chalk.yellow(`⚠ LFS 拉取失败: ${lfsError.message}`))
+          console.log(chalk.yellow('数据集可能包含未下载的大文件'))
+        }
+      }
 
       // 解压数据集内的 zip 文件（如果有）
       if (dataset.zipFile) {

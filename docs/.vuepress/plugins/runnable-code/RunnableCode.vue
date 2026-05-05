@@ -796,15 +796,21 @@ onUnmounted(() => {
   overflow-y: auto;
 }
 
-.output-area {
+.runnable-code-block .output-container {
   padding: 12px 16px;
-  background: #1e1e1e;
-  color: #d4d4d4;
-  font-family: 'Fira Code', 'Consolas', 'Monaco', monospace;
+  background: #1E1E1E;
+  border-top: 1px solid #333333;
+  font-family: 'Fira Code', monospace;
   font-size: 13px;
   line-height: 1.5;
-  max-height: 400px;
+  color: #4EC9B0;
+  white-space: pre-wrap;
+  max-height: 1000px;
   overflow-y: auto;
+}
+
+.runnable-code-block .output-area {
+  padding: 12px 16px;
 }
 
 .output-area.loading {

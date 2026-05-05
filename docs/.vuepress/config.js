@@ -190,7 +190,7 @@ export default {
               { text: 'AlexNet 与 CNN 复兴', link: '/deep-learning/convolutional-neural-network/alexnet' },
               { text: 'VGG 与 GoogLeNet', link: '/deep-learning/convolutional-neural-network/vgg-inception' },
               // { text: 'ResNet 残差网络', link: '/deep-learning/convolutional-neural-network/resnet' },
-              { text: '训练实验：AlexNet 图像分类', link: '/deep-learning/convolutional-neural-network/alexnet-experiment' },
+              { text: '工程实训：AlexNet 图像分类实验', link: '/deep-learning/convolutional-neural-network/alexnet-experiment' },
             ]
           },
         ]
@@ -204,9 +204,14 @@ export default {
         collapsible: false,
       },
       {
-        text: '附录：读经典论文',
+        text: '机器学习经典论文',
+        collapsible: false,
+      },
+      {
+        text: '附录',
         collapsible: false,
         children: [
+              { text: '构建沙箱环境', link: '/sandbox.md' },
               { text: '临时格式测试页面', link: '/test.md' },
         ]
       },

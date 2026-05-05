@@ -11,6 +11,20 @@ import { getSandboxEndpoint } from './sandbox-config.js'
 import Prism from 'prismjs'
 import 'prismjs/components/prism-python'
 
+/**
+ * 去除 ANSI 转义码
+ * IPython/Jupyter 的 traceback 包含彩色输出的 ANSI 转义码（如 [36m、[31m 等）
+ * 在网页中需要过滤掉这些字符，只保留纯文本
+ * @param {string} text - 包含 ANSI 转义码的文本
+ * @returns {string} - 纯文本
+ */
+function stripAnsi(text) {
+  // 匹配两种格式的 ANSI 转义码：
+  // 1. \x1b[...m（完整的 ESC 序列）
+  // 2. [...m（部分显示格式，如 [36m）
+  return text.replace(/\x1b\[[0-9;]*m/g, '').replace(/\[[0-9;]*m/g, '')
+}
+
 // 内联样式确保加载
 const styleId = 'runnable-code-styles'
 if (typeof document !== 'undefined' && !document.getElementById(styleId)) {
@@ -140,17 +154,21 @@ if (typeof document !== 'undefined' && !document.getElementById(styleId)) {
 }
 
 /* 输出区域 */
-.runnable-code-block .output-area {
+.runnable-code-block .output-container {
   padding: 12px 16px;
-  background: #1e1e1e;
-  color: #d4d4d4;
-  font-family: 'Fira Code', 'Consolas', 'Monaco', monospace;
+  background: #1E1E1E;
+  border-top: 1px solid #333333;
+  font-family: 'Fira Code', monospace;
   font-size: 13px;
   line-height: 1.5;
+  color: #ffffff;
   white-space: pre-wrap;
-  word-break: break-all;
   max-height: 1000px;
   overflow-y: auto;
+}
+
+.runnable-code-block .output-area {
+  padding: 12px 16px;
 }
 
 .runnable-code-block .output-area:empty::before {
@@ -533,7 +551,12 @@ function initCodeBlock(block) {
           textOutput.className = 'output-area loading'
           textOutput.textContent = ''
         } else if (msg.status === 'running') {
-          // 运行中状态，清除加载提示
+          // 运行中状态，更新进度条并清除加载提示
+          progressContainer.innerHTML = `
+            <div class="progress-bar">
+              <div class="progress-header">${msg.message || '代码执行中...'}</div>
+            </div>
+          `
           textOutput.className = 'output-area'
           if (textOutput.textContent === '执行中...' || textOutput.textContent === '正在启动容器...') {
             textOutput.innerHTML = ''
@@ -603,10 +626,10 @@ function initCodeBlock(block) {
           }
         }
 
-        // 普通文本输出 - 追加到文本区域
+        // 普通文本输出 - 追加到文本区域（去除 ANSI 转义码）
         const pre = document.createElement('pre')
         pre.className = `output-stream ${msg.name || 'stdout'}`
-        pre.textContent = msg.text || ''
+        pre.textContent = stripAnsi(msg.text || '')
         textOutput.appendChild(pre)
         break
 
@@ -677,34 +700,49 @@ function initCodeBlock(block) {
       case 'error':
         // 错误输出 - 追加到文本区域
         textOutput.className = 'output-area error'
-        if (outputArea.textContent === '执行中...' || outputArea.textContent === '正在启动容器...') {
-          outputArea.innerHTML = ''
+        if (textOutput.textContent === '执行中...' || textOutput.textContent === '正在启动容器...') {
+          textOutput.innerHTML = ''
         }
 
         const errorDiv = document.createElement('div')
         errorDiv.className = 'output-error'
-        errorDiv.innerHTML = `<div class="error-header">${msg.ename}: ${msg.evalue}</div>`
+        // 去除 ANSI 转义码，显示纯文本
+        const cleanEvalue = stripAnsi(msg.evalue || '')
+        errorDiv.innerHTML = `<div class="error-header">${msg.ename}: ${cleanEvalue}</div>`
         if (msg.traceback && msg.traceback.length) {
           const tracebackPre = document.createElement('pre')
           tracebackPre.className = 'error-traceback'
-          tracebackPre.textContent = Array.isArray(msg.traceback)
-            ? msg.traceback.join('\n')
-            : String(msg.traceback)
+          // 去除 ANSI 转义码，显示纯文本 traceback
+          const cleanTraceback = Array.isArray(msg.traceback)
+            ? msg.traceback.map(stripAnsi).join('\n')
+            : stripAnsi(String(msg.traceback))
+          tracebackPre.textContent = cleanTraceback
           errorDiv.appendChild(tracebackPre)
         }
         textOutput.appendChild(errorDiv)
         break
 
       case 'result':
-        // 最终结果汇总 - 追加到文本区域
+        // 最终结果汇总 - 根据成功状态更新进度条
+        if (msg.success) {
+          progressContainer.innerHTML = `
+            <div class="progress-bar">
+              <div class="progress-header">✅ 代码执行完毕</div>
+            </div>
+          `
+        } else {
+          progressContainer.innerHTML = `
+            <div class="progress-bar">
+              <div class="progress-header">❌ 执行失败</div>
+            </div>
+          `
+        }
         if (msg.executionTime) {
           const timeDiv = document.createElement('div')
           timeDiv.className = 'execution-time'
           timeDiv.textContent = `--- 执行时间: ${msg.executionTime.toFixed(3)}s`
           textOutput.appendChild(timeDiv)
         }
-        // 保留进度条显示在 100% 完成状态（不清除）
-        // progressContainer.innerHTML = ''  // 已注释：保持进度条可见
         break
     }
   }
@@ -795,17 +833,34 @@ function initCodeBlock(block) {
       // 使用流式端点
       const endpoint = getSandboxEndpoint() + '/api/sandbox/stream'
 
+      // 连接超时检测（5秒）
+      // 当服务未启动时，fetch 会长时间等待，需要主动超时
+      const CONNECTION_TIMEOUT = 5000
+      let timeoutId = null
+      const connectionTimeoutPromise = new Promise((_, reject) => {
+        timeoutId = setTimeout(() => {
+          reject(new Error('ConnectionTimeout'))
+        }, CONNECTION_TIMEOUT)
+      })
+
       try {
-        const response = await fetch(endpoint, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            code,
-            useGpu,
-            timeout: timeout === 'unlimited' ? null : (timeout ? parseInt(timeout, 10) : null)
+        // 使用 Promise.race 实现连接超时
+        const response = await Promise.race([
+          fetch(endpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              code,
+              useGpu,
+              timeout: timeout === 'unlimited' ? null : (timeout ? parseInt(timeout, 10) : null)
+            }),
+            signal: abortController.signal
           }),
-          signal: abortController.signal
-        })
+          connectionTimeoutPromise
+        ])
+
+        // 连接成功，清除超时计时器
+        if (timeoutId) clearTimeout(timeoutId)
 
         if (!response.ok) {
           // HTTP 错误响应
@@ -859,9 +914,17 @@ function initCodeBlock(block) {
         }
 
       } catch (error) {
+        // 清除超时计时器（如果还存在）
+        if (timeoutId) clearTimeout(timeoutId)
+
         // 处理中止错误
         if (error.name === 'AbortError') {
           // 中止不是错误，输出已由停止按钮处理
+        } else if (error.message === 'ConnectionTimeout') {
+          // 连接超时 - 服务未启动
+          progressContainer.innerHTML = ''
+          textOutput.className = 'output-area error'
+          textOutput.textContent = '⚠️ 无法连接到沙箱服务（连接超时）\n\n请确保沙箱服务正在运行：\n• 源码模式：npm run server\n• CLI 模式：dmla start\n\n或在设置中检查沙箱地址配置'
         } else {
           progressContainer.innerHTML = ''
           textOutput.className = 'output-area error'
