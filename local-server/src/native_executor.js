@@ -150,6 +150,7 @@ export async function runPythonCodeNative(code, useGpu = false, timeoutOverride 
     ...process.env,
     PYTHONPATH: getSharedModulesPath(),
     PYTHONUNBUFFERED: '1',
+    PYTHONIOENCODING: 'utf-8',  // Windows 下确保 Python 使用 UTF-8 输出
     DMLA_DATA_PATH: getDataPath(),
     DMLA_PROGRESS_PATH: getProgressPath()
   }
@@ -407,6 +408,7 @@ export async function runPythonCodeStreamingNative(code, useGpu = false, res, ti
     ...process.env,
     PYTHONPATH: getSharedModulesPath(),
     PYTHONUNBUFFERED: '1',
+    PYTHONIOENCODING: 'utf-8',  // Windows 下确保 Python 使用 UTF-8 输出
     DMLA_DATA_PATH: getDataPath(),
     DMLA_PROGRESS_PATH: getProgressPath()
   }

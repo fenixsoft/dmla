@@ -206,8 +206,14 @@ async function runPythonCommand(args, timeout = 10000) {
     }).join(' ')
     const fullCmd = `${pythonCmd} ${argsStr}`
 
+    // Windows 下设置 PYTHONIOENCODING=utf-8 确保正确处理中文
+    const execEnv = {
+      ...process.env,
+      PYTHONIOENCODING: 'utf-8'
+    }
+
     return new Promise((resolve) => {
-      exec(fullCmd, { timeout }, (error, stdout, stderr) => {
+      exec(fullCmd, { timeout, env: execEnv }, (error, stdout, stderr) => {
         if (error) {
           resolve({
             success: false,
