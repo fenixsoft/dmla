@@ -85,34 +85,61 @@ export async function pullImages(types, registry = 'dockerhub') {
       console.log(chalk.gray(`更新镜像...`))
     }
 
-    // 拉取镜像
-    try {
-      await pullImageWithProgress(remoteImage)
+    // 拉取镜像（支持无限重试循环）
+    let pullSuccess = false
+    while (!pullSuccess) {
+      try {
+        await pullImageWithProgress(remoteImage, 2) // 自动重试 2 次
 
-      // Tag 为本地名称
-      console.log(chalk.gray(`重命名为 ${localImage}...`))
-      const image = docker.getImage(remoteImage)
-      await image.tag({ repo: CONFIG.imageName, tag: type })
+        // Tag 为本地名称
+        console.log(chalk.gray(`重命名为 ${localImage}...`))
+        const image = docker.getImage(remoteImage)
+        await image.tag({ repo: CONFIG.imageName, tag: type })
 
-      console.log(chalk.green(`✔ ${type.toUpperCase()} 镜像拉取完成`))
-      console.log()
-      results[type] = { success: true }
-    } catch (error) {
-      console.log(chalk.red(`❌ ${type.toUpperCase()} 镜像拉取失败: ${error.message}`))
-      console.log()
-
-      // 给用户手动拉取命令
-      console.log(chalk.yellow('您可以手动拉取镜像：'))
-      console.log(chalk.cyan(`   docker pull ${remoteImage}`))
-      console.log(chalk.gray(`   docker tag ${remoteImage} ${localImage}`))
-      console.log()
-
-      results[type] = { success: false, error: error.message, manualCommand: remoteImage }
-
-      // 如果本地已有镜像，可以继续使用
-      if (exists) {
-        console.log(chalk.gray('   但本地已有镜像，安装将继续进行'))
+        console.log(chalk.green(`✔ ${type.toUpperCase()} 镜像拉取完成`))
         console.log()
+        results[type] = { success: true }
+        pullSuccess = true
+      } catch (error) {
+        console.log(chalk.red(`❌ ${type.toUpperCase()} 镜像拉取失败: ${error.message}`))
+        console.log()
+
+        // 询问用户是否继续重试
+        const retryChoice = await prompt({
+          type: 'select',
+          name: 'action',
+          message: '拉取失败，是否继续重试？',
+          choices: [
+            { name: 'retry', message: '继续重试（自动重试 2 次）' },
+            { name: 'skip', message: '跳过此镜像' },
+            { name: 'exit', message: '退出整个流程' }
+          ]
+        })
+
+        if (retryChoice.action === 'retry') {
+          console.log(chalk.gray('继续重试...'))
+          continue // 继续循环，再次尝试
+        } else if (retryChoice.action === 'skip') {
+          // 跳过，记录失败结果
+          console.log(chalk.yellow('您可以手动拉取镜像：'))
+          console.log(chalk.cyan(`   docker pull ${remoteImage}`))
+          console.log(chalk.gray(`   docker tag ${remoteImage} ${localImage}`))
+          console.log()
+
+          results[type] = { success: false, error: error.message, manualCommand: remoteImage }
+
+          // 如果本地已有镜像，可以继续使用
+          if (exists) {
+            console.log(chalk.gray('   但本地已有镜像，可继续使用'))
+            console.log()
+          }
+          break // 跳出循环，处理下一个镜像
+        } else {
+          // 用户选择退出
+          console.log(chalk.yellow('已取消镜像拉取'))
+          results[type] = { success: false, error: 'User cancelled', manualCommand: remoteImage }
+          return results // 直接返回，结束整个流程
+        }
       }
     }
   }
@@ -121,9 +148,32 @@ export async function pullImages(types, registry = 'dockerhub') {
 }
 
 /**
- * 带进度显示的镜像拉取
+ * 带重试的镜像拉取
+ * @param {string} imageName 镜像名称
+ * @param {number} maxRetries 最大重试次数（默认 2 次）
  */
-async function pullImageWithProgress(imageName) {
+async function pullImageWithProgress(imageName, maxRetries = 2) {
+  for (let attempt = 1; attempt <= maxRetries + 1; attempt++) {
+    try {
+      await doPullImageWithProgress(imageName)
+      return // 成功则退出
+    } catch (error) {
+      if (attempt <= maxRetries) {
+        console.log(chalk.yellow(`  拉取失败，正在重试 (${attempt}/${maxRetries})...`))
+        // 等待 1 秒后重试
+        await new Promise(resolve => setTimeout(resolve, 1000))
+      } else {
+        // 最后一次尝试也失败了，抛出错误
+        throw error
+      }
+    }
+  }
+}
+
+/**
+ * 带进度显示的镜像拉取（单次尝试）
+ */
+async function doPullImageWithProgress(imageName) {
   return new Promise((resolve, reject) => {
     console.log(chalk.gray(`  正在拉取: ${imageName}`))
 

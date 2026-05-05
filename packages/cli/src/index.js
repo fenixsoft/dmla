@@ -10,7 +10,7 @@ import fs from 'fs'
 import { startServer, startServerSync, stopServer, getStatus } from './commands/server.js'
 import { runDoctor } from './commands/manage.js'
 import { runDataTUI, runDataCommand } from './commands/data.js'
-import { runInstallTUI } from '@icyfenix-dmla/install'
+import { runImagesTUI } from './commands/images.js'
 import { runUpdate } from './commands/update.js'
 
 // 从 package.json 读取版本号
@@ -147,13 +147,13 @@ program
   })
 
 // ─────────────────────────────────────────────────────────────
-// install 命令
+// images 命令
 // ─────────────────────────────────────────────────────────────
 program
-  .command('install')
-  .description('启动安装向导')
+  .command('images')
+  .description('拉取 Docker 镜像')
   .action(async () => {
-    await runInstallTUI()
+    await runImagesTUI()
   })
 
 // ─────────────────────────────────────────────────────────────

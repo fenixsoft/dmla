@@ -5,9 +5,21 @@ import chalk from 'chalk'
 import pkg from 'enquirer'
 const { prompt } = pkg
 import net from 'net'
+import path from 'path'
+import { fileURLToPath } from 'url'
+import fs from 'fs'
 import { checkEnvironment } from './modules/environment.js'
 import { pullImages } from './modules/docker.js'
 import { installNpmPackage, verifyInstallation } from './modules/install.js'
+
+// 导出供 CLI 的 images 命令使用
+export { pullImages }
+
+// 从 package.json 读取版本号
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
+const pkgPath = path.resolve(__dirname, '../package.json')
+const VERSION = JSON.parse(fs.readFileSync(pkgPath, 'utf8')).version
 
 /**
  * 检测端口是否可用
@@ -25,7 +37,7 @@ function isPortAvailable(port) {
 }
 
 /**
- * 显示 Banner
+ * 显示 Banner（右下角带版本号）
  */
 function showBanner() {
   console.log()
@@ -36,6 +48,7 @@ function showBanner() {
   console.log(chalk.cyan(' _| |_.\' /_| |_\\/_| |_  _| |__/ | _/ /   \\ \\_  '))
   console.log(chalk.cyan('|______.\'|_____||_____||________||____| |____| '))
   console.log(chalk.blue('== Designing Machine Learning Applications =='))
+  console.log(chalk.blue('                                 '+ chalk.gray('v' + VERSION) ))
   console.log()
 }
 
@@ -199,8 +212,8 @@ export async function runInstallTUI() {
       const choices = [
         { name: 'auto', message: '自动选择 (根据环境)' },
         { name: 'all', message: '全部安装 (CPU + GPU)' },
-        { name: 'cpu', message: '仅 CPU 版本 (~ 650MB)' },
-        { name: 'gpu', message: '仅 GPU 版本 (~ 7.42GB)' }
+        { name: 'cpu', message: '仅 CPU 版本 (~ 683MB)' },
+        { name: 'gpu', message: '仅 GPU 版本 (~ 7.93GB)' }
       ]
 
       const typeChoice = await prompt({
