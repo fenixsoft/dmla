@@ -8,6 +8,7 @@ import chalk from 'chalk'
 import path from 'path'
 import { fileURLToPath } from 'url'
 import os from 'os'
+import fs from 'fs'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -577,8 +578,30 @@ export function getKernelRunnerPath() {
  * @returns {string}
  */
 export function getDataPath() {
-  // 默认 ~/dmla-data，可通过 DMLA_DATA_PATH 环境变量覆盖
-  return process.env.DMLA_DATA_PATH || path.join(os.homedir(), 'dmla-data')
+  // 优先级：环境变量 > 配置文件 > 默认路径
+
+  // 1. 环境变量（最高优先级）
+  if (process.env.DMLA_DATA_PATH) {
+    return process.env.DMLA_DATA_PATH
+  }
+
+  // 2. 配置文件（~/.dmla/config.json）
+  const configDir = path.join(os.homedir(), '.dmla')
+  const configFile = path.join(configDir, 'config.json')
+
+  try {
+    if (fs.existsSync(configFile)) {
+      const config = JSON.parse(fs.readFileSync(configFile, 'utf8'))
+      if (config.dataVolumePath) {
+        return config.dataVolumePath
+      }
+    }
+  } catch (e) {
+    // 配置文件读取失败，使用默认路径
+  }
+
+  // 3. 默认路径
+  return path.join(os.homedir(), 'dmla-data')
 }
 
 /**
