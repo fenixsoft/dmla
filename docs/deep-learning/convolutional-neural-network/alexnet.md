@@ -57,10 +57,10 @@ layers:
   - {name: Conv4, type: conv, kernel: 3, stride: 1, channels: 384, out: "13 x 13 x 384", act: ReLU}
   - {name: Conv5, type: conv, kernel: 3, stride: 1, channels: 256, out: "13 x 13 x 256", act: ReLU}
   - {name: Pool5, type: pool, kernel: 3, stride: 2, out: "6 x 6 x 256"}
-  - {name: FC1, type: fc, size: 4096, act: ReLU, dropout: true}
-  - {name: FC2, type: fc, size: 4096, act: ReLU, dropout: true}
-  - {name: FC3, type: fc, size: 1000}
-  - {name: Output, type: output, size: 1000, act: Softmax}
+  - {name: FC1, type: fc, size: "4096 维", act: ReLU, dropout: true}
+  - {name: FC2, type: fc, size: "4096 维", act: ReLU, dropout: true}
+  - {name: FC3, type: fc, size: "1000 维"}
+  - {name: Output, type: output, size: "1000", act: Softmax}
 ```
 *图：AlexNet 网络架构图*
 

@@ -359,7 +359,7 @@ print(f"输出形状: {output.shape}")
 
 本阶段的工程决策围绕"如何消除数据加载瓶颈"展开：
 
-- **JPEG 解码位置选择**：解码是 CPU 密集型操作，单线程 PIL 解码每张图片约 1-3ms。使用 NVIDIA DALI 库的 nvJPEG 算子可以将解码移到 GPU 执行，速度提升 10 倍以上。但 Windows 宿主环境下，Docker 由于 NVML 限制无法使用 GPU nvJPEG，只能使用 DALI 的 CPU 多线程解码（仍比单线程快 2-3 倍）。
+- **JPEG 解码位置选择**：解码是 CPU 密集型操作，单线程 PIL 解码每张图片约 1-3ms。使用 NVIDIA DALI 库的 nvJPEG 算子可以将解码移到 GPU 执行，但 Windows 宿主环境下，Docker 由于 NVML 限制无法使用 GPU nvJPEG，只能使用 DALI 的 CPU 多线程解码（仍比单线程快）。
 - **数据增强位置选择**：随机翻转、裁剪、归一化等操作如果放在 CPU 执行，会产生额外的 CPU-GPU 数据传输。DALI 将这些操作全部移到 GPU 执行，数据在 GPU 显存中流转，无需传输回 CPU。
 - **LMDB 零拷贝读取**：第二阶段已经将预处理结果存入 LMDB，本阶段通过内存映射直接读取 JPEG bytes，避免了额外的文件 I/O 操作。
 - **环境自适应设计**：通过检测 `/proc/version` 内容判断宿主操作系统，Windows 自动切换为 CPU 多线程解码模式，确保兼容运行；Linux 使用 GPU nvJPEG 解码模式，获得最大效率。
@@ -481,7 +481,7 @@ def create_train_pipeline(data_source, decode_device='cpu'):
         dtype=types.FLOAT,
         output_layout='CHW',
         crop=(224, 224),
-        mirror=fn.random.coin_flip(probability=0.5),
+        mirror=fn.random.coin_flip(probability=0.5),  # 随机水平翻转
         mean=[0.485 * 255, 0.456 * 255, 0.406 * 255],
         std=[0.229 * 255, 0.224 * 255, 0.225 * 255]
     )
@@ -792,8 +792,12 @@ transform = transforms.Compose([
 # 加载类别名称（从 wnids.txt）
 wnids_path = os.path.join(DATA_DIR, 'datasets', 'tiny-imagenet-200', 'wnids.txt')
 words_path = os.path.join(DATA_DIR, 'datasets', 'tiny-imagenet-200', 'words.txt')
+val_annotations_path = os.path.join(DATA_DIR, 'datasets', 'tiny-imagenet-200', 'val', 'val_annotations.txt')
 
 class_names = {}
+val_labels = {}  # 验证集图片的真实标签
+wnids = []
+
 if os.path.exists(wnids_path) and os.path.exists(words_path):
     with open(wnids_path, 'r') as f:
         wnids = [line.strip() for line in f.readlines()]
@@ -804,6 +808,14 @@ if os.path.exists(wnids_path) and os.path.exists(words_path):
             parts = line.strip().split('\t')
             if len(parts) >= 2:
                 class_names[parts[0]] = parts[1]
+
+# 加载验证集真实标签
+if os.path.exists(val_annotations_path):
+    with open(val_annotations_path, 'r') as f:
+        for line in f.readlines():
+            parts = line.strip().split('\t')
+            if len(parts) >= 2:
+                val_labels[parts[0]] = parts[1]  # img_name -> wnid
 
 def predict_image(image_path, model, transform, device, class_names, wnids):
     """对单张图像进行预测"""
@@ -826,11 +838,11 @@ def predict_image(image_path, model, transform, device, class_names, wnids):
         else:
             name = f"Class {idx}"
         
-        results.append((name, prob))
+        results.append((name, prob, wnid if idx < len(wnids) else None))
     
-    return results
+    return results, image
 
-# 使用验证集中的一张图片进行测试
+# 使用验证集中的图片进行测试
 val_images_dir = os.path.join(DATA_DIR, 'datasets', 'tiny-imagenet-200', 'val', 'images')
 
 if os.path.exists(val_images_dir):
@@ -843,28 +855,78 @@ if os.path.exists(val_images_dir):
         img_path = os.path.join(val_images_dir, img_name)
         
         if os.path.exists(img_path):
-            predictions = predict_image(img_path, model, transform, device, class_names, wnids if 'wnids' in dir() else [])
+            predictions, original_image = predict_image(img_path, model, transform, device, class_names, wnids)
             
-            print(f"\n图像: {img_name}")
+            # 获取真实标签
+            true_wnid = val_labels.get(img_name, None)
+            true_name = class_names.get(true_wnid, true_wnid) if true_wnid else "未知"
+            
+            # 检查是否正确预测（Top-5）
+            predicted_wnids = [p[2] for p in predictions]
+            is_correct = true_wnid in predicted_wnids if true_wnid else False
+            top1_correct = predictions[0][2] == true_wnid if true_wnid else False
+            
+            # 显示图片
+            display(original_image)
+            
+            # 输出预测结果
+            status = "✓ Top-1 正确" if top1_correct else ("✓ Top-5 正确" if is_correct else "✗ 错误")
+            print(f"图像: {img_name} ({status})")
+            print(f"真实标签: {true_name}")
             print("Top-5 预测:")
-            for rank, (name, prob) in enumerate(predictions, 1):
-                print(f"  {rank}. {name}: {prob:.2f}%")
+            for rank, (name, prob, wnid) in enumerate(predictions, 1):
+                marker = " ✓" if wnid == true_wnid else ""
+                print(f"  {rank}. {name}: {prob:.2f}%{marker}")
+            print()
 else:
     print("验证集目录不存在，无法进行推理测试")
 
-# 也可以使用自定义图片
-print("\n" + "=" * 60)
-print(f"提示: 您可以将自己的图片放到 {DATA_DIR}/datasets/custom/ 目录进行测试")
-print(f"使用方法: predict_image('{DATA_DIR}/datasets/custom/your_image.jpg', model, transform, device, class_names, wnids)")
+print("=" * 60)
+print(f"模型准确率: {checkpoint['best_acc']:.2f}% (Top-1)")
 ```
 
-## 实验结果
+## 实验结论
+
+原版 AlexNet 在 ILSVRC 比赛中取得了 Top-5 错误率 15.3%（即 Top-5 准确率约 84.7%）的成绩。本实验使用 Tiny ImageNet 200 数据集训练后，验证集 Top-1 准确率约为 45%。这个差距需要从以下几个维度去理解：
+
+1. **指标差异**：首先需要明确指标含义的差异。ILSVRC 评估使用 **Top-5 准确率**，即只要正确类别在预测概率最高的 5 个类别中就算正确。而本实验显示的是 **Top-1 准确率**，即必须预测概率最高的类别才是正确答案才算正确。
+
+    - 原版 AlexNet：Top-5 错误率 15.3% → Top-5 准确率 84.7%，对应的 Top-1 准确率约为 63%
+    - 本实验结果：Top-1 准确率约 45%，对应的 Top-5 准确率约为 65-70%
+
+    因此，如果换算成同一指标（Top-1 准确率），实际差距从"84.7% vs 45%"缩小为"63% vs 45%"，约 18 个百分点的差距。
+
+2. **训练数据集规模与质量差异**：这是造成 18 个百分点差距的直接原因，两者的训练数据集对比为：
+
+    | 对比项 | ImageNet 1K（原版） | Tiny ImageNet 200（本实验） |
+    |--------|---------------------|----------------------------|
+    | 训练集规模 | 120 万张 | 10 万张（12 倍差距） |
+    | 图像原始尺寸 | $256 \times 256$ 到 $500 \times 500$ 不等 | 统一 $64 \times 64$ JPEG |
+    | 输入尺寸 | $224 \times 224$（从较大图像裁剪） | $224 \times 224$（从 $64 \times 64$ 放大） |
+
+    Tiny ImageNet 的图像是从原始 ImageNet 图像压缩到 $64 \times 64$ 后得到的。从 $64 \times 64$ 放大到 $224 \times 224$，会导致：
+    - **信息损失**：压缩过程丢失了高频细节（纹理、边缘锐度）。
+    - **插值模糊**：放大过程无法恢复丢失的信息，反而引入插值伪影。
+    - **特征提取困难**：CNN 需要从模糊图像中学习特征，难度大幅增加。
+
+    除此以外，$64 \times 64$ 的训练集还严重限制了数据增强和训练可用的手段，譬如原版 AlexNet 会从 $256 \times 256$ 图像中随机裁剪处 $224 \times 224$ 区域，可以产生多个不同的训练样本（一张图可裁剪出约 33 个不同位置）。而 Tiny ImageNet 已经是 64×64，放大后随机裁剪位置产生的多样性十分有限；又譬如原版 AlexNet 的 PCA 颜色增强对高质量大图（$256 \times 256$以上）效果显著，但对 Tiny ImageNet 这类低质量小图（64×64 放大到 224×224）反而可能有害，信息损失严重的图像经颜色扰动后会进一步破坏有限的纹理细节。因此本实验仅保留随机水平翻转，这是对小尺寸图像唯一稳定有效的增强方式。其他两者其他增强和训练手段差异还包括：
+
+    | 配置项 | 原版 AlexNet | 本实验 |
+    |--------|--------------|--------|
+    | Epoch 数 | 90 | 20 |
+    | 数据增强 | 水平翻转 + 随机裁剪（$224 \times 224$ from $256 \times 256$） + PCA 颜色扰动 | 仅水平翻转 |
+    | 学习率策略 | 手动调整：0.01→0.001→0.0001（第 30、60 epoch） | StepLR：0.01→0.001（第 10 epoch） |
+    | Dropout | p=0.5 | p=0.5（相同） |
+
+本实验的准确率在给定条件下是合理的预期结果。要进一步提升准确率，可以考虑使用更大规模的数据集，譬如原版的 [ImageNet 1K](https://ieeexplore.ieee.org/document/5206848)（约 150 GB）、[Mini ImageNet 100](https://modelscope.cn/datasets/tany0699/mini_imagenet100)（约 6.4GB），这样可以采用更多的数据增强手段、更多的训练轮数。也可以考虑更适合小尺寸图像的网络架构（如针对 64×64 设计的简化版 CNN）。本实验的目标是通过完整复现 AlexNet 训练流程来理解经典 CNN 架构与现代深度学习框架的结合，考虑到读者的实践可行性，没有追求竞赛级别的准确率。对此感兴趣的读者，不妨选择上述一条路径（换数据集或者换网络架构）作为本节的练习题。
+
+## 数据结果
 
 本实验完整展示了 AlexNet 的训练流程，训练完成后，以下生成的文件将保存到数据目录：
 
 - **模型文件**：
     - `<DATA_DIR>/models/alexnet/checkpoints/best_model.pth` - 最佳验证准确率的模型
-    - `<DATA_DIR>/models/alexnet/checkpoints/epoch_*.pth` - 每 5 epoch 的 checkpoint
+    - `<DATA_DIR>/models/alexnet/checkpoints/epoch_*.pth` - 每 4 epoch 的 checkpoint
     - `<DATA_DIR>/models/alexnet/final/alexnet_tiny_imagenet.pth` - 最终模型权重
 - **预处理缓存**：
     - `<DATA_DIR>/cache/preprocessing/tiny-imagenet-224-lmdb/train.lmdb/` - 训练集 LMDB 数据库（约 2GB）

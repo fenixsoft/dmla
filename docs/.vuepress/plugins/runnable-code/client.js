@@ -53,7 +53,7 @@ if (typeof document !== 'undefined' && !document.getElementById(styleId)) {
 .runnable-code-block .floating-toolbar {
   position: absolute;
   top: 8px;
-  right: 12px;
+  right: 20px;
   display: flex;
   gap: 6px;
   align-items: center;
