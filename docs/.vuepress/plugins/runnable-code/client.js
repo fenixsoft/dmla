@@ -881,35 +881,91 @@ function initCodeBlock(block) {
 
         let buffer = ''
 
+        /**
+         * 从 buffer 中提取完整的 JSON 对象
+         * 处理超大 JSON（如图片）被分割到多个 chunk 的情况
+         */
+        function extractCompleteJson(buf) {
+          if (!buf.trim()) return { json: null, remaining: '' }
+
+          // 找到 JSON 开始位置
+          const jsonStart = buf.indexOf('{')
+          if (jsonStart === -1) return { json: null, remaining: buf }
+
+          // 从起始位置开始，找到匹配的闭合括号
+          let depth = 0
+          let inString = false
+          let escapeNext = false
+
+          for (let i = jsonStart; i < buf.length; i++) {
+            const char = buf[i]
+
+            if (escapeNext) {
+              escapeNext = false
+              continue
+            }
+
+            if (char === '\\' && inString) {
+              escapeNext = true
+              continue
+            }
+
+            if (char === '"' && !escapeNext) {
+              inString = !inString
+              continue
+            }
+
+            if (!inString) {
+              if (char === '{') depth++
+              else if (char === '}') {
+                depth--
+                if (depth === 0) {
+                  // 找到完整的 JSON
+                  const jsonStr = buf.substring(jsonStart, i + 1)
+                  const remaining = buf.substring(i + 1)
+                  try {
+                    const json = JSON.parse(jsonStr)
+                    return { json, remaining, jsonStr }
+                  } catch (e) {
+                    // JSON 不完整，继续等待
+                    return { json: null, remaining: buf }
+                  }
+                }
+              }
+            }
+          }
+
+          // 未找到完整 JSON，返回原 buffer 等待更多数据
+          return { json: null, remaining: buf }
+        }
+
         while (true) {
           const { done, value } = await reader.read()
           if (done) break
 
           buffer += decoder.decode(value, { stream: true })
 
-          // 按行分割并处理
-          const lines = buffer.split('\n')
-          buffer = lines.pop() || ''  // 保留不完整的行
-
-          for (const line of lines) {
-            if (!line.trim()) continue
-            try {
-              const msg = JSON.parse(line)
-              handleStreamMessage(msg, progressContainer, textOutput)
-            } catch (parseError) {
-              // JSON 解析错误，可能是非标准输出，作为普通文本处理
-              console.warn('Failed to parse JSON line:', line.substring(0, 100))
+          // 尝试提取完整的 JSON 对象
+          while (true) {
+            const result = extractCompleteJson(buffer)
+            if (result.json) {
+              handleStreamMessage(result.json, progressContainer, textOutput)
+              // 移除已处理的 JSON，继续处理剩余部分
+              buffer = result.remaining.trim()
+              // 移除可能的换行符分隔
+              if (buffer.startsWith('\n')) buffer = buffer.substring(1).trim()
+            } else {
+              // 没有完整 JSON，跳出循环等待更多数据
+              break
             }
           }
         }
 
         // 处理剩余的 buffer
         if (buffer.trim()) {
-          try {
-            const msg = JSON.parse(buffer)
-            handleStreamMessage(msg, progressContainer, textOutput)
-          } catch (parseError) {
-            // 忽略
+          const result = extractCompleteJson(buffer)
+          if (result.json) {
+            handleStreamMessage(result.json, progressContainer, textOutput)
           }
         }
 

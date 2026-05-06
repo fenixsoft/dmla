@@ -617,7 +617,7 @@ best_acc = 0.0
 print(f"开始训练: {num_epochs} epochs, 每 epoch {total_batches} batches")
 
 # 训练函数
-def train_one_epoch_dali(model, train_reader, train_pipe, criterion, optimizer, device, perf_log):
+def train_one_epoch_dali(model, train_reader, train_pipe, criterion, optimizer, device, perf_log, start_batch_idx=0):
     model.train()
     running_loss = 0.0
     correct = 0
@@ -658,8 +658,11 @@ def train_one_epoch_dali(model, train_reader, train_pipe, criterion, optimizer, 
         _, predicted = outputs.max(1)
         total += targets.size(0)
         correct += predicted.eq(targets).sum().item()
+        
+        # 更新全局进度（累加 start_batch_idx）
+        global_batch_idx = start_batch_idx + batch_idx
         if batch_idx % 50 == 0:
-            progress.update(batch_idx, message=f"Batch {batch_idx}/{total_batches}")
+            progress.update(global_batch_idx, message=f"Epoch {epoch+1}/{num_epochs}, Batch {batch_idx}/{total_batches}")
     return running_loss / total_batches, 100. * correct / total
 
 # 验证函数
@@ -688,9 +691,11 @@ def validate_dali(model, val_reader, val_pipe, criterion, device):
     return running_loss / val_batches, 100. * correct / total
 
 try:
+    global_batch_count = 0  # 全局 batch 计数器
     for epoch in range(num_epochs):
         epoch_start = time.time()
-        train_loss, train_acc = train_one_epoch_dali(model, train_reader, train_pipe, criterion, optimizer, device, perf_log)
+        train_loss, train_acc = train_one_epoch_dali(model, train_reader, train_pipe, criterion, optimizer, device, perf_log, start_batch_idx=global_batch_count)
+        global_batch_count += total_batches  # 累加已完成的 batch 数
         val_loss, val_acc = validate_dali(model, val_reader, val_pipe, criterion, device)
         scheduler.step()
         epoch_time = time.time() - epoch_start
