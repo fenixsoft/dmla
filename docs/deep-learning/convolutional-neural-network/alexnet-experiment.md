@@ -79,7 +79,7 @@ from dmla_progress import ProgressReporter
 
 # 数据及缓存目录（DATA_DIR 由 kernel 自动注入）
 # Docker 模式: DATA_DIR='/data', Native 模式: DATA_DIR='~/dmla-data'
-raw_data_dir = os.path.join(DATA_DIR, 'datasets', 'tiny-imagenet-200')
+RAW_DATA_DIR = os.path.join(DATA_DIR, 'datasets', 'tiny-imagenet-200')
 CACHE_DIR = os.path.join(DATA_DIR, 'cache', 'preprocessing', 'tiny-imagenet-224-lmdb')
 
 class LMDBPreprocessCache:
@@ -243,7 +243,7 @@ class LMDBPreprocessCache:
         
         return train_count, val_count
 
-preprocessor = LMDBPreprocessCache(DATA_DIR, CACHE_DIR)
+preprocessor = LMDBPreprocessCache(RAW_DATA_DIR, CACHE_DIR)
 
 if preprocessor.check_cache_exists():
     train_count, val_count = preprocessor.get_cache_stats()
@@ -256,7 +256,7 @@ if preprocessor.check_cache_exists():
     print(f"训练集: {train_count} 张图片（train.lmdb）")
     print(f"验证集: {val_count} 张图片（val.lmdb）")
 else:
-    if not os.path.exists(DATA_DIR):
+    if not os.path.exists(RAW_DATA_DIR):
         print("错误: 数据集未下载，请先运行 'dmla data' 下载数据集")
     else:
         progress = ProgressReporter(total_steps=200, description="预处理训练集")
@@ -361,7 +361,7 @@ print(f"输出形状: {output.shape}")
 
 - **JPEG 解码位置选择**：解码是 CPU 密集型操作，单线程 PIL 解码每张图片约 1-3ms。使用 NVIDIA DALI 库的 nvJPEG 算子可以将解码移到 GPU 执行，速度提升 10 倍以上。但 Windows 宿主环境下，Docker 由于 NVML 限制无法使用 GPU nvJPEG，只能使用 DALI 的 CPU 多线程解码（仍比单线程快 2-3 倍）。
 - **数据增强位置选择**：随机翻转、裁剪、归一化等操作如果放在 CPU 执行，会产生额外的 CPU-GPU 数据传输。DALI 将这些操作全部移到 GPU 执行，数据在 GPU 显存中流转，无需传输回 CPU。
-- **LMDB mmap 零拷贝读取**：第二阶段已经将预处理结果存入 LMDB，本阶段通过内存映射直接读取 JPEG bytes，避免了额外的文件 I/O 操作。
+- **LMDB 零拷贝读取**：第二阶段已经将预处理结果存入 LMDB，本阶段通过内存映射直接读取 JPEG bytes，避免了额外的文件 I/O 操作。
 - **环境自适应设计**：通过检测 `/proc/version` 内容判断宿主操作系统，Windows 自动切换为 CPU 多线程解码模式，确保兼容运行；Linux 使用 GPU nvJPEG 解码模式，获得最大效率。
 
 ```python runnable gpuonly timeout=unlimited
@@ -856,13 +856,6 @@ print(f"使用方法: predict_image('{DATA_DIR}/datasets/custom/your_image.jpg',
 ## 实验结果
 
 本实验完整展示了 AlexNet 的训练流程，训练完成后，以下生成的文件将保存到数据目录：
-
-::: tip 数据目录路径
-- **Docker 模式**: `/data`（容器内挂载路径）
-- **Native 模式**: `~/dmla-data`（宿主机数据目录，可通过 `DMLA_DATA_PATH` 自定义）
-
-代码中使用 `DATA_DIR` 变量自动适配两种模式。
-:::
 
 - **模型文件**：
     - `<DATA_DIR>/models/alexnet/checkpoints/best_model.pth` - 最佳验证准确率的模型

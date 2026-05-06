@@ -547,12 +547,13 @@ export function clearCache() {
 }
 
 /**
- * 获取共享模块路径
+ * 获取共享模块路径（CLI 包中的 shared 目录）
  * @returns {string}
  */
 export function getSharedModulesPath() {
-  // CLI 包中的 shared_modules 目录
-  return path.resolve(__dirname, '../../shared_modules')
+  // 返回 CLI 包根目录，包含 shared 目录
+  // 路径: packages/cli/src/server/ -> ../.. -> packages/cli/
+  return path.resolve(__dirname, '../..')
 }
 
 /**

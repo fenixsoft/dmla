@@ -107,7 +107,7 @@ export async function abortExecution(executionId = null) {
 
 // 检测运行模式并计算正确的路径
 // 开发模式: 从 local-server/src 运行，项目根目录在上两级
-// 独立模式: 从 packages/cli/src/server 运行，无 shared_modules 目录
+// 独立模式: 从 packages/cli/src/server 运行，无 shared 目录
 function detectProjectRoot() {
   // 尝试向上两级查找 local-server 目录（开发模式）
   const candidateRoot = path.resolve(__dirname, '..', '..')
@@ -131,7 +131,7 @@ const PROJECT_ROOT = detectProjectRoot()
 
 // 共享模块目录（仅开发模式可用）
 const DEFAULT_SHARED_MODULES_PATH = PROJECT_ROOT
-  ? path.join(PROJECT_ROOT, 'local-server', 'shared_modules')
+  ? path.join(PROJECT_ROOT, 'local-server', 'shared')
   : null
 
 // kernel_runner.py 路径（开发模式下可用）

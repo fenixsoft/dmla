@@ -17,7 +17,7 @@
     "bin/",
     "src/",
     "scripts/",
-    "shared_modules/",
+    "shared/",
     "version.json",
     "README.md"
   ],

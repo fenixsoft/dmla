@@ -8,15 +8,15 @@
  *
  * 模块路径推断规则:
  *   1. 显式映射（CHAPTER_MAPPING）优先，用于特殊命名
- *   2. 未映射的目录自动推断：docs/<category>/<chapter>/ → shared_modules/<chapter_snake_case>/
+ *   2. 未映射的目录自动推断：docs/<category>/<chapter>/ → shared/<chapter_snake_case>/
  *
  * 显式映射示例:
  *   'neural-network-structure' → 'neural' (简化命名)
  *   'convolutional-neural-network' → 'cnn' (简化命名)
  *
  * 自动推断示例:
- *   docs/deep-learning/transformer-models/ → shared_modules/transformer_models/
- *   docs/statistical-learning/new-topic/ → shared_modules/new_topic/
+ *   docs/deep-learning/transformer-models/ → shared/transformer_models/
+ *   docs/statistical-learning/new-topic/ → shared/new_topic/
  */
 
 import fs from 'fs';
@@ -29,7 +29,7 @@ const __dirname = path.dirname(__filename);
 // 项目根目录
 const PROJECT_ROOT = path.resolve(__dirname, '..');
 const DOCS_DIR = path.join(PROJECT_ROOT, 'docs');
-const SHARED_MODULES_DIR = path.join(PROJECT_ROOT, 'local-server', 'shared_modules');
+const SHARED_MODULES_DIR = path.join(PROJECT_ROOT, 'local-server', 'shared');
 
 // 显式映射（用于特殊命名覆盖）
 // 只在这里添加需要简化或特殊命名的目录
@@ -349,7 +349,7 @@ function main() {
 
   // 确保共享模块目录存在
   if (!fs.existsSync(SHARED_MODULES_DIR)) {
-    console.log('错误: shared_modules 目录不存在');
+    console.log('错误: shared 目录不存在');
     process.exit(1);
   }
 
@@ -387,7 +387,7 @@ function main() {
           // 使用推断函数获取模块路径（支持显式映射 + 自动推断）
           const moduleDir = inferModulePath(docPath);
           const mappingType = CHAPTER_MAPPING[docPath] ? '(显式映射)' : '(自动推断)';
-          console.log(`  模块路径: shared_modules/${moduleDir}/ ${mappingType}`);
+          console.log(`  模块路径: shared/${moduleDir}/ ${mappingType}`);
 
           // 确保模块目录存在
           const fullModuleDir = path.join(SHARED_MODULES_DIR, moduleDir);
@@ -442,7 +442,7 @@ ${imports}
 `;
 
     fs.writeFileSync(topInitPath, content);
-    console.log('  ✓ shared_modules/__init__.py');
+    console.log('  ✓ shared/__init__.py');
   }
 
   console.log('\n✓ 提取完成！');

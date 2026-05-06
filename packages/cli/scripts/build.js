@@ -11,9 +11,9 @@ const __dirname = path.dirname(__filename)
 
 const rootDir = path.resolve(__dirname, '../../..')
 const localServerSrc = path.resolve(rootDir, 'local-server/src')
-const localServerShared = path.resolve(rootDir, 'local-server/shared_modules')
+const localServerShared = path.resolve(rootDir, 'local-server/shared')
 const cliServerDest = path.resolve(__dirname, '../src/server')
-const cliSharedDest = path.resolve(__dirname, '../shared_modules')
+const cliSharedDest = path.resolve(__dirname, '../shared')
 
 console.log('📦 构建 CLI 包...')
 
