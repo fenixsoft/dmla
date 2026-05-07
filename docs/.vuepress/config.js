@@ -154,7 +154,7 @@ export default {
         collapsible: false,
         children: [
           {
-            text: '神经网络',
+            text: '神经网络结构',
             collapsible: false,
             children: [
               { text: '神经网络设计思想', link: '/deep-learning/neural-network-structure/idea-origin' },
@@ -189,10 +189,27 @@ export default {
               { text: 'CNN 基础原理', link: '/deep-learning/convolutional-neural-network/cnn-basics' },
               { text: 'AlexNet 与 CNN 复兴', link: '/deep-learning/convolutional-neural-network/alexnet' },
               { text: 'VGG 与 GoogLeNet', link: '/deep-learning/convolutional-neural-network/vgg-inception' },
-              // { text: 'ResNet 残差网络', link: '/deep-learning/convolutional-neural-network/resnet' },
+              { text: 'ResNet 残差网络', link: '/deep-learning/convolutional-neural-network/resnet' },
               { text: '工程实训：AlexNet 图像分类实验', link: '/deep-learning/convolutional-neural-network/alexnet-experiment' },
             ]
           },
+          // {
+          //   text: '生成模型',
+          //   collapsible: false,
+          //   children: [
+          //     { text: '变分自编码器', link: '/deep-learning/generative-models/vae' },
+          //     { text: '生成对抗网络', link: '/deep-learning/generative-models/gan' },
+          //   ]
+          // },
+          // {
+          //   text: '序列模型',
+          //   collapsible: false,
+          //   children: [
+          //     { text: '循环神经网络', link: '/deep-learning/sequence-models/rnn-basics' },
+          //     { text: 'LSTM 与 GRU 门控机制', link: '/deep-learning/sequence-models/lstm-gru' },
+          //     { text: 'Seq2Seq 序列映射', link: '/deep-learning/sequence-models/seq2seq' },
+          //   ]
+          // },
         ]
       },
       {
