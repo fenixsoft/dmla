@@ -193,14 +193,14 @@ export default {
               { text: '工程实训：AlexNet 图像分类实验', link: '/deep-learning/convolutional-neural-network/alexnet-experiment' },
             ]
           },
-          // {
-          //   text: '生成模型',
-          //   collapsible: false,
-          //   children: [
-          //     { text: '变分自编码器', link: '/deep-learning/generative-models/vae' },
-          //     { text: '生成对抗网络', link: '/deep-learning/generative-models/gan' },
-          //   ]
-          // },
+          {
+            text: '生成模型',
+            collapsible: false,
+            children: [
+              { text: '变分自编码器', link: '/deep-learning/generative-models/vae' },
+              { text: '生成式对抗网络', link: '/deep-learning/generative-models/gan' },
+            ]
+          },
           // {
           //   text: '序列模型',
           //   collapsible: false,
