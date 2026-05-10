@@ -199,7 +199,7 @@ export default {
             children: [
               { text: '变分自编码器', link: '/deep-learning/generative-models/vae' },
               { text: '生成式对抗网络', link: '/deep-learning/generative-models/gan' },
-              { text: '工程实训：GAN 图像生成实验', link: '/deep-learning/generative-models/gan-experiment' },
+              { text: '工程实训：DCGAN 图像生成实验', link: '/deep-learning/generative-models/gan-experiment' },
             ]
           },
           {

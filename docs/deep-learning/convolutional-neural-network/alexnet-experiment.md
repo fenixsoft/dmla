@@ -919,7 +919,16 @@ print(f"模型准确率: {checkpoint['best_acc']:.2f}% (Top-1)")
 
 本实验的准确率在给定条件下是合理的预期结果。要进一步提升准确率，可以考虑使用更大规模的数据集，譬如原版的 [ImageNet 1K](https://ieeexplore.ieee.org/document/5206848)（约 150 GB）、[Mini ImageNet 100](https://modelscope.cn/datasets/tany0699/mini_imagenet100)（约 6.4GB），这样可以采用更多的数据增强手段、更多的训练轮数。也可以考虑更适合小尺寸图像的网络架构（如针对 64×64 设计的简化版 CNN）。本实验的目标是通过完整复现 AlexNet 训练流程来理解经典 CNN 架构与现代深度学习框架的结合，考虑到读者的实践可行性，没有追求竞赛级别的准确率。对此感兴趣的读者，不妨选择上述一条路径（换数据集或者换网络架构）作为本节的练习题。
 
-## 数据结果
+## 运行结果
+
+模型推理后，随机从验证集中挑选 5 张图片进行分类预测，然后与验证集的标签进行比对，一个实际的运行样例如下所示：
+
+| 图片 | 预测内容 | 图片 | 预测内容 |
+|-----|---------|------|---------|
+| ![exp1](./assets/exp1.png) | 图像: val_7656.JPEG (✓ Top-5 正确)<br>真实标签: cougar, puma, catamount, mountain lion, painter, panther, Felis concolor<br>Top-5 预测:<br>  1. orangutan, orang, orangutang, Pongo <br>ygmaeus: 39.19%<br>  2. cougar, puma, catamount, mountain lion, painter, panther, Felis concolor: 8.53% ✓<br>  3. lion, king of beasts, Panthera leo: 8.47%<br>  4. baboon: 4.30%<br>  5. lesser panda, red panda, panda, bear cat, cat bear, Ailurus fulgens: 4.03% | ![exp2](./assets/exp2.png) | 图像: val_9447.JPEG (✗ 错误)<br>真实标签: binoculars, field glasses, opera glasses<br>Top-5 预测:<br>  1. snorkel: 22.78%<br>  2. miniskirt, mini: 7.39%<br>  3. standard poodle: 7.39%<br>  4. military uniform: 4.82%<br>  5. pole: 4.76% |
+|![exp3](./assets/exp3.png)|图像: val_6564.JPEG (✓ Top-1 正确)<br>真实标签: king penguin, Aptenodytes patagonica<br>Top-5 预测:<br>  1. king penguin, Aptenodytes patagonica: 99.92% ✓<br>  2. syringe: 0.02%<br>  3. lemon: 0.01%<br>  4. mantis, mantid: 0.01%<br>  5. projectile, missile: 0.01%<br>|![exp4](./assets/exp4.png)|图像: val_4249.JPEG (✓ Top-5 正确)<br>真实标签: potpie<br>Top-5 预测:<br>  1. mashed potato: 61.36%<br>  2. cauliflower: 12.87%<br>  3. ice cream, icecream: 5.28%<br>  4. potpie: 3.55% ✓<br>  5. guacamole: 2.90%
+|![exp5](./assets/exp5.png)|图像: val_141.JPEG (✓ Top-5 正确)<br>真实标签: snail<br>Top-5 预测:<br>  1. wooden spoon: 7.24%<br>  2. meat loaf, meatloaf: 6.32%<br>  3. snail: 5.56% ✓<br>  4. rocking chair, rocker: 4.51%<br>  5. pretzel: 4.34%| | |
+
 
 本实验完整展示了 AlexNet 的训练流程，训练完成后，以下生成的文件将保存到数据目录：
 
