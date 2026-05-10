@@ -194,26 +194,27 @@ export default {
             ]
           },
           {
-            text: '生成模型',
+            text: '生成式模型',
             collapsible: false,
             children: [
               { text: '变分自编码器', link: '/deep-learning/generative-models/vae' },
               { text: '生成式对抗网络', link: '/deep-learning/generative-models/gan' },
+              { text: '工程实训：GAN 图像生成实验', link: '/deep-learning/generative-models/gan-experiment' },
             ]
           },
-          // {
-          //   text: '序列模型',
-          //   collapsible: false,
-          //   children: [
-          //     { text: '循环神经网络', link: '/deep-learning/sequence-models/rnn-basics' },
-          //     { text: 'LSTM 与 GRU 门控机制', link: '/deep-learning/sequence-models/lstm-gru' },
-          //     { text: 'Seq2Seq 序列映射', link: '/deep-learning/sequence-models/seq2seq' },
-          //   ]
-          // },
+          {
+            text: '序列模型',
+            collapsible: false,
+            children: [
+              { text: 'RNN 基础原理', link: '/deep-learning/sequence-models/rnn-basics' },
+              // { text: 'LSTM 与 GRU 门控机制', link: '/deep-learning/sequence-models/lstm-gru' },
+              // { text: 'Seq2Seq 序列映射', link: '/deep-learning/sequence-models/seq2seq' },
+            ]
+          },
         ]
       },
       {
-        text: '大语言模型的迸发',
+        text: '语言模型的奇点',
         collapsible: false,
       },
       {

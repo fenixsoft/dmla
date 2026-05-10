@@ -42,7 +42,8 @@ const CHAPTER_MAPPING = {
   'statistical-learning/unsupervised-learning': 'unsupervised',
   // deep-learning - 简化命名
   'deep-learning/neural-network-structure': 'neural',
-  'deep-learning/convolutional-neural-network': 'cnn'
+  'deep-learning/convolutional-neural-network': 'cnn',
+  'deep-learning/generative-models': 'gan'
 };
 
 // 将目录名转换为 snake_case 模块名

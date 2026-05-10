@@ -2,6 +2,8 @@
 heroImage: /logo.png
 # heroText: 
 # tagline: 
+prev: false
+next: false
 badges:
   - src: https://img.shields.io/github/stars/fenixsoft/dmla
     alt: GitHub Repo stars

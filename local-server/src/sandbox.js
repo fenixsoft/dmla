@@ -891,19 +891,63 @@ export async function runPythonCodeStreaming(code, useGpu = false, res, imageOve
     })
 
     // 处理日志流数据
+    let totalChunks = 0
+    let totalBytes = 0
+    let jsonBuffer = ''  // 用于累积跨多个帧的 JSON 消息
+    let frameBuffer = Buffer.alloc(0)  // 用于累积不完整的 Docker 日志帧
+
     logStream.on('data', (chunk) => {
+      totalChunks++
+      totalBytes += chunk.length
+      log(`Chunk ${totalChunks}: ${chunk.length} bytes, total: ${totalBytes} bytes`)
+
       if (Buffer.isBuffer(chunk)) {
-        // 解析 Docker 日志格式
-        const lines = parseDockerLogLines(chunk)
+        // 合并帧缓冲和新数据
+        const combinedBuffer = Buffer.concat([frameBuffer, chunk])
+        log(`Combined buffer: ${combinedBuffer.length} bytes (frameBuffer: ${frameBuffer.length}, chunk: ${chunk.length})`)
+
+        // 解析 Docker 日志格式，返回未处理的剩余缓冲
+        const { lines, remainingBuffer } = parseDockerLogLinesWithBuffer(combinedBuffer)
+        frameBuffer = remainingBuffer
+        log(`Parsed ${lines.length} messages, remaining buffer: ${frameBuffer.length} bytes`)
+
         for (const { streamType, text } of lines) {
           if (text && text.trim()) {
-            log(`Stream output (${streamType}): ${text.substring(0, 100)}...`)
+            const preview = text.substring(0, 200)
+            log(`Message (${streamType}): length=${text.length}, preview: ${preview.endsWith('...') ? preview : preview + '...'}`)
+
+            // 检查是否有未完成的 JSON 缓冲
+            if (jsonBuffer) {
+              // 将当前文本追加到缓冲
+              jsonBuffer += text
+              log(`Appending to JSON buffer, total length: ${jsonBuffer.length}`)
+
+              // 检查是否完成（找到闭合括号）
+              if (isJsonComplete(jsonBuffer)) {
+                log(`JSON buffer complete, forwarding: ${jsonBuffer.length} bytes`)
+                res.write(jsonBuffer + '\n')
+                jsonBuffer = ''
+              } else {
+                log(`JSON buffer incomplete, waiting for more data`)
+              }
+              continue
+            }
+
             // kernel_runner.py 已经输出 JSON 格式消息，直接转发
             // 检查是否已经是 JSON 格式（stream, result, progress 等消息）
             if (text.trim().startsWith('{') && text.includes('"type":')) {
-              res.write(text + '\n')
+              // 检查 JSON 是否完整
+              if (isJsonComplete(text)) {
+                log(`Forwarding complete JSON message: ${text.length} bytes`)
+                res.write(text + '\n')
+              } else {
+                // JSON 不完整，存入缓冲等待后续帧
+                log(`JSON message incomplete, buffering: ${text.length} bytes`)
+                jsonBuffer = text
+              }
             } else {
               // 非 JSON 内容（如容器启动日志），包装为 stream 消息
+              log(`Wrapping non-JSON content as stream message`)
               res.write(JSON.stringify({
                 type: 'stream',
                 name: streamType,
@@ -914,6 +958,7 @@ export async function runPythonCodeStreaming(code, useGpu = false, res, imageOve
         }
       } else {
         // 字符串格式（fallback）
+        log(`Received string chunk: ${chunk.length} chars`)
         const textLines = chunk.toString().split('\n').filter(l => l.trim())
         for (const line of textLines) {
           if (line.trim().startsWith('{') && line.includes('"type":')) {
@@ -926,6 +971,50 @@ export async function runPythonCodeStreaming(code, useGpu = false, res, imageOve
             }) + '\n')
           }
         }
+      }
+    })
+
+    logStream.on('end', () => {
+      // 流结束时，处理剩余的帧缓冲
+      if (frameBuffer.length > 0) {
+        log(`Stream ended with frame buffer remaining: ${frameBuffer.length} bytes`)
+        // 尝试解析剩余的帧缓冲（可能不完整）
+        const { lines, remainingBuffer } = parseDockerLogLinesWithBuffer(frameBuffer)
+        frameBuffer = remainingBuffer
+
+        for (const { streamType, text } of lines) {
+          if (text && text.trim()) {
+            log(`Final frame message (${streamType}): length=${text.length}`)
+            // 处理剩余消息（与主循环相同的逻辑）
+            if (jsonBuffer) {
+              jsonBuffer += text
+              if (isJsonComplete(jsonBuffer)) {
+                res.write(jsonBuffer + '\n')
+                jsonBuffer = ''
+              }
+            } else if (text.trim().startsWith('{') && text.includes('"type":')) {
+              if (isJsonComplete(text)) {
+                res.write(text + '\n')
+              } else {
+                jsonBuffer = text
+              }
+            } else {
+              res.write(JSON.stringify({
+                type: 'stream',
+                name: streamType,
+                text: text
+              }) + '\n')
+            }
+          }
+        }
+      }
+
+      // 处理剩余的 JSON 缓冲
+      if (jsonBuffer) {
+        log(`Stream ended with JSON buffer remaining: ${jsonBuffer.length} bytes`)
+        // 尝试转发剩余缓冲（可能不完整但应该发送）
+        res.write(jsonBuffer + '\n')
+        jsonBuffer = ''
       }
     })
 
@@ -945,11 +1034,29 @@ export async function runPythonCodeStreaming(code, useGpu = false, res, imageOve
     await container.wait()
     log('Container finished')
 
-    // 等待日志流结束
+    // 等待日志流结束（带超时保护）
     await new Promise((resolve) => {
-      logStream.on('end', resolve)
+      const timeout = setTimeout(() => {
+        log('Log stream timeout, forcing resolve')
+        resolve()
+      }, 5000)  // 最多等待 5 秒
+
+      logStream.on('end', () => {
+        clearTimeout(timeout)
+        log('Log stream end event triggered')
+        resolve()
+      })
+
+      logStream.on('close', () => {
+        clearTimeout(timeout)
+        log('Log stream close event triggered')
+        resolve()
+      })
+
       // 确保流已结束（可能已经结束）
       if (logStream.destroyed || logStream.readableEnded) {
+        clearTimeout(timeout)
+        log('Log stream already ended/destroyed')
         resolve()
       }
     })
@@ -997,6 +1104,106 @@ export async function runPythonCodeStreaming(code, useGpu = false, res, imageOve
 }
 
 /**
+ * 检查 JSON 字符串是否完整（括号是否匹配）
+ * @param {string} jsonStr - JSON 字符串
+ * @returns {boolean} - 是否完整
+ */
+function isJsonComplete(jsonStr) {
+  if (!jsonStr || !jsonStr.trim().startsWith('{')) return false
+
+  let depth = 0
+  let inString = false
+  let escapeNext = false
+
+  for (let i = 0; i < jsonStr.length; i++) {
+    const char = jsonStr[i]
+
+    if (escapeNext) {
+      escapeNext = false
+      continue
+    }
+
+    if (char === '\\' && inString) {
+      escapeNext = true
+      continue
+    }
+
+    if (char === '"' && !escapeNext) {
+      inString = !inString
+      continue
+    }
+
+    if (!inString) {
+      if (char === '{') depth++
+      else if (char === '}') {
+        depth--
+        if (depth === 0) {
+          // 找到闭合括号，JSON 完整
+          return true
+        }
+      }
+    }
+  }
+
+  // 未找到闭合括号
+  return false
+}
+
+/**
+ * 解析 Docker 日志流中的多行数据（带帧缓冲）
+ * Docker 日志格式: [8字节头][数据]
+ * 返回解析的消息和剩余的不完整帧缓冲
+ * @param {Buffer} buffer - Docker 日志 buffer（可能包含之前的帧缓冲）
+ * @returns {{ lines: Array, remainingBuffer: Buffer }} - 解析后的消息和剩余缓冲
+ */
+function parseDockerLogLinesWithBuffer(buffer) {
+  if (!Buffer.isBuffer(buffer) || buffer.length === 0) {
+    return { lines: [], remainingBuffer: Buffer.alloc(0) }
+  }
+
+  const lines = []
+  let offset = 0
+
+  while (offset < buffer.length) {
+    // 检查是否有完整的头部（8字节）
+    if (offset + 8 > buffer.length) {
+      // 头部不完整，返回剩余部分作为缓冲
+      const remainingBuffer = buffer.slice(offset)
+      return { lines, remainingBuffer }
+    }
+
+    const streamType = buffer[offset]  // 1=stdout, 2=stderr
+    const length = buffer.readUInt32BE(offset + 4)
+
+    offset += 8
+
+    // 检查是否有完整的数据
+    if (offset + length > buffer.length) {
+      // 数据不完整，返回从头部开始的部分作为缓冲
+      // 注意：需要包含头部，所以 offset 要减去 8
+      const remainingBuffer = buffer.slice(offset - 8)
+      return { lines, remainingBuffer }
+    }
+
+    const chunk = buffer.slice(offset, offset + length).toString('utf8')
+    offset += length
+
+    // 不按行分割，保留完整的 chunk（大 JSON 消息可能包含换行符）
+    // 仅处理末尾的换行符（kernel_runner.py 输出时添加的）
+    const text = chunk.endsWith('\n') ? chunk.slice(0, -1) : chunk
+    if (text.trim()) {
+      lines.push({
+        streamType: streamType === 1 ? 'stdout' : 'stderr',
+        text: text
+      })
+    }
+  }
+
+  // 所有数据已解析完成，返回空缓冲
+  return { lines, remainingBuffer: Buffer.alloc(0) }
+}
+
+/**
  * 解析 Docker 日志流中的多行数据
  * Docker 日志格式: [8字节头][数据]
  * @param {Buffer} buffer - Docker 日志 buffer
@@ -1023,13 +1230,13 @@ function parseDockerLogLines(buffer) {
     const chunk = buffer.slice(offset, offset + length).toString('utf8')
     offset += length
 
-    // 按行分割（一个 Docker 消息可能包含多行）
-    const chunkLines = chunk.split('\n').filter(l => l.trim())
-    for (const line of chunkLines) {
-      // 返回包含 streamType 的对象
+    // 不按行分割，保留完整的 chunk（大 JSON 消息可能包含换行符）
+    // 仅处理末尾的换行符（kernel_runner.py 输出时添加的）
+    const text = chunk.endsWith('\n') ? chunk.slice(0, -1) : chunk
+    if (text.trim()) {
       lines.push({
         streamType: streamType === 1 ? 'stdout' : 'stderr',
-        text: line
+        text: text
       })
     }
   }

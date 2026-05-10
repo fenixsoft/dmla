@@ -411,6 +411,7 @@ npm run build:sandbox:gpu
 │   ├── cifar-10/                      # CIFAR-10
 │   ├── cifar-100/                     # CIFAR-100
 │   ├── mnist/                         # MNIST
+│   ├── cartoon-face/                  # Cartoon Face (卡通人脸)
 │   └── custom/                        # 用户自定义数据集
 │
 ├── models/                            # 模型目录
@@ -445,6 +446,7 @@ npm run build:sandbox:gpu
 - CIFAR-10 (170MB)
 - CIFAR-100 (170MB)
 - MNIST (11MB，通过 torchvision 自动下载)
+- Cartoon Face (288MB，卡通人脸图片)
 
 ### 端口说明
 

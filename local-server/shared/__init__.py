@@ -3,6 +3,7 @@
 
 from .bayesian import *
 from .cnn import *
+from .gan import *
 from .linear import *
 from .neural import *
 from .svm import *

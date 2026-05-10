@@ -51,6 +51,16 @@ const DATASETS = [
     format: 'git',
     targetDir: 'datasets/mnist',
     source: 'ModelScope (icyfenix)'
+  },
+  {
+    id: 'cartoon-face',
+    name: 'Cartoon Face',
+    url: 'https://www.modelscope.cn/datasets/icyfenix/Cartoon_Face.git',
+    size: '288MB',
+    format: 'git',
+    targetDir: 'datasets/cartoon-face',
+    source: 'ModelScope (icyfenix)',
+    zipFile: 'faces.zip'
   }
 ]
 
@@ -578,6 +588,8 @@ async function downloadDataset(dataPath, dataset) {
     fs.mkdirSync(parentDir, { recursive: true })
   }
 
+  let hasGitLfs = false  // 在 try 块开头定义，确保整个块内可见
+
   try {
     if (dataset.format === 'git') {
       // 使用 git clone 下载 ModelScope 数据集
@@ -585,7 +597,6 @@ async function downloadDataset(dataPath, dataset) {
       console.log()
 
       // 检查并安装 Git LFS
-      let hasGitLfs = false
       try {
         execSync('git lfs install', { stdio: 'pipe' })
         hasGitLfs = true

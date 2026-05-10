@@ -226,3 +226,23 @@
 .edgeLabel p {
     background-color: #fff !important;
 }
+
+/* Mermaid 图表中 KaTeX 公式节点尺寸与垂直居中修正 */
+/* KaTeX 在 SVG foreignObject 中渲染 MathML 时高度计算偏小，导致格子变小 */
+/* inline-block + vertical-align 无法在 foreignObject 中实现居中，需用 inline-flex */
+.mermaid svg .katex {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 28px;
+}
+
+.mermaid svg math {
+  display: inline-block;
+}
+
+/* 公式字体大小恢复到与正文匹配 */
+.mermaid svg .katex > math {
+  display: inline-block;
+  font-size: 16px !important;
+}
