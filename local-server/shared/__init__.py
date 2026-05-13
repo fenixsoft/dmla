@@ -6,6 +6,7 @@ from .cnn import *
 from .gan import *
 from .linear import *
 from .neural import *
+from .sequence_models import *
 from .svm import *
 from .tree import *
 from .unsupervised import *

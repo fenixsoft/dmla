@@ -61,6 +61,15 @@ const DATASETS = [
     targetDir: 'datasets/cartoon-face',
     source: 'ModelScope (icyfenix)',
     zipFile: 'faces.zip'
+  },
+  {
+    id: 'chinese-poetry',
+    name: 'Chinese Poetry (古诗词)',
+    url: 'https://www.modelscope.cn/datasets/icyfenix/Chinese-Poetry.git',
+    size: '~50MB',
+    format: 'git',
+    targetDir: 'datasets/chinese-poetry',
+    source: 'ModelScope (icyfenix)'
   }
 ]
 

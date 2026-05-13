@@ -395,7 +395,12 @@ npm run build:sandbox:gpu
 
 **目录结构**：
 - 文档：`docs/statistical-learning/linear-models/*.md`
-- 共享模块：`local-server/shared_modules/linear/*.py`
+- 共享模块：`local-server/shared/linear/*.py`
+
+**重要规则**：
+- **禁止手动创建共享模块文件**：共享模块必须通过 `node scripts/extract-shared-modules.js` 脚本从文档中自动提取生成
+- **模块路径自动推断**：脚本会根据文档路径自动推断模块名（如 `deep-learning/sequence-models/` → `shared/sequence_models/`），也可在脚本的 `CHAPTER_MAPPING` 中配置显式映射
+- **开发流程**：先在文档中编写带 `extract-class` 标记的代码块 → 运行提取脚本 → 在其他代码块中导入使用
 
 **开发模式**：Volume Mount 自动启用，修改代码无需重建镜像
 **生产模式**：设置 `MOUNT_SHARED_MODULES=false` 禁用挂载
