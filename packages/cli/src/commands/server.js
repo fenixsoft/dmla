@@ -369,12 +369,12 @@ function findProgressReporterPath() {
  * --dev 模式下需要挂载此目录
  */
 function findSharedModulesPath() {
-  // 开发环境路径：packages/cli/src/commands -> ../../../local-server/shared_modules
-  const devPath = path.resolve(__dirname, '../../../local-server/shared_modules')
-  // npm 包路径：packages/cli/src/commands -> ../../shared_modules（构建后）
-  const npmPath = path.resolve(__dirname, '../../shared_modules')
-  // CLI 包根目录下的 shared_modules（构建后）
-  const cliRootPath = path.resolve(__dirname, '../../shared_modules')
+  // 开发环境路径：packages/cli/src/commands -> ../../../local-server/shared
+  const devPath = path.resolve(__dirname, '../../../local-server/shared')
+  // npm 包路径：packages/cli/src/commands -> ../../shared（构建后）
+  const npmPath = path.resolve(__dirname, '../../shared')
+  // CLI 包根目录下的 shared（构建后）
+  const cliRootPath = path.resolve(__dirname, '../../shared')
 
   // 优先使用开发环境路径（如果 local-server 存在）
   if (fs.existsSync(devPath) && fs.readdirSync(devPath).length > 0) {
@@ -473,7 +473,7 @@ export async function startServerSync(port, useGpu = false, dev = false, shmSize
 
   if (dev && !sharedModulesPath) {
     console.log(chalk.yellow('⚠️ --dev 模式需要共享模块目录'))
-    console.log(chalk.gray('   未找到 shared_modules，将仅使用镜像内置模块'))
+    console.log(chalk.gray('   未找到 shared 目录，将仅使用镜像内置模块'))
   }
   if (dev && !kernelRunnerPath) {
     console.log(chalk.yellow('⚠️ --dev 模式需要 kernel_runner.py'))
