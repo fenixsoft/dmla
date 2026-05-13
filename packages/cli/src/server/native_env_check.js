@@ -551,8 +551,8 @@ export function clearCache() {
  * @returns {string}
  */
 export function getSharedModulesPath() {
-  // CLI 包中的 shared_modules 目录
-  return path.resolve(__dirname, '../../shared_modules')
+  // CLI 包中的 shared 目录
+  return path.resolve(__dirname, '../../shared')
 }
 
 /**

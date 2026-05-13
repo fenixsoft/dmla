@@ -273,7 +273,7 @@ LSTM 语言模型的训练目标是最大化训练数据中字符序列的似然
 - **学习率调度**：采用余弦退火（Cosine Annealing）策略，学习率从初始值逐步降低到接近零。这种策略在训练初期提供较大的学习率加速收敛，后期降低学习率精细调优。
 - **批处理与序列打包**：由于诗词长度不一，使用填充（Padding）将同一批次内的序列对齐到相同长度。为提高效率，按长度排序后分批，减少每批内的填充量。
 
-```python runnable timeout=unlimited
+```python runnable gpu timeout=unlimited
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -545,7 +545,7 @@ else:
 2. **温度采样**：通过温度参数控制生成多样性。温度越高（如 1.0），生成越随机、越有创意；温度越低（如 0.5），生成越保守、越接近训练数据。温度为 0 时退化为贪婪搜索。
 3. **隐藏状态传递**：生成时保持隐藏状态的连续性，让模型"记住"之前生成的内容，保持语义连贯。
 
-```python runnable
+```python runnable gpu
 import torch
 import torch.nn.functional as F
 import os

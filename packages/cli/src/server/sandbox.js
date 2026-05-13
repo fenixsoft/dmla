@@ -131,7 +131,7 @@ const PROJECT_ROOT = detectProjectRoot()
 
 // 共享模块目录（仅开发模式可用）
 const DEFAULT_SHARED_MODULES_PATH = PROJECT_ROOT
-  ? path.join(PROJECT_ROOT, 'local-server', 'shared_modules')
+  ? path.join(PROJECT_ROOT, 'local-server', 'shared')
   : null
 
 // kernel_runner.py 路径（开发模式下可用）
