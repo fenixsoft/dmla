@@ -548,13 +548,28 @@ export function clearCache() {
 }
 
 /**
- * 获取共享模块路径（CLI 包中的 shared 目录）
+ * 获取共享模块路径
  * @returns {string}
  */
 export function getSharedModulesPath() {
-  // 返回 CLI 包根目录，包含 shared 目录
-  // 路径: packages/cli/src/server/ -> ../.. -> packages/cli/
-  return path.resolve(__dirname, '../..')
+  // 优先使用环境变量指定的路径
+  if (process.env.SHARED_MODULES_PATH) {
+    return process.env.SHARED_MODULES_PATH
+  }
+
+  // 检测运行模式
+  // 源码目录运行: local-server/src/ -> shared 在 local-server/shared/
+  // CLI 包运行: packages/cli/src/server/ -> shared 在 packages/cli/shared/
+  const currentDir = __dirname
+
+  // 检查是否为源码目录运行（local-server/src/）
+  if (currentDir.includes('local-server/src')) {
+    // 源码目录: local-server/src/ -> local-server/shared/
+    return path.resolve(currentDir, '../shared')
+  }
+
+  // CLI 包运行: packages/cli/src/server/ -> packages/cli/shared/
+  return path.resolve(currentDir, '../../shared')
 }
 
 /**

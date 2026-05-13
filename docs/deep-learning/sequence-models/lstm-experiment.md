@@ -85,7 +85,12 @@ class PoetryDataset:
         elif 'paragraphs' in poem:
             text = ''.join(poem['paragraphs'])
         elif 'content' in poem:
-            text = poem['content']
+            # content 可能是字符串或列表
+            content = poem['content']
+            if isinstance(content, list):
+                text = ''.join(content)
+            else:
+                text = content
         else:
             return None
 
@@ -368,6 +373,13 @@ else:
                 text = poem['text']
             elif 'paragraphs' in poem:
                 text = ''.join(poem['paragraphs'])
+            elif 'content' in poem:
+                # content 可能是字符串或列表
+                content = poem['content']
+                if isinstance(content, list):
+                    text = ''.join(content)
+                else:
+                    text = content
             else:
                 return None
             text = re.sub(r'[^一-龥，。！？、；：""''（）]', '', text)
