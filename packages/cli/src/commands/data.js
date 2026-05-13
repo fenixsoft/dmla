@@ -66,7 +66,7 @@ const DATASETS = [
     id: 'chinese-poetry',
     name: 'Chinese Poetry (古诗词)',
     url: 'https://www.modelscope.cn/datasets/icyfenix/Chinese-Poetry.git',
-    size: '~50MB',
+    size: '~380MB',
     format: 'git',
     targetDir: 'datasets/chinese-poetry',
     source: 'ModelScope (icyfenix)'
@@ -851,7 +851,66 @@ async function downloadDataset(dataPath, dataset) {
   } catch (error) {
     console.log()
     console.log(chalk.red(`下载失败: ${error.message}`))
-    console.log(chalk.yellow('您可以稍后重试'))
+
+    // 检查是否有不完整的数据残留
+    const hasIncompleteData = fs.existsSync(targetDir)
+
+    if (hasIncompleteData) {
+      console.log(chalk.yellow(`目录 ${targetDir} 存在不完整数据`))
+    }
+
+    // 提供重试或删除选项
+    while (true) {
+      try {
+        const choices = ['重试下载']
+        if (hasIncompleteData) {
+          choices.push('删除不完整数据并返回')
+        }
+        choices.push('保留现状并返回')
+
+        const { choice } = await prompt({
+          type: 'select',
+          name: 'choice',
+          message: '如何处理?',
+          choices,
+          styles: {
+            primary: chalk.cyan.bold
+          }
+        })
+
+        if (choice === '重试下载') {
+          // 删除不完整数据后重试
+          if (hasIncompleteData && fs.existsSync(targetDir)) {
+            console.log(chalk.gray('删除不完整数据...'))
+            fs.rmSync(targetDir, { recursive: true, force: true })
+          }
+          console.log(chalk.gray('重新下载...'))
+          console.log()
+          // 递归调用自身重试
+          await downloadDataset(dataPath, dataset)
+          return  // 重试成功后退出
+        } else if (choice === '删除不完整数据并返回') {
+          fs.rmSync(targetDir, { recursive: true, force: true })
+          console.log(chalk.gray('不完整数据已删除'))
+          return
+        } else {
+          // 保留现状并返回
+          // 创建标记文件表明数据不完整
+          if (!fs.existsSync(targetDir)) {
+            fs.mkdirSync(targetDir, { recursive: true })
+          }
+          fs.writeFileSync(path.join(targetDir, '.lfs-incomplete'), `下载失败: ${error.message}`)
+          console.log(chalk.yellow('已保留不完整数据，可稍后重试'))
+          return
+        }
+      } catch (promptError) {
+        if (isUserCancel(promptError)) {
+          console.log(chalk.gray('返回上一级'))
+          return
+        }
+        throw promptError
+      }
+    }
   }
 }
 

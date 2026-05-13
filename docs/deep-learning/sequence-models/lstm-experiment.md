@@ -1,6 +1,6 @@
 # LSTM 古诗词生成实验
 
-本次工程实训中，笔者将与你一同使用 PyTorch 实现 LSTM 语言模型的完整训练流程，从数据预处理到模型定义、从训练调优到文本生成，通过实践来理解循环神经网络的序列建模能力，并最终训练出能够生成古诗词的模型。
+本次工程实训将实现 LSTM 语言模型的完整训练流程，从数据预处理到模型定义、从训练调优到文本生成，通过实践来理解循环神经网络的序列建模能力，并最终训练出能够生成古诗词的模型。
 
 ## 实验准备
 
@@ -11,58 +11,12 @@
 dmla data
 ```
 
-验证数据集是否已正确下载，并检查其结构。chinese-poetry 数据集包含 5.5 万首唐诗、26 万首宋诗、2.1 万首宋词等古典文集，数据以 JSON 格式存储，便于解析和处理。
-
-```python runnable
-import os
-import json
-
-# 检查数据目录是否存在（DATA_DIR 由 kernel 自动注入）
-data_dir = os.path.join(DATA_DIR, 'datasets', 'chinese-poetry')
-
-if os.path.exists(data_dir):
-    print("数据集目录已存在")
-
-    # 统计各类诗词数量
-    categories = {
-        '全唐诗': '全唐诗',
-        '宋词': '宋词',
-        '诗经': '诗经',
-        '楚辞': '楚辞'
-    }
-
-    for name, folder in categories.items():
-        folder_path = os.path.join(data_dir, folder)
-        if os.path.exists(folder_path):
-            json_files = [f for f in os.listdir(folder_path) if f.endswith('.json')]
-            total_poems = 0
-            for jf in json_files:
-                with open(os.path.join(folder_path, jf), 'r', encoding='utf-8') as f:
-                    data = json.load(f)
-                    total_poems += len(data)
-            print(f"  {name}: {total_poems} 首 ({len(json_files)} 个文件)")
-
-    # 查看一首唐诗样例
-    tang_path = os.path.join(data_dir, '全唐诗')
-    if os.path.exists(tang_path):
-        json_files = [f for f in os.listdir(tang_path) if f.endswith('.json')]
-        if json_files:
-            with open(os.path.join(tang_path, json_files[0]), 'r', encoding='utf-8') as f:
-                sample = json.load(f)[0]
-            print(f"\n唐诗样例:")
-            print(f"  标题: {sample.get('title', 'N/A')}")
-            print(f"  作者: {sample.get('author', 'N/A')}")
-            print(f"  内容: {sample.get('text', sample.get('paragraphs', 'N/A'))}")
-else:
-    print("数据集未下载，请运行 'dmla data' 下载数据集")
-```
-
 ## 第一阶段：数据预处理
 
 LSTM 语言模型的数据预处理需要将原始文本转换为模型可处理的数值序列。本实验采用字符级建模方式，即每个汉字作为一个独立的词元（token），模型学习预测下一个字符。字符级建模的优势在于词汇表大小可控（常用汉字约 3000-5000 个），且能处理任意新词，无需预先定义词表。本阶段的工程决策围绕以下两点展开：
 
 - **数据清洗**：古诗数据中包含标题、作者、注释等元信息，训练时只需保留诗词正文。同时需要过滤掉残缺不全的诗句（如包含"□"等缺字标记），以及过短或过长的作品（过短信息量不足，过长训练效率低）。
-- **序列构建**：LSTM 训练采用教师强制（Teacher Forcing）模式，输入序列为目标序列去掉最后一个字符，目标序列为原序列去掉第一个字符。例如诗句"床前明月光"，输入为"床前明月"，目标为"前明月光"。模型学习根据前文预测后文。
+- **序列构建**：LSTM 训练采用[教师强制](lstm-gru.md#训练技巧与最佳实践)（Teacher Forcing）模式，输入序列为目标序列去掉最后一个字符，目标序列为原序列去掉第一个字符。譬如诗句"床前明月光"，输入为"床前明月"，目标为"前明月光"。模型学习根据前文预测后文。
 
 ```python runnable
 import os
@@ -215,7 +169,7 @@ else:
 
 LSTM 语言模型的核心结构是一个多层 LSTM 网络，将输入的字符序列逐步编码为隐藏状态，最后通过全连接层将隐藏状态映射到词汇表大小的输出空间。本实验的模型架构遵循以下设计原则：
 
-- **嵌入层**：将字符索引映射为稠密向量表示。嵌入维度（embedding_dim）决定了字符的语义表达能力，通常设置为 128-512 维。嵌入层让模型学习字符之间的语义关系，如"春"和"秋"在嵌入空间中距离较近，因为它们都与季节相关。
+- **嵌入层**：将字符索引映射为稠密向量表示。嵌入维度决定了字符的语义表达能力，通常设置为 128-512 维。嵌入层让模型学习字符之间的语义关系，如"春"和"秋"在嵌入空间中距离较近，因为它们都与季节相关。
 - **LSTM 层**：采用 2 层 LSTM 结构，每层隐藏维度为 256。多层 LSTM 能够学习更复杂的序列模式，第一层捕捉基础语法结构，第二层捕捉更高层次的语义关系。使用 Dropout（0.3）防止过拟合。
 - **输出层**：将 LSTM 输出映射到词汇表大小的 logits，通过 Softmax 转换为概率分布，表示下一个字符的预测概率。
 
@@ -312,7 +266,7 @@ LSTM 语言模型的训练目标是最大化训练数据中字符序列的似然
 - **损失函数**：使用交叉熵损失（Cross Entropy Loss），忽略填充位置（`<PAD>`）的损失。交叉熵损失衡量模型预测分布与真实分布之间的差异，是语言模型的标准损失函数。
 - **梯度裁剪**：LSTM 虽然缓解了梯度消失问题，但仍可能发生梯度爆炸。使用梯度裁剪（`clip_grad_norm_`，最大范数 5.0）防止参数更新幅度过大，保持训练稳定。
 - **学习率调度**：采用余弦退火（Cosine Annealing）策略，学习率从初始值逐步降低到接近零。这种策略在训练初期提供较大的学习率加速收敛，后期降低学习率精细调优。
-- **批处理与序列打包**：由于诗词长度不一，使用填充（padding）将同一批次内的序列对齐到相同长度。为提高效率，按长度排序后分批，减少每批内的填充量。
+- **批处理与序列打包**：由于诗词长度不一，使用填充（Padding）将同一批次内的序列对齐到相同长度。为提高效率，按长度排序后分批，减少每批内的填充量。
 
 ```python runnable timeout=unlimited
 import torch

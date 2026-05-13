@@ -2,7 +2,7 @@
 
 自适应学习率的思想源于一个朴素的观察，不同参数在训练过程中扮演着不同的角色，有些参数频繁更新，梯度大而稳定；有些参数更新稀疏，梯度小甚至偶尔为零。如果给所有参数配发同样的步长，频繁更新的参数可能步子太大、震荡难收敛，而稀疏更新的参数可能步子太小、前进缓慢。这就像校长给全校学生布置同样的作业量，高年级的学生觉得无聊，低年级的学生觉得吃力。
 
-**自适应优化器**（Adaptive Optimizers）正是为解决以上"一刀切"问题而生，它们根据参数的历史梯度自动调整学习率，为每个参数分配独立的更新步长。这种"因材施教"的策略最早由约翰·杜奇（John Duchi）于 2011 年提出，他的 AdaGrad 算法开创了自适应学习率的先河。随后，辛顿在 2012 年的 Coursera 课程中提出了 RMSprop，解决了 AdaGrad 学习率过早衰减的问题。2015 年，迪德里克·金玛（Diederik Kingma）和吉米·巴（Jimmy Ba）发表里程碑论文《Adam: A Method for Stochastic Optimization》，将动量法与自适应学习率完美结合，Adam 由此成为深度学习领域最流行的优化器。2019 年，伊利亚·洛希洛夫（Ilya Loshchilov）和弗兰克·赫特（Frank Hutter）发现 Adam 的权重衰减实现存在理论缺陷，提出了 AdamW，进一步提升了泛化能力。本章将会介绍以上四种重要的自适应优化器，分析它们的设计原理、优缺点和适用场景。
+**自适应优化器**（Adaptive Optimizers）正是为解决以上"一刀切"问题而生，它们根据参数的历史梯度自动调整学习率，为每个参数分配独立的更新步长。这种"因材施教"的策略最早由约翰·杜奇（John Duchi）于 2011 年提出，他的 AdaGrad 算法开创了自适应学习率的先河。随后，辛顿在 2012 年的 Coursera 课程中提出了 RMSprop，解决了 AdaGrad 学习率过早衰减的问题。2015 年，迪德里克·金玛（Diederik Kingma）和吉米·巴（Jimmy Ba）发表里程碑论文《Adam: A Method for Stochastic Optimization》，将动量法与自适应学习率有效结合，Adam 由此成为深度学习领域最流行的优化器。2019 年，伊利亚·洛希洛夫（Ilya Loshchilov）和弗兰克·赫特（Frank Hutter）发现 Adam 的权重衰减实现存在理论缺陷，提出了 AdamW，进一步提升了泛化能力。本章将会介绍以上四种重要的自适应优化器，分析它们的设计原理、优缺点和适用场景。
 
 ## AdaGrad
 
@@ -26,7 +26,7 @@ AdaGrad 这种自适应调整特别适合处理稀疏梯度问题（如自然语
 
 **RMSprop**（Root Mean Square Propagation）由杰弗里·辛顿在 2012 年的 Coursera 课程中提出。有趣的是，辛顿从未正式发表过关于 RMSprop 的论文，它仅作为课程笔记被流传，但因其简单有效迅速被社区采纳。RMSprop 对 AdaGrad 的改进是用指数滑动平均代替 AdaGrad 的累积。滑动平均是一种加权平均，新数据权重大、旧数据权重逐渐衰减，就像一个窗口在数据链中滑动，让历史信息有进有出，因此 RMSprop 能做到只保留最近若干步（约 $\frac{1}{1-\gamma}$ 步）的梯度信息。
 
-设 $\mathbf{E}_t$ 是梯度平方的指数滑动平均，$\gamma$ 是衰减系数（通常取 $0.9$），用作历史累积梯度的权重，控制历史信息的保留程度，剩下的 $(1-\gamma)$ 用作新梯度的权重，这样保证了权重之和为 1。RMSprop 的梯度累计公式为（可与公式 {{eq:adagrad-update}} 对比）：
+设 $\mathbf{E}_t$ 是梯度平方的指数滑动平均，$\gamma$ 是衰减系数（通常取 $0.9$），用作历史累积梯度平方的权重，控制历史信息的保留程度，剩下的 $(1-\gamma)$ 用作新梯度平方的权重，这样保证了权重之和为 1。RMSprop 的梯度累计公式为（可与公式 {{eq:adagrad-update}} 对比）：
 
 $$[eq:rmsprop-update] \mathbf{E}_t = \gamma \mathbf{E}_{t-1} + (1 - \gamma)(\nabla L_t)^2$$
 
@@ -38,7 +38,7 @@ RMSprop 使用指数滑动平均的特性带来了两点收益，首先是窗口
 
 ## Adam
 
-**Adam**（Adaptive Moment Estimation）由迪德里克·金玛（Diederik Kingma）和吉米·巴（Jimmy Ba） 2015 年在国际机器学习会议（ICLR）上提出。Adam 的名称源于其核心机制：同时估计梯度的[一阶矩](https://en.wikipedia.org/wiki/Moment_(mathematics))（First Moment，即均值）和二阶矩（Second Moment，即未中心化的方差），将动量法与自适应学习率融于一身。这种双管齐下的策略让参数更新既有方向上的平滑稳定，又有步长上的因材施教，成为当前深度学习领域最流行的优化器。
+**Adam**（Adaptive Moment Estimation）由迪德里克·金玛（Diederik Kingma）和吉米·巴（Jimmy Ba） 2015 年在国际学习表征会议（ICLR）上提出。Adam 的名称源于其核心机制：同时估计梯度的[一阶矩](https://en.wikipedia.org/wiki/Moment_(mathematics))（First Moment，即均值）和二阶矩（Second Moment，即未中心化的方差），将动量法与自适应学习率融于一身。这种双管齐下的策略让参数更新既有方向上的平滑稳定，又有步长上的因材施教，成为当前深度学习领域最流行的优化器。
 
 实现这一融合的关键是 Adam 同时维护两个状态变量。**一阶矩** $\mathbf{m}_t$ 累积历史梯度的方向信息，相当于动量法中的速度变量，用于平滑更新路径、抑制震荡。**二阶矩** $\mathbf{v}_t$ 累积历史梯度的平方，相当于 RMSprop 中的滑动平均，用于调整各参数的学习率。两者独立运作、互不干扰，一阶矩负责"往哪走"，二阶矩负责"走多远"。这种分工让 Adam 在各类任务上都表现稳健，对超参数选择不敏感，默认参数（$\beta_1=0.9, \beta_2=0.999, \eta=0.001$）就能适配绝大多数场景，这也是它能广泛流行的重要原因之一。
 
@@ -58,7 +58,7 @@ $$ \hat{\mathbf{m}}_t = \frac{\mathbf{m}_t}{1 - \beta_1^t}, \quad \hat{\mathbf{v
 
 $$[adam-w-update] \mathbf{W}_{t+1} = \mathbf{W}_t - \frac{\eta}{\sqrt{\hat{\mathbf{v}}_t} + \epsilon} \cdot \hat{\mathbf{m}}_t$$
 
-这个公式可以理解为用偏差修正后的动量 $\hat{\mathbf{m}}_t$ 指明前进方向（平滑后的梯度），用自适应学习率 $\frac{\eta}{\sqrt{\hat{\mathbf{v}}_t}}$ 控制步长（各参数独立调整）。用 $\epsilon$（通常 $10^{-8}$）防止除零，$\eta$ 是全局学习率（通常 $0.001$，比 SGD 的默认值小，因为自适应已放大有效步长）。Adam 结合了动量法和自适应学习率的优点，在计算机视觉、自然语言处理、推荐系统等领域广泛使用，成为深度学习研究的默认优化器。
+这个公式可以理解为用偏差修正后的动量 $\hat{\mathbf{m}}_t$ 指明前进方向（平滑后的梯度），用自适应学习率 $\frac{\eta}{\sqrt{\hat{\mathbf{v}}_t}}$ 控制步长（各参数独立调整）。用 $\epsilon$（通常 $10^{-8}$）防止除零，$\eta$ 是全局学习率（通常 $0.001$，比 SGD 的默认值小，因为自适应机制会使部分参数的有效步长过大）。Adam 结合了动量法和自适应学习率的优点，在计算机视觉、自然语言处理、推荐系统等领域广泛使用，成为深度学习研究的默认优化器。
 
 Adam 提供了四个超参数的设置，但除了全局学习率外，其中三个通常使用默认值即可，实际训练时，损失震荡则降低学习率，收敛慢则增大学习率：
 
@@ -73,7 +73,7 @@ Adam 提供了四个超参数的设置，但除了全局学习率外，其中三
 
 Adam 似乎已经集齐了动量法和自适应学习率的所有优点，成为深度学习的默认优化器。然而，2019 年一篇论文揭示了一个隐藏的理论缺陷，Adam 中权重衰减（L2 正则化）的实现方式与自适应学习率冲突，正则化效果不稳定。这个问题引出了 Adam 的最新修正版本 AdamW。
 
-权重衰减（Weight Decay）是防止过拟合的常用技术，实质上就是 [L2 正则化](../../statistical-learning/linear-models/regularization-glm.md#正则化原理)。在损失函数中添加参数惩罚项，迫使参数保持较小值 $L_{total} = L_{data} + \lambda \|\mathbf{W}\|^2$，相应地，梯度变为 $\nabla L_{total} = \nabla L_{data} + 2\lambda \mathbf{W}$，在 SGD 中，权重衰减的实现很简单直观：
+权重衰减（Weight Decay）是防止过拟合的常用技术，在 SGD 中实质上等同于 [L2 正则化](../../statistical-learning/linear-models/regularization-glm.md#正则化原理)。在损失函数中添加参数惩罚项，迫使参数保持较小值 $L_{total} = L_{data} + \lambda \|\mathbf{W}\|^2$，相应地，梯度变为 $\nabla L_{total} = \nabla L_{data} + 2\lambda \mathbf{W}$，在 SGD 中，权重衰减的实现很简单直观：
 
 $$\mathbf{W}_{t+1} = \mathbf{W}_t - \eta \nabla L_{data} - \eta \lambda \mathbf{W}_t = \mathbf{W}_t(1 - \eta \lambda) - \eta \nabla L_{data}$$
 
@@ -112,7 +112,7 @@ $$\mathbf{W}_{t+1} = \mathbf{W}_t - \frac{\eta}{\sqrt{\hat{\mathbf{v}}_t} + \eps
     | 通用深度学习 | AdamW | 鲁棒性强，默认选择 |
     | 计算机视觉 | SGD + Momentum | 实验表明泛化能力更好 |
     | 自然语言处理 | AdamW | 稀疏梯度，自适应优势明显 |
-    | RNN/LSTM | RMSprop / AdamW | 处理梯度消失，学习率稳定 |
+    | RNN/LSTM | RMSprop / AdamW | 适应梯度尺度差异 |
     | 精调预训练模型 | SGD + Momentum | 小学习率精调，防止破坏预训练特征 |
     | 稀疏数据（推荐系统） | AdamW | 稀疏参数获得大学习率 |
 

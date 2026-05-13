@@ -206,6 +206,7 @@ export default {
             text: '序列模型',
             collapsible: false,
             children: [
+              { text: '词嵌入与表示学习', link: '/deep-learning/sequence-models/word-embedding' },
               { text: 'RNN 基础原理', link: '/deep-learning/sequence-models/rnn-basics' },
               { text: 'LSTM 与 GRU 门控机制', link: '/deep-learning/sequence-models/lstm-gru' },
               { text: 'Seq2Seq 序列映射', link: '/deep-learning/sequence-models/seq2seq' },

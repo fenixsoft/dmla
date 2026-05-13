@@ -11,9 +11,9 @@
         - Linux >= 570.26
         - Windows: >= 570.65
     - 存储空间要求：
-        - CPU 镜像约为 650 MB；GPU 镜像约 7.43 GB（CUDA 的官方镜像超过 4GB，PyTorch GPU 版本接近 3GB）。
+        - CPU 镜像约为 680 MB；GPU 镜像约 7.83 GB（CUDA 的官方镜像超过 4GB，PyTorch GPU 版本接近 3GB）。
         - CPU 镜像的内存上限约束为 4GB；GPU 镜像未设置内存上限，在模型训练的章节中会有内存评估的内容，通常至少需要 16GB 内存和 8GB 显存。
-        - 宿主机中还应预留大于 100GB 空间，用于存放各类数据集、预处理缓存及模型 Checkpoint 等内容。
+        - 宿主机中还应预留大于 20GB 空间，用于存放各类数据集、预处理缓存及模型 Checkpoint 等内容。
     - 其他工具要求：
         - [Git](https://git-scm.com/install/)LFS：模型训练/评估的数据集使用需使用 Git LFS 下载。
 - 其余依赖（如 Jupyter Notebook Kernel、Python、Numpy、PyTorch、CUDA 等）均通过 Docker 镜像来使用，不需要单独安装。
