@@ -74,7 +74,7 @@ $$[eq:xavier-var] \text{Var}(w) = \frac{2}{n_{in} + n_{out}}$$
 
     $$\mathbf{W}_{ij} \sim N\left(0, \frac{2}{n_{in} + n_{out}}\right)$$
 
-Xavier 初始化的推导有一个关键假设 —— 激活函数是线性的。这个假设在实际中肯定不成立（激活函数就是为了非线性表达），但是如果考虑 Xavier 初始化控制了权重方差，绝大部分激活值不会远离零点而落入饱和区域，而是集中在零值附近呢？我们回顾一下 [Sigmoid 激活函数](../../statistical-learning/linear-models/logistic-regression.md#sigmoid-函数) 的形状，当输入 $x$ 在 0 附近时，Sigmoid 函数的行为可以用泰勒展开近似：
+Xavier 初始化的推导有一个关键假设：激活函数是线性的。这个假设在实际中肯定不成立（激活函数就是为了非线性表达），但是如果考虑 Xavier 初始化控制了权重方差，绝大部分激活值不会远离零点而落入饱和区域，而是集中在零值附近呢？我们回顾一下 [Sigmoid 激活函数](../../statistical-learning/linear-models/logistic-regression.md#sigmoid-函数) 的形状，当输入 $x$ 在 0 附近时，Sigmoid 函数的行为可以用泰勒展开近似：
 
 $$\sigma(x) \approx \sigma(0) + \sigma'(0) \cdot x = 0.5 + 0.25 \cdot x$$
 
