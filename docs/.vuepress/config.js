@@ -75,7 +75,6 @@ export default {
               { text: '向量基础', link: '/maths/linear/vectors' },
               { text: '矩阵基础', link: '/maths/linear/matrices' },
               { text: '数据处理实践', link: '/maths/linear/numpy' },
-              { text: '应用场景', link: '/maths/linear/applications' },
             ]
           },
           {

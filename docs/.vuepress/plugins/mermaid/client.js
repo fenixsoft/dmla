@@ -33,7 +33,12 @@ async function renderMermaid() {
         nodeSpacing: 20,
         rankSpacing: 25,
         // 使用贝塞尔曲线，连线更紧凑
-        curve: 'basis'
+        curve: 'basis',
+        // subgraph 标题边距，为标题预留空间避免被裁剪
+        subGraphTitleMargin: {
+              top: 2,
+              bottom: 7
+        }
       },
       themeVariables: {
         // 默认字体从 14px 减小到 11px，节点会更小
@@ -156,7 +161,12 @@ export default defineClientConfig({
             nodeSpacing: 20,
             rankSpacing: 25,
             // 使用贝塞尔曲线，连线更紧凑
-            curve: 'basis'
+            curve: 'basis',
+            // subgraph 标题边距，为标题预留空间避免被裁剪
+            subGraphTitleMargin: {
+              top: 2,
+              bottom: 7
+            }
           },
           themeVariables: {
             // 默认字体从 14px 减小到 11px，节点会更小

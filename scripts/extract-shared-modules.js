@@ -257,6 +257,21 @@ function generateModuleFile(className, classCode, moduleDir) {
     imports.push('import os');
   }
 
+  // JSON 处理
+  if (classCode.includes('json.') || /\bjson\b/.test(classCode)) {
+    imports.push('import json');
+  }
+
+  // 正则表达式
+  if (classCode.includes('re.') || /\bre\b/.test(classCode)) {
+    imports.push('import re');
+  }
+
+  // collections 模块
+  if (classCode.includes('Counter') || classCode.includes('defaultdict') || classCode.includes('deque')) {
+    imports.push('from collections import Counter, defaultdict, deque');
+  }
+
   // 排序并去重
   const uniqueImports = [...new Set(imports)].sort((a, b) => {
     // from 导入排在后面
@@ -278,6 +293,9 @@ ${importsSection}${classCode}
   return { path: modulePath, content };
 }
 
+// 可选依赖列表（这些包可能未安装）
+const OPTIONAL_DEPENDENCIES = ['lmdb', 'redis', 'pymongo', 'mysql', 'psycopg2'];
+
 // 更新 __init__.py（完全重新生成，扫描目录中所有 .py 文件）
 function updateInitPy(moduleDir, classNames) {
   const initPath = path.join(SHARED_MODULES_DIR, moduleDir, '__init__.py');
@@ -293,6 +311,7 @@ function updateInitPy(moduleDir, classNames) {
 
   // 从 .py 文件内容中提取类名，并映射到实际文件名
   const fileClassMap = {};  // 文件名 -> 类名列表
+  const fileDepsMap = {};   // 文件名 -> 可选依赖列表
   const allClassNames = [];
 
   for (const file of existingFiles) {
@@ -304,6 +323,20 @@ function updateInitPy(moduleDir, classNames) {
     if (classes.length > 0) {
       fileClassMap[file] = classes;
       allClassNames.push(...classes);
+
+      // 检测文件中的可选依赖
+      // 检测方式：import xxx 或 from xxx 或 xxx.（模块使用）
+      const deps = [];
+      for (const dep of OPTIONAL_DEPENDENCIES) {
+        if (content.includes(`import ${dep}`) ||
+            content.includes(`from ${dep}`) ||
+            content.includes(`${dep}.`)) {
+          deps.push(dep);
+        }
+      }
+      if (deps.length > 0) {
+        fileDepsMap[file] = deps;
+      }
     }
   }
 
@@ -311,9 +344,9 @@ function updateInitPy(moduleDir, classNames) {
   allClassNames.push(...classNames);
   const uniqueClassNames = [...new Set(allClassNames)];
 
-  // 生成导入语句
-  // 对于已有文件中的类，使用实际文件名；对于新类，使用推断的文件名
-  const imports = [];
+  // 生成导入语句（按文件分组，对有可选依赖的使用 try-except）
+  const importGroups = {};  // 文件名 -> { classes, hasOptionalDep }
+
   for (const className of uniqueClassNames) {
     // 查找类所在的实际文件
     let actualFileName = null;
@@ -329,14 +362,36 @@ function updateInitPy(moduleDir, classNames) {
       actualFileName = classNameToFileName(className);
     }
 
-    imports.push(`from .${actualFileName} import ${className}`);
+    // 初始化文件组
+    if (!importGroups[actualFileName]) {
+      const hasOptionalDep = fileDepsMap[`${actualFileName}.py`];
+      importGroups[actualFileName] = { classes: [], hasOptionalDep };
+    }
+    importGroups[actualFileName].classes.push(className);
+  }
+
+  // 生成导入语句
+  const importLines = [];
+  for (const [fileName, { classes, hasOptionalDep }] of Object.entries(importGroups)) {
+    const classList = classes.join(', ');
+    const importStmt = `from .${fileName} import ${classList}`;
+
+    if (hasOptionalDep) {
+      // 使用 try-except 包裹有可选依赖的导入
+      importLines.push(`try:`);
+      importLines.push(`    ${importStmt}`);
+      importLines.push(`except ImportError:`);
+      importLines.push(`    pass  # 可选依赖 ${hasOptionalDep.join(', ')} 未安装`);
+    } else {
+      importLines.push(importStmt);
+    }
   }
 
   // 生成 __all__ 列表
   const allList = uniqueClassNames.map(n => `'${n}'`).join(', ');
 
   const content = `# ${moduleDir.toUpperCase()} 模块
-${imports.join('\n')}
+${importLines.join('\n')}
 
 __all__ = [${allList}]
 `;
@@ -434,12 +489,17 @@ function main() {
              f !== '__pycache__';
     });
 
-    // 生成简洁的 __init__.py：只使用 from .xxx import * 模式
-    const imports = subModules.map(m => `from .${m} import *`).join('\n');
+    // 生成简洁的 __init__.py：不使用 from .xxx import *（避免可选依赖问题）
+    // 用户需要显式导入，如 from shared.sequence_models import PoetryLSTM
     const content = `# shared 模块包初始化
 # 包含统计学习系列文档中可复用的类定义
+#
+# 使用方式：显式导入需要的模块
+#   from shared.sequence_models import PoetryLSTM, PoetryDataset
+#   from shared.cnn import AlexNet
+#   from shared.linear import LogisticRegression
 
-${imports}
+__all__ = [${subModules.map(m => `'${m}'`).join(', ')}]
 `;
 
     fs.writeFileSync(topInitPath, content);

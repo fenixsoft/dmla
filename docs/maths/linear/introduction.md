@@ -41,11 +41,11 @@ $$\mathbf{x} = (90, 2, 1, 5, 500)$$
   print(f"向量维度：{vector.shape[0]}")  # 输出：784
   ```
 
-- **文本数据**：文本的向量化有多种方法。最简单的是[词袋模型（Bag of Words）](applications.md#经典-nlp-的代表-词袋模型)，它统计每个词出现的频次，形成频次向量。更先进的方法如 `Word2Vec`、`BERT` 能将单词或句子映射为语义丰富的稠密向量。
+- **文本数据**：文本的向量化有多种方法。最简单的是[词袋模型（Bag of Words）](../../deep-learning/sequence-models/word-embedding.md#one-hot-编码与词袋模型)，它统计每个词出现的频次，形成频次向量。更先进的方法如 `Word2Vec`、`BERT` 能将单词或句子映射为语义丰富的稠密向量。
 
   ```python
   # 简化的词袋模型示例
-  documents = ["深入理解 Java 虚拟机", "凤凰架构", "智慧的疆界"]
+  documents = ["深入理解 Java 虚拟机", "凤凰架构", "智慧的疆界", "设计机器学习应用系统"]
   vocabulary = set(" ".join(documents).split())  # 构建词汇表（按空格分词）
   print(f"词汇表：{vocabulary}")
 

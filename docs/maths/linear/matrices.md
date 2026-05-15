@@ -281,6 +281,30 @@ $$ \mathbf{h} = \mathbf{W}\mathbf{x} + \mathbf{b} $$
 
 其中 $\mathbf{x}$ 是输入向量（上一层的输出），$\mathbf{W}$ 是权重矩阵，$\mathbf{b}$ 是偏置向量，$\mathbf{h}$ 是本层的输出。权重矩阵 $\mathbf{W}$ 把输入从 $n$ 维空间"映射"到 $m$ 维空间（$\mathbf{W}$ 为 $m \times n$ 矩阵），这个映射过程就是一次线性变换。
 
+## 特征向量与特征值
+
+机器学习领域有一句广为流传的名言："数据决定了模型的上限，算法只是逼近这个上限"。这句话出自 2009 年 Google 研究员吴恩达（Andrew Ng）在一次机器学习讲座中的总结，它强调了数据质量对模型性能的决定性作用。而特征工程（Feature Engineering）正是提升数据质量的主要手段，它将原始数据转化为更能表达问题本质的特征表示，使模型更容易学习到数据中的规律。
+
+特征值与特征向量的概念已经有很长的历史，18 世纪，欧拉在研究旋转刚体的运动方程时，发现了与特征值相关的数学结构 —— 刚体的旋转轴方向在变换下保持不变。这一发现当时并未引起广泛关注，但随后在微分方程、振动分析等领域反复出现。1904 年，德国数学家大卫·希尔伯特（David Hilbert）正式引入了"Eigen"这一术语（德语意为"自身的"、"固有的"），用以强调这些值和向量是矩阵固有的内在属性，而非偶然的数值巧合。中文将其译为"特征"，取"特有征象"之意。
+
+从数学定义看，对于 $n \times n$ 方阵 $\mathbf{A}$，如果存在非零向量 $\mathbf{v}$ 和标量 $\lambda$，满足：$\mathbf{A}\mathbf{v} = \lambda\mathbf{v}$，则称 $\mathbf{v}$ 为 $\mathbf{A}$ 的**特征向量**，$\lambda$ 为对应的**特征值**。用一个具体例子来理解这个定义。考虑矩阵 $\mathbf{A} = \begin{bmatrix} 2 & 1 \\ 1 & 2 \end{bmatrix}$，取向量 $\mathbf{v} = \begin{bmatrix} 1 \\ 1 \end{bmatrix}$。计算 $\mathbf{A}\mathbf{v}$：
+
+$$\mathbf{A}\mathbf{v} = \begin{bmatrix} 2 & 1 \\ 1 & 2 \end{bmatrix} \begin{bmatrix} 1 \\ 1 \end{bmatrix} = \begin{bmatrix} 2 \cdot 1 + 1 \cdot 1 \\ 1 \cdot 1 + 2 \cdot 1 \end{bmatrix} = \begin{bmatrix} 3 \\ 3 \end{bmatrix} = 3 \begin{bmatrix} 1 \\ 1 \end{bmatrix} = 3\mathbf{v}$$
+
+结果 $\mathbf{A}\mathbf{v} = 3\mathbf{v}$ 正好符合定义的形式！这说明 $\mathbf{v} = \begin{bmatrix} 1 \\ 1 \end{bmatrix}$ 是 $\mathbf{A}$ 的特征向量，对应的特征值 $\lambda = 3$。几何上，$\mathbf{v}$ 指向第一象限的 $45°$ 方向，矩阵 $\mathbf{A}$ 在这个方向上的作用只是把向量"拉长"了 3 倍，方向不变。再考虑另一个向量 $\mathbf{u} = \begin{bmatrix} 1 \\ -1 \end{bmatrix}$：
+
+$$\mathbf{A}\mathbf{u} = \begin{bmatrix} 2 & 1 \\ 1 & 2 \end{bmatrix} \begin{bmatrix} 1 \\ -1 \end{bmatrix} = \begin{bmatrix} 2 \cdot 1 + 1 \cdot (-1) \\ 1 \cdot 1 + 2 \cdot (-1) \end{bmatrix} = \begin{bmatrix} 1 \\ -1 \end{bmatrix} = 1\mathbf{u}$$
+
+同样满足 $\mathbf{A}\mathbf{u} = 1\mathbf{u}$！$\mathbf{u}$ 也是特征向量，对应特征值 $\lambda = 1$。几何上，$\mathbf{u}$ 指向第四象限的 $-45°$ 方向，矩阵 $\mathbf{A}$ 在这个方向上保持向量长度不变。这个 $2 \times 2$ 矩阵恰好有两个正交的特征方向：$45°$ 方向拉伸 3 倍，$-45°$ 方向保持不变。
+
+![特征向量的几何可视化](./assets/eigenvectors_demo.png)
+
+*图：特征向量的几何可视化*
+
+图中蓝色向量 $\mathbf{v}$ 指向 $45°$ 方向，经矩阵 $\mathbf{A}$ 变换后（红色）被拉伸 3 倍，方向不变；绿色向量 $\mathbf{u}$ 指向 $-45°$ 方向，经变换后（橙色）长度保持不变。这正是特征向量的核心特性：在特征方向上，矩阵变换仅表现为缩放。以上例子揭示了一个深刻的事实：在一般情况下，矩阵作用于向量会产生复杂的变化，既改变方向又改变长度；但在特征向量所指示的特殊方向上，矩阵变换收敛为最简单的形式：只进行缩放，方向保持不变。缩放的比例正是特征值 $\lambda$，若 $\lambda > 1$，向量被放大；若 $0 < \lambda < 1$，向量被压缩；若 $\lambda < 0$，方向反转后再缩放。
+
+这一几何直觉在物理和工程中有着丰富的对应：振动系统中，特征向量指向"固有振动模式"的方向，特征值决定振动频率；量子力学里，测量算符的特征值就是可观测物理量的可能取值，特征向量对应各量子态；控制理论中，系统矩阵的特征值分布决定了系统是否稳定，所有特征值位于单位圆内意味着系统收敛，任何一个超出则会导致发散。正是这种"捕捉系统本质行为"的能力，使特征值分解成为降维、压缩、稳定性分析等任务的数学核心。
+
 ## 张量
 
 如同向量将标量从零阶扩展到一阶，矩阵将向量从一阶扩展到二阶，**张量**（Tensor）更一般地扩展到了 $n$ 阶。张量是标量、向量、矩阵在高维空间的自然推广，可以描述任意维度的数据及其变换关系。一个 $n$ 阶张量包含 $n$ 个索引，每个索引对应一个维度。

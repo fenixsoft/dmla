@@ -109,7 +109,7 @@ $$a_i^K = \frac{e^{z_i^K}}{\sum_{j=1}^{I} e^{z_j^K}}$$
 
 $$l = -\sum_{i=1}^{I} y_i \log a_i^K$$
 
-其中 $y_i$ 是真实标签的 [One-Hot](https://en.wikipedia.org/wiki/One-hot) 编码（正确类别为 1，其他类别为 0）。$\log a_i^K$ 是预测概率的对数，概率越接近 1，对数越接近 0，整体损失等于正确类别预测概率的负对数，概率越低损失越大。$l$ 对 $z_i^K$ 的偏导数为（推导见[练习题](#练习题)部分）：
+其中 $y_i$ 是真实标签的 [One-Hot 编码](../../deep-learning/sequence-models/word-embedding.md#one-hot-编码与词袋模型)（正确类别为 1，其他类别为 0）。$\log a_i^K$ 是预测概率的对数，概率越接近 1，对数越接近 0，整体损失等于正确类别预测概率的负对数，概率越低损失越大。$l$ 对 $z_i^K$ 的偏导数为（推导见[练习题](#练习题)部分）：
 
 $$[eq:backprop-output-eq] \frac{\partial l}{\partial z_i^K} = a_i^K - y_i$$
 
@@ -537,7 +537,7 @@ plt.close()
     
     $$= -\sum_j y_j \delta_{jk} + \sum_j y_j a_k = -y_k + a_k \sum_j y_j$$
     
-    由于 $\sum_j y_j = 1$（one-hot 编码），得到：
+    由于 $\sum_j y_j = 1$（One-Hot 编码），得到：
     
     $$\frac{\partial l}{\partial z_k} = a_k - y_k$$
     

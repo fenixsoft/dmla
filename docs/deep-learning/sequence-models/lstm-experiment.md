@@ -13,12 +13,14 @@ dmla data
 
 ## 第一阶段：数据预处理
 
-LSTM 语言模型的数据预处理需要将原始文本转换为模型可处理的数值序列。本实验采用字符级建模方式，即每个汉字作为一个独立的词元（token），模型学习预测下一个字符。字符级建模的优势在于词汇表大小可控（常用汉字约 3000-5000 个），且能处理任意新词，无需预先定义词表。本阶段的工程决策围绕以下两点展开：
+LSTM 语言模型的数据预处理需要将原始文本转换为模型可处理的数值序列。本实验采用字符级建模方式，即每个汉字作为一个独立的词元（Token），模型学习预测下一个字符。字符级建模的优势在于词汇表大小可控（常用汉字约 3000-5000 个），且能处理任意新词，无需预先定义词表。本阶段的工程决策围绕以下两点展开：
 
 - **数据清洗**：古诗数据中包含标题、作者、注释等元信息，训练时只需保留诗词正文。同时需要过滤掉残缺不全的诗句（如包含"□"等缺字标记），以及过短或过长的作品（过短信息量不足，过长训练效率低）。
 - **序列构建**：LSTM 训练采用[教师强制](lstm-gru.md#训练技巧与最佳实践)（Teacher Forcing）模式，输入序列为目标序列去掉最后一个字符，目标序列为原序列去掉第一个字符。譬如诗句"床前明月光"，输入为"床前明月"，目标为"前明月光"。模型学习根据前文预测后文。
 
-```python runnable
+下面代码不会产生缓存或者其他中间结果，因此无需手工执行，会在第四阶段模型训练中被自动调用。
+
+```python runnable extract-class="PoetryDataset"
 import os
 import json
 import re
@@ -273,6 +275,13 @@ LSTM 语言模型的训练目标是最大化训练数据中字符序列的似然
 - **学习率调度**：采用余弦退火（Cosine Annealing）策略，学习率从初始值逐步降低到接近零。这种策略在训练初期提供较大的学习率加速收敛，后期降低学习率精细调优。
 - **批处理与序列打包**：由于诗词长度不一，使用填充（Padding）将同一批次内的序列对齐到相同长度。为提高效率，按长度排序后分批，减少每批内的填充量。
 
+::: info 训练预估
+
+293803 首诗词，运行 30 epoch，2296 batches/epoch。
+只需 4G 内存、4G 显存即可运行，用 GPU 训练约 25 - 30 分钟。
+
+:::
+
 ```python runnable gpu timeout=unlimited
 import torch
 import torch.nn as nn
@@ -285,8 +294,9 @@ import time
 # 导入进度报告模块
 from dmla_progress import ProgressReporter
 
-# 导入共享模块中的模型
+# 导入共享模块中的模型和数据集
 from shared.sequence_models.poetry_lstm import PoetryLSTM
+from shared.sequence_models.poetry_dataset import PoetryDataset
 
 # 定义数据集类（用于 DataLoader）
 class PoetryDatasetForTraining(Dataset):
@@ -311,8 +321,8 @@ def collate_fn(batch):
     return inputs_padded, targets_padded
 
 # === 训练配置 ===
-batch_size = 64
-num_epochs = 50
+batch_size = 128
+num_epochs = 30
 learning_rate = 0.001
 hidden_dim = 256
 embedding_dim = 256
@@ -332,95 +342,18 @@ data_dir = os.path.join(DATA_DIR, 'datasets', 'chinese-poetry')
 if not os.path.exists(data_dir):
     print("错误: 数据集未下载，请先运行 'dmla data' 下载数据集", flush=True)
 else:
-    # 使用之前定义的 PoetryDataset 加载数据
-    import json
-    import re
-    from collections import Counter
-
-    # 简化的数据加载（复用之前的逻辑）
-    class SimplePoetryLoader:
-        def __init__(self, data_dir, min_length=10, max_length=100, vocab_size=4000):
-            self.min_length = min_length
-            self.max_length = max_length
-            self.vocab_size = vocab_size
-            self.poems = self._load_poems(data_dir)
-            self.char2idx, self.idx2char = self._build_vocab()
-            self.sequences = self._encode_poems()
-
-        def _load_poems(self, data_dir):
-            poems = []
-            datasets = ['全唐诗', '宋词']
-            for dataset in datasets:
-                dataset_path = os.path.join(data_dir, dataset)
-                if not os.path.exists(dataset_path):
-                    continue
-                json_files = [f for f in os.listdir(dataset_path) if f.endswith('.json')]
-                for jf in json_files[:5]:  # 限制文件数量以加快加载
-                    file_path = os.path.join(dataset_path, jf)
-                    try:
-                        with open(file_path, 'r', encoding='utf-8') as f:
-                            data = json.load(f)
-                        for poem in data:
-                            text = self._extract_text(poem)
-                            if text and self._is_valid(text):
-                                poems.append(text)
-                    except:
-                        pass
-            return poems
-
-        def _extract_text(self, poem):
-            if 'text' in poem:
-                text = poem['text']
-            elif 'paragraphs' in poem:
-                text = ''.join(poem['paragraphs'])
-            elif 'content' in poem:
-                # content 可能是字符串或列表
-                content = poem['content']
-                if isinstance(content, list):
-                    text = ''.join(content)
-                else:
-                    text = content
-            else:
-                return None
-            text = re.sub(r'[^一-龥，。！？、；：""''（）]', '', text)
-            return text
-
-        def _is_valid(self, text):
-            if len(text) < self.min_length or len(text) > self.max_length:
-                return False
-            if '□' in text or '■' in text:
-                return False
-            return True
-
-        def _build_vocab(self):
-            char_counter = Counter()
-            for poem in self.poems:
-                char_counter.update(poem)
-            most_common = char_counter.most_common(self.vocab_size - 2)
-            char2idx = {'<PAD>': 0, '<UNK>': 1}
-            for i, (char, _) in enumerate(most_common, start=2):
-                char2idx[char] = i
-            idx2char = {idx: char for char, idx in char2idx.items()}
-            return char2idx, idx2char
-
-        def _encode_poems(self):
-            sequences = []
-            for poem in self.poems:
-                seq = [self.char2idx.get(c, self.char2idx['<UNK>']) for c in poem]
-                sequences.append(seq)
-            return sequences
-
+    # 使用共享模块中的 PoetryDataset 加载数据
     print("正在加载数据集...", flush=True)
-    loader = SimplePoetryLoader(data_dir)
-    print(f"加载完成: {len(loader.poems)} 首诗词, 词汇表大小: {len(loader.char2idx)}", flush=True)
+    dataset = PoetryDataset(data_dir, min_length=10, max_length=100, vocab_size=4000)
+    print(f"加载完成: {len(dataset.poems)} 首诗词, 词汇表大小: {len(dataset.char2idx)}", flush=True)
 
     # 创建数据加载器
-    train_dataset = PoetryDatasetForTraining(loader.sequences)
+    train_dataset = PoetryDatasetForTraining(dataset.sequences)
     train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True,
                               collate_fn=collate_fn, num_workers=0)
 
     # 创建模型
-    vocab_size = len(loader.char2idx)
+    vocab_size = len(dataset.char2idx)
     model = PoetryLSTM(
         vocab_size=vocab_size,
         embedding_dim=embedding_dim,
@@ -514,16 +447,16 @@ else:
                 'model_state_dict': model.state_dict(),
                 'optimizer_state_dict': optimizer.state_dict(),
                 'loss': avg_loss,
-                'char2idx': loader.char2idx,
-                'idx2char': loader.idx2char,
+                'char2idx': dataset.char2idx,
+                'idx2char': dataset.idx2char,
             }, os.path.join(model_dir, 'best_model.pth'))
 
     # 保存最终模型
     torch.save({
         'epoch': num_epochs,
         'model_state_dict': model.state_dict(),
-        'char2idx': loader.char2idx,
-        'idx2char': loader.idx2char,
+        'char2idx': dataset.char2idx,
+        'idx2char': dataset.idx2char,
     }, os.path.join(model_dir, 'final_model.pth'))
 
     progress.complete(message=f"训练完成！最终 Loss: {avg_loss:.4f}")
