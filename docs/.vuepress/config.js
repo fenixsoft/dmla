@@ -223,7 +223,7 @@ export default {
             collapsible: false,
             children: [
               { text: 'Transformer 架构基础', link: '/language-models/architecture-basics/transformer-architecture' },
-              // { text: '架构演进与变体', link: '/language-models/architecture-basics/architecture-evolution' },
+              { text: 'Transformer 演进与变体', link: '/language-models/architecture-basics/architecture-evolution' },
             ]
           },
           {
