@@ -12,12 +12,12 @@ issue:
 
 **矩阵**（Matrix）是由标量按行列排列成的矩形阵列，如同向量将标量从零阶扩展到一阶，矩阵则把向量从一阶扩展到了二阶。习惯上，人们常用粗体、大写字母来表示矩阵。一个 $m \times n$ 的矩阵 $\mathbf{A}$ 包含 $m$ 行 $n$ 列元素。矩阵的维度记为 $m \times n$，其中 $m$ 是行数（rows），$n$ 是列数（columns）。矩阵具有相同数量的行和列时被称为**方阵**（Square Matrix），其形状为正方形。
 
-$$ \mathbf{A} = \begin{pmatrix}
+$$ \mathbf{A} = \begin{bmatrix}
 a_{11} & a_{12} & \cdots & a_{1n} \\
 a_{21} & a_{22} & \cdots & a_{2n} \\
 \vdots & \vdots & \ddots & \vdots \\
 a_{m1} & a_{m2} & \cdots & a_{mn}
-\end{pmatrix} $$
+\end{bmatrix} $$
 
 矩阵 $\mathbf{A}$ 的第 $i$ 行第 $j$ 列元素记为 $a_{ij}$ 或 $(\mathbf{A})_{ij}$。在 NumPy 中，矩阵可以用二维数组表示，譬如，一个 $2 \times 3$ 的矩阵有 2 行 3 列：
 
@@ -65,46 +65,46 @@ print(f"元素 a[0,1]: {A[0, 1]}")  # 2（第 0 行第 1 列，0-indexed）
 
     但是，矩阵乘法不满足交换律，一般情况下，$\mathbf{AB} \neq \mathbf{BA}$。甚至于 $\mathbf{BA}$ 都未必是一个合法的结果，它未必能满足内维匹配要求。下面是一个 $3 \times 2$ 矩阵与 $2 \times 3$ 矩阵相乘的具体示例，结果为 $3 \times 3$ 矩阵：
 
-$$\mathbf{A} = \begin{pmatrix}
+$$\mathbf{A} = \begin{bmatrix}
 1 & 2 \\
 3 & 4 \\
 5 & 6
-\end{pmatrix}, \quad
-\mathbf{B} = \begin{pmatrix}
+\end{bmatrix}, \quad
+\mathbf{B} = \begin{bmatrix}
 1 & 2 & 3 \\
 4 & 5 & 6
-\end{pmatrix}, \quad
-\mathbf{AB} = \begin{pmatrix}
+\end{bmatrix}, \quad
+\mathbf{AB} = \begin{bmatrix}
 1 \cdot 1 + 2 \cdot 4 & 1 \cdot 2 + 2 \cdot 5 & 1 \cdot 3 + 2 \cdot 6 \\
 3 \cdot 1 + 4 \cdot 4 & 3 \cdot 2 + 4 \cdot 5 & 3 \cdot 3 + 4 \cdot 6 \\
 5 \cdot 1 + 6 \cdot 4 & 5 \cdot 2 + 6 \cdot 5 & 5 \cdot 3 + 6 \cdot 6
-\end{pmatrix}
-= \begin{pmatrix}
+\end{bmatrix}
+= \begin{bmatrix}
 9 & 12 & 15 \\
 19 & 26 & 33 \\
 29 & 40 & 51
-\end{pmatrix}$$
+\end{bmatrix}$$
 
 - **矩阵外积**（Outer Product）：向量外积是矩阵乘法的特例，它将一个列向量与一个行向量相乘，得到一个矩阵。设 $\mathbf{u}$ 是 $m$ 维列向量，$\mathbf{v}$ 是 $n$ 维列向量，则它们的外积 $\mathbf{u} \mathbf{v}^T$ 是一个 $m \times n$ 矩阵：$(\mathbf{u} \mathbf{v}^T)_{ij} = u_i \cdot v_j$。外积的每一行都是向量 $\mathbf{v}^T$ 的标量倍数，因此外积矩阵的秩当两个向量都非零时为 1。外积在机器学习中有广泛应用，如协方差矩阵计算、主成分分析、低秩矩阵近似等。以下是一个 $3 \times 1$ 列向量与 $1 \times 2$ 行向量外积的具体示例，结果为 $3 \times 2$ 矩阵：
 
-$$\mathbf{u} = \begin{pmatrix}
+$$\mathbf{u} = \begin{bmatrix}
 1 \\
 2 \\
 3
-\end{pmatrix}, \quad
-\mathbf{v}^T = \begin{pmatrix}
+\end{bmatrix}, \quad
+\mathbf{v}^T = \begin{bmatrix}
 4 & 5
-\end{pmatrix}, \quad
-\mathbf{u} \mathbf{v}^T = \begin{pmatrix}
+\end{bmatrix}, \quad
+\mathbf{u} \mathbf{v}^T = \begin{bmatrix}
 1 \cdot 4 & 1 \cdot 5 \\
 2 \cdot 4 & 2 \cdot 5 \\
 3 \cdot 4 & 3 \cdot 5
-\end{pmatrix}
-= \begin{pmatrix}
+\end{bmatrix}
+= \begin{bmatrix}
 4 & 5 \\
 8 & 10 \\
 12 & 15
-\end{pmatrix}$$
+\end{bmatrix}$$
 
 从代数角度看，矩阵乘法运算过程是一系列繁琐的加、乘法运算，可是它的几何意义却十分简洁，就是连续的 $\mathbf{A}$、$\mathbf{B}$ 两次线性变换（见本文的[线性变换](#线性变换的几何直观)一节），这是人类理解矩阵乘法的捷径，代数公式是上帝留给计算机去使用的。
 
@@ -125,16 +125,16 @@ $$\mathbf{u} = \begin{pmatrix}
 
     以下是一个 $3 \times 3$ 矩阵与其转置的具体示例，可以看到，原矩阵的第一行 $(1, 2, 3)$ 变成了转置矩阵的第一列，第二行 $(4, 5, 6)$ 变成了第二列，第三行 $(7, 8, 9)$ 变成了第三列，实现了行列互换。
 
-    $$\mathbf{A} = \begin{pmatrix}
+    $$\mathbf{A} = \begin{bmatrix}
     1 & 2 & 3 \\
     4 & 5 & 6 \\
     7 & 8 & 9
-    \end{pmatrix}, \quad
-    \mathbf{A}^T = \begin{pmatrix}
+    \end{bmatrix}, \quad
+    \mathbf{A}^T = \begin{bmatrix}
     1 & 4 & 7 \\
     2 & 5 & 8 \\
     3 & 6 & 9
-    \end{pmatrix}$$
+    \end{bmatrix}$$
 
 - **矩阵的求逆**（Inverse）是一种"撤销"原矩阵的线性变换，回到原始状态的操作。对于方阵 $\mathbf{A}$，如果存在矩阵 $\mathbf{B}$ 使得：$\mathbf{AB} = \mathbf{BA} = \mathbf{I}$，则称 $\mathbf{A}$ 可逆（Invertible），$\mathbf{B}$ 称为 $\mathbf{A}$ 的逆矩阵，记为 $\mathbf{A}^{-1}$。逆矩阵具备如下性质：
 
@@ -145,22 +145,22 @@ $$\mathbf{u} = \begin{pmatrix}
 
     以下是一个 $2 \times 2$ 矩阵与其逆矩阵的具体示例：
 
-    $$\mathbf{A} = \begin{pmatrix}
+    $$\mathbf{A} = \begin{bmatrix}
     2 & 1 \\
     5 & 3
-    \end{pmatrix}, \quad
-    \mathbf{A}^{-1} = \begin{pmatrix}
+    \end{bmatrix}, \quad
+    \mathbf{A}^{-1} = \begin{bmatrix}
     3 & -1 \\
     -5 & 2
-    \end{pmatrix}, \quad
-    \mathbf{A} \mathbf{A}^{-1} = \begin{pmatrix}
+    \end{bmatrix}, \quad
+    \mathbf{A} \mathbf{A}^{-1} = \begin{bmatrix}
     2 \cdot 3 + 1 \cdot (-5) & 2 \cdot (-1) + 1 \cdot 2 \\
     5 \cdot 3 + 3 \cdot (-5) & 5 \cdot (-1) + 3 \cdot 2
-    \end{pmatrix}
-    = \begin{pmatrix}
+    \end{bmatrix}
+    = \begin{bmatrix}
     1 & 0 \\
     0 & 1
-    \end{pmatrix} = \mathbf{I}_2$$
+    \end{bmatrix} = \mathbf{I}_2$$
 
     不是所有操作都可以撤销，不是所有方阵都可逆。矩阵可逆的条件，需要同时满足行列式不为零（$\det(\mathbf{A}) \neq 0$）、满秩（对于 $n \times n$ 方阵有 $\text{rank}(\mathbf{A}) = n$）和所有特征值都不为零这三个条件的方阵才可逆。当矩阵不可逆或索性就不是方阵时，可以使用**伪逆**（Pseudoinverse）获得一个最接近的近似解。伪逆记为 $\mathbf{A}^+ = (\mathbf{A}^T \mathbf{A})^{-1} \mathbf{A}^T$（当 $\mathbf{A}^T \mathbf{A}$ 可逆时）。这个公式的含义是先通过 $\mathbf{A}^T \mathbf{A}$ 将 $m \times n$ 矩阵裁剪成 $n \times n$ 方阵，把多余的信息过滤掉，保留核心结构。然后在此基础上找到一个最接近的逆，最后乘以 $\mathbf{A}^T$ 映射回原始空间。伪逆具备如下性质：
 
@@ -179,20 +179,20 @@ $$\mathbf{u} = \begin{pmatrix}
 
 - **单位矩阵**（Identity Matrix）：$\mathbf{I}$ 是主对角线元素为 1、其余为 0 的方阵，单位矩阵是矩阵乘法的"单位元"，满足： $\mathbf{AI} = \mathbf{IA} = \mathbf{A}$。
 
-    $$\mathbf{I}_n = \begin{pmatrix}
+    $$\mathbf{I}_n = \begin{bmatrix}
     1 & 0 & \cdots & 0 \\
     0 & 1 & \cdots & 0 \\
     \vdots & \vdots & \ddots & \vdots \\
     0 & 0 & \cdots & 1
-    \end{pmatrix}$$
+    \end{bmatrix}$$
 
 - **对角矩阵**（Diagonal Matrix）：对角矩阵是除主对角线外，其他元素都为 0 的方阵，对角矩阵左乘向量，相当于对向量的每个分量进行独立缩放。
 
-    $$\mathbf{D} = \begin{pmatrix}
+    $$\mathbf{D} = \begin{bmatrix}
     d_1 & 0 & 0 \\
     0 & d_2 & 0 \\
     0 & 0 & d_3
-    \end{pmatrix}$$
+    \end{bmatrix}$$
 
 - **对称矩阵**（Symmetric Matrix）：对称矩阵满足 $\mathbf{A} = \mathbf{A}^T$，即 $a_{ij} = a_{ji}$。对称矩阵包含的特征向量可以构成正交基，许多有用的矩阵如协方差矩阵、邻接矩阵、Hessian 矩阵都是对称矩阵。
 
@@ -202,20 +202,20 @@ $$\mathbf{u} = \begin{pmatrix}
 
 假设你有一张印在橡皮膜上的照片，对它进行的各种操作：拉伸、旋转、剪切、翻转。只要不把膜弄皱（保持直线还是直线），不把膜撕裂（保持相邻的点仍然相邻），那么这些操作本质上就都算是线性变换。从代数角度看，线性变换是"一个矩阵乘以一个向量得到另一个向量"，虽然从代数公式可以准确地计算出结果，但是并不容易理解矩阵里的数字到底代表什么？每个数字与向量元素的运算又代表了什么？所以，我们继续从几何直观上寻找突破口。
 
-想象你站在原点，面前是坐标系和许多向量，每个向量 $\mathbf{v}$ 就像从原点出发的一支箭，指向空间中的某个位置。现在，你要把这整片空间中所有的向量进行"变形"，譬如沿着 x 轴拉长，沿着 y 轴方向压扁、再整体旋转 30 度，该怎么描述这个变形操作？一个有价值的洞察是你完全不需要为每个向量独立描述一套操作，只要知道基向量发生了什么变化（拉伸、旋转等），就能确定整个空间中所有向量共同的变形方式，因为一旦空间坐标轴的发生变化，这些向量都会同步被改变。从最简单的在二维平面出发，原来的基向量是 $\mathbf{e}_1 = \begin{pmatrix} 1 \\ 0 \end{pmatrix}$（沿 x 轴的单位向量）和 $\mathbf{e}_2 = \begin{pmatrix} 0 \\ 1 \end{pmatrix}$（沿 y 轴的单位向量）。
+想象你站在原点，面前是坐标系和许多向量，每个向量 $\mathbf{v}$ 就像从原点出发的一支箭，指向空间中的某个位置。现在，你要把这整片空间中所有的向量进行"变形"，譬如沿着 x 轴拉长，沿着 y 轴方向压扁、再整体旋转 30 度，该怎么描述这个变形操作？一个有价值的洞察是你完全不需要为每个向量独立描述一套操作，只要知道基向量发生了什么变化（拉伸、旋转等），就能确定整个空间中所有向量共同的变形方式，因为一旦空间坐标轴的发生变化，这些向量都会同步被改变。从最简单的在二维平面出发，原来的基向量是 $\mathbf{e}_1 = \begin{bmatrix} 1 \\ 0 \end{bmatrix}$（沿 x 轴的单位向量）和 $\mathbf{e}_2 = \begin{bmatrix} 0 \\ 1 \end{bmatrix}$（沿 y 轴的单位向量）。
 
-如果变形后，$\mathbf{e}_1$ 被搬到了 $\begin{pmatrix} a \\ c \end{pmatrix}$，$\mathbf{e}_2$ 被搬到了 $\begin{pmatrix} b \\ d \end{pmatrix}$。那么任意一个向量 $\mathbf{v} = \begin{pmatrix} x \\ y \end{pmatrix} = x\mathbf{e}_1 + y\mathbf{e}_2$ 会被搬到哪里呢？由于线性变换保持"线性组合"不变的特性，即一旦基向量（空间中的坐标轴）自被移动了，它们的线性组合也会按同样的比例被移动。所以：
+如果变形后，$\mathbf{e}_1$ 被搬到了 $\begin{bmatrix} a \\ c \end{bmatrix}$，$\mathbf{e}_2$ 被搬到了 $\begin{bmatrix} b \\ d \end{bmatrix}$。那么任意一个向量 $\mathbf{v} = \begin{bmatrix} x \\ y \end{bmatrix} = x\mathbf{e}_1 + y\mathbf{e}_2$ 会被搬到哪里呢？由于线性变换保持"线性组合"不变的特性，即一旦基向量（空间中的坐标轴）自被移动了，它们的线性组合也会按同样的比例被移动。所以：
 
-$$\mathbf{v}' = x\begin{pmatrix} a \\ c \end{pmatrix} + y\begin{pmatrix} b \\ d \end{pmatrix} = \begin{pmatrix} ax + by \\ cx + dy \end{pmatrix}$$
+$$\mathbf{v}' = x\begin{bmatrix} a \\ c \end{bmatrix} + y\begin{bmatrix} b \\ d \end{bmatrix} = \begin{bmatrix} ax + by \\ cx + dy \end{bmatrix}$$
 
 这正好就矩阵乘法的结果相吻合：
 
-$$\begin{pmatrix} a & b \\ c & d \end{pmatrix} \begin{pmatrix} x \\ y \end{pmatrix} = \begin{pmatrix} ax + by \\ cx + dy \end{pmatrix}$$
+$$\begin{bmatrix} a & b \\ c & d \end{bmatrix} \begin{bmatrix} x \\ y \end{bmatrix} = \begin{bmatrix} ax + by \\ cx + dy \end{bmatrix}$$
 
-所以，以几何视角来看，**矩阵的每一列，记录信息本质是基向量被移动到了哪里去**。第一列是 x 轴单位向量的新位置，第二列是 y 轴单位向量的新位置，以此类推。矩阵乘向量，就是"把这个向量用基向量重新组装一次"。将上述思想落实到一个具体的例子，假设有一个矩阵：$\mathbf{A} = \begin{pmatrix} 2 & 1 \\ 0 & 1 \end{pmatrix}$，它的几何含义是：
+所以，以几何视角来看，**矩阵的每一列，记录信息本质是基向量被移动到了哪里去**。第一列是 x 轴单位向量的新位置，第二列是 y 轴单位向量的新位置，以此类推。矩阵乘向量，就是"把这个向量用基向量重新组装一次"。将上述思想落实到一个具体的例子，假设有一个矩阵：$\mathbf{A} = \begin{bmatrix} 2 & 1 \\ 0 & 1 \end{bmatrix}$，它的几何含义是：
 
-  - 第一列 $\begin{pmatrix} 2 \\ 0 \end{pmatrix}$：x 轴被拉长到了原来的 2 倍（从 $(1,0)$ 搬到 $(2,0)$）
-  - 第二列 $\begin{pmatrix} 1 \\ 1 \end{pmatrix}$：y 轴被"倾斜"了（从 $(0,1)$ 搬到 $(1,1)$）
+  - 第一列 $\begin{bmatrix} 2 \\ 0 \end{bmatrix}$：x 轴被拉长到了原来的 2 倍（从 $(1,0)$ 搬到 $(2,0)$）
+  - 第二列 $\begin{bmatrix} 1 \\ 1 \end{bmatrix}$：y 轴被"倾斜"了（从 $(0,1)$ 搬到 $(1,1)$）
 
 这就像是把一张正方形网格，先沿 x 方向拉伸，再向右上方剪切。如果平面中原来一个单位正方形（由 $(0,0), (1,0), (1,1), (0,1)$ 围成），现在它就变成平行四边形了。
 
@@ -233,23 +233,23 @@ $$ (\mathbf{Av})_i = \sum_{j=1}^{n} a_{ij} v_j = a_{i1}v_1 + a_{i2}v_2 + \cdots 
 
 即结果向量的第 $i$ 个元素等于矩阵第 $i$ 行与向量的内积。从维度匹配角度看，矩阵的列数必须等于向量的维度（内维匹配），这是矩阵向量积唯一的前提约束。以下是一个 $2 \times 3$ 矩阵与 3 维向量相乘的具体示例：
 
-$$\mathbf{A} = \begin{pmatrix}
+$$\mathbf{A} = \begin{bmatrix}
 1 & 2 & 3 \\
 4 & 5 & 6
-\end{pmatrix}, \quad
-\mathbf{v} = \begin{pmatrix}
+\end{bmatrix}, \quad
+\mathbf{v} = \begin{bmatrix}
 1 \\
 2 \\
 3
-\end{pmatrix}, \quad
-\mathbf{Av} = \begin{pmatrix}
+\end{bmatrix}, \quad
+\mathbf{Av} = \begin{bmatrix}
 1 \cdot 1 + 2 \cdot 2 + 3 \cdot 3 \\
 4 \cdot 1 + 5 \cdot 2 + 6 \cdot 3
-\end{pmatrix}
-= \begin{pmatrix}
+\end{bmatrix}
+= \begin{bmatrix}
 14 \\
 32
-\end{pmatrix}$$
+\end{bmatrix}$$
 
 ```python runnable
 import numpy as np
@@ -385,33 +385,33 @@ print(f"四阶张量 shape: {tensor_4d.shape}")  # (10, 28, 28, 3)
     譬如，设 $\mathbf{A}$ 为旋转 90° 的变换，$\mathbf{B}$ 为沿 x 轴拉伸 2 倍的变换。先旋转再拉伸，与先拉伸再旋转，最终结果不同。变换顺序的改变会导致结果不同，这正是矩阵乘法不可交换的几何解释。
     </details>
 
-1. 计算矩阵 $\mathbf{A} = \begin{pmatrix} 1 & 2 & 3 \\ 4 & 5 & 6 \end{pmatrix}$ 的转置 $\mathbf{A}^T$，并验证 $(\mathbf{A}^T)^T = \mathbf{A}$。
+1. 计算矩阵 $\mathbf{A} = \begin{bmatrix} 1 & 2 & 3 \\ 4 & 5 & 6 \end{bmatrix}$ 的转置 $\mathbf{A}^T$，并验证 $(\mathbf{A}^T)^T = \mathbf{A}$。
     <details>
     <summary>参考答案</summary>
     转置：
-    $\mathbf{A}^T = \begin{pmatrix} 1 & 4 \\ 2 & 5 \\ 3 & 6 \end{pmatrix}$
+    $\mathbf{A}^T = \begin{bmatrix} 1 & 4 \\ 2 & 5 \\ 3 & 6 \end{bmatrix}$
 
     验证：
-    $(\mathbf{A}^T)^T = \begin{pmatrix} 1 & 2 & 3 \\ 4 & 5 & 6 \end{pmatrix} = \mathbf{A}$
+    $(\mathbf{A}^T)^T = \begin{bmatrix} 1 & 2 & 3 \\ 4 & 5 & 6 \end{bmatrix} = \mathbf{A}$
 
     转置操作将原矩阵的行变成列、列变成行。原矩阵 $2 \times 3$ 变成 $3 \times 2$，再转置一次又回到 $2 \times 3$，这正是"转置的转置等于原矩阵"的性质体现。
     </details>
 
-1. 计算矩阵 $\mathbf{A} = \begin{pmatrix} 4 & 7 \\ 2 & 6 \end{pmatrix}$ 的逆矩阵 $\mathbf{A}^{-1}$，并验证 $\mathbf{A}\mathbf{A}^{-1} = \mathbf{I}$。
+1. 计算矩阵 $\mathbf{A} = \begin{bmatrix} 4 & 7 \\ 2 & 6 \end{bmatrix}$ 的逆矩阵 $\mathbf{A}^{-1}$，并验证 $\mathbf{A}\mathbf{A}^{-1} = \mathbf{I}$。
     <details>
     <summary>参考答案</summary>
-    对于 $2 \times 2$ 矩阵 $\begin{pmatrix} a & b \\ c & d \end{pmatrix}$，逆矩阵公式为 $\frac{1}{ad-bc}\begin{pmatrix} d & -b \\ -c & a \end{pmatrix}$。
+    对于 $2 \times 2$ 矩阵 $\begin{bmatrix} a & b \\ c & d \end{bmatrix}$，逆矩阵公式为 $\frac{1}{ad-bc}\begin{bmatrix} d & -b \\ -c & a \end{bmatrix}$。
 
     计算行列式：$\det(\mathbf{A}) = 4 \times 6 - 7 \times 2 = 24 - 14 = 10$
 
     由于行列式不为零，矩阵可逆：
-    $\mathbf{A}^{-1} = \frac{1}{10}\begin{pmatrix} 6 & -7 \\ -2 & 4 \end{pmatrix} = \begin{pmatrix} 0.6 & -0.7 \\ -0.2 & 0.4 \end{pmatrix}$
+    $\mathbf{A}^{-1} = \frac{1}{10}\begin{bmatrix} 6 & -7 \\ -2 & 4 \end{bmatrix} = \begin{bmatrix} 0.6 & -0.7 \\ -0.2 & 0.4 \end{bmatrix}$
 
     验证：
-    $\mathbf{A}\mathbf{A}^{-1} = \begin{pmatrix} 4 & 7 \\ 2 & 6 \end{pmatrix}\begin{pmatrix} 0.6 & -0.7 \\ -0.2 & 0.4 \end{pmatrix} = \begin{pmatrix} 2.4-1.4 & -2.8+2.8 \\ 1.2-1.2 & -1.4+2.4 \end{pmatrix} = \begin{pmatrix} 1 & 0 \\ 0 & 1 \end{pmatrix}$
+    $\mathbf{A}\mathbf{A}^{-1} = \begin{bmatrix} 4 & 7 \\ 2 & 6 \end{bmatrix}\begin{bmatrix} 0.6 & -0.7 \\ -0.2 & 0.4 \end{bmatrix} = \begin{bmatrix} 2.4-1.4 & -2.8+2.8 \\ 1.2-1.2 & -1.4+2.4 \end{bmatrix} = \begin{bmatrix} 1 & 0 \\ 0 & 1 \end{bmatrix}$
     </details>
 
-1. 解释为什么矩阵 $\mathbf{A} = \begin{pmatrix} 1 & 2 \\ 2 & 4 \end{pmatrix}$ 不可逆，并从几何角度说明其含义。
+1. 解释为什么矩阵 $\mathbf{A} = \begin{bmatrix} 1 & 2 \\ 2 & 4 \end{bmatrix}$ 不可逆，并从几何角度说明其含义。
     <details>
     <summary>参考答案</summary>
     代数角度：行列式 $\det(\mathbf{A}) = 1 \times 4 - 2 \times 2 = 0$，行列式为零故不可逆。
@@ -421,32 +421,32 @@ print(f"四阶张量 shape: {tensor_4d.shape}")  # (10, 28, 28, 3)
     信息丢失的直观理解：就像把一张二维的照片完全压扁成一维的线条，所有垂直于该线条方向的信息都丢失了，无法通过逆向操作恢复原始的二维信息。
     </details>
 
-1. 计算矩阵 $\mathbf{A} = \begin{pmatrix} 1 & 2 \\ 3 & 6 \end{pmatrix}$ 的伪逆 $\mathbf{A}^+$，并解释伪逆的作用。
+1. 计算矩阵 $\mathbf{A} = \begin{bmatrix} 1 & 2 \\ 3 & 6 \end{bmatrix}$ 的伪逆 $\mathbf{A}^+$，并解释伪逆的作用。
     <details>
     <summary>参考答案</summary>
     使用伪逆公式 $\mathbf{A}^+ = (\mathbf{A}^T \mathbf{A})^{-1} \mathbf{A}^T$：
 
-    $\mathbf{A}^T \mathbf{A} = \begin{pmatrix} 1 & 3 \\ 2 & 6 \end{pmatrix}\begin{pmatrix} 1 & 2 \\ 3 & 6 \end{pmatrix} = \begin{pmatrix} 10 & 20 \\ 20 & 40 \end{pmatrix}$
+    $\mathbf{A}^T \mathbf{A} = \begin{bmatrix} 1 & 3 \\ 2 & 6 \end{bmatrix}\begin{bmatrix} 1 & 2 \\ 3 & 6 \end{bmatrix} = \begin{bmatrix} 10 & 20 \\ 20 & 40 \end{bmatrix}$
 
     注意 $\mathbf{A}^T \mathbf{A}$ 的行列式仍为零，需要使用其他方法（如 SVD）计算伪逆。实际计算得到：
-    $\mathbf{A}^+ = \frac{1}{50}\begin{pmatrix} 1 & 3 \\ 2 & 6 \end{pmatrix}$
+    $\mathbf{A}^+ = \frac{1}{50}\begin{bmatrix} 1 & 3 \\ 2 & 6 \end{bmatrix}$
 
     伪逆的作用：当矩阵不可逆时，伪逆提供最小二乘意义下的最优近似解。在实际应用中，伪逆可用于求解超定方程组（方程数多于变量数）的最优解，如线性回归问题。
     </details>
 
-1. 验证矩阵 $\mathbf{Q} = \begin{pmatrix} \frac{1}{\sqrt{2}} & -\frac{1}{\sqrt{2}} \\ \frac{1}{\sqrt{2}} & \frac{1}{\sqrt{2}} \end{pmatrix}$ 是正交矩阵，并解释其几何意义。
+1. 验证矩阵 $\mathbf{Q} = \begin{bmatrix} \frac{1}{\sqrt{2}} & -\frac{1}{\sqrt{2}} \\ \frac{1}{\sqrt{2}} & \frac{1}{\sqrt{2}} \end{bmatrix}$ 是正交矩阵，并解释其几何意义。
     <details>
     <summary>参考答案</summary>
     正交矩阵需要满足 $\mathbf{Q}^T \mathbf{Q} = \mathbf{I}$：
 
-    $\mathbf{Q}^T = \begin{pmatrix} \frac{1}{\sqrt{2}} & \frac{1}{\sqrt{2}} \\ -\frac{1}{\sqrt{2}} & \frac{1}{\sqrt{2}} \end{pmatrix}$
+    $\mathbf{Q}^T = \begin{bmatrix} \frac{1}{\sqrt{2}} & \frac{1}{\sqrt{2}} \\ -\frac{1}{\sqrt{2}} & \frac{1}{\sqrt{2}} \end{bmatrix}$
 
-    $\mathbf{Q}^T \mathbf{Q} = \begin{pmatrix} \frac{1}{2}+\frac{1}{2} & -\frac{1}{2}+\frac{1}{2} \\ -\frac{1}{2}+\frac{1}{2} & \frac{1}{2}+\frac{1}{2} \end{pmatrix} = \begin{pmatrix} 1 & 0 \\ 0 & 1 \end{pmatrix} = \mathbf{I}$
+    $\mathbf{Q}^T \mathbf{Q} = \begin{bmatrix} \frac{1}{2}+\frac{1}{2} & -\frac{1}{2}+\frac{1}{2} \\ -\frac{1}{2}+\frac{1}{2} & \frac{1}{2}+\frac{1}{2} \end{bmatrix} = \begin{bmatrix} 1 & 0 \\ 0 & 1 \end{bmatrix} = \mathbf{I}$
 
     几何意义：这是一个旋转 45° 的变换矩阵。正交矩阵的特殊性质是保持向量长度和角度不变，向量经过旋转后，其模长不变，与其他向量的夹角也不变。这就是为什么正交矩阵在坐标变换、信号处理等领域如此重要。
     </details>
 
-1. 给定线性变换矩阵 $\mathbf{A} = \begin{pmatrix} 2 & 0 \\ 0 & 0.5 \end{pmatrix}$，描述这个变换对二维平面的作用，并计算向量 $(1, 1)$ 变换后的位置。
+1. 给定线性变换矩阵 $\mathbf{A} = \begin{bmatrix} 2 & 0 \\ 0 & 0.5 \end{bmatrix}$，描述这个变换对二维平面的作用，并计算向量 $(1, 1)$ 变换后的位置。
     <details>
     <summary>参考答案</summary>
     变换描述：这是一个对角矩阵，表示沿坐标轴方向的独立缩放。第一列 $(2, 0)$ 表示 x 轴单位向量被拉伸到原来的 2 倍；第二列 $(0, 0.5)$ 表示 y 轴单位向量被压缩到原来的一半。
@@ -454,7 +454,7 @@ print(f"四阶张量 shape: {tensor_4d.shape}")  # (10, 28, 28, 3)
     变换后的平面：原来单位正方形 $[0,1] \times [0,1]$ 变成长方形 $[0,2] \times [0,0.5]$。
 
     计算变换：
-    $\mathbf{A}\begin{pmatrix} 1 \\ 1 \end{pmatrix} = \begin{pmatrix} 2 & 0 \\ 0 & 0.5 \end{pmatrix}\begin{pmatrix} 1 \\ 1 \end{pmatrix} = \begin{pmatrix} 2 \times 1 + 0 \times 1 \\ 0 \times 1 + 0.5 \times 1 \end{pmatrix} = \begin{pmatrix} 2 \\ 0.5 \end{pmatrix}$
+    $\mathbf{A}\begin{bmatrix} 1 \\ 1 \end{bmatrix} = \begin{bmatrix} 2 & 0 \\ 0 & 0.5 \end{bmatrix}\begin{bmatrix} 1 \\ 1 \end{bmatrix} = \begin{bmatrix} 2 \times 1 + 0 \times 1 \\ 0 \times 1 + 0.5 \times 1 \end{bmatrix} = \begin{bmatrix} 2 \\ 0.5 \end{bmatrix}$
 
     向量 $(1, 1)$ 被变换到 $(2, 0.5)$，x 坐标放大 2 倍，y 坐标缩小一半。
     </details>

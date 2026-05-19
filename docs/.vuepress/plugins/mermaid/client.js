@@ -72,6 +72,12 @@ async function renderMermaid() {
     // 跳过已经渲染过的元素
     if (el.dataset.rendered === 'true') continue
 
+    // 检查父节点是否存在（避免 Vue 响应式更新导致元素被移除）
+    if (!el.parentNode) {
+      console.warn('Mermaid element has no parent node, skipping')
+      continue
+    }
+
     // 从 data-mermaid 属性获取原始代码（避免浏览器解析 HTML 标签）
     const code = el.dataset.mermaid ? decodeURIComponent(el.dataset.mermaid) : el.textContent
 
@@ -80,13 +86,14 @@ async function renderMermaid() {
 
     if (code && code.trim()) {
       try {
+        // 先标记为已渲染，防止重复处理
+        el.dataset.rendered = 'true'
+
         // 创建新的 div 容器，保留尺寸修饰符
         const div = document.createElement('div')
         div.className = 'mermaid ' + sizeClasses.join(' ')
         div.style.textAlign = 'center'
         div.textContent = code.trim()
-
-        // 标记为已渲染
         div.dataset.rendered = 'true'
 
         // 替换原来的 pre 元素

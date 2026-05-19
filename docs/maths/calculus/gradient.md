@@ -190,7 +190,7 @@ $$\int_0^1 2x \, dx = G(1) - G(0) = 1^2 - 0^2 = 1$$
     - $\frac{\partial^2 f}{\partial x \partial y} = 2$
     - $\frac{\partial^2 f}{\partial y \partial x} = 2$
 
-    海森矩阵：$\mathbf{H} = \begin{pmatrix} 2 & 2 \\ 2 & 4 \end{pmatrix}$
+    海森矩阵：$\mathbf{H} = \begin{bmatrix} 2 & 2 \\ 2 & 4 \end{bmatrix}$
 
     计算特征值：
     $\det(\mathbf{H} - \lambda \mathbf{I}) = \begin{vmatrix} 2-\lambda & 2 \\ 2 & 4-\lambda \end{vmatrix} = (2-\lambda)(4-\lambda) - 4 = \lambda^2 - 6\lambda + 4 = 0$

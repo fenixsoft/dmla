@@ -87,7 +87,16 @@ function protectExcludedRegions(content) {
     return match;
   });
 
-  // 3. 保护公式块 ($$...$$)
+  // 3. 保护代码块 (```...```)
+  // 注意：先保护代码块，再保护公式块，避免代码块内部的公式被错误处理
+  const codeBlockRegex = /```[\s\S]+?```/g;
+  protectedContent = protectedContent.replace(codeBlockRegex, (match) => {
+    const index = placeholders.codeBlock.length;
+    placeholders.codeBlock.push(match);
+    return `{{${PLACEHOLDER_DELIMITER}CODE_BLOCK_${index}${PLACEHOLDER_DELIMITER}}}`;
+  });
+
+  // 4. 保护公式块 ($$...$$)
   // 使用 [^\x01] 确保不会跨越已保护的区域
   // 使用 +? 非贪婪匹配，避免匹配多个公式块时跨越中间内容
   const mathBlockRegex = /\$\$[\s\S]+?\$\$/g;
@@ -95,14 +104,6 @@ function protectExcludedRegions(content) {
     const index = placeholders.mathBlock.length;
     placeholders.mathBlock.push(match);
     return `{{${PLACEHOLDER_DELIMITER}MATH_BLOCK_${index}${PLACEHOLDER_DELIMITER}}}`;
-  });
-
-  // 4. 保护代码块 (```...```)
-  const codeBlockRegex = /```[\s\S]+?```/g;
-  protectedContent = protectedContent.replace(codeBlockRegex, (match) => {
-    const index = placeholders.codeBlock.length;
-    placeholders.codeBlock.push(match);
-    return `{{${PLACEHOLDER_DELIMITER}CODE_BLOCK_${index}${PLACEHOLDER_DELIMITER}}}`;
   });
 
   // 5. 保护行内代码 (`...`)
@@ -140,9 +141,16 @@ function restoreExcludedRegions(content, placeholders) {
     return type.replace(/([a-z])([A-Z])/g, '$1_$2').toUpperCase();
   };
 
+  // 定义还原顺序：先还原公式（mathBlock, mathInline），再还原代码块（codeBlock, codeInline）
+  // 这样代码块内部的公式占位符才能被正确还原
+  const restoreOrder = ['mathBlock', 'mathInline', 'frontmatter', 'linkUrl', 'codeBlock', 'codeInline'];
+
   // 按顺序还原各类型占位符
   // 注意：需要转义替换字符串中的 $ 字符，因为 $$ 在 replace 中有特殊含义
-  for (const [type, items] of Object.entries(placeholders)) {
+  for (const type of restoreOrder) {
+    const items = placeholders[type];
+    if (!items) continue;
+
     const prefix = typeToPrefix(type);
     for (let i = 0; i < items.length; i++) {
       // 新格式：{{\x01PREFIX_N\x01}}

@@ -30,7 +30,7 @@ issue:
 |----------|------|------|------|
 | 一维数组 | `(n,)` | $\begin{bmatrix} v_1 & v_2 & \cdots & v_n \end{bmatrix}$ |只有长度，无行列之分 |
 | 行向量 | `(1, n)` | $\mathbf{v} = \begin{bmatrix} v_1 & v_2 & \cdots & v_n \end{bmatrix}$ | 1 行 $n$ 列的二维数组 |
-| 列向量 | `(n, 1)` | $\mathbf{v} = \begin{pmatrix} v_1 \\ v_2 \\ \vdots \\ v_n \end{pmatrix}$ | $n$ 行 1 列的二维数组 |
+| 列向量 | `(n, 1)` | $\mathbf{v} = \begin{bmatrix} v_1 \\ v_2 \\ \vdots \\ v_n \end{bmatrix}$ | $n$ 行 1 列的二维数组 |
 
 如无特殊说明，在大多数线性代数文献中，默认使用**列向量**。而在深度学习框架（如 PyTorch、TensorFlow）中，由于数据通常以行优先格式存储，默认更倾向于行向量的表示形式。在 Python 的 NumPy 框架中，一维数组既可以表示行向量也可以表示列向量：
 
@@ -339,11 +339,11 @@ print(f"v1, v2, v4 线性无关：{is_linearly_independent([v1, v2, v4])}")  # F
     标准正交基的优越性在于：坐标可以直接通过内积计算得到，无需解线性方程组。
     </details>
 
-1. 在神经网络中，某一层的输入向量 $\mathbf{x} = (1, 2)$，权重矩阵 $\mathbf{W} = \begin{pmatrix} 0.5 & 0.3 \\ 0.2 & 0.4 \end{pmatrix}$，偏置向量 $\mathbf{b} = (0.1, 0.2)$。计算该层的输出 $\mathbf{y} = \mathbf{Wx} + \mathbf{b}$，并从线性组合的角度解释这个计算过程。
+1. 在神经网络中，某一层的输入向量 $\mathbf{x} = (1, 2)$，权重矩阵 $\mathbf{W} = \begin{bmatrix} 0.5 & 0.3 \\ 0.2 & 0.4 \end{bmatrix}$，偏置向量 $\mathbf{b} = (0.1, 0.2)$。计算该层的输出 $\mathbf{y} = \mathbf{Wx} + \mathbf{b}$，并从线性组合的角度解释这个计算过程。
     <details>
     <summary>参考答案</summary>
     计算 $\mathbf{Wx}$：
-    $\mathbf{Wx} = \begin{pmatrix} 0.5 & 0.3 \\ 0.2 & 0.4 \end{pmatrix} \begin{pmatrix} 1 \\ 2 \end{pmatrix} = \begin{pmatrix} 0.5 \times 1 + 0.3 \times 2 \\ 0.2 \times 1 + 0.4 \times 2 \end{pmatrix} = \begin{pmatrix} 1.1 \\ 1.0 \end{pmatrix}$
+    $\mathbf{Wx} = \begin{bmatrix} 0.5 & 0.3 \\ 0.2 & 0.4 \end{bmatrix} \begin{bmatrix} 1 \\ 2 \end{bmatrix} = \begin{bmatrix} 0.5 \times 1 + 0.3 \times 2 \\ 0.2 \times 1 + 0.4 \times 2 \end{bmatrix} = \begin{bmatrix} 1.1 \\ 1.0 \end{bmatrix}$
 
     加偏置：$\mathbf{y} = \mathbf{Wx} + \mathbf{b} = (1.1, 1.0) + (0.1, 0.2) = (1.2, 1.2)$
 
