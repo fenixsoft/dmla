@@ -224,13 +224,13 @@ export default {
             children: [
               { text: 'Transformer 架构基础', link: '/language-models/architecture-basics/transformer-architecture' },
               { text: 'Transformer 演进与变体', link: '/language-models/architecture-basics/architecture-evolution' },
+              { text: '语言模型与分词', link: '/language-models/architecture-basics/language-model-tokenization' },
             ]
           },
           {
             text: '预训练',
             collapsible: false,
             children: [
-              // { text: '语言模型与分词', link: '/language-models/pretraining/language-model-tokenization' },
               // { text: '预训练数据工程', link: '/language-models/pretraining/pretraining-data' },
               // { text: '缩放定律', link: '/language-models/pretraining/scaling-laws' },
               // { text: '分布式训练基础设施', link: '/language-models/pretraining/distributed-training' },

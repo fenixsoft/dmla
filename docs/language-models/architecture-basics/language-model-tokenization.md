@@ -798,7 +798,7 @@ demonstrate_oov_solution()
 
 通过子词分割，模型可以学习这些跨语言的共享子词，实现知识迁移。
 
-## 小结
+## 本章小结
 
 本文从语言模型的历史脉络出发，系统梳理了分词算法与词表设计。首先介绍了 N-gram 模型的统计方法基础，由香农在 1948 年奠定理论基础，分析了其稀疏性和无法捕捉长距离依赖的根本局限。然后追溯了神经语言模型的突破，由 Bengio 在 2003 年开创，引入分布式表示带来泛化能力。
 
@@ -809,8 +809,6 @@ demonstrate_oov_solution()
 词表设计权衡部分分析了词表大小对序列长度和模型参数的影响，探讨了不同语言的特殊考量，以及中文分词的歧义问题和解决方案。
 
 子词分割的意义体现在三个方面：彻底解决 OOV 问题、平衡词表大小与语义粒度、支持跨语言泛化。分词是语言模型与原始文本之间的桥梁，理解分词算法是理解现代 LLM 训练的基础。下一章将探讨预训练数据工程 —— 海量文本如何被收集、清洗、混合，成为模型的知识来源。
-
----
 
 ## 练习题
 
@@ -844,16 +842,3 @@ demonstrate_oov_solution()
 - 在相同语料上训练 BPE、WordPiece、Unigram 三种分词器
 - 对比相同文本的分词结果
 - 分析序列长度和词表覆盖率的差异
-
----
-
-## 参考资料
-
-1. **N-gram 语言模型**: "A Bit of Progress in Language Modeling" (Goodman, 2001)
-2. **神经语言模型**: "A Neural Probabilistic Language Model" (Bengio et al., 2003)
-3. **BPE 分词**: "Neural Machine Translation of Rare Words with Subword Units" (Sennrich et al., 2016)
-4. **WordPiece**: "Japanese and Korean Voice Search" (Schuster & Nakajima, 2012)
-5. **SentencePiece**: "SentencePiece: A simple and language independent subword tokenizer" (Kudo & Richardson, 2018)
-6. **Unigram**: "Subword Regularization: Improving Neural Machine Translation with Multiple Subword Candidates" (Kudo, 2018)
-7. **GPT-2 分词**: "Language Models are Unsupervised Multitask Learners" (Radford et al., 2019)
-8. **LLaMA 分词**: "LLaMA: Open and Efficient Foundation Language Models" (Touvron et al., 2023)

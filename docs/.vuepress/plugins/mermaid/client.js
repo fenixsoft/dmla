@@ -34,11 +34,6 @@ async function renderMermaid() {
         rankSpacing: 25,
         // 使用贝塞尔曲线，连线更紧凑
         curve: 'basis',
-        // subgraph 标题边距，为标题预留空间避免被裁剪
-        subGraphTitleMargin: {
-              top: 2,
-              bottom: 7
-        }
       },
       themeVariables: {
         // 默认字体从 14px 减小到 11px，节点会更小
@@ -108,6 +103,23 @@ async function renderMermaid() {
           svg.style.display = 'inline-block'
           svg.style.margin = '0 auto'
 
+          // 修正 subgraph 标题裁剪：Mermaid 对 cluster label 的 <p> 元素
+          // 使用 16px 字体（不受 themeVariables.fontSize 控制），导致标题高度
+          // 超出 foreignObject 和 cluster rect 的预留空间，标题上半部分被裁剪。
+          // 修正方式：固定 <p> 字体为 16px、lineHeight 1.5，将 foreignObject
+          // 高度设为 26px（足够容纳 16px*1.5=24px 行高加 2px 余量）
+          const clusterLabels = svg.querySelectorAll('.cluster foreignObject p')
+          for (const p of clusterLabels) {
+            p.style.fontSize = '16px'
+            p.style.lineHeight = '1.5'
+            p.style.margin = '0'
+            p.style.marginTop = '-3px'
+          }
+          const foreignObjects = svg.querySelectorAll('.cluster foreignObject')
+          for (const fo of foreignObjects) {
+            fo.setAttribute('height', '26')
+          }
+
           // 如果有尺寸修饰符，调整容器大小以避免裁剪
           const sizeClass = sizeClasses.find(cls => cls.startsWith('mermaid-'))
           if (sizeClass) {
@@ -171,8 +183,8 @@ export default defineClientConfig({
             curve: 'basis',
             // subgraph 标题边距，为标题预留空间避免被裁剪
             subGraphTitleMargin: {
-              top: 2,
-              bottom: 7
+              top: 4,
+              bottom: 9
             }
           },
           themeVariables: {
