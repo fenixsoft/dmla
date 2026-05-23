@@ -42,6 +42,12 @@ RUN pip install --no-cache-dir -i https://pypi.tuna.tsinghua.edu.cn/simple \
 RUN pip install --no-cache-dir \
     torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
 
+# 安装 HuggingFace Transformers 生态（LLM 预训练实验所需）
+RUN pip install --no-cache-dir -i https://pypi.tuna.tsinghua.edu.cn/simple \
+    transformers \
+    tokenizers \
+    datasets
+
 # 复制执行器和进度报告模块
 COPY local-server/src/kernel_runner.py /workspace/kernel_runner.py
 COPY local-server/src/dmla_progress.py /workspace/dmla_progress.py

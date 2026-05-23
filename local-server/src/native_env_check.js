@@ -25,7 +25,10 @@ const SOFT_DEPS = [
   'jupyter_client',
   'ipykernel',
   'lmdb',
-  'requests'
+  'requests',
+  'transformers',
+  'tokenizers',
+  'datasets'
 ]
 
 // 环境检测结果缓存

@@ -1,8 +1,15 @@
-# ImageVAE 类定义
+# ImageVAE 定义
 # 从文档自动提取生成
 
+import gzip
+import matplotlib.pyplot as plt
+import numpy as np
+import os
+import struct
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
+from dmla_progress import ProgressReporter
 from PIL import Image
 
 class ImageVAE(nn.Module):

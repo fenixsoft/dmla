@@ -1,4 +1,4 @@
-# AdaBoost 类定义
+# AdaBoost 定义
 # 从文档自动提取生成
 
 import numpy as np

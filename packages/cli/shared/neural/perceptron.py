@@ -1,6 +1,7 @@
-# Perceptron 类定义
+# Perceptron 定义
 # 从文档自动提取生成
 
+import matplotlib.pyplot as plt
 import numpy as np
 
 class Perceptron:

@@ -14,7 +14,7 @@ import sandboxRouter from './routes/sandbox.js'
 import nativeRouter from './routes/native.js'
 import { cleanupAllContainers } from './sandbox.js'
 import { cleanupAllProcesses } from './native_executor.js'
-import { checkNativeEnvironment } from './native_env_check.js'
+import { checkNativeEnvironment, getDataPath } from './native_env_check.js'
 
 // 检测运行模式
 const isNativeMode = process.env.DMLA_MODE === 'native'
@@ -149,6 +149,7 @@ if (shouldStart) {
       log(`Python: ${envResult.pythonVersion}`)
       log(`PyTorch: ${envResult.pytorchVersion}`)
       log(`GPU: ${envResult.gpuCapable ? 'available' : 'not available (CPU-only)'}`)
+      log(`Data directory: ${getDataPath()}`)
 
       // 环境检测通过，启动服务
       startServer()
@@ -170,6 +171,11 @@ function startServer() {
     log('Server started successfully')
     log(`API: http://localhost:${PORT}`)
     log(`Health: http://localhost:${PORT}/api/health`)
+    if (!isNativeMode) {
+      // Docker 模式提示数据路径配置方式
+      log('Data directory (Docker): /data')
+      log('Native mode data directory: use "dmla data" command to configure')
+    }
   })
 
   server.on('error', (err) => {

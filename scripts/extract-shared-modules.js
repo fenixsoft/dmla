@@ -5,6 +5,9 @@
  * 用法: node scripts/extract-shared-modules.js
  *
  * 标记语法: ```python runnable extract-class="ClassName"
+ * 多类语法: ```python runnable extract-class="ClassA, ClassB, func_name"
+ *   逗号分隔的多个名称，同一代码块中的类和自由函数将合并写入同一个 .py 文件
+ *   文件名以第一个名称为准
  *
  * 模块路径推断规则:
  *   1. 显式映射（CHAPTER_MAPPING）优先，用于特殊命名
@@ -43,7 +46,9 @@ const CHAPTER_MAPPING = {
   // deep-learning - 简化命名
   'deep-learning/neural-network-structure': 'neural',
   'deep-learning/convolutional-neural-network': 'cnn',
-  'deep-learning/generative-models': 'gan'
+  'deep-learning/generative-models': 'gan',
+  // language-models - 简化命名
+  'language-models/pretraining': 'llm'
 };
 
 // 将目录名转换为 snake_case 模块名
@@ -117,36 +122,38 @@ function classNameToFileName(className) {
   return result;
 }
 
-// 改进的类定义提取（处理嵌套结构）
-function extractClassDefinition(code, className) {
+// 改进的类/函数定义提取（处理嵌套结构）
+// 支持提取 class 定义和顶层 def 函数定义
+function extractClassDefinition(code, name) {
   const lines = code.split('\n');
   const result = [];
-  let foundClass = false;
-  let classBaseIndent = -1;
-  let inMethod = false;
-  let methodBaseIndent = -1;
+  let foundDef = false;
+  let defBaseIndent = -1;
+  let isClass = false;
 
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
     const trimmedLine = line.trim();
     const lineIndent = line.search(/\S/);
 
-    // 跳过开头的 import 语句（不属于类定义）
-    if (!foundClass && (/^(import|from)\s+/.test(trimmedLine) || trimmedLine === '')) {
+    // 跳过开头的 import 语句（不属于定义）
+    if (!foundDef && (/^(import|from)\s+/.test(trimmedLine) || trimmedLine === '')) {
       continue;
     }
 
-    // 查找目标类的定义
-    if (!foundClass) {
+    // 查找目标定义（class 或 def）
+    if (!foundDef) {
       const classMatch = trimmedLine.match(/^class\s+(\w+)/);
-      if (classMatch && classMatch[1] === className) {
-        foundClass = true;
-        classBaseIndent = lineIndent;
+      const funcMatch = trimmedLine.match(/^def\s+(\w+)/);
+      if ((classMatch && classMatch[1] === name) || (funcMatch && funcMatch[1] === name)) {
+        foundDef = true;
+        isClass = !!classMatch;
+        defBaseIndent = lineIndent;
         result.push(line);
         continue;
       }
     } else {
-      // 已经找到类定义，收集类内容
+      // 已经找到定义，收集内容
 
       // 空行直接添加
       if (trimmedLine === '') {
@@ -154,26 +161,17 @@ function extractClassDefinition(code, className) {
         continue;
       }
 
-      // 检查是否是类方法定义
-      if (lineIndent === classBaseIndent + 4 && /^def\s+/.test(trimmedLine)) {
-        inMethod = true;
-        methodBaseIndent = lineIndent;
-        result.push(line);
-        continue;
-      }
-
-      // 检查是否遇到同级的顶级定义（类结束）
-      if (lineIndent === classBaseIndent) {
-        // 遇到新的顶级 class 或顶层代码，类定义结束
+      // 检查是否遇到同级的顶级定义（定义结束）
+      if (lineIndent === defBaseIndent) {
+        // 遇到新的顶级 class/def 或顶层代码，定义结束
         if (/^class\s+\w/.test(trimmedLine) || /^def\s+\w/.test(trimmedLine)) {
           break;
         }
-        // 顶层的注释或变量赋值也结束类定义（如 # 测试代码）
         break;
       }
 
-      // 检查是否是顶层代码（比类缩进更少）
-      if (lineIndent < classBaseIndent) {
+      // 检查是否是顶层代码（比定义缩进更少）
+      if (lineIndent < defBaseIndent) {
         break;
       }
 
@@ -194,100 +192,179 @@ function processFile(filePath) {
   const content = fs.readFileSync(filePath, 'utf-8');
   const results = [];
 
-  // 正则匹配 extract-class="ClassName"
+  // 正则匹配 extract-class="ClassName" 或 extract-class="ClassA, ClassB"
   // 支持格式: ```python runnable [gpu] [timeout=xxx] extract-class="ClassName"
-  const codeBlockRegex = /```python\s+runnable[\s\w=]*extract-class="(\w+)"[\s\w=]*\n([\s\S]*?)```/g;
+  // 多类格式: ```python runnable [gpu] [timeout=xxx] extract-class="ClassA, ClassB"
+  const codeBlockRegex = /```python\s+runnable[\s\w=]*extract-class="([^"]+)"[\s\w=]*\n([\s\S]*?)```/g;
   let match;
 
   while ((match = codeBlockRegex.exec(content)) !== null) {
-    const className = match[1];
+    const classListStr = match[1];
     const code = match[2];
-    const classDefinition = extractClassDefinition(code, className);
 
-    if (classDefinition) {
+    // 支持逗号分隔的多类名（向前兼容：单类名也走同一逻辑）
+    const classNames = classListStr.split(',').map(s => s.trim()).filter(s => s.length > 0);
+
+    // 收集同一代码块中所有提取到的定义
+    const definitions = [];
+    for (const name of classNames) {
+      const definition = extractClassDefinition(code, name);
+      if (definition) {
+        definitions.push({ name, code: definition });
+        console.log(`  ✓ 找到定义: ${name}`);
+      } else {
+        console.log(`  ⚠ 未能提取定义: ${name}`);
+      }
+    }
+
+    if (definitions.length > 0) {
+      // 多类提取时，所有定义合并为一个结果条目
+      // 第一个名称作为文件名依据
       results.push({
-        className,
-        code: classDefinition
+        className: definitions[0].name,
+        definitions: definitions,
+        sourceCode: code  // 保留原始代码块，用于提取 import 语句
       });
-      console.log(`  ✓ 找到类: ${className}`);
-    } else {
-      console.log(`  ⚠ 未能提取类: ${className}`);
     }
   }
 
   return results;
 }
 
-// 生成 Python 模块文件
-function generateModuleFile(className, classCode, moduleDir) {
-  const fileName = classNameToFileName(className) + '.py';
-  const modulePath = path.join(SHARED_MODULES_DIR, moduleDir, fileName);
+// 从原始代码块中提取 import 语句
+function extractImportsFromSource(sourceCode) {
+  const imports = [];
+  for (const line of sourceCode.split('\n')) {
+    const trimmed = line.trim();
+    if (/^(import|from)\s+/.test(trimmed)) {
+      imports.push(trimmed);
+    }
+  }
+  return imports;
+}
 
-  // 自动检测需要的导入
+// 根据代码内容自动检测需要的导入
+function detectAutoImports(combinedCode) {
   const imports = [];
 
   // PyTorch 相关
-  if (classCode.includes('torch.') || classCode.includes('nn.') || classCode.includes('Tensor')) {
+  if (combinedCode.includes('torch.') || combinedCode.includes('nn.') || combinedCode.includes('Tensor')) {
     imports.push('import torch');
   }
-  if (classCode.includes('nn.') || classCode.includes('nn.Module') || classCode.includes('Sequential') ||
-      classCode.includes('Conv2d') || classCode.includes('Linear') || classCode.includes('ReLU') ||
-      classCode.includes('Dropout') || classCode.includes('MaxPool2d') || classCode.includes('AdaptiveAvgPool2d')) {
+  if (combinedCode.includes('nn.') || combinedCode.includes('nn.Module') || combinedCode.includes('Sequential') ||
+      combinedCode.includes('Conv2d') || combinedCode.includes('Linear') || combinedCode.includes('ReLU') ||
+      combinedCode.includes('Dropout') || combinedCode.includes('MaxPool2d') || combinedCode.includes('AdaptiveAvgPool2d')) {
     imports.push('import torch.nn as nn');
   }
-  if (classCode.includes('Dataset') || classCode.includes('DataLoader')) {
+  if (combinedCode.includes('Dataset') || combinedCode.includes('DataLoader')) {
     imports.push('from torch.utils.data import Dataset, DataLoader');
+  }
+  if (combinedCode.includes('F.') || combinedCode.includes('functional')) {
+    imports.push('import torch.nn.functional as F');
   }
 
   // 图像处理
-  if (classCode.includes('Image')) {
+  if (combinedCode.includes('Image')) {
     imports.push('from PIL import Image');
   }
-  if (classCode.includes('transforms.')) {
+  if (combinedCode.includes('transforms.')) {
     imports.push('from torchvision import transforms');
   }
 
   // 数值计算
-  if (classCode.includes('np.') || classCode.includes('numpy')) {
+  if (combinedCode.includes('np.') || combinedCode.includes('numpy')) {
     imports.push('import numpy as np');
   }
 
   // 文件系统
-  if (classCode.includes('os.') || classCode.includes('os.path')) {
+  if (combinedCode.includes('os.') || combinedCode.includes('os.path')) {
     imports.push('import os');
   }
 
   // JSON 处理
-  if (classCode.includes('json.') || /\bjson\b/.test(classCode)) {
+  if (combinedCode.includes('json.') || /\bjson\b/.test(combinedCode)) {
     imports.push('import json');
   }
 
   // 正则表达式
-  if (classCode.includes('re.') || /\bre\b/.test(classCode)) {
+  if (combinedCode.includes('re.') || /\bre\b/.test(combinedCode)) {
     imports.push('import re');
   }
 
   // collections 模块
-  if (classCode.includes('Counter') || classCode.includes('defaultdict') || classCode.includes('deque')) {
+  if (combinedCode.includes('Counter') || combinedCode.includes('defaultdict') || combinedCode.includes('deque')) {
     imports.push('from collections import Counter, defaultdict, deque');
   }
 
-  // 排序并去重
-  const uniqueImports = [...new Set(imports)].sort((a, b) => {
-    // from 导入排在后面
+  // math 模块
+  if (combinedCode.includes('math.') || /\bmath\b/.test(combinedCode)) {
+    imports.push('import math');
+  }
+
+  // dataclasses
+  if (combinedCode.includes('@dataclass') || combinedCode.includes('dataclass')) {
+    imports.push('from dataclasses import dataclass');
+  }
+
+  // typing
+  if (combinedCode.includes('Optional') || combinedCode.includes('Tuple') || combinedCode.includes('List') || combinedCode.includes('Dict')) {
+    imports.push('from typing import Optional, Tuple, List, Dict');
+  }
+
+  return imports;
+}
+
+// 生成 Python 模块文件
+// definitions: [{name, code}, ...] — 提取到的类/函数定义
+// sourceCode: 原始代码块（用于提取 import 语句）
+function generateModuleFile(definitions, sourceCode, moduleDir) {
+  const firstName = definitions[0].name;
+  const fileName = classNameToFileName(firstName) + '.py';
+  const modulePath = path.join(SHARED_MODULES_DIR, moduleDir, fileName);
+
+  // 合并所有定义的代码
+  const combinedCode = definitions.map(d => d.code).join('\n\n\n');
+
+  // 从原始代码块提取显式 import
+  const explicitImports = extractImportsFromSource(sourceCode);
+
+  // 自动检测需要的导入
+  const autoImports = detectAutoImports(combinedCode);
+
+  // 合并并去重（显式 import 优先，补充自动检测到的）
+  const importSet = new Set(explicitImports);
+  for (const imp of autoImports) {
+    // 仅添加自动检测到的、与已有 import 不冲突的
+    const impModule = imp.replace(/^from\s+(\S+)\s+.*/, '$1').replace(/^import\s+(\S+).*/, '$1');
+    let conflict = false;
+    for (const existing of importSet) {
+      const existingModule = existing.replace(/^from\s+(\S+)\s+.*/, '$1').replace(/^import\s+(\S+).*/, '$1');
+      if (impModule === existingModule) {
+        conflict = true;
+        break;
+      }
+    }
+    if (!conflict) {
+      importSet.add(imp);
+    }
+  }
+
+  // 排序：import 在前，from 在后
+  const sortedImports = [...importSet].sort((a, b) => {
     if (a.startsWith('from') && !b.startsWith('from')) return 1;
     if (!a.startsWith('from') && b.startsWith('from')) return -1;
     return a.localeCompare(b);
   });
 
-  const importsSection = uniqueImports.length > 0
-    ? uniqueImports.join('\n') + '\n\n'
+  const importsSection = sortedImports.length > 0
+    ? sortedImports.join('\n') + '\n\n'
     : '';
 
-  const content = `# ${className} 类定义
+  const names = definitions.map(d => d.name).join(', ');
+  const content = `# ${names} 定义
 # 从文档自动提取生成
 
-${importsSection}${classCode}
+${importsSection}${combinedCode}
 `;
 
   return { path: modulePath, content };
@@ -309,8 +386,8 @@ function updateInitPy(moduleDir, classNames) {
   const existingFiles = fs.readdirSync(moduleFullPath)
     .filter(f => f.endsWith('.py') && f !== '__init__.py');
 
-  // 从 .py 文件内容中提取类名，并映射到实际文件名
-  const fileClassMap = {};  // 文件名 -> 类名列表
+  // 从 .py 文件内容中提取类名和函数名，并映射到实际文件名
+  const fileClassMap = {};  // 文件名 -> 名称列表
   const fileDepsMap = {};   // 文件名 -> 可选依赖列表
   const allClassNames = [];
 
@@ -318,11 +395,14 @@ function updateInitPy(moduleDir, classNames) {
     const filePath = path.join(moduleFullPath, file);
     const content = fs.readFileSync(filePath, 'utf-8');
     const classMatches = content.match(/^class\s+(\w+)/gm);
+    const funcMatches = content.match(/^def\s+(\w+)/gm);
     const classes = classMatches ? classMatches.map(m => m.replace('class ', '')) : [];
+    const funcs = funcMatches ? funcMatches.map(m => m.replace('def ', '')) : [];
+    const names = [...classes, ...funcs];
 
-    if (classes.length > 0) {
-      fileClassMap[file] = classes;
-      allClassNames.push(...classes);
+    if (names.length > 0) {
+      fileClassMap[file] = names;
+      allClassNames.push(...names);
 
       // 检测文件中的可选依赖
       // 检测方式：import xxx 或 from xxx 或 xxx.（模块使用）
@@ -445,26 +525,31 @@ function main() {
           const mappingType = CHAPTER_MAPPING[docPath] ? '(显式映射)' : '(自动推断)';
           console.log(`  模块路径: shared/${moduleDir}/ ${mappingType}`);
 
-          // 确保模块目录存在
+          // 确保模块目录和 __init__.py 存在
           const fullModuleDir = path.join(SHARED_MODULES_DIR, moduleDir);
           if (!fs.existsSync(fullModuleDir)) {
             fs.mkdirSync(fullModuleDir, { recursive: true });
-            // 创建 __init__.py
-            fs.writeFileSync(path.join(fullModuleDir, '__init__.py'), '__all__ = []\n');
             console.log(`    创建目录: ${moduleDir}/`);
+          }
+          const initPyPath = path.join(fullModuleDir, '__init__.py');
+          if (!fs.existsSync(initPyPath)) {
+            fs.writeFileSync(initPyPath, '__all__ = []\n');
           }
 
           if (!moduleClasses[moduleDir]) {
             moduleClasses[moduleDir] = [];
           }
 
-          for (const { className, code } of classes) {
+          for (const { className, definitions, sourceCode } of classes) {
             // 生成模块文件
-            const { path: modulePath, content } = generateModuleFile(className, code, moduleDir);
+            const { path: modulePath, content } = generateModuleFile(definitions, sourceCode, moduleDir);
             fs.writeFileSync(modulePath, content);
             console.log(`    写入: ${path.relative(PROJECT_ROOT, modulePath)}`);
 
-            moduleClasses[moduleDir].push(className);
+            // 收集所有定义名称（类名 + 函数名），用于更新 __init__.py
+            for (const def of definitions) {
+              moduleClasses[moduleDir].push(def.name);
+            }
           }
         }
       }

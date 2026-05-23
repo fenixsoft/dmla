@@ -8,6 +8,7 @@ import chalk from 'chalk'
 import path from 'path'
 import { fileURLToPath } from 'url'
 import os from 'os'
+import fs from 'fs'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -24,7 +25,10 @@ const SOFT_DEPS = [
   'jupyter_client',
   'ipykernel',
   'lmdb',
-  'requests'
+  'requests',
+  'transformers',
+  'tokenizers',
+  'datasets'
 ]
 
 // 环境检测结果缓存
@@ -551,8 +555,32 @@ export function clearCache() {
  * @returns {string}
  */
 export function getSharedModulesPath() {
-  // CLI 包中的 shared 目录
-  return path.resolve(__dirname, '../../shared')
+  // 优先使用环境变量指定的路径
+  if (process.env.SHARED_MODULES_PATH) {
+    return process.env.SHARED_MODULES_PATH
+  }
+
+  // 检测运行模式
+  // 源码目录运行: local-server/src/ -> shared 在 local-server/shared/
+  // CLI 包运行: packages/cli/src/server/ -> shared 在 packages/cli/shared/
+  const currentDir = __dirname
+
+  // 检查是否为源码目录运行（local-server/src/）
+  if (currentDir.includes('local-server/src')) {
+    // 源码目录: local-server/src/ -> local-server/shared/
+    return path.resolve(currentDir, '../shared')
+  }
+
+  // CLI 包运行: packages/cli/src/server/ -> packages/cli/shared/
+  return path.resolve(currentDir, '../../shared')
+}
+
+/**
+ * 获取服务端 Python 路径（kernel_runner.py 和 dmla_progress.py 所在目录）
+ * @returns {string}
+ */
+export function getServerPythonPath() {
+  return path.resolve(__dirname)
 }
 
 /**
@@ -568,8 +596,30 @@ export function getKernelRunnerPath() {
  * @returns {string}
  */
 export function getDataPath() {
-  // 默认 ~/dmla-data，可通过 DMLA_DATA_PATH 环境变量覆盖
-  return process.env.DMLA_DATA_PATH || path.join(os.homedir(), 'dmla-data')
+  // 优先级：环境变量 > 配置文件 > 默认路径
+
+  // 1. 环境变量（最高优先级）
+  if (process.env.DMLA_DATA_PATH) {
+    return process.env.DMLA_DATA_PATH
+  }
+
+  // 2. 配置文件（~/.dmla/config.json）
+  const configDir = path.join(os.homedir(), '.dmla')
+  const configFile = path.join(configDir, 'config.json')
+
+  try {
+    if (fs.existsSync(configFile)) {
+      const config = JSON.parse(fs.readFileSync(configFile, 'utf8'))
+      if (config.dataVolumePath) {
+        return config.dataVolumePath
+      }
+    }
+  } catch (e) {
+    // 配置文件读取失败，使用默认路径
+  }
+
+  // 3. 默认路径
+  return path.join(os.homedir(), 'dmla-data')
 }
 
 /**
@@ -585,6 +635,7 @@ export default {
   getCachedEnvironment,
   clearCache,
   getSharedModulesPath,
+  getServerPythonPath,
   getKernelRunnerPath,
   getDataPath,
   getProgressPath,

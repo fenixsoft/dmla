@@ -9,7 +9,7 @@ import { fileURLToPath } from 'url'
 import os from 'os'
 import fs from 'fs'
 import chalk from 'chalk'
-import { getCachedEnvironment, getKernelRunnerPath, getSharedModulesPath, getDataPath, getProgressPath, getPythonCommand, detectPythonCommand } from './native_env_check.js'
+import { getCachedEnvironment, getKernelRunnerPath, getSharedModulesPath, getServerPythonPath, getDataPath, getProgressPath, getPythonCommand, detectPythonCommand } from './native_env_check.js'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -146,9 +146,16 @@ export async function runPythonCodeNative(code, useGpu = false, timeoutOverride 
   log(`Executing code (length=${code.length}, timeout=${timeoutSeconds}s, useGpu=${useGpu})`)
 
   // 构建环境变量
+  // PYTHONPATH 包含 shared_modules 和 server src 目录（跨平台路径分隔符）
+  const pythonPathSeparator = process.platform === 'win32' ? ';' : ':'
+  const pythonPath = [
+    getSharedModulesPath(),
+    getServerPythonPath()
+  ].join(pythonPathSeparator)
+
   const env = {
     ...process.env,
-    PYTHONPATH: getSharedModulesPath(),
+    PYTHONPATH: pythonPath,
     PYTHONUNBUFFERED: '1',
     PYTHONIOENCODING: 'utf-8',  // Windows 下确保 Python 使用 UTF-8 输出
     DMLA_DATA_PATH: getDataPath(),
@@ -404,9 +411,16 @@ export async function runPythonCodeStreamingNative(code, useGpu = false, res, ti
   const timeoutSeconds = timeoutOverride === null ? 86400 : (timeoutOverride || DEFAULT_TIMEOUT)
 
   // 构建环境变量
+  // PYTHONPATH 包含 shared_modules 和 server src 目录（跨平台路径分隔符）
+  const pythonPathSeparator = process.platform === 'win32' ? ';' : ':'
+  const pythonPath = [
+    getSharedModulesPath(),
+    getServerPythonPath()
+  ].join(pythonPathSeparator)
+
   const env = {
     ...process.env,
-    PYTHONPATH: getSharedModulesPath(),
+    PYTHONPATH: pythonPath,
     PYTHONUNBUFFERED: '1',
     PYTHONIOENCODING: 'utf-8',  // Windows 下确保 Python 使用 UTF-8 输出
     DMLA_DATA_PATH: getDataPath(),

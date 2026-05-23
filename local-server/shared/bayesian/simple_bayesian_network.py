@@ -1,5 +1,7 @@
-# SimpleBayesianNetwork 类定义
+# SimpleBayesianNetwork 定义
 # 从文档自动提取生成
+
+import matplotlib.pyplot as plt
 
 class SimpleBayesianNetwork:
     """

@@ -70,6 +70,15 @@ const DATASETS = [
     format: 'git',
     targetDir: 'datasets/chinese-poetry',
     source: 'ModelScope (icyfenix)'
+  },
+  {
+    id: 'minimind-pretrain',
+    name: 'MiniMind Pretrain (LLM预训练语料)',
+    url: 'https://www.modelscope.cn/datasets/icyfenix/minimind_pretrain.git',
+    size: '~1.2GB',
+    format: 'git',
+    targetDir: 'datasets/minimind-pretrain',
+    source: 'ModelScope (icyfenix)'
   }
 ]
 

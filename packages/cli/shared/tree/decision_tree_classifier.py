@@ -1,7 +1,9 @@
-# DecisionTreeClassifier 类定义
+# DecisionTreeClassifier 定义
 # 从文档自动提取生成
 
+import matplotlib.pyplot as plt
 import numpy as np
+from sklearn.datasets import load_iris
 
 class DecisionTreeClassifier:
     """

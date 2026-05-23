@@ -1,6 +1,7 @@
-# GaussianMixtureModel 类定义
+# GaussianMixtureModel 定义
 # 从文档自动提取生成
 
+import matplotlib.pyplot as plt
 import numpy as np
 
 class GaussianMixtureModel:

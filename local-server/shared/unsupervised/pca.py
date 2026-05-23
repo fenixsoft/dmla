@@ -1,7 +1,8 @@
-# PCA 类定义
+# PCA 定义
 # 从文档自动提取生成
 
 import numpy as np
+from sklearn.datasets import load_iris
 
 class PCA:
     """

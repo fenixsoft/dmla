@@ -1,4 +1,4 @@
-# DCGANGenerator 类定义
+# DCGANGenerator 定义
 # 从文档自动提取生成
 
 import torch

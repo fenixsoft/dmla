@@ -74,6 +74,12 @@ RUN pip install --no-cache-dir \
 # 安装 NVIDIA DALI（GPU 数据加载库，CUDA 12.x 版本）
 RUN pip install --no-cache-dir nvidia-dali-cuda120
 
+# 安装 HuggingFace Transformers 生态（LLM 预训练实验所需）
+RUN pip install --no-cache-dir -i https://pypi.tuna.tsinghua.edu.cn/simple \
+    transformers \
+    tokenizers \
+    datasets
+
 # 复制执行器和诊断脚本
 COPY local-server/src/kernel_runner.py /workspace/kernel_runner.py
 COPY local-server/src/cuda_compat_check.py /workspace/cuda_compat_check.py
@@ -92,7 +98,10 @@ RUN mkdir -p /data/datasets \
              /data/models/resnet \
              /data/models/gan \
              /data/models/llm \
+             /data/models/minimind/pretrain \
+             /data/models/minimind/sft \
              /data/models/pretrained \
+             /data/datasets/minimind-pretrain \
              /data/outputs \
              /data/outputs/training_logs \
              /data/outputs/visualizations \

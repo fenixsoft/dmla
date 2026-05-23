@@ -1,49 +1,28 @@
 # CLAUDE.md
 
-## 前言：交互语言
+## 交互语言
 使用**中文**进行信息描述和文档编写，包括：
  - **GIT Commit：** GIT提交时的变更信息，内容使用中文描述
  - **Proposal、Design和归档后形成的Spec文档：** 所有涉及到的SDD文档，内容使用中文描述
  - **程序注释：** 程序代码中的注释，内容使用中文描述
 
-## 第一部分：核心编程原则
-这是我们合作的顶层思想，指导所有具体的行为。
+### 文档写作风格
+- **避免 AI 语言习惯：** 不要滥用"核心"、"关键"等空洞强调词；不要滥用破折号"——"和分号"；"；不要以短句罗列知识点来凑篇幅。写自然、连贯的中文，像给人讲解而非堆砌要点。
 
-### 基础设计原则
-- **可读性优先：** 始终牢记"代码是写给人看的，只是恰好机器可以执行"。清晰度高于一切。
-- **DRY (Don't Repeat Yourself)：** 绝不复制代码片段。通过抽象（如函数、类、模块）来封装和复用通用逻辑。
-- **高内聚，低耦合：** 功能高度相关的代码应该放在一起（高内聚），而模块之间应尽量减少依赖（低耦合），以增强模块独立性和可维护性。
-
-### 开发方法论
-- **测试驱动开发：** 每完成一个功能模块就立即编写相应的测试，确保代码质量和稳定性。
-- **渐进式开发策略：** 每写一个单元就进行一轮测试，避免后期全局修改和发现系统性问题。
-- **后端单元测试检查：** 后端所有对 public 方法的修改（包括方法签名变更、参数增减、返回值类型变化等）都必须检查并更新相关的单元测试，确保测试覆盖率不被破坏。
-- **前端页面测试：** 对于前端页面的修改，完毕后要通过 playwright-cli 完成实际测试后才能关闭任务。
-
-## 第二部分：任务运作约束
+## 任务运作约束
 
 ### 项目运作模式
 - Goal: 在**不中断**的前提下，充分并行子任务，直到产出完整、可验证的交付物。
 - Autonomy: 允许在本仓库内创建/修改/删除文件；禁止写入 `node_modules`, `.git`, `dist`, `build`, `~` 与上级目录。
 - **Git 推送控制：** 除非得到用户的明确指令，否则禁止自动推送代码到 git 仓库。完成代码修改后，应告知用户变更内容并等待用户确认后再执行 `git push`。
-- Parallelism: 同时运行 ≤ 3 个并行任务。
-- Checkpointing: 每个任务完成后，**必须**更新`tasks.md`，以便断点续跑。
-- Validation First: 任何子任务完成后，都要跑对应校验（构建/测试/脚本），不通过则自我修复后再进入下一个任务。
 
 ### 项目与代码维护
-- **统一文档维护：** 严禁为每个独立任务（如重构、功能实现）创建新的总结文档（例如 CODE_REFACTORING_SUMMARY.md）。在任务完成后，必须优先检查项目中已有的相关文档（如 README.md、既有的设计文档等），并将新的总结、变更或补充内容直接整合到现有文档中，维护其完整性和时效性。
 - **及时清理：** 在完成开发任务时，如果发现任何已无用（过时）的代码、文件或注释，应主动提出清理建议。
 - **测试截图统一存放：** 所有测试产生的 Chrome 浏览器截图图片统一存放在 `.history` 目录，便于追踪测试历史和对比结果。
-- **nn-arch 测试图片存放：** nn-arch 工具测试生成的 SVG/PNG 图片统一存放在 `/root/devspaces/nn-arch/images/` 目录中。
 - **禁止修改 node_modules：** 严禁直接修改 `node_modules` 目录下的任何文件。`node_modules` 是依赖包的缓存目录，任何修改都会在 `npm install` 时被覆盖。如需修改第三方库的行为，应：
   1. Fork 该库并发布为独立包
   2. 将该库源码复制到项目中作为本地模块
   3. 使用 patch-package 创建补丁（需在 package.json 中配置 postinstall 脚本）
-
-### 数据库安全规则
-- **禁止删除数据库文件：** 严禁执行 `rm`、`mv` 或其他任何删除/移动数据库文件（`*.db`）的操作。数据库包含用户数据、工作流、运行历史等重要信息，一旦删除将导致不可逆的数据丢失。
-- **数据库迁移优先：** 遇到数据库结构问题时，应通过数据迁移脚本（如 `DataMigrationService`）修复，而非删除数据库。
-- **备份优先原则：** 如确需对数据库进行高风险操作，必须先备份现有数据库文件，并征得用户确认后方可执行。
 
 ### 进程管理规则
 - **禁止广泛杀进程：** 严禁使用 `killall node`、`pkill -f node`、`killall python` 等广泛匹配的命令终止进程。这些命令会误杀 VSCode 远程连接进程、其他用户的进程或系统关键服务。
@@ -79,6 +58,57 @@ CLI 包的构建脚本（`packages/cli/scripts/build.js`）会从 `local-server/
 1. 修改 `local-server/src/` 下的源文件
 2. 运行 `cd packages/cli && npm run build` 复制到 CLI 包
 3. 提交时确保两个目录都已更新（构建脚本会自动更新 `packages/cli/src/server/`）
+
+### Native 模式依赖管理（重要）
+
+**每次修改 Python 依赖关系后，必须通过 Native 模式启动验证依赖检测和自动安装是否正常工作。**
+
+**依赖定义位置**：
+
+| 文件 | 修改位置 | 说明 |
+|------|---------|------|
+| `local-server/src/native_env_check.js` | `SOFT_DEPS` 数组 | Native 模式软依赖列表（缺失时自动安装） |
+| `local-server/Dockerfile.sandbox` | `RUN pip install` 段落 | Docker GPU 镜像依赖 |
+| `local-server/Dockerfile.sandbox.cpu` | `RUN pip install` 段落 | Docker CPU 镜像依赖 |
+
+三处依赖定义需保持一致。新增 Python 包时，三个文件都要同步更新。
+
+**Native 模式启动方式**：
+
+```bash
+# 方式 1：源码目录直接启动（开发环境推荐）
+lsof -ti:3001 -sTCP:LISTEN | xargs kill 2>/dev/null
+DMLA_MODE=native node local-server/src/index.js
+
+# 方式 2：通过 CLI 启动
+dmla start --native
+
+# 方式 3：同步模式（前台运行，便于观察依赖安装过程）
+dmla start --native --sync --dev
+```
+
+**依赖变更验证流程**：
+
+1. 修改 `SOFT_DEPS` 数组，新增或移除包名
+2. 运行 `cd packages/cli && npm run build` 将改动同步到 CLI 包
+3. 以 Native 模式启动服务，观察输出：
+   - 已安装的包：不输出（静默跳过）
+   - 新增缺失的包：显示 `安装 xxx...` 并自动 pip install
+   - 安装成功：显示 `已安装: xxx, yyy`
+   - 安装失败：显示 `安装失败: xxx` 和手动安装命令
+4. 确认服务正常启动后，用 Python 验证包可导入：
+   ```bash
+   python3 -c "import transformers; print(transformers.__version__)"
+   ```
+5. 清理端口：`lsof -ti:3001 -sTCP:LISTEN | xargs kill 2>/dev/null`
+
+**当前 SOFT_DEPS 完整列表**：
+
+```
+numpy, pandas, matplotlib, scipy, scikit-learn, pillow,
+opencv-python-headless, jupyter_client, ipykernel, lmdb, requests,
+transformers, tokenizers, datasets
+```
 
 ### 镜像开发约束（Volume Mount 机制）
 
@@ -270,13 +300,7 @@ data_dir = '/data/datasets/tiny-imagenet-200'
 data_dir = os.path.join(DATA_DIR, 'datasets', 'tiny-imagenet-200')
 ```
 
-## 第三部分：项目概览
-- **设计文档**: `/docs/arch/design.md`
-- **技术栈**: VuePress v2 + Vue 3 + Express + Docker
-
----
-
-## 第四部分：常用命令
+## 常用命令
 
 ### 开发运行
 

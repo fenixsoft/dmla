@@ -1,7 +1,9 @@
-# RandomForestClassifier 类定义
+# RandomForestClassifier 定义
 # 从文档自动提取生成
 
 import numpy as np
+from sklearn.datasets import load_digits
+from sklearn.model_selection import train_test_split
 
 class RandomForestClassifier:
     """

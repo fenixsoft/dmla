@@ -1,7 +1,9 @@
-# LMDBPreprocessCache 类定义
+# LMDBPreprocessCache 定义
 # 从文档自动提取生成
 
+import json
 import os
+from dmla_progress import ProgressReporter
 from PIL import Image
 
 class LMDBPreprocessCache:
