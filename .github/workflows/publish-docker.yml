@@ -34,6 +34,17 @@ jobs:
       matrix:
         type: [cpu, gpu]
     steps:
+      - name: Free disk space
+        uses: jlumbroso/free-disk-space@main
+        with:
+          tool-cache: false
+          android: true
+          dotnet: true
+          haskell: true
+          large-packages: true
+          docker-images: true
+          swap-storage: true
+
       - name: Checkout
         uses: actions/checkout@v5
 
@@ -78,6 +89,17 @@ jobs:
       matrix:
         type: [cpu, gpu]
     steps:
+      - name: Free disk space
+        uses: jlumbroso/free-disk-space@main
+        with:
+          tool-cache: false
+          android: true
+          dotnet: true
+          haskell: true
+          large-packages: true
+          docker-images: true
+          swap-storage: true
+
       - name: Download image artifact
         uses: actions/download-artifact@v5
         with:
@@ -113,6 +135,17 @@ jobs:
       matrix:
         type: [cpu, gpu]
     steps:
+      - name: Free disk space
+        uses: jlumbroso/free-disk-space@main
+        with:
+          tool-cache: false
+          android: true
+          dotnet: true
+          haskell: true
+          large-packages: true
+          docker-images: true
+          swap-storage: true
+
       - name: Download image artifact
         uses: actions/download-artifact@v5
         with:
