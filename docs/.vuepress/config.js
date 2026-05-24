@@ -225,7 +225,7 @@ export default {
               { text: 'Transformer 架构基础', link: '/language-models/architecture-basics/transformer-architecture' },
               { text: 'Transformer 演进与变体', link: '/language-models/architecture-basics/architecture-evolution' },
               { text: '语言模型与分词', link: '/language-models/architecture-basics/language-model-tokenization' },
-              { text: '工程实训：Minimind 语言模型实验', link: '/language-models/architecture-basics/llm-pretrain-experiment' },
+              { text: '工程实训：Transformer 模型训练实验', link: '/language-models/architecture-basics/llm-pretrain-experiment' },
             ]
           },
           {
