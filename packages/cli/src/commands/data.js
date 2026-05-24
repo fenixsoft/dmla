@@ -74,10 +74,19 @@ const DATASETS = [
   {
     id: 'minimind-pretrain',
     name: 'MiniMind Pretrain (LLM预训练语料)',
-    url: 'https://www.modelscope.cn/datasets/icyfenix/minimind_pretrain.git',
+    url: 'https://www.modelscope.cn/datasets/icyfenix/Minimind_Pretrain.git',
     size: '~1.2GB',
     format: 'git',
     targetDir: 'datasets/minimind-pretrain',
+    source: 'ModelScope (icyfenix)'
+  },
+  {
+    id: 'minimind-sft',
+    name: 'MiniMind SFT (LLM监督微调语料)',
+    url: 'https://www.modelscope.cn/datasets/icyfenix/Minimind_SFT.git',
+    size: '~500MB',
+    format: 'git',
+    targetDir: 'datasets/minimind-sft',
     source: 'ModelScope (icyfenix)'
   }
 ]

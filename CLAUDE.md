@@ -478,6 +478,10 @@ npm run build:sandbox:gpu
 - MNIST (11MB，通过 torchvision 自动下载)
 - Cartoon Face (288MB，卡通人脸图片)
 
+**数据集配置维护**：
+
+数据集的下载地址、名称等配置定义在 `packages/cli/src/commands/data.js` 的 `DATASETS` 数组中，每个条目包含 `id`、`name`、`url`、`size`、`format`、`targetDir`、`source` 字段。更新数据集地址时直接修改该数组中对应条目的 `url` 和 `source` 即可。
+
 ### 端口说明
 
 | 服务 | 端口 | 说明 |

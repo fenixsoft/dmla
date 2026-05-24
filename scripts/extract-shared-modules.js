@@ -48,7 +48,9 @@ const CHAPTER_MAPPING = {
   'deep-learning/convolutional-neural-network': 'cnn',
   'deep-learning/generative-models': 'gan',
   // language-models - 简化命名
-  'language-models/pretraining': 'llm'
+  'language-models/architecture-basics': 'llm',
+  'language-models/pretraining': 'llm',
+  'language-models/alignment': 'llm'
 };
 
 // 将目录名转换为 snake_case 模块名
