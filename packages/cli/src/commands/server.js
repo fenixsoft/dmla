@@ -3,7 +3,7 @@
  */
 import chalk from 'chalk'
 import Docker from 'dockerode'
-import { spawn } from 'child_process'
+import { spawn, execSync } from '../verbose.js'
 import http from 'http'
 import path from 'path'
 import { fileURLToPath, pathToFileURL } from 'url'

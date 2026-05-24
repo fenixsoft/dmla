@@ -3,7 +3,7 @@
  * 通过 npm 更新程序
  */
 import chalk from 'chalk'
-import { execSync } from 'child_process'
+import { execSync } from '../verbose.js'
 
 /**
  * 运行 update 命令

@@ -8,8 +8,7 @@ const { prompt } = pkg
 import fs from 'fs'
 import path from 'path'
 import os from 'os'
-import { spawn } from 'child_process'
-import { execSync } from 'child_process'
+import { spawn, execSync } from '../verbose.js'
 import AdmZip from 'adm-zip'
 
 // 配置文件路径
@@ -310,10 +309,11 @@ async function showMainMenu(dataPath) {
   const choices = [
     { name: '1', message: '挂载路径设置        ' + chalk.gray(`[当前: ${dataPath}]`) },
     { name: '2', message: '下载数据集' },
-    { name: '3', message: '查看数据集列表' },
-    { name: '4', message: '清空数据内容' },
-    { name: '5', message: '删除数据卷' },
-    { name: '6', message: '退出' }
+    { name: '3', message: '删除数据集' },
+    { name: '4', message: '查看数据集列表' },
+    { name: '5', message: '清空数据内容' },
+    { name: '6', message: '删除数据卷' },
+    { name: '7', message: '退出' }
   ]
 
   const { action } = await prompt({
@@ -459,6 +459,117 @@ async function removeData() {
   writeConfig({ dataVolumePath: null })
 
   console.log(chalk.green('数据卷已删除'))
+}
+
+/**
+ * 删除数据集子菜单
+ */
+async function deleteDatasets() {
+  const dataPath = getDataVolumePath()
+
+  console.log()
+  console.log(chalk.bold('删除数据集'))
+  console.log()
+
+  // 收集已下载（含不完整）的数据集
+  const existingDatasets = DATASETS.filter(d => isDatasetExists(dataPath, d.id))
+
+  if (existingDatasets.length === 0) {
+    console.log(chalk.yellow('没有已下载的数据集'))
+    return
+  }
+
+  // 构建选项列表
+  const choices = existingDatasets.map((dataset) => {
+    const downloaded = isDatasetDownloaded(dataPath, dataset.id)
+    const incomplete = isDatasetIncomplete(dataPath, dataset.id)
+
+    let message = `${dataset.name} (${dataset.size})`
+    if (downloaded) {
+      message += ' [可用]'
+    } else if (incomplete) {
+      message += ' [不完整]'
+    } else {
+      message += ' [存在]'
+    }
+
+    return {
+      name: dataset.id,
+      message
+    }
+  })
+
+  console.log(chalk.gray('操作: 上下键移动，空格勾选/取消，回车确认，ESC 返回'))
+  console.log()
+
+  try {
+    const { selected } = await prompt({
+      type: 'multiselect',
+      name: 'selected',
+      message: '选择要删除的数据集',
+      choices,
+      hint: '空格选择，回车确认删除',
+      styles: {
+        primary: chalk.cyan.bold
+      }
+    })
+
+    if (!selected || selected.length === 0) {
+      console.log(chalk.yellow('未选择任何数据集'))
+      return
+    }
+
+    // 确认删除
+    const selectedNames = selected.map(id => {
+      const ds = existingDatasets.find(d => d.id === id)
+      return ds.name
+    })
+
+    console.log()
+    console.log(chalk.red(`将删除以下数据集: ${selectedNames.join(', ')}`))
+
+    const { confirm } = await prompt({
+      type: 'confirm',
+      name: 'confirm',
+      message: '确认删除?',
+      initial: false
+    })
+
+    if (!confirm) {
+      console.log(chalk.yellow('操作已取消'))
+      return
+    }
+
+    // 执行删除
+    for (const datasetId of selected) {
+      const dataset = DATASETS.find(d => d.id === datasetId)
+      const targetDir = path.join(dataPath, dataset.targetDir)
+
+      if (fs.existsSync(targetDir)) {
+        fs.rmSync(targetDir, { recursive: true, force: true })
+        console.log(chalk.green(`已删除: ${dataset.name}`))
+      }
+
+      // 更新配置
+      const config = readConfig()
+      if (config.installedDatasets) {
+        config.installedDatasets = config.installedDatasets.filter(id => id !== datasetId)
+      }
+      if (config.incompleteDatasets) {
+        config.incompleteDatasets = config.incompleteDatasets.filter(id => id !== datasetId)
+      }
+      writeConfig(config)
+    }
+
+    console.log()
+    console.log(chalk.green('删除完成'))
+  } catch (error) {
+    if (isUserCancel(error)) {
+      console.log(chalk.gray('返回上一级'))
+      return
+    }
+    throw error
+  }
 }
 
 /**
@@ -1002,9 +1113,20 @@ export async function runDataTUI() {
           }
           break
         case 3:
-          listDatasets()
+          try {
+            await deleteDatasets()
+          } catch (error) {
+            if (isUserCancel(error)) {
+              console.log(chalk.gray('返回主菜单'))
+            } else {
+              throw error
+            }
+          }
           break
         case 4:
+          listDatasets()
+          break
+        case 5:
           try {
             await clearData()
           } catch (error) {
@@ -1015,7 +1137,7 @@ export async function runDataTUI() {
             }
           }
           break
-        case 5:
+        case 6:
           try {
             await removeData()
           } catch (error) {
@@ -1026,7 +1148,7 @@ export async function runDataTUI() {
             }
           }
           break
-        case 6:
+        case 7:
           console.log()
           console.log(chalk.gray('已退出数据管理'))
           console.log()
@@ -1076,6 +1198,9 @@ export async function runDataCommand(subCommand, options) {
       break
     case 'download':
       await downloadDatasets()
+      break
+    case 'delete':
+      await deleteDatasets()
       break
     default:
       // 无子命令时进入 TUI

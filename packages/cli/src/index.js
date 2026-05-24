@@ -12,6 +12,7 @@ import { runDoctor } from './commands/manage.js'
 import { runDataTUI, runDataCommand } from './commands/data.js'
 import { runImagesTUI } from './commands/images.js'
 import { runUpdate } from './commands/update.js'
+import { setVerbose } from './verbose.js'
 
 // 从 package.json 读取版本号
 const __filename = fileURLToPath(import.meta.url)
@@ -85,6 +86,13 @@ program
   .version(VERSION, '-v, --version', '显示版本号')
   .helpOption('-h, --help', '显示帮助信息')
   .addHelpCommand('help [command]', '显示命令帮助信息')
+  .option('--verbose', '显示所有执行的外部命令，便于调试')
+
+// 解析全局选项（需要在子命令 action 之前解析，以便设置 verbose 开关）
+program.parseOptions(process.argv)
+if (program.opts().verbose) {
+  setVerbose(true)
+}
 
 // ─────────────────────────────────────────────────────────────
 // start 命令
