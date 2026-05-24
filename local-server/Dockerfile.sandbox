@@ -78,7 +78,8 @@ RUN pip install --no-cache-dir nvidia-dali-cuda120
 RUN pip install --no-cache-dir -i https://pypi.tuna.tsinghua.edu.cn/simple \
     transformers \
     tokenizers \
-    datasets
+    datasets \
+    ipywidgets
 
 # 复制执行器和诊断脚本
 COPY local-server/src/kernel_runner.py /workspace/kernel_runner.py

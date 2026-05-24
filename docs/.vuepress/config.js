@@ -277,7 +277,7 @@ export default {
         collapsible: false,
         children: [
               { text: '构建沙箱环境', link: '/sandbox.md' },
-              // { text: '临时格式测试页面', link: '/test.md' },
+              { text: '临时格式测试页面', link: '/test.md' },
         ]
       },
     ]

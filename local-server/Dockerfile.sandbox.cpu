@@ -46,7 +46,8 @@ RUN pip install --no-cache-dir \
 RUN pip install --no-cache-dir -i https://pypi.tuna.tsinghua.edu.cn/simple \
     transformers \
     tokenizers \
-    datasets
+    datasets \
+    ipywidgets
 
 # 复制执行器和进度报告模块
 COPY local-server/src/kernel_runner.py /workspace/kernel_runner.py

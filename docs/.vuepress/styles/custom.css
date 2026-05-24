@@ -165,7 +165,7 @@
 }
 
 .theme-default-content details summary:hover {
-  background-color: #EFF6FF;
+  /* background-color: #EFF6FF; */
 }
 
 /* 展开后的三角形 */
@@ -176,7 +176,7 @@
 /* 展开后的 summary 与内容间距 */
 .theme-default-content details[open] {
   /* display: block; */
-  width: 100%;
+  /* width: 100%; */
 }
 
 .theme-default-content details[open] summary {
