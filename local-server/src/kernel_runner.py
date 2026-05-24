@@ -225,11 +225,24 @@ def run_code(code: str, timeout: int = DEFAULT_TIMEOUT, stream: bool = False) ->
         restore_stdout()
         log_debug('stdout restored for code execution')
 
-        # 3. 注入全局变量和数据路径兼容
-        log_debug('Injecting global variables and matplotlib config')
+        # 3. 注入全局变量、数据路径和 sys.path 配置
+        log_debug('Injecting global variables, sys.path and matplotlib config')
+        # 从 PYTHONPATH 环境变量读取共享模块和服务器路径，注入 kernel 的 sys.path
+        python_path_env = os.environ.get('PYTHONPATH', '')
+        path_separator = ';' if os.name == 'nt' else ':'
+        python_path_entries = [p for p in python_path_env.split(path_separator) if p]
+
         setup_code = '''
 import os
+import sys
+
 DATA_DIR = os.environ.get('DMLA_DATA_PATH', '/data')
+
+# 将 PYTHONPATH 中的路径注入 sys.path（IPython kernel 可能不会自动继承）
+_python_path_entries = ''' + repr(python_path_entries) + '''
+for _p in _python_path_entries:
+    if _p not in sys.path:
+        sys.path.insert(0, _p)
 
 # 配置 matplotlib inline 后端（在用户 import matplotlib 之前设置）
 import matplotlib

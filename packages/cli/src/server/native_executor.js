@@ -146,10 +146,12 @@ export async function runPythonCodeNative(code, useGpu = false, timeoutOverride 
   log(`Executing code (length=${code.length}, timeout=${timeoutSeconds}s, useGpu=${useGpu})`)
 
   // 构建环境变量
-  // PYTHONPATH 包含 shared_modules 和 server src 目录（跨平台路径分隔符）
+  // PYTHONPATH 包含 shared 包的父目录和 server src 目录（跨平台路径分隔符）
+  // 注意: shared 包的父目录才能让 `import shared.xxx` 正确解析，
+  // 如果指向 shared/ 目录本身，Python 会在该路径下找 shared/shared/ 而失败
   const pythonPathSeparator = process.platform === 'win32' ? ';' : ':'
   const pythonPath = [
-    getSharedModulesPath(),
+    path.dirname(getSharedModulesPath()),
     getServerPythonPath()
   ].join(pythonPathSeparator)
 
@@ -411,10 +413,12 @@ export async function runPythonCodeStreamingNative(code, useGpu = false, res, ti
   const timeoutSeconds = timeoutOverride === null ? 86400 : (timeoutOverride || DEFAULT_TIMEOUT)
 
   // 构建环境变量
-  // PYTHONPATH 包含 shared_modules 和 server src 目录（跨平台路径分隔符）
+  // PYTHONPATH 包含 shared 包的父目录和 server src 目录（跨平台路径分隔符）
+  // 注意: shared 包的父目录才能让 `import shared.xxx` 正确解析，
+  // 如果指向 shared/ 目录本身，Python 会在该路径下找 shared/shared/ 而失败
   const pythonPathSeparator = process.platform === 'win32' ? ';' : ':'
   const pythonPath = [
-    getSharedModulesPath(),
+    path.dirname(getSharedModulesPath()),
     getServerPythonPath()
   ].join(pythonPathSeparator)
 

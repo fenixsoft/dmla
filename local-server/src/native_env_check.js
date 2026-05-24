@@ -28,7 +28,8 @@ const SOFT_DEPS = [
   'requests',
   'transformers',
   'tokenizers',
-  'datasets'
+  'datasets',
+  'ipywidgets'
 ]
 
 // 环境检测结果缓存
@@ -562,7 +563,7 @@ export function getSharedModulesPath() {
 
   // 检测运行模式
   // 源码目录运行: local-server/src/ -> shared 在 local-server/shared/
-  // CLI 包运行: packages/cli/src/server/ -> shared 在 packages/cli/shared/
+  // CLI 包运行: packages/cli/src/server/ -> shared 在 packages/cli/shared/ 或 shared_modules/
   const currentDir = __dirname
 
   // 检查是否为源码目录运行（local-server/src/）
@@ -571,8 +572,13 @@ export function getSharedModulesPath() {
     return path.resolve(currentDir, '../shared')
   }
 
-  // CLI 包运行: packages/cli/src/server/ -> packages/cli/shared/
-  return path.resolve(currentDir, '../../shared')
+  // CLI 包运行: 优先查找 shared/，回退到 shared_modules/（兼容旧版 npm 包）
+  const sharedPath = path.resolve(currentDir, '../../shared')
+  if (fs.existsSync(sharedPath)) {
+    return sharedPath
+  }
+
+  return path.resolve(currentDir, '../../shared_modules')
 }
 
 /**
