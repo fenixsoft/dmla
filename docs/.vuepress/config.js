@@ -60,7 +60,7 @@ export default {
         collapsible: false,
         children: [
           { text: '关于作者', link: '/introduction/about-me' },
-          { text: '关于本文档' },
+          { text: '关于本文档', link: '/introduction/about-dmla' },
         ]
       },
       {
@@ -156,7 +156,7 @@ export default {
             text: '神经网络结构',
             collapsible: false,
             children: [
-              { text: '神经网络设计思想', link: '/deep-learning/neural-network-structure/idea-origin' },
+              { text: '神经网络基础原理', link: '/deep-learning/neural-network-structure/idea-origin' },
               { text: '线性感知机', link: '/deep-learning/neural-network-structure/perceptron' },
               { text: '多层感知机', link: '/deep-learning/neural-network-structure/mlp' },
               { text: '前向传播', link: '/deep-learning/neural-network-structure/forward-propagation' },
@@ -222,7 +222,7 @@ export default {
             text: 'Transformer 架构',
             collapsible: false,
             children: [
-              { text: 'Transformer 架构基础', link: '/language-models/architecture-basics/transformer-architecture' },
+              { text: 'Transformer 基础原理', link: '/language-models/architecture-basics/transformer-architecture' },
               { text: 'Transformer 演进与变体', link: '/language-models/architecture-basics/architecture-evolution' },
               { text: '语言模型与分词', link: '/language-models/architecture-basics/language-model-tokenization' },
               { text: '工程实训：Transformer 模型训练实验', link: '/language-models/architecture-basics/llm-pretrain-experiment' },
@@ -232,8 +232,8 @@ export default {
             text: '预训练',
             collapsible: false,
             children: [
-              // { text: '预训练数据工程', link: '/language-models/pretraining/pretraining-data' },
-              // { text: '缩放定律', link: '/language-models/pretraining/scaling-laws' },
+              { text: '预训练数据工程', link: '/language-models/pretraining/pretraining-data' },
+              { text: '缩放定律', link: '/language-models/pretraining/scaling-laws' },
               // { text: '分布式训练基础设施', link: '/language-models/pretraining/distributed-training' },
               // { text: '工程实训：SFT 监督微调实验', link: '/language-models/pretraining/llm-sft-experiment' },
             ]
@@ -245,6 +245,7 @@ export default {
               // { text: 'RLHF', link: '/language-models/alignment/rlhf' },
               // { text: '对齐新范式', link: '/language-models/alignment/alignment-new-paradigms' },
             ]
+            
           },
           {
             text: '推理能力',
@@ -276,8 +277,8 @@ export default {
         text: '附录',
         collapsible: false,
         children: [
-              { text: '构建沙箱环境', link: '/sandbox.md' },
-              { text: '临时格式测试页面', link: '/test.md' },
+              { text: '构建沙箱环境', link: '/sandbox' },
+              { text: '临时格式测试页面', link: '/test' },
         ]
       },
     ]

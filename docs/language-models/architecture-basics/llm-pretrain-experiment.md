@@ -2,9 +2,9 @@
 
 通过这几章的学习，我们了解了 Transformer 架构的原理、现代 LLM 的各种改进技术、以及分词器的工作方式。这些知识构成了理解大语言模型的理论基础，但仅凭理论很难真正体会训练一个语言模型时面临的种种工程抉择。本次实验中，我们将亲手训练一个约 64M 参数的 Transformer 架构大语言模型，从语料准备到预训练再到推理对话，完整走一遍语言模型从零到能说话的全流程。
 
-> 本次实验的训练数据全部来自 [MiniMind](https://github.com/jingyaogong/minimind) 开源项目，模型配置（$dim=768, layers=8$）也与 MiniMind-v3 主线选择保持着一致。
+> 本次实验的训练数据全部来自 [MiniMind](https://github.com/jingyaogong/minimind) 开源项目，模型配置（$dim=768，layers=8$）也与 MiniMind-v3 主线选择保持着一致。在此向项目作者（[@jingyaogong](https://github.com/jingyaogong)）的优秀工作致谢。
 >
-> 因演示需要以及部分技术栈差异，笔者参考原项目重写了全部训练代码，重新组织了程序结构，使其可以在 DMLA 的页面中完成训练。感谢项目原作者（[@jingyaogong](https://github.com/jingyaogong)）的优秀工作。
+> 因演示需要以及部分技术栈差异，笔者参考 MiniMind 源码，重写了全部训练代码，重新组织了程序结构，使其可以在 DMLA 的页面中完成训练。
 
 ## 实验准备
 
@@ -15,7 +15,7 @@
 dmla data
 ```
 
-该语料包包含预训练文本数据（`pretrain_t2t_mini.jsonl`，约 1.2 GB）以及配套的 BPE 分词器文件（`tokenizer.json` 和 `tokenizer_config.json`）。下载完成后，验证语料和分词器文件是否完整：
+该语料包含预训练文本数据（`pretrain_t2t_mini.jsonl`，约 1.2 GB）以及配套的 BPE 分词器文件（`tokenizer.json` 和 `tokenizer_config.json`）。下载完成后，验证语料和分词器文件是否完整：
 
 ```python runnable
 import os
@@ -87,7 +87,7 @@ compression = len(text) / len(tokens)
 print(f"压缩率: {compression:.2f} 字符/token")
 ```
 
-预训练语料的格式为 JSONL（每行一个 JSON 对象），每条样本包含一个 `text` 字段，存储一段连续文本。预训练的目标是让模型学会预测下一个 token，即给定序列 $w_1, w_2, ..., w_t$，模型需要学会输出 $P(w_{t+1} | w_1, ..., w_t)$。因此，数据集的加载逻辑相对简单：将每条文本 tokenize 为 token ID 序列，加上 BOS 和 EOS 标记，然后对齐到固定长度即可。
+预训练语料的格式为 JSONL（每行一个 JSON 对象），每条样本包含一个 `text` 字段，存储一段连续文本。预训练的目标是让模型学会预测下一个 token，即给定序列 $w_1, w_2, ..., w_t$，模型需要学会输出 $P(w_{t+1} | w_1, ..., w_t)$。因此，数据集的加载逻辑相对简单，将每条文本 tokenize 为 token ID 序列，加上 BOS 和 EOS 标记，然后对齐到固定长度即可。
 
 与 [AlexNet 实验](../../deep-learning/convolutional-neural-network/alexnet-experiment.md)中图像数据的预处理不同，文本数据的预处理开销极小，分词操作本身是 CPU 上的查表与字符串匹配，速度远快于 JPEG 解码和 Resize。预训练数据集不需要 LMDB 缓存等优化手段，直接从 JSONL 文件逐行读取并实时分词即可。因此以下数据集代码会在训练时被调用，无需手动执行。
 
@@ -494,13 +494,13 @@ print(f"词嵌入与输出头共享: {config.tie_word_embeddings}")
 
 ::: info 训练预估
 
-训练语料约 200 万条样本，序列长度 512，批大小 32，2 个 epoch，笔者使用单卡 RTX 5080 约需 2 小时（预估时间为 220 mins，实际时间为 105 mins）。
+训练语料约 200 万条样本，序列长度 512，批大小 32，2 个 epoch，笔者使用单卡 RTX 5080 约需 2 小时（预估时间为 215 分钟，实际时间为 105 分钟）。
 
 - 本次训练的峰值显存占用约 7.2 GB（硬件支持 Flash Attention）或 11.8 GB（硬件不支持 Flash Attention）。8 GB 显存的 GPU 有较大 OOM 的风险，12 GB 以上支持 Flash Attention 的 GPU 可稳定训练。
 
 - NVIDIA 从 Ampere 架构（Compute Capability ≥ 8.0）开始原生支持 Flash Attention，也就是 RTX 30 系列 / A100 及之后。
 
-::: details 训练显存占用分析
+::: details 训练显存占用预估
 
 1. **静态占用**（约 0.95 GB）
 
@@ -518,7 +518,7 @@ print(f"词嵌入与输出头共享: {config.tie_word_embeddings}")
 
 2. **前向传播激活值**（约 3.12 GB / 7.12 GB）
 
-    反向传播需要用到前向传播的中间结果来计算梯度，PyTorch 会在前向传播时将这些中间结果保存到计算图中。这是显存占用的最大项，且与 batch_size 和 seq_len 成正比。每个 Transformer 层需要保存的激活值如下（以 BF16 即 2 bytes 计算）：
+    反向传播需要用到前向传播的中间结果来计算梯度，PyTorch 会在前向传播时将这些中间结果保存到计算图中。这是显存占用的最大项，且与 `batch_size` 和 `seq_len` 成正比。每个 Transformer 层需要保存的激活值如下（以 BF16 即 2 bytes 计算）：
 
     | 激活项 | 计算 | Flash Attention | 普通 Attention |
     |--------|------|:---:|:---:|
@@ -551,31 +551,31 @@ print(f"词嵌入与输出头共享: {config.tie_word_embeddings}")
 
     `cross_entropy` 在计算时会将 BF16 的 logits 自动 upcast 为 FP32，加上 `contiguous()` 创建的切片副本，导致同一个 logits 数据在显存中存在了三份。这是显存峰值出现在 loss 计算阶段的直接原因。此时 logits 的 BF16 原始张量、BF16 切片副本和 FP32 上转型同时存在。
 
-**峰值显存汇总**
+- **峰值显存汇总**
 
-| 项目 | Flash Attention | 普通 Attention |
-|------|:---:|:---:|
-| 静态占用 | 0.95 GB | 0.95 GB |
-| 前向传播激活值 | 3.12 GB | 7.12 GB |
-| Logits + Loss | 1.17 GB | 1.17 GB |
-| CUDA 运行时 | ≈1.0 GB | ≈1.0 GB |
-| 碎片化开销 (~15%) | ≈0.94 GB | ≈1.53 GB |
-| **估算峰值** | **7.2 GB** | **11.8 GB** |
+    | 项目 | Flash Attention | 普通 Attention |
+    |------|:---:|:---:|
+    | 静态占用 | 0.95 GB | 0.95 GB |
+    | 前向传播激活值 | 3.12 GB | 7.12 GB |
+    | Logits + Loss | 1.17 GB | 1.17 GB |
+    | CUDA 运行时 | ≈1.0 GB | ≈1.0 GB |
+    | 碎片化开销 (~15%) | ≈0.94 GB | ≈1.53 GB |
+    | **估算峰值** | **7.2 GB** | **11.8 GB** |
 
-上述估算是理论最小值，实际运行中还会因 PyTorch 缓存分配器的预留策略（按块分配显存并保留空闲块供复用）、cuDNN 工作空间、CUDA runtime 等因素额外消耗 0.5-1 GB。因此 Flash Attention 下 batch_size=32 实际需要 8 GB 以上的显存才有可能运行，使用 RTX 4060（8 GB 约 7.6 GB 可用）等显存的 GPU 时，有较大概率 OOM，建议将 batch_size 降至 16 并将 accumulation_steps 相应调整为 16。
+    上述估算是理论最小值，实际运行中还会因 PyTorch 缓存分配器的预留策略（按块分配显存并保留空闲块供复用）、cuDNN 工作空间、CUDA runtime 等因素额外消耗 0.5-1 GB。因此 Flash Attention 下 `batch_size=32` 实际需要 8 GB 以上的显存才有可能运行，使用 RTX 4060（8 GB 约 7.6 GB 可用）等显存的 GPU 时，有较大概率 OOM，建议将 `batch_size` 降至 16 并将 `accumulation_steps` 相应调整为 16。
 
-**显存不足时的调整方案**
+- **显存不足时的调整方案**
 
-如果 GPU 显存不足以运行默认的 `batch_size=32`，可以通过减小 batch_size 并等比例增大梯度累积步数来保持等效批大小不变（训练效果等价，只是每步更频繁地清零和累积梯度，速度略慢）：
+    如果 GPU 显存不足以运行默认的 `batch_size=32`，可以通过减小 `batch_size` 并等比例增大梯度累积步数来保持等效批大小不变（训练效果等价，只是每步更频繁地清零和累积梯度，速度变慢）：
 
-| batch_size | accumulation_steps | 等效批大小 | 估算峰值显存 |
-|:---:|:---:|:---:|:---:|
-| 32 | 8 | 256 | ≈7.2 GB |
-| 16 | 16 | 256 | ≈4.7 GB |
-| 8 | 32 | 256 | ≈3.5 GB |
-| 4 | 64 | 256 | ≈2.9 GB |
+    | batch_size | accumulation_steps | 等效批大小 | 估算峰值显存 |
+    |:---:|:---:|:---:|:---:|
+    | 32 | 8 | 256 | ≈7.2 GB |
+    | 16 | 16 | 256 | ≈4.7 GB |
+    | 8 | 32 | 256 | ≈3.5 GB |
+    | 4 | 64 | 256 | ≈2.9 GB |
 
-如果 GPU 不支持 Flash Attention（PyTorch 版本低于 2.0 或 CUDA 计算能力低于 8.0），建议将 batch_size 降至 4 或 8 以避免 OOM。
+    如果 GPU 不支持 Flash Attention（PyTorch 版本低于 2.0 或 CUDA Compute Capability 低于 8.0），建议将 `batch_size` 降至 4 或 8 以避免 OOM。
 
 :::
 

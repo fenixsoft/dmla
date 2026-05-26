@@ -130,20 +130,121 @@
 你可以使用以下示例代码实际检查沙箱环境是否已经可用，代码可编辑，点击 Run 或者 Run on GPU 按钮运行代码：
 
 ```python runnable gpu
-import importlib.util
+import importlib
+
+# 检查沙箱环境中的 Python 包
+required_packages = {
+    # 科学计算
+    'numpy': 'NumPy',
+    'pandas': 'Pandas',
+    'matplotlib': 'Matplotlib',
+    'scipy': 'SciPy',
+    'sklearn': 'scikit-learn',
+    'requests': 'Requests',
+    'PIL': 'Pillow',
+    'cv2': 'OpenCV',
+    'lmdb': 'LMDB',
+    # PyTorch
+    'torch': 'PyTorch',
+    'torchvision': 'TorchVision',
+    'torchaudio': 'TorchAudio',
+    # HuggingFace
+    'transformers': 'HuggingFace Transformers',
+    'tokenizers': 'HuggingFace Tokenizers',
+    'datasets': 'HuggingFace Datasets',
+    # Jupyter 内核
+    'ipykernel': 'IPyKernel',
+    'jupyter_client': 'Jupyter Client',
+    'ipywidgets': 'IPyWidgets',
+}
+
+print("=== Python 包检查 ===")
+for pkg, desc in required_packages.items():
+    try:
+        mod = importlib.import_module(pkg)
+        version = getattr(mod, '__version__', '内置')
+        print(f"  ✅ {pkg:20s} {desc:30s} {version}")
+    except ModuleNotFoundError:
+        print(f"  ❌ {pkg:20s} {desc:30s} 未安装")
+
+# 检查 Python 版本和运行模式
 import sys
+import os
+print(f"\nPython: {sys.version}")
+print(f"运行模式: {'Docker' if os.path.exists('/.dockerenv') else 'Native'}")
+print(f"DATA_DIR: {os.path.join(DATA_DIR)}")
 
-def check_package(package_name):
-    spec = importlib.util.find_spec(package_name)
-    if spec is None:
-        print(f"❌ {package_name} 未安装")
-        return False
-    else:
-        module = importlib.import_module(package_name)
-        version = getattr(module, '__version__', '未知版本')
-        print(f"✅ {package_name} 已安装，版本: {version}")
-        return True
+# 检查 shared 包位置和内容
+print(f"\n=== Shared 包检查 ===")
+is_docker = os.path.exists('/.dockerenv')
+if is_docker:
+    # Docker 模式：shared 包位于镜像内置路径或 Volume Mount 路径
+    shared_candidates = [
+        ('/workspace/shared', 'Volume Mount（开发模式挂载）'),
+        ('/usr/local/lib/python3.11/site-packages/shared', '镜像内置'),
+    ]
+else:
+    # Native 模式：从 PYTHONPATH 中查找
+    python_paths = os.environ.get('PYTHONPATH', '').split(os.pathsep)
+    shared_candidates = []
+    for p in python_paths:
+        candidate = os.path.join(p, 'shared')
+        shared_candidates.append((candidate, f'PYTHONPATH: {p}'))
 
-check_package("numpy")
-check_package("torch")
+shared_found = False
+for shared_path, source in shared_candidates:
+    if os.path.isdir(shared_path):
+        print(f"  ✅ Shared 包路径: {shared_path}")
+        print(f"     来源: {source}")
+        shared_found = True
+        # 列出 shared 包中的子模块
+        submodules = sorted([
+            d for d in os.listdir(shared_path)
+            if os.path.isdir(os.path.join(shared_path, d))
+            and not d.startswith('_')
+            and os.path.exists(os.path.join(shared_path, d, '__init__.py'))
+        ])
+        if submodules:
+            print(f"     子模块: {', '.join(submodules)}")
+            # 列出每个子模块中的类
+            for mod in submodules:
+                mod_path = os.path.join(shared_path, mod)
+                classes = sorted([
+                    f[:-3] for f in os.listdir(mod_path)
+                    if f.endswith('.py') and f != '__init__.py'
+                ])
+                if classes:
+                    print(f"       {mod}: {', '.join(classes)}")
+        break
+
+if not shared_found:
+    print(f"  ⚠️ 未找到 shared 包（部分章节的代码将无法复用类定义）")
+
+
+# 检查硬件信息
+import multiprocessing
+import torch
+
+print("\n=== 硬件信息 ===")
+print(f"CPU 核心数: {multiprocessing.cpu_count()}")
+try:
+    with open('/proc/meminfo') as f:
+        for line in f:
+            if line.startswith('MemTotal:'):
+                mem_gb = int(line.split()[1]) / 1024 / 1024
+                print(f"内存: {mem_gb:.1f} GB")
+                break
+except Exception:
+    pass
+
+if torch.cuda.is_available():
+    print(f"\n=== GPU 信息 ===")
+    print(f"CUDA 版本: {torch.version.cuda}")
+    for i in range(torch.cuda.device_count()):
+        props = torch.cuda.get_device_properties(i)
+        print(f"GPU {i}: {props.name}")
+        print(f"  显存: {props.total_mem / 1024**3:.1f} GB")
+        print(f"  计算能力: {props.major}.{props.minor}")
+else:
+    print("GPU: 不可用（当前为 CPU 模式）")
 ```
