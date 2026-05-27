@@ -148,7 +148,7 @@ class PretrainDataset(Dataset):
 
 ::: info 预训练语料规模
 
-预训练数据集的 `pretrain_t2t_mini.jsonl` 包含约 200 万条文本样本，总数据量约 1.2GB。这是 MiniMind 项目提供的精简版语料，适合在单卡 GPU 上快速复现预训练流程。完整版语料 `pretrain_t2t.jsonl` 约 10GB，训练效果更好但耗时更长。本实验使用精简版语料。
+预训练数据集的 `pretrain_t2t_mini.jsonl` 包含约 200 万条文本样本，总数据量约 1.2 GB。这是 MiniMind 项目提供的精简版语料，适合在单卡 GPU 上快速复现预训练流程。完整版语料 `pretrain_t2t.jsonl` 约 10 GB，训练效果更好但耗时更长。本实验使用精简版语料。
 
 :::
 

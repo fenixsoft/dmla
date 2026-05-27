@@ -229,12 +229,13 @@ export default {
             ]
           },
           {
-            text: '预训练',
+            text: '预训练与微调',
             collapsible: false,
             children: [
               { text: '预训练数据工程', link: '/language-models/pretraining/pretraining-data' },
               { text: '缩放定律', link: '/language-models/pretraining/scaling-laws' },
               // { text: '分布式训练基础设施', link: '/language-models/pretraining/distributed-training' },
+              // { text: '监督微调', link: 'language-models/pretraining/supervised-finetuning' },
               // { text: '工程实训：SFT 监督微调实验', link: '/language-models/pretraining/llm-sft-experiment' },
             ]
           },
