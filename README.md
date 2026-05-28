@@ -1,10 +1,9 @@
 <p align="center">
 	<br/>
   <a href="https://ai.icyfenix.cn" target="_blank">
-    <img width="180" src="https://github.com/fenixsoft/dmla/blob/main/docs/.vuepress/public/logo.png?raw=true" alt="logo">
-    <span stype="font-size:48px">设计机器学习应用系统</span>
+    <img src="https://github.com/fenixsoft/dmla/blob/main/docs/.vuepress/public/logo.png?raw=true" alt="logo">
   </a>
-  <div>
+  <div align="center">
     <img src="https://visitor-badge.laobi.icu/badge?page_id=fenixsoft/dmla" alt="visitors">
     <img src="https://img.shields.io/github/last-commit/fenixsoft/dmla" alt="GitHub last commit">
     <img src="https://img.shields.io/github/actions/workflow/status/fenixsoft/dmla/deploy.yml" alt="GitHub Actions Workflow Status">
