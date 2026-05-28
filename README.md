@@ -4,6 +4,11 @@
     <img src="https://github.com/fenixsoft/dmla/blob/main/docs/.vuepress/public/logo.png?raw=true" alt="logo">
   </a>
   <div align="center">
+    <img src="https://img.shields.io/github/stars/fenixsoft/dmla" alt="GitHub Repo stars">
+    <img src="https://img.shields.io/github/followers/fenixsoft" alt="GitHub followers">
+    <img src="https://img.shields.io/github/forks/fenixsoft/dmla" alt="GitHub forks">
+  </div>
+  <div align="center">
     <img src="https://visitor-badge.laobi.icu/badge?page_id=fenixsoft/dmla" alt="visitors">
     <img src="https://img.shields.io/github/last-commit/fenixsoft/dmla" alt="GitHub last commit">
     <img src="https://img.shields.io/github/actions/workflow/status/fenixsoft/dmla/deploy.yml" alt="GitHub Actions Workflow Status">
