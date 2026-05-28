@@ -34,9 +34,9 @@ actions:
   - text: 文档目录
     link: /contents.html
     type: secondary
-  - text: 构建沙箱
-    link: /sandbox.html
-    type: secondary
+  # - text: 构建沙箱
+  #   link: /sandbox.html
+  #   type: secondary
 # features:
 #   - title: 🧑‍💻 开发者与智能
 #     details: 以开发者向人工智能转型的视角撰写，成体系的机器学习文章集

@@ -47,6 +47,9 @@ coverage/
 # Playwright CLI (用于测试)
 .playwright-cli/
 
+# OpenSpec
+openspec/
+
 # Scripts - 仅忽略 Python 文件
 scripts/*.py
 
