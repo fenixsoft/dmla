@@ -55,22 +55,25 @@ export default {
   beforeDestroy() {
     if (this.pollTimer) {
       clearInterval(this.pollTimer)
+      this.pollTimer = null
     }
+    this._destroyed = true
   },
   methods: {
     async checkStatus() {
-      if (this.ready) return
+      if (this.ready || this._destroyed) return
       try {
         const res = await fetch('/api/chat/status')
+        if (this._destroyed) return
         const data = await res.json()
         this.ready = data.ready
       } catch {
-        this.ready = false
+        if (!this._destroyed) this.ready = false
       }
     },
     async sendMessage() {
       const text = this.inputText.trim()
-      if (!text || !this.ready || this.loading) return
+      if (!text || !this.ready || this.loading || this._destroyed) return
 
       this.messages.push({ role: 'user', content: text })
       this.inputText = ''

@@ -53,7 +53,7 @@ function copyDir(src, dest, filter = null) {
 console.log('\n📋 复制服务器代码...')
 console.log(`   源目录: ${localServerSrc}`)
 console.log(`   目标目录: ${cliServerDest}`)
-copyDir(localServerSrc, cliServerDest, (name) => name.endsWith('.js') || name.endsWith('.py'))
+copyDir(localServerSrc, cliServerDest, (name) => name.endsWith('.js') || name.endsWith('.cjs') || name.endsWith('.py'))
 
 // 复制共享模块（复制所有 .py 文件和 __init__.py）
 console.log('\n📋 复制共享模块...')
