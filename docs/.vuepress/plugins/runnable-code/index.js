@@ -33,7 +33,7 @@ export const runnableCodePlugin = (options = {}) => {
         if (info.includes('runnable')) {
           const infoLower = info.toLowerCase()
           // 移除所有标记参数，提取语言名称
-          const language = info.replace(/runnable|gpu|gpuonly|timeout=\S+|extract-class="[^"]*"/gi, '').trim() || 'python'
+          const language = info.replace(/runnable|gpu|gpuonly|timeout=\S+|mode=\S+|extract-class="[^"]*"/gi, '').trim() || 'python'
           const useGpu = infoLower.includes('gpu')
           const gpuOnly = infoLower.includes('gpuonly')
 
@@ -44,6 +44,10 @@ export const runnableCodePlugin = (options = {}) => {
           // 解析 extract-class 参数
           const extractMatch = info.match(/extract-class="([^"]+)"/i)
           const extractClass = extractMatch ? extractMatch[1] : null
+
+          // 解析 mode 参数
+          const modeMatch = info.match(/mode=(\S+)/i)
+          const mode = modeMatch ? modeMatch[1] : null
 
           // 生成唯一 ID
           const id = `runnable-${idx}-${Date.now()}`
@@ -64,7 +68,8 @@ export const runnableCodePlugin = (options = {}) => {
             `data-gpu="${useGpu}"`,
             `data-gpu-only="${gpuOnly}"`,
             timeout ? `data-timeout="${timeout}"` : '',
-            extractClass ? `data-extract-class="${extractClass}"` : ''
+            extractClass ? `data-extract-class="${extractClass}"` : '',
+            mode ? `data-mode="${mode}"` : ''
           ].filter(Boolean).join(' ')
 
           // 渲染按钮：gpuonly 时只显示 GPU 按钮，否则显示普通 Run 按钮（有 gpu 时也显示 GPU 按钮）

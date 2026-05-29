@@ -12,6 +12,7 @@ import { fileURLToPath } from 'url'
 import { resolve } from 'path'
 import sandboxRouter from './routes/sandbox.js'
 import nativeRouter from './routes/native.js'
+import chatRouter from './routes/chat.js'
 import { cleanupAllContainers } from './sandbox.js'
 import { cleanupAllProcesses } from './native_executor.js'
 import { checkNativeEnvironment, getDataPath } from './native_env_check.js'
@@ -71,6 +72,9 @@ if (isNativeMode) {
   log('Using Docker sandbox router')
   app.use('/api/sandbox', sandboxRouter)
 }
+
+// 对话 API
+app.use('/api/chat', chatRouter)
 
 // 错误处理
 app.use((err, req, res, next) => {

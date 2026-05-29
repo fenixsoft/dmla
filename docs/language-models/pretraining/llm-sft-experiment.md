@@ -1,24 +1,20 @@
-# SFT 监督微调实验
+# SFT 模型对话实验
 
-在上一章的预训练实验中，我们训练了一个约 64M 参数的 MiniMind 语言模型。预训练赋予了模型语言建模的能力——给定一段文本，模型能够续写出语法通顺、语义连贯的后续内容。然而，预训练模型的行为模式是"续写"而非"回答"：如果你对它说"你好"，它可能续写为"你好，欢迎来到……"而不是回答"你好！有什么可以帮你的？"。
-
-这种差异的本质在于，预训练学习的是文本的概率分布，而用户期望的是遵循指令的行为模式。**监督微调**（Supervised Fine-Tuning, SFT）就是弥合这一差异的关键步骤：通过人工编写的指令-回答对，教会模型理解"用户提问 → 助手回答"的交互格式，从"续写者"转变为"对话者"。
-
-本次实验在预训练模型的基础上进行 SFT 训练。训练完成后，你将直接观察到模型行为的质变——从只能续写文本，到能够理解用户意图并给出有针对性的回答。
+在[Transformer 模型训练实验](../architecture-basics/llm-pretrain-experiment.md)中，我们训练了一个约 64M 参数的语言模型。够续写出语法通顺、语义连贯的后续内容。在本实验里将使用监督微调，通过人工编写的指令回答对，教会模型理解"用户提问 → 模型回答"的交互格式，从续写转变为对话。
 
 ## 实验准备
 
 在开始实验之前，请确保已完成以下准备工作：
 
-1. 已完成预训练实验，模型权重保存在数据目录中
-2. 已[挂载数据目录](../../sandbox.md#数据管理)并下载好 SFT 训练语料
+1. 已完成[Transformer 模型训练实验](../architecture-basics/llm-pretrain-experiment.md)，模型权重文件 `pretrain_768.pth` 正确生成在数据目录中。
+2. 已[挂载数据目录](../../sandbox.md#数据管理)并下载好 SFT 训练语料。与预训练实验一样，语料数据集来自 [MiniMind](https://github.com/jingyaogong/minimind) 开源项目。
 
 ```bash
 # 选择 "下载数据集" -> 选择 "MiniMind SFT (LLM监督微调语料)"
 dmla data
 ```
 
-该语料包含 SFT 训练文本数据（`sft_t2t_mini.jsonl`，约 500MB）。下载完成后，验证预训练模型和 SFT 语料是否完整：
+该语料包含 SFT 训练文本数据（`sft_t2t_mini.jsonl`，约 1.7 GB）。本实验从中随机抽取 5 万条样本生成了 `sft_t2t_tiny.jsonl` 用于训练。下载完成后，验证预训练模型和 SFT 语料是否完整：
 
 ```python runnable gpu
 import os
@@ -58,68 +54,9 @@ tokenizer_config = os.path.join(tokenizer_dir, 'tokenizer_config.json')
 print(f"Tokenizer: {'已存在' if os.path.exists(tokenizer_json) else '未找到'}")
 ```
 
-## 第一阶段：SFT 数据集
+## 第一阶段：监督微调数据集
 
-### SFT 数据格式
-
-SFT 训练数据与预训练数据有着根本性的结构差异。预训练语料是连续文本（`{"text": "一段文本..."}`），每条样本只有一个文本字段，模型在整个序列上学习预测下一个 token。SFT 语料则采用**对话格式**，每条样本包含多轮对话，需要区分不同角色的消息：
-
-```json
-{
-  "conversations": [
-    {"role": "user", "content": "什么是机器学习？"},
-    {"role": "assistant", "content": "机器学习是人工智能的一个分支..."},
-    {"role": "user", "content": "它有哪些应用？"},
-    {"role": "assistant", "content": "机器学习的应用非常广泛..."}
-  ]
-}
-```
-
-这种对话格式通过 `apply_chat_template` 方法转换为模型可处理的 ChatML 文本：
-
-```
-<|im_start|>user
-什么是机器学习？<|im_end|>
-<|im_start|>assistant
-机器学习是人工智能的一个分支...<|im_end|>
-<|im_start|>user
-它有哪些应用？<|im_end|>
-<|im_start|>assistant
-机器学习的应用非常广泛...<|im_end|>
-```
-
-### 标签掩码：SFT 的核心机制
-
-SFT 与预训练最关键的技术差异在于**标签掩码**。预训练中，整个序列的所有 token 都参与 loss 计算；SFT 中，只有 **assistant 的回答**部分参与 loss 计算，user 的提问和 system 提示被掩码为 -100（交叉熵损失忽略值）。
-
-这样做的原因是：预训练的目标是让模型学会语言的统计规律，因此每个 token 都是学习目标；SFT 的目标是让模型学会"如何回答"，因此只有回答部分才是学习目标，提问部分只是上下文条件。
-
-```python runnable
-# 演示标签掩码机制
-sample_text = "<|im_start|>user\n你好<|im_end|>\n<|im_start|>assistant\n你好！有什么可以帮你的？<|im_end|>\n"
-
-# 简化的 token 对应（实际 tokenization 更细粒度）
-tokens = sample_text.replace("\n", "↵").split("|")
-# 实际机制：通过检测 <|im_start|>assistant↵ 和 <|im_end|>↵ 标记定位回答区间
-
-print("SFT 标签掩码示意：")
-print("=" * 70)
-print(f"{'Token':<30s} {'标签':>6s} {'说明':<20s}")
-print("-" * 70)
-print(f"{'<|im_start|>user':<30s} {'-100':>6s} {'用户提问，不计算loss':<20s}")
-print(f"{'你好':<30s} {'-100':>6s} {'用户提问，不计算loss':<20s}")
-print(f"{'<|im_end|>':<30s} {'-100':>6s} {'用户提问，不计算loss':<20s}")
-print(f"{'<|im_start|>assistant':<30s} {'-100':>6s} {'角色标记，不计算loss':<20s}")
-print(f"{'你好！有什么可以帮你的？':<30s} {'token':>6s} {'assistant回答，计算loss':<20s}")
-print(f"{'<|im_end|>':<30s} {'token':>6s} {'结束标记，计算loss':<20s}")
-print()
-print("预训练标签：所有 token 都参与 loss 计算")
-print("SFT 标签：仅 assistant 回答部分参与 loss 计算")
-```
-
-### SFTDataset 实现
-
-下面实现 SFTDataset，它将对话数据 tokenize 为模型可训练的格式，核心逻辑是定位 assistant 回答区间并生成对应的标签掩码：
+下面代码实现了 SFTDataset，它将对话数据 tokenize 为模型可训练的格式，核心逻辑是定位 assistant 回答区间并生成对应的标签掩码。这段代码会在训练阶段被调用，无需手动运行。
 
 ```python runnable gpu extract-class="SFTDataset, pre_processing_chat"
 import os
@@ -128,6 +65,7 @@ from torch.utils.data import Dataset
 import json
 import random
 from datasets import load_dataset, Features, Value
+from datasets import logging as datasets_logging
 
 def pre_processing_chat(conversations, add_system_ratio=0.2):
     """预处理对话数据：概率性添加系统提示词"""
@@ -137,15 +75,11 @@ def pre_processing_chat(conversations, add_system_ratio=0.2):
 
     SYSTEM_PROMPTS = [
         "你是一个知识丰富的AI，尽力为用户提供准确的信息。",
-        "你是minimind，一个小巧但有用的语言模型。",
         "你是一个专业的AI助手，请提供有价值的回答。",
-        "你是minimind，请尽力帮助用户解决问题。",
         "你是一个可靠的AI，请给出准确的回答。",
         "You are a helpful AI assistant.",
-        "You are minimind, a lightweight intelligent assistant.",
         "You are a friendly chatbot. Please answer the user's questions carefully.",
         "You are a knowledgeable AI. Try your best to provide accurate information.",
-        "You are minimind, a small but useful language model."
     ]
     # 概率性添加 system
     if conversations[0].get('role') != 'system':
@@ -163,17 +97,32 @@ class SFTDataset(Dataset):
     - 标签掩码：仅 assistant 回答部分参与 loss，其余标记为 -100
     - 使用 apply_chat_template 将对话转为 ChatML 格式
     """
+    # MiniMind 使用 ChatML 格式：<|im_start|>role\ncontent<|im_end|>\n
+    # tokenizer 本身未内置 chat_template，需手动设置
+    CHATML_TEMPLATE = (
+        "{% for message in messages %}<|im_start|>{{ message.role }}\n"
+        "{{ message.content }}<|im_end|>\n"
+        "{% endfor %}"
+        "{% if add_generation_prompt %}<|im_start|>assistant\n{% endif %}"
+    )
+
     def __init__(self, jsonl_path, tokenizer, max_length=768):
         super().__init__()
         os.environ["TOKENIZERS_PARALLELISM"] = "false"
         self.tokenizer = tokenizer
+        # MiniMind tokenizer 未内置 chat_template，需手动设置 ChatML 格式
+        if not tokenizer.chat_template:
+            tokenizer.chat_template = self.CHATML_TEMPLATE
         self.max_length = max_length
         features = Features({
             'conversations': [{'role': Value('string'), 'content': Value('string'),
                               'reasoning_content': Value('string'), 'tools': Value('string'),
                               'tool_calls': Value('string')}]
         })
+        # 抑制 load_dataset 的 "Generating train split" 进度输出
+        datasets_logging.set_verbosity_error()
         self.samples = load_dataset('json', data_files=jsonl_path, split='train', features=features)
+        datasets_logging.set_verbosity_warning()
         # 预计算 assistant 回答的起止标记 ID
         self.bos_id = tokenizer(f'{tokenizer.bos_token}assistant\n', add_special_tokens=False).input_ids
         self.eos_id = tokenizer(f'{tokenizer.eos_token}\n', add_special_tokens=False).input_ids
@@ -229,95 +178,19 @@ class SFTDataset(Dataset):
         return torch.tensor(input_ids, dtype=torch.long), torch.tensor(labels, dtype=torch.long)
 ```
 
-::: info SFT 数据规模
+## 第二阶段：监督微调训练
 
-MiniMind 的 `sft_t2t_mini.jsonl` 包含约 20 万条对话样本，总数据量约 500MB。这是 MiniMind 项目提供的精简版 SFT 语料，覆盖问答、代码、推理、创意写作等多种任务类型。以 768 的序列长度和 16 的批大小训练 3 个 epoch，单卡 RTX 3090 约需 1-2 小时。
+SFT 训练的工程决策与预训练有所不同，主要差异是学习率和训练轮数：
 
-:::
-
-## 第二阶段：加载预训练模型
-
-SFT 的起点不是随机初始化的模型，而是预训练得到的权重。预训练模型已经掌握了语言的统计规律，SFT 只是在此基础上微调模型的行为模式。
-
-```python runnable gpu
-import os
-import torch
-from transformers import AutoTokenizer
-
-# 导入共享模块中的 MiniMind 模型
-from shared.llm.mini_mind_config import MiniMindForCausalLM, MiniMindConfig
-
-# ========== 路径配置 ==========
-PRETRAIN_PATH = os.path.join(DATA_DIR, 'models', 'minimind', 'pretrain', 'pretrain_768.pth')
-TOKENIZER_PATH = os.path.join(DATA_DIR, 'datasets', 'minimind-pretrain')
-
-# ========== 加载 tokenizer ==========
-tokenizer = AutoTokenizer.from_pretrained(TOKENIZER_PATH)
-print(f"词表大小: {len(tokenizer)}")
-
-# ========== 创建模型并加载预训练权重 ==========
-config = MiniMindConfig(hidden_size=768, num_hidden_layers=8)
-model = MiniMindForCausalLM(config)
-
-# 查找可用的预训练权重
-weight_path = None
-if os.path.exists(PRETRAIN_PATH):
-    weight_path = PRETRAIN_PATH
-else:
-    for epoch in [2, 1]:
-        ckp = os.path.join(DATA_DIR, 'models', 'minimind', 'pretrain', f'pretrain_epoch{epoch}.pth')
-        if os.path.exists(ckp):
-            weight_path = ckp
-            break
-
-if weight_path:
-    weights = torch.load(weight_path, map_location='cpu')
-    model.load_state_dict(weights, strict=False)
-    print(f"已加载预训练权重: {weight_path}")
-else:
-    print("未找到预训练权重，使用随机初始化（SFT 效果将很差）")
-
-total_params = sum(p.numel() for p in model.parameters())
-print(f"模型参数量: {total_params:,} ({total_params/1e6:.2f}M)")
-
-# 演示预训练模型的"续写"行为
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-model = model.half().to(device).eval()
-
-test_prompt = "你好"
-input_text = tokenizer.bos_token + test_prompt
-inputs = tokenizer(input_text, return_tensors="pt", truncation=True).to(device)
-
-with torch.no_grad():
-    generated_ids = model.generate(
-        inputs=inputs["input_ids"],
-        attention_mask=inputs["attention_mask"],
-        max_new_tokens=32,
-        temperature=0.85,
-        top_p=0.85,
-        do_sample=True,
-        pad_token_id=tokenizer.pad_token_id,
-        eos_token_id=tokenizer.eos_token_id
-    )
-
-response = tokenizer.decode(generated_ids[0][len(inputs["input_ids"][0]):], skip_special_tokens=True)
-print(f"\n预训练模型续写示例:")
-print(f"输入: {test_prompt}")
-print(f"续写: {response}")
-print(f"\n注意: 预训练模型只会续写文本，不会进行对话。SFT 之后才能改变这种行为。")
-```
-
-## 第三阶段：SFT 训练
-
-SFT 训练的工程决策与预训练有所不同，最关键的差异是学习率和训练轮数：
-
-- **更小的学习率**（1e-5）：预训练用 5e-4 的学习率从随机初始化开始学习语言知识，SFT 则在预训练模型的基础上微调行为模式，过大的学习率会破坏已学到的语言能力，造成"灾难性遗忘"。
-- **更少的训练轮数**（3 epoch）：SFT 数据量远小于预训练数据（万级 vs 百万级），训练太久容易过拟合，模型会"背诵"训练数据而非学习通用的回答能力。
+- **更小的学习率**（1e-5）：预训练用 5e-4 的学习率从随机初始化开始学习语言知识，SFT 则在预训练模型的基础上微调行为模式，过大的学习率会破坏已学到的语言能力，造成灾难性遗忘。
+- **更少的训练轮数**（3 epoch）：SFT 数据量远小于预训练数据（万级 vs 百万级），训练太久容易过拟合，模型会记忆训练数据而非学习通用的回答能力。
 - **更长的序列**（768）：对话数据通常比预训练文本更长，需要更大的序列长度来容纳多轮对话的上下文。
 
 ::: info 训练预估
 
-SFT 语料约 20 万条对话样本，序列长度 768，批大小 16，3 个 epoch，约需 8G 显存可运行，用 GPU 训练约 1-2 小时。
+`sft_t2t_mini.jsonl` 包含约 20 万条对话样本，总数据量约 1.74 GB。这是 MiniMind 项目提供的精简版 SFT 语料，覆盖问答、代码、推理、创意写作等多种任务类型。
+
+按序列长度 768，批大小 16，3 个 epoch，约需 8 GB 显存可运行，用 5080 GPU 训练约 1 小时。
 
 :::
 
@@ -341,7 +214,7 @@ from shared.llm.sftdataset import SFTDataset
 
 # ========== 路径配置 ==========
 TOKENIZER_PATH = os.path.join(DATA_DIR, 'datasets', 'minimind-pretrain')
-SFT_DATA_PATH = os.path.join(DATA_DIR, 'datasets', 'minimind-sft', 'sft_t2t_mini.jsonl')
+SFT_DATA_PATH = os.path.join(DATA_DIR, 'datasets', 'minimind-sft', 'sft_t2t_tiny.jsonl')
 PRETRAIN_PATH = os.path.join(DATA_DIR, 'models', 'minimind', 'pretrain', 'pretrain_768.pth')
 SAVE_DIR = os.path.join(DATA_DIR, 'models', 'minimind', 'sft')
 
@@ -349,10 +222,10 @@ SAVE_DIR = os.path.join(DATA_DIR, 'models', 'minimind', 'sft')
 hidden_size = 768
 num_hidden_layers = 8
 max_seq_len = 768
-batch_size = 16
-learning_rate = 1e-5     # SFT 学习率远小于预训练（5e-4）
-num_epochs = 3
-accumulation_steps = 4   # 梯度累积（等效 batch_size = 16 × 4 = 64）
+batch_size = 32
+learning_rate = 5e-5     # SFT 学习率（比预训练的 5e-4 低一个数量级，但不至于过小）
+num_epochs = 2
+accumulation_steps = 1   # 不使用梯度累积（数据量小，直接大 batch 更新）
 grad_clip = 1.0
 log_interval = 50
 save_interval = 500
@@ -423,8 +296,12 @@ autocast_ctx = nullcontext() if device_type == "cpu" else torch.cuda.amp.autocas
 optimizer = optim.AdamW(model.parameters(), lr=learning_rate)
 
 def get_lr(current_step, total_steps, lr):
-    """余弦学习率调度：SFT 使用更低的学习率，仍保持平滑衰减"""
-    return lr * (0.1 + 0.45 * (1 + math.cos(math.pi * current_step / total_steps)))
+    """线性 warmup + 余弦衰减：前 10% 步数线性升温，之后余弦衰减"""
+    warmup_steps = int(0.1 * total_steps)
+    if current_step < warmup_steps:
+        return lr * current_step / warmup_steps
+    progress = (current_step - warmup_steps) / (total_steps - warmup_steps)
+    return lr * (0.1 + 0.45 * (1 + math.cos(math.pi * progress)))
 
 os.makedirs(SAVE_DIR, exist_ok=True)
 progress.update(8, message="SFT 训练环境准备完成")
@@ -521,9 +398,9 @@ progress.complete(message=f"SFT 完成！模型已保存到 {final_path}")
 print(f"\n最终模型已保存: {final_path}")
 ```
 
-## 第四阶段：对话推理
+## 第三阶段：对话推理
 
-SFT 训练完成后，模型已经学会了遵循对话格式，能够理解用户指令并给出有针对性的回答。与预训练模型只能续写文本不同，SFT 模型能够识别 `<|im_start|>user` 和 `<|im_start|>assistant` 标记，知道自己是"助手"角色，应该在用户提问后给出回答。
+SFT 训练完成后，模型已经学会了遵循对话格式，能够理解用户指令并给出有针对性的回答。与预训练模型只能续写文本不同，SFT 模型能够识别 `<|im_start|>user` 和 `<|im_start|>assistant` 标记，知道自己是"AI 助手"角色，在用户提问后能给出恰当的回答。
 
 ```python runnable gpuonly
 import torch
@@ -539,6 +416,14 @@ sft_model_path = os.path.join(DATA_DIR, 'models', 'minimind', 'sft', 'full_sft_7
 
 # 加载分词器
 tokenizer = AutoTokenizer.from_pretrained(tokenizer_path)
+# MiniMind tokenizer 未内置 chat_template，需手动设置 ChatML 格式
+if not tokenizer.chat_template:
+    tokenizer.chat_template = (
+        "{% for message in messages %}<|im_start|>{{ message.role }}\n"
+        "{{ message.content }}<|im_end|>\n"
+        "{% endfor %}"
+        "{% if add_generation_prompt %}<|im_start|>assistant\n{% endif %}"
+    )
 
 # 创建模型并加载 SFT 权重
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -674,6 +559,95 @@ print()
 print("预训练模型倾向于续写文本，SFT 模型则理解对话意图并给出针对性回答。")
 ```
 
+### 对话体验
+
+上方代码块运行后，模型将加载到沙箱中。加载完成后，可在下方与 SFT 微调后的模型进行对话。
+
+```python runnable gpuonly mode=chat
+import torch
+import os
+from transformers import AutoTokenizer
+from shared.llm.mini_mind_config import MiniMindForCausalLM, MiniMindConfig
+
+# 加载 tokenizer
+tokenizer_path = os.path.join(DATA_DIR, 'datasets', 'minimind-pretrain')
+tokenizer = AutoTokenizer.from_pretrained(tokenizer_path)
+# MiniMind tokenizer 未内置 chat_template，需手动设置 ChatML 格式
+if not tokenizer.chat_template:
+    tokenizer.chat_template = (
+        "{% for message in messages %}<|im_start|>{{ message.role }}\n"
+        "{{ message.content }}<|im_end|>\n"
+        "{% endfor %}"
+        "{% if add_generation_prompt %}<|im_start|>assistant\n{% endif %}"
+    )
+
+# 加载 SFT 模型
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+config = MiniMindConfig(hidden_size=768, num_hidden_layers=8)
+model = MiniMindForCausalLM(config)
+
+# 查找可用的 SFT 权重
+sft_model_path = os.path.join(DATA_DIR, 'models', 'minimind', 'sft', 'full_sft_768.pth')
+weight_path = None
+if os.path.exists(sft_model_path):
+    weight_path = sft_model_path
+else:
+    for epoch in [3, 2, 1]:
+        ckp = os.path.join(DATA_DIR, 'models', 'minimind', 'sft', f'sft_epoch{epoch}.pth')
+        if os.path.exists(ckp):
+            weight_path = ckp
+            break
+
+if weight_path:
+    weights = torch.load(weight_path, map_location=device)
+    model.load_state_dict(weights, strict=False)
+    print(f"已加载 SFT 权重: {weight_path}")
+else:
+    print("未找到 SFT 模型，将使用随机初始化权重")
+
+model = model.half().to(device).eval()
+print(f"模型参数量: {sum(p.numel() for p in model.parameters()) / 1e6:.2f}M")
+print("对话服务已就绪")
+
+# 定义对话函数
+def chat(user_message, history=None):
+    if history is None:
+        history = []
+    messages = [{"role": "system", "content": "你是一个有帮助的AI助手。"}]
+    for h in history:
+        messages.append(h)
+    messages.append({"role": "user", "content": user_message})
+
+    chat_input = tokenizer.apply_chat_template(
+        messages, tokenize=False, add_generation_prompt=True
+    )
+    inputs = tokenizer(chat_input, return_tensors="pt", truncation=True).to(device)
+
+    with torch.no_grad():
+        generated_ids = model.generate(
+            inputs=inputs["input_ids"],
+            attention_mask=inputs["attention_mask"],
+            max_new_tokens=128,
+            temperature=0.85,
+            top_p=0.85,
+            top_k=50,
+            do_sample=True,
+            pad_token_id=tokenizer.pad_token_id,
+            eos_token_id=tokenizer.eos_token_id,
+            repetition_penalty=1.2
+        )
+
+    response = tokenizer.decode(
+        generated_ids[0][len(inputs["input_ids"][0]):],
+        skip_special_tokens=True
+    )
+    return response.strip()
+```
+
+::: details 运行上面代码后，点击这里进行对话
+<ChatDemo />
+:::
+
 ## 实验结论
 
 本次实验在预训练模型的基础上完成了 SFT 监督微调，训练完成后，以下文件将保存到数据目录：
@@ -683,15 +657,23 @@ print("预训练模型倾向于续写文本，SFT 模型则理解对话意图并
     - `<DATA_DIR>/models/minimind/sft/sft_epoch*.pth` - 每 epoch 结束时的 checkpoint
     - `<DATA_DIR>/models/minimind/sft/sft_step*.pth` - 训练中间 checkpoint
 
-SFT 训练使模型的行为发生了质变，具体表现在以下三个方面：
+### 训练决策：本实验与原版 MiniMind 的差异
 
-1. **从续写到对话**：预训练模型只学会了文本的概率分布，输入"什么是机器学习？"会续写为"什么是机器学习？这是一个关于……"，因为它在预训练语料中学到的模式就是这样的。SFT 模型理解了对话格式，知道遇到用户提问时应该直接回答，而非继续编造对话。这种转变是通过标签掩码实现的——只有 assistant 回答部分参与 loss 计算，迫使模型在用户提问后学习生成有意义的回答。
+原版 MiniMind 的 SFT 训练面向全量数据（约 90 万条对话）在多 GPU 环境下运行，本实验面向教学场景，在单张消费级 GPU（如 RTX 4060，7.6 GB 显存）上运行，因此对训练策略做了针对性调整。下表列出关键差异及调整原因：
 
-2. **遵循指令格式**：SFT 模型学会了识别 `<|im_start|>user` 和 `<|im_start|>assistant` 标记，知道自己是"助手"角色。这使得模型能够支持多轮对话：用户可以连续提问，模型会根据对话历史生成连贯的回复。预训练模型无法做到这一点，因为它从未学习过角色区分和对话结构。
+| 训练决策 | 原版 MiniMind | 本实验 | 调整原因 |
+|---------|-------------|-------|---------|
+| 训练数据 | 全量 90 万条（`sft_t2t_mini.jsonl`） | 筛选后 5 万条纯对话（`sft_t2t_tiny.jsonl`） | 原版数据包含大量 tool_calls 和推理链样本，本实验只做基础对话对齐，筛选只含 role+content 的纯对话即可。缩减数据量将训练时间从 20+ 小时降至约 1 小时，适合教学演示 |
+| 学习率 | 1e-5 | 5e-5 | 原版在全量数据上训练约 11 万步，余弦调度有足够的步数缓慢衰减。本实验只有约 3000 步/epoch，1e-5 的学习率在几百步后就被余弦调度压到 1e-6 量级，模型几乎停止学习。提高 5 倍确保在有限的步数内仍有足够的更新幅度 |
+| 学习率调度 | 纯余弦衰减 | 线性 warmup（前 10%）+ 余弦衰减 | 纯余弦调度从第 1 步就开始衰减，步数少时 lr 下降过快。加入 warmup 阶段让模型在训练初期用逐步增大的 lr 充分探索参数空间，避免 lr 过早降到无效水平 |
+| 梯度累积 | 1（batch_size=16） | 1（batch_size=32） | 原版直接用 batch_size=16 每步更新一次。本实验曾尝试 batch_size=16 + accumulation_steps=4（等效 64），但 loss 除以 4 使每步有效梯度缩小 4 倍，叠加低学习率导致训练几乎不动。改为直接 batch_size=32、不累积，每步的梯度信号更强，且显存实测约 5.7 GB，7.6 GB 足够 |
+| 训练轮数 | 2 | 2 | 与原版一致。SFT 数据量小，训练太久容易过拟合 |
 
-3. **能力边界仍然存在**：SFT 赋予了模型对话能力，但并未显著增加知识量或推理能力。64M 参数的模型拥有的世界知识有限，回答可能存在事实错误或逻辑不严密。更深层的推理能力（如数学证明、代码调试）和多步骤规划能力，需要更大规模的模型或后续的强化学习对齐（RLHF）才能获得。SFT 是"教模型如何说话"，而非"教模型更多知识"。
+这些调整的本质是：**当训练步数大幅减少时，必须提高每步的有效更新量**。原版有 11 万步来慢慢收敛，本实验只有 6 千步，如果学习率和梯度幅度与原版相同，模型在 lr 衰减到无效之前根本来不及学好。
 
-预训练和 SFT 共同构成了语言模型训练的基础阶段。在 InstructGPT 的三阶段框架中，SFT 是第一阶段，为后续的奖励模型训练和 PPO 强化学习提供了起点。下一章将探讨 RLHF——如何通过人类反馈的强化学习进一步提升模型的对齐程度。
+SFT 训练使模型的行为发生了质变，赋予了模型对话能力，但并未显著增加知识量或推理能力。64M 参数的模型拥有的世界知识有限，回答可能存在事实错误或逻辑不严密。更深层的推理能力（如数学证明、代码调试）和多步骤规划能力，需要更大规模的模型或后续的强化学习对齐（RLHF）才能获得。SFT 是"教模型如何说话"，而非"教模型更多知识"。
+
+预训练和 SFT 共同构成了语言模型训练的基础阶段。在 InstructGPT 的三阶段框架中，SFT 是第一阶段，为后续的奖励模型训练和 PPO 强化学习提供了起点。后续还将通过人类反馈的强化学习实验进一步提升模型的对齐程度。
 
 ## 运行结果
 

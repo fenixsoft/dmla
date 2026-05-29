@@ -177,6 +177,10 @@ const props = defineProps({
     type: String,
     default: null  // null, 数字字符串, 或 'unlimited'
   },
+  mode: {
+    type: String,
+    default: null  // null 或 'chat'
+  },
   apiEndpoint: {
     type: String,
     default: ''  // 留空则使用配置的端点
@@ -490,7 +494,8 @@ async function runCode(useGpu = false) {
       body: JSON.stringify({
         code: props.code,
         useGpu,
-        timeout: timeoutValue.value
+        timeout: timeoutValue.value,
+        mode: props.mode
       }),
       signal: abortController.signal
     })

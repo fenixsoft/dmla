@@ -1,6 +1,7 @@
 import { defineClientConfig } from 'vuepress/client'
 import './styles/custom.css'
 import HomeHero from './components/HomeHero.vue'
+import ChatDemo from './components/ChatDemo.vue'
 
 // Sidebar 配置（从 config.js 同步）
 const sidebarConfig = [
@@ -39,6 +40,7 @@ export default defineClientConfig({
     // 手动注册 HomeHero 组件，确保 VuePress 上下文正确传递
     // 避免 registerComponentsPlugin 自动注册导致的 HMR 上下文问题
     app.component('HomeHero', HomeHero)
+    app.component('ChatDemo', ChatDemo)
 
     // 注入 sidebar 配置到全局属性
     app.provide('sidebarConfig', sidebarConfig)

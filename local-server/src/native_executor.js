@@ -390,8 +390,9 @@ export async function runPythonCodeNative(code, useGpu = false, timeoutOverride 
  * @param {boolean} useGpu - 是否请求 GPU
  * @param {object} res - Express 响应对象
  * @param {number|null} timeoutOverride - 超时时间（秒）
+ * @param {string|null} mode - 执行模式（'chat' 启用对话模式）
  */
-export async function runPythonCodeStreamingNative(code, useGpu = false, res, timeoutOverride = null) {
+export async function runPythonCodeStreamingNative(code, useGpu = false, res, timeoutOverride = null, mode = null) {
   const startTime = Date.now()
   const executionId = generateExecutionId()
 
@@ -486,6 +487,7 @@ export async function runPythonCodeStreamingNative(code, useGpu = false, res, ti
       '--timeout', String(timeoutSeconds),
       '--stream'
     ]
+    if (mode === 'chat') procArgs.push('--serve')
   } else {
     // Linux/macOS 直接传递代码参数
     procArgs = [
@@ -494,6 +496,7 @@ export async function runPythonCodeStreamingNative(code, useGpu = false, res, ti
       '--timeout', String(timeoutSeconds),
       '--stream'
     ]
+    if (mode === 'chat') procArgs.push('--serve')
   }
 
   try {
@@ -534,6 +537,19 @@ export async function runPythonCodeStreamingNative(code, useGpu = false, res, ti
         // kernel_runner.py 输出的已经是 JSON 格式，直接转发
         if (line.trim().startsWith('{')) {
           res.write(line + '\n')
+          // chat 模式：检测 idle 消息，注册 ChatManager
+          if (mode === 'chat' && !chatManager.session) {
+            try {
+              const msg = JSON.parse(line)
+              if (msg.type === 'idle') {
+                chatManager.register('native', {
+                  process: proc,
+                  stdin: proc.stdin
+                })
+                log('ChatManager registered for Native chat sandbox')
+              }
+            } catch {}
+          }
         } else {
           // 非 JSON 内容包装为 stream 消息
           res.write(JSON.stringify({
@@ -582,15 +598,25 @@ export async function runPythonCodeStreamingNative(code, useGpu = false, res, ti
       }) + '\n')
     })
 
-    // 等待进程完成
-    await new Promise((resolve) => {
+    // 等待进程完成（chat 模式下进程持续运行，不等待 close）
+    if (mode === 'chat') {
+      // chat 模式：进程持续运行，HTTP 流保持打开
+      // 当进程意外退出时清理
       proc.on('close', () => {
         if (chatManager.session) {
           chatManager.clear()
         }
-        resolve()
       })
-    })
+    } else {
+      await new Promise((resolve) => {
+        proc.on('close', () => {
+          if (chatManager.session) {
+            chatManager.clear()
+          }
+          resolve()
+        })
+      })
+    }
 
     // 处理缓冲区剩余内容
     if (stdoutBuffer.trim()) {
@@ -638,8 +664,11 @@ export async function runPythonCodeStreamingNative(code, useGpu = false, res, ti
         log(`Failed to clean up temp file: ${e.message}`)
       }
     }
-    res.end()
-    log('Streaming response ended')
+    // chat 模式下不关闭 HTTP 响应，进程持续运行
+    if (mode !== 'chat') {
+      res.end()
+      log('Streaming response ended')
+    }
   }
 }
 

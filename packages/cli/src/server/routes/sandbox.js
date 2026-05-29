@@ -124,11 +124,11 @@ router.post('/run', async (req, res) => {
 /**
  * 流式执行代码
  * POST /api/sandbox/stream
- * Body: { code: string, useGpu?: boolean, timeout?: number|null }
+ * Body: { code: string, useGpu?: boolean, timeout?: number|null, mode?: string }
  * 响应: JSON Lines 流式输出
  */
 router.post('/stream', async (req, res) => {
-  const { code, useGpu = false, timeout = null } = req.body
+  const { code, useGpu = false, timeout = null, mode = null } = req.body
 
   // 验证请求
   if (!code || typeof code !== 'string') {
@@ -193,7 +193,7 @@ router.post('/stream', async (req, res) => {
     }
 
     // 流式执行代码
-    await runPythonCodeStreaming(code, actualUseGpu, res, actualImage, timeout)
+    await runPythonCodeStreaming(code, actualUseGpu, res, actualImage, timeout, mode)
 
   } catch (error) {
     console.error('Sandbox stream error:', error)

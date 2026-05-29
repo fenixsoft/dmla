@@ -115,7 +115,7 @@ router.post('/run', async (req, res) => {
  * 响应: JSON Lines 流式输出
  */
 router.post('/stream', async (req, res) => {
-  const { code, useGpu = false, timeout = null } = req.body
+  const { code, useGpu = false, timeout = null, mode = null } = req.body
 
   // 验证请求
   if (!code || typeof code !== 'string') {
@@ -155,7 +155,7 @@ router.post('/stream', async (req, res) => {
     }
 
     // 流式执行
-    await runPythonCodeStreamingNative(code, useGpu, res, timeout)
+    await runPythonCodeStreamingNative(code, useGpu, res, timeout, mode)
 
   } catch (error) {
     console.error('[Native Sandbox Stream] Error:', error)

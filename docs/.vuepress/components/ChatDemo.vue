@@ -37,6 +37,8 @@
 </template>
 
 <script>
+import { getSandboxEndpoint } from '../plugins/runnable-code/sandbox-config.js'
+
 export default {
   name: 'ChatDemo',
   data() {
@@ -63,7 +65,8 @@ export default {
     async checkStatus() {
       if (this.ready || this._destroyed) return
       try {
-        const res = await fetch('/api/chat/status')
+        const endpoint = getSandboxEndpoint()
+        const res = await fetch(endpoint + '/api/chat/status')
         if (this._destroyed) return
         const data = await res.json()
         this.ready = data.ready
@@ -81,7 +84,8 @@ export default {
       this.scrollToBottom()
 
       try {
-        const res = await fetch('/api/chat/send', {
+        const endpoint = getSandboxEndpoint()
+        const res = await fetch(endpoint + '/api/chat/send', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ message: text })
@@ -117,7 +121,6 @@ export default {
   border-radius: 8px;
   overflow: hidden;
   margin: 16px 0;
-  max-width: 640px;
 }
 
 .chat-messages {

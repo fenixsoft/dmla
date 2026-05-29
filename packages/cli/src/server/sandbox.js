@@ -7,6 +7,7 @@ import path from 'path'
 import { fileURLToPath } from 'url'
 import fs from 'fs'
 import os from 'os'
+import chatManager from './chat-manager.cjs'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -71,6 +72,7 @@ export async function cleanupAllContainers() {
   }
 
   activeContainers.clear()
+  chatManager.clear()
   log(`All containers cleaned up: ${count}`)
   return count
 }
@@ -102,6 +104,7 @@ export async function abortExecution(executionId = null) {
     }
   }
 
+  chatManager.clear()
   return { success: true, stopped }
 }
 
@@ -496,7 +499,8 @@ export async function runPythonCode(code, useGpu = false, imageOverride = null, 
     Env: [
       'PYTHONUNBUFFERED=1',
       'PYTHONPATH=/workspace',
-      actualTimeout === null ? 'DMLA_NO_TIMEOUT=1' : ''
+      actualTimeout === null ? 'DMLA_NO_TIMEOUT=1' : '',
+      `DMLA_DATA_PATH=${getDataVolumePath() || '/data'}`
     ].filter(e => e)  // 过滤空字符串
   }
 
@@ -557,6 +561,12 @@ export async function runPythonCode(code, useGpu = false, imageOverride = null, 
   if (binds.length > 0) {
     containerConfig.HostConfig.Binds = binds
   }
+
+  // 将宿主机 shared 目录路径注入到容器环境变量，供环境检查代码读取
+  const sharedMountInfo = (useMount && sharedModulesPath && fs.existsSync(sharedModulesPath))
+    ? `host_path=${sharedModulesPath},mounted=true`
+    : 'mounted=false'
+  containerConfig.Env.push(`DMLA_SHARED_INFO=${sharedMountInfo}`)
 
   if (!PROJECT_ROOT) {
     console.log('[Sandbox] 独立安装模式，无 Volume Mount')
@@ -727,7 +737,7 @@ export async function runPythonCode(code, useGpu = false, imageOverride = null, 
  * @param {number|null} timeoutOverride - 可选，超时时间（秒）
  * @returns {Promise<void>}
  */
-export async function runPythonCodeStreaming(code, useGpu = false, res, imageOverride = null, timeoutOverride = null) {
+export async function runPythonCodeStreaming(code, useGpu = false, res, imageOverride = null, timeoutOverride = null, mode = null) {
   const startTime = Date.now()
 
   // 生成唯一执行 ID
@@ -785,9 +795,17 @@ export async function runPythonCodeStreaming(code, useGpu = false, res, imageOve
   // GPU 容器不限制内存，CPU 容器限制 4GB
   const memoryLimit = useGpu ? SANDBOX_CONFIG.memoryGpu : SANDBOX_CONFIG.memoryCpu
 
+  // 构建命令参数
+  const cmdArgs = ['python3', '/workspace/kernel_runner.py', '--code', code, '--timeout', String(timeoutSeconds), '--stream']
+  if (mode === 'chat') {
+    cmdArgs.push('--serve')
+  }
+
   const containerConfig = {
     Image: image,
-    Cmd: ['python3', '/workspace/kernel_runner.py', '--code', code, '--timeout', String(timeoutSeconds), '--stream'],
+    Cmd: cmdArgs,
+    OpenStdin: true,
+    StdinOnce: false,
     HostConfig: {
       AutoRemove: false
     },
@@ -838,6 +856,12 @@ export async function runPythonCodeStreaming(code, useGpu = false, res, imageOve
     containerConfig.HostConfig.Binds = binds
   }
 
+  // 将宿主机 shared 目录路径注入到容器环境变量
+  const sharedMountInfo = (useMount && sharedModulesPath && fs.existsSync(sharedModulesPath))
+    ? `host_path=${sharedModulesPath},mounted=true`
+    : 'mounted=false'
+  containerConfig.Env.push(`DMLA_SHARED_INFO=${sharedMountInfo}`)
+
   // GPU 配置
   if (useGpu) {
     containerConfig.HostConfig.DeviceRequests = [{
@@ -871,6 +895,24 @@ export async function runPythonCodeStreaming(code, useGpu = false, res, imageOve
     log('Starting container...')
     await container.start()
     log('Container started')
+
+    // chat 模式：获取容器的 attach 流（支持 stdin 写入）
+    if (mode === 'chat') {
+      log('Chat mode detected, preparing stdin stream...')
+      const attachStream = await container.attach({
+        hijack: true,
+        stdin: true,
+        stream: true,
+        stdout: true,
+        stderr: true
+      })
+      // 先注册 stdin，等 idle 消息时设置 ready
+      chatManager.register('docker', {
+        container,
+        stdin: attachStream
+      })
+      log('ChatManager registered for Docker sandbox (stdin ready, waiting for idle)')
+    }
 
     // 输出运行状态消息
     const runningMsg = {
@@ -940,6 +982,16 @@ export async function runPythonCodeStreaming(code, useGpu = false, res, imageOve
               if (isJsonComplete(text)) {
                 log(`Forwarding complete JSON message: ${text.length} bytes`)
                 res.write(text + '\n')
+                // chat 模式：检测 idle 消息，设置 ChatManager 就绪
+                if (mode === 'chat') {
+                  try {
+                    const msg = JSON.parse(text)
+                    if (msg.type === 'idle') {
+                      chatManager.setReady(true)
+                      log('ChatManager ready (idle message received)')
+                    }
+                  } catch {}
+                }
               } else {
                 // JSON 不完整，存入缓冲等待后续帧
                 log(`JSON message incomplete, buffering: ${text.length} bytes`)
@@ -1029,10 +1081,14 @@ export async function runPythonCodeStreaming(code, useGpu = false, res, imageOve
       res.write(JSON.stringify(errorMsg) + '\n')
     })
 
-    // 等待容器结束
-    log('Waiting for container to finish...')
-    await container.wait()
-    log('Container finished')
+    // 等待容器结束（chat 模式下不等待，容器持续运行）
+    if (mode !== 'chat') {
+      log('Waiting for container to finish...')
+      await container.wait()
+      log('Container finished')
+    } else {
+      log('Chat mode: container will keep running, not waiting for finish')
+    }
 
     // 等待日志流结束（带超时保护）
     await new Promise((resolve) => {
@@ -1085,6 +1141,12 @@ export async function runPythonCodeStreaming(code, useGpu = false, res, imageOve
   } finally {
     // 从活跃列表移除
     unregisterContainer(executionId)
+
+    // chat 模式下保持容器运行和 HTTP 流打开
+    if (mode === 'chat') {
+      log('Chat mode: keeping container alive and HTTP stream open')
+      return
+    }
 
     // 清理容器
     log('Cleaning up container...')

@@ -833,9 +833,10 @@ function initCodeBlock(block) {
       // 使用流式端点
       const endpoint = getSandboxEndpoint() + '/api/sandbox/stream'
 
-      // 连接超时检测（5秒）
+      // 连接超时检测（10秒）
       // 当服务未启动时，fetch 会长时间等待，需要主动超时
-      const CONNECTION_TIMEOUT = 5000
+      // 首次运行时 Docker 启动容器较慢，需预留足够时间
+      const CONNECTION_TIMEOUT = 10000
       let timeoutId = null
       const connectionTimeoutPromise = new Promise((_, reject) => {
         timeoutId = setTimeout(() => {
@@ -852,7 +853,8 @@ function initCodeBlock(block) {
             body: JSON.stringify({
               code,
               useGpu,
-              timeout: timeout === 'unlimited' ? null : (timeout ? parseInt(timeout, 10) : null)
+              timeout: timeout === 'unlimited' ? null : (timeout ? parseInt(timeout, 10) : null),
+              mode: block.dataset.mode || null
             }),
             signal: abortController.signal
           }),
