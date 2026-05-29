@@ -6,6 +6,7 @@ import os
 import random
 import torch
 from datasets import load_dataset, Features, Value
+from datasets import logging as datasets_logging
 from torch.utils.data import Dataset
 
 class SFTDataset(Dataset):
@@ -17,17 +18,32 @@ class SFTDataset(Dataset):
     - 标签掩码：仅 assistant 回答部分参与 loss，其余标记为 -100
     - 使用 apply_chat_template 将对话转为 ChatML 格式
     """
+    # MiniMind 使用 ChatML 格式：<|im_start|>role\ncontent<|im_end|>\n
+    # tokenizer 本身未内置 chat_template，需手动设置
+    CHATML_TEMPLATE = (
+        "{% for message in messages %}<|im_start|>{{ message.role }}\n"
+        "{{ message.content }}<|im_end|>\n"
+        "{% endfor %}"
+        "{% if add_generation_prompt %}<|im_start|>assistant\n{% endif %}"
+    )
+
     def __init__(self, jsonl_path, tokenizer, max_length=768):
         super().__init__()
         os.environ["TOKENIZERS_PARALLELISM"] = "false"
         self.tokenizer = tokenizer
+        # MiniMind tokenizer 未内置 chat_template，需手动设置 ChatML 格式
+        if not tokenizer.chat_template:
+            tokenizer.chat_template = self.CHATML_TEMPLATE
         self.max_length = max_length
         features = Features({
             'conversations': [{'role': Value('string'), 'content': Value('string'),
                               'reasoning_content': Value('string'), 'tools': Value('string'),
                               'tool_calls': Value('string')}]
         })
+        # 抑制 load_dataset 的 "Generating train split" 进度输出
+        datasets_logging.set_verbosity_error()
         self.samples = load_dataset('json', data_files=jsonl_path, split='train', features=features)
+        datasets_logging.set_verbosity_warning()
         # 预计算 assistant 回答的起止标记 ID
         self.bos_id = tokenizer(f'{tokenizer.bos_token}assistant\n', add_special_tokens=False).input_ids
         self.eos_id = tokenizer(f'{tokenizer.eos_token}\n', add_special_tokens=False).input_ids
@@ -91,15 +107,11 @@ def pre_processing_chat(conversations, add_system_ratio=0.2):
 
     SYSTEM_PROMPTS = [
         "你是一个知识丰富的AI，尽力为用户提供准确的信息。",
-        "你是minimind，一个小巧但有用的语言模型。",
         "你是一个专业的AI助手，请提供有价值的回答。",
-        "你是minimind，请尽力帮助用户解决问题。",
         "你是一个可靠的AI，请给出准确的回答。",
         "You are a helpful AI assistant.",
-        "You are minimind, a lightweight intelligent assistant.",
         "You are a friendly chatbot. Please answer the user's questions carefully.",
         "You are a knowledgeable AI. Try your best to provide accurate information.",
-        "You are minimind, a small but useful language model."
     ]
     # 概率性添加 system
     if conversations[0].get('role') != 'system':

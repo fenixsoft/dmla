@@ -10,6 +10,25 @@
     - 驱动版本要求：
         - Linux >= 570.28.03
         - Windows: >= 570.76
+    - Docker GPU 支持：需要在宿主机安装 [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html)，使 Docker 容器能够访问 GPU 硬件。
+        - Windows 用户使用 Docker Desktop 时，Container Toolkit 已自动集成，无需额外安装。
+        - Linux 用户（包括 WSL2 中直接安装 Docker Engine 的情况）需要手动安装，安装方法如下：
+            ```bash
+            # 配置 apt 仓库
+            curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey | \
+              gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg
+            curl -s -L https://nvidia.github.io/libnvidia-container/stable/deb/nvidia-container-toolkit.list | \
+              sed 's#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g' | \
+              tee /etc/apt/sources.list.d/nvidia-container-toolkit.list
+
+            # 安装并配置
+            apt-get update && apt-get install -y nvidia-container-toolkit
+            nvidia-ctk runtime configure --runtime=docker
+            systemctl restart docker
+
+            # 验证安装（应输出 GPU 型号信息）
+            docker run --rm --gpus all dmla-sandbox:gpu nvidia-smi -L
+            ```
     - 存储与内存：
         - CPU 镜像约为 680 MB；GPU 镜像约 7.83 GB（其中 CUDA 官方镜像 >4GB，PyTorch GPU 版本 ≈3GB）。
         - CPU 镜像内存上限为 4GB；GPU 镜像无内存上限，但模型训练通常至少需要 16GB 内存和 8GB 显存（具体评估见训练章节）。
@@ -177,47 +196,54 @@ print(f"DATA_DIR: {DATA_DIR}")
 # 检查 shared 包位置和内容
 print(f"\n=== Shared 包检查 ===")
 is_docker = os.path.exists('/.dockerenv')
+shared_path = None
+shared_source = None
+
 if is_docker:
-    # Docker 模式：shared 包位于镜像内置路径或 Volume Mount 路径
-    shared_candidates = [
-        ('/workspace/shared', 'Volume Mount（开发模式挂载）'),
-        ('/usr/local/lib/python{sys.version_info.major}.{sys.version_info.minor}/site-packages/shared', '镜像内置'),
-    ]
+    # Docker 模式：通过 DMLA_SHARED_INFO 环境变量获取宿主机路径
+    shared_path = '/workspace/shared'
+    if os.path.isdir(shared_path):
+        shared_info = os.environ.get('DMLA_SHARED_INFO', '')
+        if 'mounted=true' in shared_info:
+            # 从 host_path=xxx 中提取宿主机路径
+            import re
+            host_match = re.search(r'host_path=([^,]+)', shared_info)
+            host_path = host_match.group(1) if host_match else '未知'
+            shared_source = f'Volume Mount（宿主机: {host_path}）'
+        else:
+            shared_source = '镜像内置（Volume Mount 已禁用）'
 else:
     # Native 模式：从 PYTHONPATH 中查找
     python_paths = os.environ.get('PYTHONPATH', '').split(os.pathsep)
-    shared_candidates = []
     for p in python_paths:
         candidate = os.path.join(p, 'shared')
-        shared_candidates.append((candidate, f'PYTHONPATH: {p}'))
+        if os.path.isdir(candidate):
+            shared_path = candidate
+            shared_source = f'PYTHONPATH: {p}'
+            break
 
-shared_found = False
-for shared_path, source in shared_candidates:
-    if os.path.isdir(shared_path):
-        print(f"  ✅ Shared 包路径: {shared_path}")
-        print(f"     来源: {source}")
-        shared_found = True
-        # 列出 shared 包中的子模块
-        submodules = sorted([
-            d for d in os.listdir(shared_path)
-            if os.path.isdir(os.path.join(shared_path, d))
-            and not d.startswith('_')
-            and os.path.exists(os.path.join(shared_path, d, '__init__.py'))
-        ])
-        if submodules:
-            print(f"     子模块: {', '.join(submodules)}")
-            # 列出每个子模块中的类
-            for mod in submodules:
-                mod_path = os.path.join(shared_path, mod)
-                classes = sorted([
-                    f[:-3] for f in os.listdir(mod_path)
-                    if f.endswith('.py') and f != '__init__.py'
-                ])
-                if classes:
-                    print(f"       {mod}: {', '.join(classes)}")
-        break
-
-if not shared_found:
+if shared_path:
+    print(f"  ✅ Shared 包路径: {shared_path}")
+    print(f"     来源: {shared_source}")
+    # 列出 shared 包中的子模块
+    submodules = sorted([
+        d for d in os.listdir(shared_path)
+        if os.path.isdir(os.path.join(shared_path, d))
+        and not d.startswith('_')
+        and os.path.exists(os.path.join(shared_path, d, '__init__.py'))
+    ])
+    if submodules:
+        print(f"     子模块: {', '.join(submodules)}")
+        # 列出每个子模块中的类
+        for mod in submodules:
+            mod_path = os.path.join(shared_path, mod)
+            classes = sorted([
+                f[:-3] for f in os.listdir(mod_path)
+                if f.endswith('.py') and f != '__init__.py'
+            ])
+            if classes:
+                print(f"       {mod}: {', '.join(classes)}")
+else:
     print(f"  ⚠️ 未找到 shared 包（部分章节的代码将无法复用类定义）")
 
 
@@ -243,7 +269,7 @@ if torch.cuda.is_available():
     for i in range(torch.cuda.device_count()):
         props = torch.cuda.get_device_properties(i)
         print(f"GPU {i}: {props.name}")
-        print(f"  显存: {props.total_mem / 1024**3:.1f} GB")
+        print(f"  显存: {props.total_memory / 1024**3:.1f} GB")
         print(f"  计算能力: {props.major}.{props.minor}")
 else:
     print("GPU: 不可用（当前为 CPU 模式）")

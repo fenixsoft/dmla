@@ -236,14 +236,14 @@ export default {
               { text: '缩放定律', link: '/language-models/pretraining/scaling-laws' },
               { text: '分布式训练基础设施', link: '/language-models/pretraining/distributed-training' },
               { text: '监督微调', link: 'language-models/pretraining/supervised-finetuning' },
-              // { text: '工程实训：SFT 监督微调实验', link: '/language-models/pretraining/llm-sft-experiment' },
+              { text: '工程实训：SFT 模型对话实验', link: '/language-models/pretraining/llm-sft-experiment' },
             ]
           },
           {
             text: '对齐训练',
             collapsible: false,
             children: [
-              // { text: '人类反馈强化学习', link: '/language-models/alignment/rlhf' },
+              { text: '人类反馈强化学习', link: '/language-models/alignment/rlhf' },
               // { text: '对齐新范式', link: '/language-models/alignment/alignment-new-paradigms' },
             ]
             

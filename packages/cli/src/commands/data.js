@@ -83,7 +83,7 @@ const DATASETS = [
     id: 'minimind-sft',
     name: 'MiniMind SFT (LLM监督微调语料)',
     url: 'https://www.modelscope.cn/datasets/icyfenix/Minimind_SFT.git',
-    size: '~500MB',
+    size: '~1.7GB',
     format: 'git',
     targetDir: 'datasets/minimind-sft',
     source: 'ModelScope (icyfenix)'

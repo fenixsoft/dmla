@@ -483,6 +483,164 @@ matplotlib.use('module://matplotlib_inline.backend_inline')
                 log_debug(f'Error shutting down kernel: {e}')
 
 
+def _collect_kernel_outputs(kc, timeout, stream=False):
+    """
+    从 Kernel 收集执行输出，复用 run_code 中的输出处理逻辑。
+
+    Args:
+        kc: 已启动的 KernelClient
+        timeout: 执行超时时间（秒），0 表示不超时
+        stream: 是否启用流式输出
+
+    Returns:
+        (outputs, timed_out, has_error) 元组
+    """
+    deadline = time.time() + timeout if timeout > 0 else float('inf')
+    outputs = []
+    timed_out = False
+    has_error = False
+
+    while True:
+        remaining = deadline - time.time()
+        if timeout > 0 and remaining <= 0:
+            timed_out = True
+            break
+
+        try:
+            msg = kc.get_iopub_msg(timeout=max(1, remaining) if timeout > 0 else 2)
+        except Exception:
+            if timeout > 0 and time.time() >= deadline:
+                timed_out = True
+            break
+
+        msg_type = msg['header']['msg_type']
+        content = msg['content']
+
+        if msg_type == 'status':
+            if content.get('execution_state') == 'idle':
+                break
+            continue
+
+        if msg_type == 'stream':
+            stream_output = {
+                'type': 'stream',
+                'name': content.get('name', 'stdout'),
+                'text': content.get('text', '')
+            }
+            if stream:
+                output_json(stream_output)
+            else:
+                outputs.append(stream_output)
+
+        elif msg_type == 'display_data':
+            display_output = {
+                'type': 'display_data',
+                'data': content.get('data', {}),
+                'metadata': content.get('metadata', {})
+            }
+            if stream:
+                output_json(display_output)
+            else:
+                outputs.append(display_output)
+
+        elif msg_type == 'execute_result':
+            result_output = {
+                'type': 'execute_result',
+                'data': content.get('data', {}),
+                'metadata': content.get('metadata', {}),
+                'execution_count': content.get('execution_count')
+            }
+            if stream:
+                output_json(result_output)
+            else:
+                outputs.append(result_output)
+
+        elif msg_type == 'error':
+            error_output = {
+                'type': 'error',
+                'ename': content.get('ename', 'UnknownError'),
+                'evalue': content.get('evalue', ''),
+                'traceback': content.get('traceback', [])
+            }
+            if is_cuda_compat_error(content.get('evalue', '')):
+                error_output = enrich_cuda_error(error_output)
+            has_error = True
+            if stream:
+                output_json(error_output)
+            else:
+                outputs.append(error_output)
+
+    return outputs, timed_out, has_error
+
+
+def _execute_and_output(kc, code, timeout=0):
+    """
+    在已有的 Kernel 中执行代码，非流式模式，输出 JSON 结果到 stdout。
+
+    Args:
+        kc: 已启动的 KernelClient
+        code: 要执行的 Python 代码
+        timeout: 执行超时时间（秒），0 表示不超时
+    """
+    start_time = time.time()
+    actual_timeout = timeout if timeout > 0 else DEFAULT_TIMEOUT
+
+    kc.execute(code, allow_stdin=False)
+    outputs, timed_out, has_error = _collect_kernel_outputs(kc, actual_timeout, stream=False)
+
+    execution_time = time.time() - start_time
+
+    if timed_out:
+        result = {
+            'success': False,
+            'outputs': [{
+                'type': 'error',
+                'ename': 'TimeoutError',
+                'evalue': f'Execution timed out after {actual_timeout} seconds',
+                'traceback': [f'Execution timed out after {actual_timeout} seconds']
+            }],
+            'executionTime': round(execution_time, 3)
+        }
+    else:
+        result = {
+            'success': not has_error,
+            'outputs': outputs,
+            'executionTime': round(execution_time, 3)
+        }
+
+    print(json.dumps(result, ensure_ascii=False))
+    sys.stdout.flush()
+
+
+def _stream_execute(kc, code, timeout=0):
+    """
+    在已有的 Kernel 中执行代码，流式模式，实时输出每个消息到 stdout。
+
+    Args:
+        kc: 已启动的 KernelClient
+        code: 要执行的 Python 代码
+        timeout: 执行超时时间（秒），0 表示不超时
+    """
+    start_time = time.time()
+    actual_timeout = timeout if timeout > 0 else DEFAULT_TIMEOUT
+
+    kc.execute(code, allow_stdin=False)
+    outputs, timed_out, has_error = _collect_kernel_outputs(kc, actual_timeout, stream=True)
+
+    execution_time = time.time() - start_time
+
+    if timed_out:
+        output_json({'type': 'error', 'ename': 'TimeoutError',
+                     'evalue': f'Execution timed out after {actual_timeout} seconds',
+                     'traceback': [f'Execution timed out after {actual_timeout} seconds']})
+        output_json({'type': 'result', 'success': False,
+                     'executionTime': round(execution_time, 3)})
+    else:
+        output_json({'type': 'result', 'success': not has_error,
+                     'outputs': outputs,
+                     'executionTime': round(execution_time, 3)})
+
+
 def check_cuda_compatibility():
     """
     快速检查 CUDA 兼容性
@@ -545,6 +703,8 @@ def main():
     parser.add_argument('--timeout', type=int, default=DEFAULT_TIMEOUT, help='执行超时时间（秒）')
     parser.add_argument('--check-cuda', action='store_true', help='仅检查 CUDA 兼容性')
     parser.add_argument('--stream', action='store_true', help='启用流式输出模式（实时输出每个消息）')
+    parser.add_argument("--serve", action="store_true",
+                        help="长运行模式：初始代码执行后 Kernel 保持运行，从 stdin 接收后续指令")
 
     args = parser.parse_args()
 
@@ -569,7 +729,7 @@ def main():
             return
     elif args.code:
         code = args.code
-    else:
+    elif not args.serve:
         result = {
             'success': False,
             'outputs': [{
@@ -587,6 +747,112 @@ def main():
     if args.check_cuda:
         result = check_cuda_compatibility()
         print(json.dumps(result, ensure_ascii=False))
+        return
+
+    # serve 模式：自行管理 Kernel 生命周期，执行初始代码后进入 stdin 监听循环
+    if args.serve:
+        from jupyter_client import KernelManager
+
+        km = KernelManager()
+        suppress_stdout()
+        km.start_kernel()
+        kc = km.client()
+        kc.start_channels()
+        kc.wait_for_ready(timeout=30)
+        restore_stdout()
+
+        # 注入全局变量、数据路径和 sys.path 配置
+        python_path_env = os.environ.get('PYTHONPATH', '')
+        path_separator = ';' if os.name == 'nt' else ':'
+        python_path_entries = [p for p in python_path_env.split(path_separator) if p]
+        setup_code = '''
+import os
+import sys
+
+DATA_DIR = os.environ.get('DMLA_DATA_PATH', '/data')
+
+# 将 PYTHONPATH 中的路径注入 sys.path（IPython kernel 可能不会自动继承）
+_python_path_entries = ''' + repr(python_path_entries) + '''
+for _p in _python_path_entries:
+    if _p not in sys.path:
+        sys.path.insert(0, _p)
+
+# 配置 matplotlib inline 后端（在用户 import matplotlib 之前设置）
+import matplotlib
+matplotlib.use('module://matplotlib_inline.backend_inline')
+'''
+        kc.execute(setup_code, allow_stdin=False)
+        # 等待 setup 执行完成
+        setup_start = time.time()
+        while True:
+            if time.time() - setup_start > 5:
+                break
+            try:
+                msg = kc.get_iopub_msg(timeout=2)
+                msg_type = msg['header']['msg_type']
+                if msg_type == 'status' and msg['content'].get('execution_state') == 'idle':
+                    break
+            except Exception:
+                break
+
+        # 执行初始代码
+        if code:
+            if args.stream:
+                _stream_execute(kc, code, args.timeout)
+            else:
+                _execute_and_output(kc, code, args.timeout)
+
+        # serve 模式：进入 stdin 监听循环
+        def output_message(msg_type, content):
+            """输出 JSON Lines 消息到 stdout"""
+            msg = {"type": msg_type}
+            if content is not None:
+                msg["content"] = content
+            sys.stdout.write(json.dumps(msg, ensure_ascii=False) + "\n")
+            sys.stdout.flush()
+
+        output_message("idle", "kernel ready")
+
+        while True:
+            try:
+                line = sys.stdin.readline()
+                if not line:
+                    break
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    cmd = json.loads(line)
+                except json.JSONDecodeError:
+                    output_message("error", f"无效的 JSON 指令: {line}")
+                    continue
+
+                action = cmd.get("action")
+                if action == "ping":
+                    output_message("pong", None)
+                elif action == "execute":
+                    exec_code = cmd.get("code", "")
+                    if args.stream:
+                        _stream_execute(kc, exec_code, cmd.get("timeout", 0))
+                    else:
+                        _execute_and_output(kc, exec_code, cmd.get("timeout", 0))
+                    output_message("idle", "kernel ready")
+                else:
+                    output_message("error", f"未知指令: {action}")
+            except Exception as e:
+                output_message("error", str(e))
+                break
+
+        # stdin 关闭或出错，清理退出
+        kc.stop_channels()
+        try:
+            kc.shutdown_kernel()
+        except Exception:
+            pass
+        try:
+            km.shutdown_kernel(now=True)
+        except Exception:
+            pass
         return
 
     result = run_code(code, args.timeout, stream=args.stream)

@@ -12,7 +12,7 @@ from transformers.modeling_outputs import MoeCausalLMOutputWithPast
 from typing import Optional, Tuple, List, Dict
 
 class MiniMindConfig(PretrainedConfig):
-    """MiniMind 模型配置"""
+    """模型配置"""
     model_type = "minimind"
     def __init__(self, hidden_size=768, num_hidden_layers=8, use_moe=False, **kwargs):
         super().__init__(**kwargs)
@@ -182,7 +182,7 @@ class MiniMindBlock(nn.Module):
 
 
 class MiniMindModel(nn.Module):
-    """MiniMind 主体：词嵌入 + 多层 Transformer + 最终归一化"""
+    """模型主体：词嵌入 + 多层 Transformer + 最终归一化"""
     def __init__(self, config):
         super().__init__()
         self.config = config
@@ -228,7 +228,7 @@ class MiniMindModel(nn.Module):
 
 
 class MiniMindForCausalLM(PreTrainedModel, GenerationMixin):
-    """MiniMind 因果语言模型：用于预训练和推理"""
+    """因果语言模型：用于预训练和推理"""
     config_class = MiniMindConfig
     _tied_weights_keys = {"lm_head.weight": "model.embed_tokens.weight"}
     def __init__(self, config=None):
@@ -251,7 +251,10 @@ class MiniMindForCausalLM(PreTrainedModel, GenerationMixin):
         return MoeCausalLMOutputWithPast(loss=loss, aux_loss=aux_loss, logits=logits, past_key_values=past_key_values, hidden_states=hidden_states)
 
     @torch.inference_mode()
-    def generate(self, inputs=None, attention_mask=None, max_new_tokens=512, temperature=0.85, top_p=0.85, top_k=50, eos_token_id=2, streamer=None, use_cache=True, num_return_sequences=1, do_sample=True, repetition_penalty=1.0, **kwargs):
+    def generate(self, inputs=None, attention_mask=None, max_new_tokens=512,
+                 temperature=0.85, top_p=0.85, top_k=50, eos_token_id=2,
+                 streamer=None, use_cache=True, num_return_sequences=1,
+                 do_sample=True, repetition_penalty=1.0, **kwargs):
         """自回归生成：逐 token 采样，支持 top-k、top-p、重复惩罚"""
         input_ids = kwargs.pop("input_ids", inputs).repeat(num_return_sequences, 1)
         attention_mask = attention_mask.repeat(num_return_sequences, 1) if attention_mask is not None else None
