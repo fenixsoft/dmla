@@ -10,6 +10,7 @@ import os from 'os'
 import fs from 'fs'
 import chalk from 'chalk'
 import { getCachedEnvironment, getKernelRunnerPath, getSharedModulesPath, getServerPythonPath, getDataPath, getProgressPath, getPythonCommand, detectPythonCommand } from './native_env_check.js'
+import chatManager from './chat-manager.cjs'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -232,6 +233,14 @@ export async function runPythonCodeNative(code, useGpu = false, timeoutOverride 
 
     registerProcess(executionId, proc)
 
+    // 检测是否为对话沙箱
+    if (procArgs.includes('--serve')) {
+      chatManager.register('native', {
+        process: proc,
+        stdin: proc.stdin
+      })
+    }
+
     // 设置超时
     const timeoutPromise = new Promise((_, reject) => {
       timeoutId = setTimeout(() => {
@@ -259,6 +268,9 @@ export async function runPythonCodeNative(code, useGpu = false, timeoutOverride 
     const execPromise = new Promise((resolve, reject) => {
       proc.on('close', (code) => {
         log(`Process exited with code ${code}`)
+        if (chatManager.session) {
+          chatManager.clear()
+        }
         if (timeoutId) clearTimeout(timeoutId)
         resolve({ stdout, stderr, exitCode: code })
       })
@@ -489,6 +501,14 @@ export async function runPythonCodeStreamingNative(code, useGpu = false, res, ti
 
     registerProcess(executionId, proc)
 
+    // 检测是否为对话沙箱
+    if (procArgs.includes('--serve')) {
+      chatManager.register('native', {
+        process: proc,
+        stdin: proc.stdin
+      })
+    }
+
     // 输出运行状态
     res.write(JSON.stringify({
       type: 'status',
@@ -564,7 +584,12 @@ export async function runPythonCodeStreamingNative(code, useGpu = false, res, ti
 
     // 等待进程完成
     await new Promise((resolve) => {
-      proc.on('close', resolve)
+      proc.on('close', () => {
+        if (chatManager.session) {
+          chatManager.clear()
+        }
+        resolve()
+      })
     })
 
     // 处理缓冲区剩余内容
