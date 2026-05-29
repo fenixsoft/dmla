@@ -53,6 +53,9 @@ class SFTDataset(Dataset):
 
     def create_chat_prompt(self, conversations):
         """将对话列表应用 chat template 转为文本"""
+        # DataLoader 多 worker 场景下 tokenizer.chat_template 可能丢失，需防御性设置
+        if not self.tokenizer.chat_template:
+            self.tokenizer.chat_template = self.CHATML_TEMPLATE
         messages = []
         tools = None
         for message in conversations:
