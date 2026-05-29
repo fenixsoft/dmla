@@ -13,21 +13,18 @@
         <div class="chat-role">AI</div>
         <div class="chat-content chat-typing">思考中...</div>
       </div>
-      <div v-if="!ready && messages.length === 0 && !loading" class="chat-hint">
-        请先点击上方代码块的「运行」按钮启动对话服务
-      </div>
     </div>
     <div class="chat-input-area">
       <input
         v-model="inputText"
         class="chat-input"
-        :disabled="!ready || loading"
-        :placeholder="ready ? '输入消息，按 Enter 发送' : '对话服务未启动'"
+        :disabled="loading"
+        placeholder="输入消息，按 Enter 发送"
         @keyup.enter="sendMessage"
       />
       <button
         class="chat-send-btn"
-        :disabled="!ready || loading || !inputText.trim()"
+        :disabled="loading || !inputText.trim()"
         @click="sendMessage"
       >
         发送
@@ -43,40 +40,18 @@ export default {
   name: 'ChatDemo',
   data() {
     return {
-      ready: false,
       loading: false,
       inputText: '',
-      messages: [],
-      pollTimer: null
+      messages: []
     }
-  },
-  mounted() {
-    this.checkStatus()
-    this.pollTimer = setInterval(this.checkStatus, 3000)
   },
   beforeDestroy() {
-    if (this.pollTimer) {
-      clearInterval(this.pollTimer)
-      this.pollTimer = null
-    }
     this._destroyed = true
   },
   methods: {
-    async checkStatus() {
-      if (this.ready || this._destroyed) return
-      try {
-        const endpoint = getSandboxEndpoint()
-        const res = await fetch(endpoint + '/api/chat/status')
-        if (this._destroyed) return
-        const data = await res.json()
-        this.ready = data.ready
-      } catch {
-        if (!this._destroyed) this.ready = false
-      }
-    },
     async sendMessage() {
       const text = this.inputText.trim()
-      if (!text || !this.ready || this.loading || this._destroyed) return
+      if (!text || this.loading || this._destroyed) return
 
       this.messages.push({ role: 'user', content: text })
       this.inputText = ''

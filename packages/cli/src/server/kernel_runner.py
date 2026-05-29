@@ -306,10 +306,45 @@ matplotlib.use('module://matplotlib_inline.backend_inline')
 
             # 处理不同类型的输出
             if msg_type == 'stream':
+                stream_name = content.get('name', 'stdout')
+                stream_text = content.get('text', '')
+
+                # 从 stderr 中提取 ProgressReporter 的 progress JSON，
+                # 作为独立的 progress 类型消息发送，避免与普通 stderr 输出混合
+                if stream_name == 'stderr':
+                    progress_lines = []
+                    other_lines = []
+                    for line in stream_text.split('\n'):
+                        if line.startswith('{"type": "progress"') or line.startswith('{"type":"progress"'):
+                            progress_lines.append(line)
+                        else:
+                            other_lines.append(line)
+
+                    # 将 progress JSON 作为独立消息发送（字段展开到顶层，与前端 progress case 匹配）
+                    for pline in progress_lines:
+                        if not pline.strip():
+                            continue
+                        try:
+                            import json as _json
+                            progress_data = _json.loads(pline)
+                            progress_data['type'] = 'progress'
+                            if stream:
+                                output_json(progress_data)
+                            else:
+                                outputs.append(progress_data)
+                        except Exception:
+                            # JSON 解析失败，作为普通文本处理
+                            other_lines.append(pline)
+
+                    # 剩余 stderr 内容正常传递
+                    stream_text = '\n'.join(other_lines)
+                    if not stream_text.strip():
+                        continue
+
                 stream_output = {
                     'type': 'stream',
-                    'name': content.get('name', 'stdout'),
-                    'text': content.get('text', '')
+                    'name': stream_name,
+                    'text': stream_text
                 }
 
                 if stream:
@@ -317,7 +352,7 @@ matplotlib.use('module://matplotlib_inline.backend_inline')
                     output_json(stream_output)
                 else:
                     outputs.append(stream_output)
-                log_debug(f'Stream output: {content.get("name")} len={len(content.get("text", ""))}')
+                log_debug(f'Stream output: {stream_name} len={len(stream_text)}')
 
             elif msg_type == 'display_data':
                 display_output = {
