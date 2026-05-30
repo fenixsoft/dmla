@@ -494,7 +494,7 @@ print(f"词嵌入与输出头共享: {config.tie_word_embeddings}")
 
 ::: info 训练预估
 
-训练语料约 200 万条样本，序列长度 512，批大小 32，2 个 epoch，笔者使用单卡 RTX 5080 约需 2 小时（预估时间为 215 分钟，实际时间为 105 分钟）。
+训练语料约 200 万条样本，序列长度 512，批大小 32，2 个 epoch，笔者使用单卡 RTX 5080 约需 2.5 小时。
 
 - 本次训练的峰值显存占用约 7.2 GB（硬件支持 Flash Attention）或 11.8 GB（硬件不支持 Flash Attention）。8 GB 显存的 GPU 有较大 OOM 的风险，12 GB 以上支持 Flash Attention 的 GPU 可稳定训练。
 

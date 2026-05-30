@@ -243,7 +243,7 @@ export default {
             text: '对齐训练',
             collapsible: false,
             children: [
-              { text: '人类反馈强化学习', link: '/language-models/alignment/rlhf' },
+              // { text: '人类反馈强化学习', link: '/language-models/alignment/rlhf' },
               // { text: '对齐新范式', link: '/language-models/alignment/alignment-new-paradigms' },
             ]
             
