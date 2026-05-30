@@ -25,9 +25,25 @@ export default {
         const validSizes = ['small', 'compact', 'tiny']
         const sizeClass = validSizes.includes(sizeModifier) ? `mermaid-${sizeModifier}` : ''
 
+      // Pre-process: move Chinese text outside $$...$$ to avoid KaTeX warnings
+      let fixedCode = code;
+      fixedCode = fixedCode.replace(/\$\$([^\$]*?)\$\$/g, (match, inner) => {
+        if (!/[\u4e00-\u9fff]/.test(inner)) return match;
+        const m = inner.match(/^([\u4e00-\u9fff\u3000-\u303f\uff00-\uffef\uff0c\u3002\uff1a\uff1b\uff01\uff1f\u3001\s]+)(.*)$/);
+        if (m) {
+          const chinese = m[1].trimEnd();
+          const math = m[2].trimStart();
+          if (math && !/[\u4e00-\u9fff]/.test(math)) {
+            return chinese + ' $$' + math + '$$';
+          }
+        }
+        const cleaned = inner.replace(/[\u4e00-\u9fff\u3000-\u303f\uff00-\uffef\uff0c\u3002\uff1a\uff1b\uff01\uff1f\u3001]/g, '').trim();
+        return cleaned ? '$$' + cleaned + '$$' : inner;
+      });
+
         // 使用 data-mermaid 属性存储原始代码，避免浏览器解析 HTML 标签
         // encodeURIComponent 确保 <br> 等标签不会被浏览器规范化
-        return `<pre class="mermaid ${sizeClass}" data-mermaid="${encodeURIComponent(code)}"></pre>`
+        return `<pre class="mermaid ${sizeClass}" data-mermaid="${encodeURIComponent(fixedCode)}"></pre>`
       }
 
       return defaultFence(tokens, idx, options, env, self)
