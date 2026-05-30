@@ -23,6 +23,8 @@ export default {
   // 禁止浏览器翻译（网站本身就是中文）
   head: [
     ['meta', { name: 'google', content: 'notranslate' }],
+    ['meta', { name: 'og:image', content: 'https://ai.icyfenix.cn/logo_min_size.png' }],
+    ['meta', { name: 'og:description', content: '面向工程师从零建立机器学习的系统性理解' }],
     ['link', { rel: 'icon', href: '/favicon.ico' }],
   ],
 
