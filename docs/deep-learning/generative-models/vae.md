@@ -80,7 +80,7 @@ $$q(z|x) \approx p(z|x)$$
 
 ### KL 散度
 
-变分推断的优化目标是找到最优的近似分布 $q(z|x)$，使得它尽可能接近真实的后验分布 $p(z|x)$。数学上衡量两个分布相似度的标准工具是 KL 散度（Kullback-Leibler Divergence），它衡量用分布 $p$ 编码来自分布 $q$ 的数据时所需的额外信息量。KL 散度的定义为：
+变分推断的优化目标是找到最优的近似分布 $q(z|x)$，使得它尽可能接近真实的后验分布 $p(z|x)$。数学上衡量两个分布相似度的标准工具是 KL 散度（Kullback-Leibler Divergence），由库尔巴克（Solomon Kullback）和莱布勒（Richard Leibler）于 1951 年提出。KL 散度 衡量用分布 $p$ 编码来自分布 $q$ 的数据时所需的额外信息量，它的定义为：
 
 $$D_{KL}(q(z|x) || p(z|x)) = \int q(z|x) \log \frac{q(z|x)}{p(z|x)} dz$$
 

@@ -18,7 +18,7 @@
 
 *图：不同规模模型的显存需求*
 
-### 数据并行（Data Parallelism）
+### 数据并行
 
 既然一张 GPU 放不下所有数据，那能否使用多张 GPU 一起分担？最早出现的**数据并行**（Data Parallelism, DP）就支持多卡并行训练。数据并行要求每张 GPU 各持有一份完整的模型参数副本，然后将一个大的 Batch 拆分成多个子 Batch，分配给不同的 GPU，每张 GPU 各自独立执行前向传播和反向传播。最后各 GPU 将计算得到的梯度汇总，得到平均梯度后各自更新参数，确保所有副本保持同步。
 
@@ -48,11 +48,11 @@ graph LR
 
 $$\text{每卡显存需求} = \underbrace{2N + 2N + 12N}_{\text{参数+梯度+优化器}} + \underbrace{A}_{\text{激活值}}$$
 
-### 模型并行（Model Parallelism）
+### 模型并行
 
 真正能够突破单卡显存限制的是**模型并行**（Model Parallelism, MP），它不复制整个模型，而是把模型的不同部分装载到不同的 GPU 上。模型并行有**流水线并行**和**张量并行**两种主要形式，它们分别从"层间"和"层内"两个粒度来切分模型。
 
-#### 流水线并行（Pipeline Parallelism）
+#### 流水线并行
 
 **流水线并行**（Pipeline Parallelism, PP）将模型按层切分，不同层放在不同 GPU 上，数据像流水线一样依次通过各 GPU。2019 年，Google 的论文《GPipe: Efficient Training of Giant Neural Networks using Pipeline Parallelism》中提出了这一方法的系统实现，随后卡内基梅隆大学在 PipeDream 中引入了更高效的调度策略。
 
@@ -147,7 +147,7 @@ gantt
 
 流水线并行的通信量远小于张量并行，因为 GPU 之间只传递层间的激活值，不涉及模型参数的同步。但它仍有局限：一是流水线气泡，即 GPU 在 Micro-batch 切换的间隙仍有空闲时间；二是层间负载不均，如果各层计算量不同，某些 GPU 会成为瓶颈。
 
-#### 张量并行（Tensor Parallelism）
+#### 张量并行
 
 流水线并行是按层切分模型，但如果某一层本身就很大，单个 GPU 仍然放不下，就需要在层内进一步切分。**张量并行**（Tensor Parallelism, TP）就是将单层的计算切分到多张 GPU 上。2019 年 NVIDIA 在 Megatron-LM 的论文中给出了 Transformer 模型中 FFN 层和 Attention 层的高效切分方案。FFN 层（$Y = ReLU(XW_1)W_2$）包含 $W_1$ 和 $W_2$ 两个线性层。可以将 $W_1$ 按列切分，$W_2$ 按行切分：
 

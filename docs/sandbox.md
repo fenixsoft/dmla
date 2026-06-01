@@ -11,15 +11,18 @@
         - Linux >= 570.28.03
         - Windows: >= 570.76
     - Docker GPU 支持：需要在宿主机安装 [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html)，使 Docker 容器能够访问 GPU 硬件。
-        - Windows 用户使用 Docker Desktop 时，Container Toolkit 已自动集成，无需额外安装。
-        - Linux 用户（包括 WSL2 中直接安装 Docker Engine 的情况）需要手动安装，安装方法如下：
+        1. Windows 用户使用 Docker Desktop 时，Container Toolkit 已自动集成，无需额外安装。
+        2. Linux 用户（包括 WSL2 中直接安装 Docker Engine 的情况）需要手动安装。
+            <details>
+            <summary>安装方法</summary>
+            
             ```bash
             # 配置 apt 仓库
             curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey | \
-              gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg
+                gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg
             curl -s -L https://nvidia.github.io/libnvidia-container/stable/deb/nvidia-container-toolkit.list | \
-              sed 's#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g' | \
-              tee /etc/apt/sources.list.d/nvidia-container-toolkit.list
+                sed 's#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g' | \
+                tee /etc/apt/sources.list.d/nvidia-container-toolkit.list
 
             # 安装并配置
             apt-get update && apt-get install -y nvidia-container-toolkit
@@ -29,10 +32,11 @@
             # 验证安装（应输出 GPU 型号信息）
             docker run --rm --gpus all dmla-sandbox:gpu nvidia-smi -L
             ```
+            </details>
     - 存储与内存：
-        - CPU 镜像约为 680 MB；GPU 镜像约 7.83 GB（其中 CUDA 官方镜像 >4GB，PyTorch GPU 版本 ≈3GB）。
-        - CPU 镜像内存上限为 4GB；GPU 镜像无内存上限，但模型训练通常至少需要 16GB 内存和 8GB 显存（具体评估见训练章节）。
-        - 宿主机还应预留20GB 以上空间，用于存放数据集、预处理缓存及模型 Checkpoint 等内容。
+        - CPU 镜像约为 680 MB；GPU 镜像约 7.83 GB（其中 CUDA 官方镜像 > 4 GB，PyTorch GPU 版本 ≈ 3 GB）。
+        - CPU 镜像内存上限为 4 GB；GPU 镜像无内存上限，但模型训练通常至少需要 16 GB 内存和 8 GB 显存（具体评估见训练章节）。
+        - 宿主机还应预留 20 GB 以上空间，用于存放数据集、预处理缓存及模型 Checkpoint 等内容。
     - 其他工具要求：
         - [Git LFS](https://git-scm.com/install/)：模型训练/评估的数据集需使用 Git LFS 下载。
 - 其余依赖（如 Jupyter Notebook Kernel、Python、NumPy、PyTorch、CUDA 等）均通过 Docker 镜像自动提供，无需单独安装。
