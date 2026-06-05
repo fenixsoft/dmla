@@ -87,6 +87,15 @@ const DATASETS = [
     format: 'git',
     targetDir: 'datasets/minimind-sft',
     source: 'ModelScope (icyfenix)'
+  },
+  {
+    id: 'minimind-alignment',
+    name: 'MiniMind Alignment (LLM对齐语料)',
+    url: 'https://www.modelscope.cn/datasets/icyfenix/Minimind_Alignment.git',
+    size: '~54MB',
+    format: 'git',
+    targetDir: 'datasets/minimind-alignment',
+    source: 'ModelScope (icyfenix)'
   }
 ]
 
@@ -95,9 +104,11 @@ const DATASETS = [
  * enquirer 可能抛出空字符串错误或包含 'cancel' 的消息
  */
 function isUserCancel(error) {
-  return !error.message ||
+  return !error ||
+         !error.message ||
          error.message === '' ||
-         error.message.includes('cancel')
+         error.message.includes('cancel') ||
+         error.code === 'ERR_USE_AFTER_CLOSE'
 }
 
 /**
@@ -1049,6 +1060,19 @@ async function downloadDataset(dataPath, dataset) {
 export async function runDataTUI() {
   showBanner()
 
+  // 处理 enquirer 在 Ctrl+C 时抛出的 ERR_USE_AFTER_CLOSE
+  // enquirer 的 cancel() 方法关闭 readline 后又调用 pause()，导致此错误
+  const handleUncaught = (err) => {
+    if (err.code === 'ERR_USE_AFTER_CLOSE') {
+      console.log()
+      console.log(chalk.gray('已退出数据管理'))
+      console.log()
+      process.exit(0)
+    }
+    throw err
+  }
+  process.on('uncaughtException', handleUncaught)
+
   let dataPath = getDataVolumePath()
 
   // 确保配置目录存在
@@ -1152,6 +1176,7 @@ export async function runDataTUI() {
           console.log()
           console.log(chalk.gray('已退出数据管理'))
           console.log()
+          process.off('uncaughtException', handleUncaught)
           return
       }
 
@@ -1163,6 +1188,7 @@ export async function runDataTUI() {
         console.log()
         console.log(chalk.gray('已退出数据管理'))
         console.log()
+        process.off('uncaughtException', handleUncaught)
         return
       }
       throw error

@@ -246,7 +246,8 @@ export default {
             collapsible: false,
             children: [
               { text: '人类反馈强化学习', link: '/language-models/alignment/rlhf' },
-              // { text: '对齐新范式', link: '/language-models/alignment/alignment-new-paradigms' },
+              { text: '对齐方法的演进', link: '/language-models/alignment/alignment-new-paradigms' },
+              { text: '工程实训：DPO 对齐训练实验', link: '/language-models/alignment/llm-dpo-experiment' },
             ]
             
           },

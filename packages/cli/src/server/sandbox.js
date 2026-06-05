@@ -982,10 +982,11 @@ export async function runPythonCodeStreaming(code, useGpu = false, res, imageOve
               if (isJsonComplete(text)) {
                 log(`Forwarding complete JSON message: ${text.length} bytes`)
                 res.write(text + '\n')
-                // chat 模式：检测 idle 消息，设置 ChatManager 就绪
+                // chat 模式：将消息转发给 ChatManager 处理
                 if (mode === 'chat') {
                   try {
                     const msg = JSON.parse(text)
+                    chatManager.handleDockerStream(Buffer.from(text + '\n'))
                     if (msg.type === 'idle') {
                       chatManager.setReady(true)
                       log('ChatManager ready (idle message received)')
