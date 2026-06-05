@@ -212,7 +212,8 @@ def logits_to_log_probs(logits, labels):
     Returns:
         每个位置的对数概率, shape [batch, seq_len]
     """
-    log_probs = F.log_softmax(logits, dim=2)
+    # 在 float32 下计算 log_softmax，避免 bfloat16 精度不足导致数值溢出
+    log_probs = F.log_softmax(logits.float(), dim=2)
     log_probs_per_token = torch.gather(log_probs, dim=2, index=labels.unsqueeze(2)).squeeze(-1)
     return log_probs_per_token
 
@@ -258,7 +259,7 @@ DPO 训练的起点是 SFT 阶段的模型。与 SFT 只需一个模型不同，
 
 | 训练决策 | MiniMind | 本实验 | 调整原因 |
 |---------|----------|-------|---------|
-| 学习率 | 4e-8 | 5e-5 | MiniMind 的学习率极小，因为它的 DPO 训练在全量 20K 数据上运行数千步，余弦调度有足够的步数缓慢衰减。本实验数据量相同但 batch_size 更小，总步数更少，4e-8 的学习率几乎无法产生有效的参数更新。提高至 5e-5 确保在有限的步数内模型能学到偏好信号 |
+| 学习率 | 4e-8 | 1e-5 | MiniMind 的学习率极小，因为它的 DPO 训练在全量 20K 数据上运行数千步，余弦调度有足够的步数缓慢衰减。本实验数据量相同但 batch_size 更小，总步数更少，4e-8 的学习率几乎无法产生有效的参数更新。但 DPO 对参数更新非常敏感（策略模型与参考模型的 log_prob 差值即使微小变化也会显著影响梯度），学习率过大会导致 loss 震荡。1e-5 在有效更新与训练稳定性之间取得平衡 |
 | $\beta$ | 0.15 | 0.1 | $\beta$ 控制模型偏离参考模型的程度。MiniMind 用 0.15 略保守，本实验降低至 0.1，让偏好信号的影响更明显，便于观察训练效果 |
 | 序列长度 | 1024 | 768 | 与 SFT 实验保持一致。DPO 的显存占用是 SFT 的约 2.5 倍（策略模型 + 参考模型 + chosen + rejected），序列越长显存压力越大 |
 | 批大小 | 4 | 4 | 一致。DPO 的每个批次包含 chosen 和 rejected 两条序列，实际前向传播的 batch_size 等效为 8，显存占用较高 |
@@ -303,7 +304,7 @@ hidden_size = 768
 num_hidden_layers = 8
 max_seq_len = 768
 batch_size = 4             # DPO 显存占用高（双模型 + chosen/rejected），batch_size 不宜过大
-learning_rate = 5e-5       # DPO 学习率
+learning_rate = 1e-5       # DPO 学习率（DPO 对参数敏感，学习率不宜过大）
 beta = 0.1                 # DPO 温度参数，控制偏离参考模型的程度
 num_epochs = 1
 accumulation_steps = 4     # 梯度累积（等效 batch_size = 4 × 4 = 16）
@@ -336,10 +337,10 @@ train_loader = DataLoader(
     train_ds, batch_size=batch_size, shuffle=True,
     num_workers=2, pin_memory=True, drop_last=True
 )
-total_steps_per_epoch = len(train_loader)
+total_steps_per_epoch = len(train_loader) // accumulation_steps
 total_steps = num_epochs * total_steps_per_epoch
-print(f"每 epoch 步数: {total_steps_per_epoch:,}")
-print(f"总训练步数: {total_steps:,}")
+print(f"每 epoch 优化步数: {total_steps_per_epoch:,}（mini-steps: {len(train_loader):,} / 累积: {accumulation_steps}）")
+print(f"总优化步数: {total_steps:,}")
 
 # ========== 3. 创建策略模型和参考模型 ==========
 progress.update(4, message="创建策略模型和参考模型...")
@@ -406,7 +407,6 @@ global_step = 0
 for epoch in range(num_epochs):
     model.train()
     epoch_start = time.time()
-    running_loss = 0.0
     running_dpo_loss = 0.0
     log_step_count = 0
 
@@ -422,11 +422,6 @@ for epoch in range(num_epochs):
         x = torch.cat([x_chosen, x_rejected], dim=0)
         y = torch.cat([y_chosen, y_rejected], dim=0)
         mask = torch.cat([mask_chosen, mask_rejected], dim=0)
-
-        # 学习率调度
-        lr = get_lr(global_step, total_steps, learning_rate)
-        for param_group in optimizer.param_groups:
-            param_group['lr'] = lr
 
         # 前向传播（混合精度）
         with autocast_ctx:
@@ -448,50 +443,51 @@ for epoch in range(num_epochs):
         # 反向传播
         loss.backward()
 
+        # 记录损失（每个 mini-step 都记录，用于日志平均）
+        current_dpo = dpo_loss_val.item()
+        running_dpo_loss += current_dpo
+        log_step_count += 1
+
         # 梯度累积 + 参数更新
         if (step + 1) % accumulation_steps == 0:
+            # 学习率调度（基于实际优化步数）
+            lr = get_lr(global_step, total_steps, learning_rate)
+            for param_group in optimizer.param_groups:
+                param_group['lr'] = lr
+
             torch.nn.utils.clip_grad_norm_(model.parameters(), grad_clip)
             optimizer.step()
             optimizer.zero_grad(set_to_none=True)
+            global_step += 1
 
-        # 记录损失
-        current_loss = loss.item() * accumulation_steps
-        current_dpo = dpo_loss_val.item()
-        running_loss += current_loss
-        running_dpo_loss += current_dpo
-        log_step_count += 1
-        global_step += 1
+            # 日志打印
+            if global_step % log_interval == 0:
+                avg_dpo = running_dpo_loss / log_step_count
+                elapsed = time.time() - epoch_start
+                eta_min = elapsed / max(global_step, 1) * (total_steps - global_step) / 60
+                print(f"Epoch[{epoch+1}/{num_epochs}] Step[{global_step}/{total_steps}], "
+                      f"dpo_loss: {avg_dpo:.4f}, lr: {lr:.8f}, eta: {eta_min:.1f}min")
+                progress.update(
+                    global_step,
+                    message=f"Epoch {epoch+1}/{num_epochs}, Step {global_step}/{total_steps}, DPO Loss={avg_dpo:.4f}",
+                    extra_data={"dpo_loss": avg_dpo, "lr": lr, "epoch": epoch + 1}
+                )
+                running_dpo_loss = 0.0
+                log_step_count = 0
 
-        # 日志打印
-        if global_step % log_interval == 0:
-            avg_loss = running_loss / log_step_count
-            avg_dpo = running_dpo_loss / log_step_count
-            elapsed = time.time() - epoch_start
-            eta_min = elapsed / max(global_step - epoch * total_steps_per_epoch, 1) * (total_steps - global_step) / 60
-            print(f"Epoch[{epoch+1}/{num_epochs}] Step[{step+1}/{total_steps_per_epoch}], "
-                  f"dpo_loss: {avg_dpo:.4f}, lr: {lr:.8f}, eta: {eta_min:.1f}min")
-            progress.update(
-                global_step,
-                message=f"Epoch {epoch+1}/{num_epochs}, Step {step+1}/{total_steps_per_epoch}, DPO Loss={avg_dpo:.4f}",
-                extra_data={"dpo_loss": avg_dpo, "lr": lr, "epoch": epoch + 1}
-            )
-            running_loss = 0.0
-            running_dpo_loss = 0.0
-            log_step_count = 0
-
-        # 周期性保存模型
-        if global_step % save_interval == 0:
-            model.eval()
-            save_path = os.path.join(SAVE_DIR, f'dpo_step{global_step}.pth')
-            state_dict = {k: v.half().cpu() for k, v in model.state_dict().items()}
-            torch.save(state_dict, save_path)
-            print(f"  -> 保存模型: step={global_step}, dpo_loss={current_dpo:.4f}")
-            model.train()
-            del state_dict
+            # 周期性保存模型
+            if global_step % save_interval == 0:
+                model.eval()
+                save_path = os.path.join(SAVE_DIR, f'dpo_step{global_step}.pth')
+                state_dict = {k: v.half().cpu() for k, v in model.state_dict().items()}
+                torch.save(state_dict, save_path)
+                print(f"  -> 保存模型: step={global_step}, dpo_loss={avg_dpo:.4f}")
+                model.train()
+                del state_dict
 
         del x_chosen, x_rejected, y_chosen, y_rejected, mask_chosen, mask_rejected
         del x, y, mask, ref_outputs, ref_logits, ref_log_probs
-        del outputs, policy_logits, policy_log_probs, loss
+        del outputs, policy_logits, policy_log_probs, dpo_loss_val
 
     # 每 epoch 结束保存
     epoch_time = time.time() - epoch_start

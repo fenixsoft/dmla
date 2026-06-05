@@ -15,7 +15,8 @@ def logits_to_log_probs(logits, labels):
     Returns:
         每个位置的对数概率, shape [batch, seq_len]
     """
-    log_probs = F.log_softmax(logits, dim=2)
+    # 在 float32 下计算 log_softmax，避免 bfloat16 精度不足导致数值溢出
+    log_probs = F.log_softmax(logits.float(), dim=2)
     log_probs_per_token = torch.gather(log_probs, dim=2, index=labels.unsqueeze(2)).squeeze(-1)
     return log_probs_per_token
 
