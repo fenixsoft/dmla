@@ -39,7 +39,7 @@ else:
         print("SFT 模型: 未找到！请先完成 SFT 实验")
 
 # 检查 DPO 语料
-dpo_dir = os.path.join(DATA_DIR, 'datasets', 'minimind-dpo')
+dpo_dir = os.path.join(DATA_DIR, 'datasets', 'minimind-alignment')
 if os.path.exists(dpo_dir):
     print(f"DPO 语料目录: 已存在")
     for f in os.listdir(dpo_dir):
@@ -290,10 +290,11 @@ from dmla_progress import ProgressReporter
 # 导入共享模块
 from shared.llm.mini_mind_config import MiniMindForCausalLM, MiniMindConfig
 from shared.llm.dpodataset import DPODataset
+from shared.llm.logits_to_log_probs import logits_to_log_probs, dpo_loss
 
 # ========== 路径配置 ==========
 TOKENIZER_PATH = os.path.join(DATA_DIR, 'datasets', 'minimind-pretrain')
-DPO_DATA_PATH = os.path.join(DATA_DIR, 'datasets', 'minimind-dpo', 'dpo.jsonl')
+DPO_DATA_PATH = os.path.join(DATA_DIR, 'datasets', 'minimind-alignment', 'dpo.jsonl')
 SFT_MODEL_PATH = os.path.join(DATA_DIR, 'models', 'minimind', 'sft', 'full_sft_768.pth')
 SAVE_DIR = os.path.join(DATA_DIR, 'models', 'minimind', 'dpo')
 
@@ -618,4 +619,4 @@ def chat(user_message, history=None):
 
 DPO 训练使模型从"学会回答"进阶到"学会区分回答优劣"。与 RLHF 的三模型架构（策略模型 + 奖励模型 + 参考模型）相比，DPO 只需两个模型（策略模型 + 参考模型），绕过了奖励模型的训练和 PPO 的不稳定性，将对齐训练的工程门槛大幅降低。DPO 的局限在于 $\beta$ 参数是固定的，不如 PPO 的自适应 KL 惩罚灵活，且对长序列的对数概率计算可能不稳定。在 [对齐方法的演进](./alignment-new-paradigms.md)中介绍的 KTO 和 GRPO 等方法，从不同角度进一步简化了对齐训练的流程。
 
-至此，我们完成了语言模型训练的完整流程：Pretraining → SFT → DPO。预训练赋予模型语言能力，SFT 赋予模型对话能力，DPO 赋予模型偏好对齐能力。三个阶段层层递进，每一步都建立在前一步的基础之上。
+至此，我们完成了语言模型训练的完整流程。预训练赋予模型语言能力，SFT 赋予模型对话能力，DPO 赋予模型偏好对齐能力。三个阶段层层递进，每一步都建立在前一步的基础之上。

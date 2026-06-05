@@ -11,14 +11,15 @@ from torch.utils.data import Dataset
 
 class SFTDataset(Dataset):
     """
-    SFT 数据集：将对话数据 tokenize 为 next-token prediction 格式
+    SFT 数据集：将对话数据 tokenize 为 ChatML 格式
 
-    与 PretrainDataset 的核心差异：
+    与 PretrainDataset 的主要差异：
     - 数据格式从 {"text": "..."} 变为 {"conversations": [...]}
-    - 标签掩码：仅 assistant 回答部分参与 loss，其余标记为 -100
+    - 标签掩码：仅 assistant 回答部分参与 loss，其余标记为 -100（PyTorch CrossEntropyLoss 默认忽略 -100 对应的位置）
     - 使用 apply_chat_template 将对话转为 ChatML 格式
+    - SFT 数据集仍然支持工具调用训练，只要将训练集从 sft_t2t_tiny.jsonl 换回带有工具调用样例的 sft_t2t_mini.jsonl 即可
     """
-    # MiniMind 使用 ChatML 格式：<|im_start|>role\ncontent<|im_end|>\n
+    # 使用 ChatML 格式：<|im_start|>role\ncontent<|im_end|>\n
     # tokenizer 本身未内置 chat_template，需手动设置
     CHATML_TEMPLATE = (
         "{% for message in messages %}<|im_start|>{{ message.role }}\n"
@@ -31,7 +32,7 @@ class SFTDataset(Dataset):
         super().__init__()
         os.environ["TOKENIZERS_PARALLELISM"] = "false"
         self.tokenizer = tokenizer
-        # MiniMind tokenizer 未内置 chat_template，需手动设置 ChatML 格式
+        # Tokenizer 未内置 chat_template，需手动设置 ChatML 格式
         if not tokenizer.chat_template:
             tokenizer.chat_template = self.CHATML_TEMPLATE
         self.max_length = max_length
@@ -44,18 +45,17 @@ class SFTDataset(Dataset):
         datasets_logging.set_verbosity_error()
         self.samples = load_dataset('json', data_files=jsonl_path, split='train', features=features)
         datasets_logging.set_verbosity_warning()
-        # 预计算 assistant 回答的起止标记 ID
-        self.bos_id = tokenizer(f'{tokenizer.bos_token}assistant\n', add_special_tokens=False).input_ids
-        self.eos_id = tokenizer(f'{tokenizer.eos_token}\n', add_special_tokens=False).input_ids
+        # 预计算 assistant 回答的起止 token ID
+        # 即 <|im_start|>assistant\n 对应的 token ID 序列，用于定位助手回答的起始位置
+        self.bos_id = tokenizer(f'{tokenizer.bos_token}assistant\n', add_special_tokens=False).input_ids  
+        # 即 <|im_end|>\n 对应的 token ID 序列，用于定位助手回答的结束位置
+        self.eos_id = tokenizer(f'{tokenizer.eos_token}\n', add_special_tokens=False).input_ids  
 
     def __len__(self):
         return len(self.samples)
 
     def create_chat_prompt(self, conversations):
         """将对话列表应用 chat template 转为文本"""
-        # DataLoader 多 worker 场景下 tokenizer.chat_template 可能丢失，需防御性设置
-        if not self.tokenizer.chat_template:
-            self.tokenizer.chat_template = self.CHATML_TEMPLATE
         messages = []
         tools = None
         for message in conversations:
@@ -97,7 +97,8 @@ class SFTDataset(Dataset):
         prompt = self.create_chat_prompt(conversations)
         input_ids = self.tokenizer(prompt).input_ids[:self.max_length]
         # 填充到固定长度
-        input_ids += [self.tokenizer.pad_token_id] * (self.max_length - len(input_ids))
+        # 右侧填充至固定长度，填充部分的标签已由 generate_labels 设为 -100，不参与 loss
+        input_ids += [self.tokenizer.pad_token_id] * (self.max_length - len(input_ids))  
         labels = self.generate_labels(input_ids)
         return torch.tensor(input_ids, dtype=torch.long), torch.tensor(labels, dtype=torch.long)
 
