@@ -256,7 +256,9 @@ export default {
             collapsible: false,
             children: [
               // { text: '思维链与推理模型', link: '/language-models/reasoning/chain-of-thought' },
-              // { text: 'Test-Time Compute Scaling', link: '/language-models/reasoning/test-time-compute' },
+              // { text: '推理算力扩展', link: '/language-models/reasoning/test-time-compute' },
+              // { text: '推理效率优化', link: '/language-models/reasoning/inference-efficiency' },
+              // { text: '推理的可靠性与局限', link: '/language-models/reasoning/reasoning-reliability' },
             ]
           },
           {
