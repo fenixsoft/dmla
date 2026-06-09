@@ -15,13 +15,14 @@ externalLinkIcon: false
 
 <hr style="height: 1px;  top: -25px; position: relative;" />
 
-- 程序员<br/>
+- 程序员
   华为七级专家，兼职一些管理与研究工作的程序员。主要从事大型企业级软件的架构与研发工作，作为总架构师，参与了 [MetaERP](https://www.huawei.com/cn/news/2023/4/metaerp-press-release)、MetaCRM 等重要变革项目。业余里对计算机科学相关的多个领域都有持续跟进。
 
-- 研究员<br/>
+- 研究员
   理学博士，华为企业应用教研室主任。曾任远光软件研究院院长，澳门科大 - 远光人工智能联合实验室主任，研究方向为机器学习 - 特征工程 - 自动化特征选择。
 
-- 计算机技术作家<br/>出版过九部计算机技术书籍，撰写过三部开源文档，口碑和销量均得到业内认可。其中"[凤凰架构](https://icyfenix.cn)"获得 [GitHub](https://github.com/) 万赞评价，六部书籍在 [豆瓣](https://www.douban.com/) 上获得了 9.0 分及以上的评价，"深入理解 Java 虚拟机"系列重印超过 45 次，销量逾 40 万册。
+- 计算机技术作家
+  出版过九部计算机技术书籍，撰写过三部开源文档，口碑和销量均得到业内认可。其中"[凤凰架构](https://icyfenix.cn)"获得 [GitHub](https://github.com/) 万赞评价，六部书籍在 [豆瓣](https://www.douban.com/) 上获得了 9.0 分及以上的评价，"深入理解 Java 虚拟机"系列重印超过 45 次，销量逾 40 万册。
   - 2026 年《[设计机器学习应用系统](https://ai.icyfenix.cn)》（开源文档，进行中）
   - 2025 年《[智慧的疆界：从图灵机到人工智能（第二版）](https://book.douban.com/subject/37357392/)》（豆瓣 9.1）
   - 2021 年《[凤凰架构：构建可靠的大型分布式系统](https://icyfenix.cn/introduction/about-book.html)》（豆瓣 9.4）
@@ -35,7 +36,7 @@ externalLinkIcon: false
   - 2011 年《[深入理解 Java 虚拟机：JVM 高级特性与最佳实践（第一版）](https://book.douban.com/subject/6522893/)》（豆瓣 8.6）
   - 2011 年《[Java 虚拟机规范（Java SE 7 中文版）](https://www.iteye.com/topic/1117824)》 （开源文档）
 
-- 技术布道师<br/>
+- 技术布道师
   开源技术的积极倡导者和推动者，国内主流云计算厂商的最有价值技术专家，媒体撰稿人，会议讲师。
   - [阿里云最有价值技术专家（MVP）](https://mvp.aliyun.com/mvp/detail/487)
   - [腾讯云最有价值技术专家（TVP）](https://cloud.tencent.com/tvp/132)
@@ -44,7 +45,6 @@ externalLinkIcon: false
   - [Java 核心技术大会会议主席](https://ke.segmentfault.com/course/1650000041954414)、[极客时间布道师](https://time.geekbang.org/opencourse/intro/100064201)、[华章课程讲师](https://xie.infoq.cn/article/36ec9efa0697377af0d043b1e)
   - [QCon 全球软件开发大会主题明星讲师](https://qcon.infoq.cn/2020/shenzhen/)、[ArchSummit 全球架构师峰会主题演讲嘉宾](https://archsummit.infoq.cn/2021/shenzhen/presentation/4104)、[HuaweiConnect 华为全连接大会专题讲师](https://www.huawei.com/cn/events/huaweiconnect/agenda?type=%E4%B8%93%E9%A2%98%E6%BC%94%E8%AE%B2)
 
-<br/>
 
 <Swiper :autoPlay='false'  :showIndicator='true' >
 <Slide><img src="./assets/icyfenix.jpg" /></Slide>
