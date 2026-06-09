@@ -20,6 +20,12 @@ export default {
   title: '设计机器学习应用系统',
   description: '',
 
+  // Markdown 渲染配置 - 启用 GFM breaks，让换行符渲染为 <br>
+  // 解决 blockquote 中多行内容被合并到同一行的问题
+  markdown: {
+    breaks: true,
+  },
+
   // 禁止浏览器翻译（网站本身就是中文）
   head: [
     ['meta', { name: 'google', content: 'notranslate' }],
@@ -255,8 +261,8 @@ export default {
             text: '推理能力',
             collapsible: false,
             children: [
-              // { text: '思维链与推理模型', link: '/language-models/reasoning/chain-of-thought' },
-              // { text: '推理算力扩展', link: '/language-models/reasoning/test-time-compute' },
+              { text: '思维链与推理模型', link: '/language-models/reasoning/chain-of-thought' },
+              { text: '推理时缩放定律', link: '/language-models/reasoning/test-time-compute' },
               // { text: '推理效率优化', link: '/language-models/reasoning/inference-efficiency' },
               // { text: '推理的可靠性与局限', link: '/language-models/reasoning/reasoning-reliability' },
             ]

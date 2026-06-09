@@ -47,7 +47,7 @@ $$\vec{king} - \vec{man} + \vec{woman} \approx \vec{queen}$$
 
 这个等式的含义是从"国王"向量减去"男人"向量，加上"女人"向量，结果接近"女王"向量。这表明词嵌入捕捉到了性别这一语义维度：$\vec{king} - \vec{queen}$ 的方向与 $\vec{man} - \vec{woman}$ 的方向相似，都表示从男性到女性的语义变化。衡量两个词向量相似度的标准方法是[余弦相似度](../../maths/linear/vectors.md#内积与投影)：
 
-$$\text{similarity}(\mathbf{a}, \mathbf{b}) = \frac{\mathbf{a} \cdot \mathbf{b}}{\|\mathbf{a}\| \|\mathbf{b}\|} = \frac{\sum_{i=1}^{d} a_i b_i}{\sqrt{\sum_{i=1}^{d} a_i^2} \sqrt{\sum_{i=1}^{d} b_i^2}}$$
+$$similarity(\mathbf{a}, \mathbf{b}) = \frac{\mathbf{a} \cdot \mathbf{b}}{\|\mathbf{a}\| \|\mathbf{b}\|} = \frac{\sum_{i=1}^{d} a_i b_i}{\sqrt{\sum_{i=1}^{d} a_i^2} \sqrt{\sum_{i=1}^{d} b_i^2}}$$
 
 余弦相似度衡量两个向量的方向相似程度，取值范围 $[-1, 1]$。值为 1 表示方向完全相同，值为 0 表示正交（无关），值为 -1 表示方向相反。相比于欧氏距离，余弦相似度更关注向量的方向而非长度，更适合衡量语义相似度。
 
