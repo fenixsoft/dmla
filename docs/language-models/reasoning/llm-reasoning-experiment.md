@@ -30,14 +30,10 @@ else:
     print("GSM8K 评测子集: 未下载，请运行 'dmla data' 下载数据集")
 
 # 加载 Qwen3.5-0.8B-Instruct 模型
-model_name = "Qwen/Qwen3.5-0.8B-Instruct"
-print(f"\n正在加载模型 {model_name}...")
-tokenizer = AutoTokenizer.from_pretrained(model_name)
-model = AutoModelForCausalLM.from_pretrained(
-    model_name,
-    torch_dtype=torch.bfloat16,
-    device_map="auto"
-)
+model_path = os.path.join(DATA_DIR, 'datasets', 'gsm8k-200')
+print(f"\n正在加载模型 {model_path}...")
+tokenizer = AutoTokenizer.from_pretrained(model_path)
+model = AutoModelForCausalLM.from_pretrained(model_path, dtype=torch.bfloat16).to("cuda")
 model.eval()
 total_params = sum(p.numel() for p in model.parameters())
 print(f"模型参数量: {total_params / 1e9:.2f}B ({total_params:,})")
@@ -67,7 +63,7 @@ from transformers import AutoTokenizer, AutoModelForCausalLM
 from dmla_progress import ProgressReporter
 
 # ========== 配置 ==========
-model_name = "Qwen/Qwen3.5-0.8B-Instruct"
+model_path = os.path.join(DATA_DIR, 'datasets', 'gsm8k-200')
 gsm8k_path = os.path.join(DATA_DIR, 'datasets', 'gsm8k-200', 'gsm8k_200.jsonl')
 num_samples = 200  # 评测题数
 
@@ -78,10 +74,10 @@ questions = all_questions[:num_samples]
 print(f"评测题目数: {len(questions)}")
 
 # ========== 加载模型 ==========
-tokenizer = AutoTokenizer.from_pretrained(model_name)
+tokenizer = AutoTokenizer.from_pretrained(model_path)
 model = AutoModelForCausalLM.from_pretrained(
-    model_name, torch_dtype=torch.bfloat16, device_map="auto"
-)
+    model_path, dtype=torch.bfloat16
+).to("cuda")
 model.eval()
 
 # ========== 答案提取 ==========
@@ -233,7 +229,7 @@ from transformers import AutoTokenizer, AutoModelForCausalLM
 from dmla_progress import ProgressReporter
 
 # ========== 配置 ==========
-model_name = "Qwen/Qwen3.5-0.8B-Instruct"
+model_path = os.path.join(DATA_DIR, 'datasets', 'gsm8k-200')
 gsm8k_path = os.path.join(DATA_DIR, 'datasets', 'gsm8k-200', 'gsm8k_200.jsonl')
 num_samples = 200
 n_values = [1, 2, 4, 8]  # 采样数
@@ -244,10 +240,10 @@ with open(gsm8k_path, 'r', encoding='utf-8') as f:
     all_questions = [json.loads(line) for line in f]
 questions = all_questions[:num_samples]
 
-tokenizer = AutoTokenizer.from_pretrained(model_name)
+tokenizer = AutoTokenizer.from_pretrained(model_path)
 model = AutoModelForCausalLM.from_pretrained(
-    model_name, torch_dtype=torch.bfloat16, device_map="auto"
-)
+    model_path, dtype=torch.bfloat16
+).to("cuda")
 model.eval()
 
 def extract_answer(text):
@@ -396,7 +392,7 @@ from transformers import AutoTokenizer, AutoModelForCausalLM
 from dmla_progress import ProgressReporter
 
 # ========== 配置 ==========
-model_name = "Qwen/Qwen3.5-0.8B-Instruct"
+model_path = os.path.join(DATA_DIR, 'datasets', 'gsm8k-200')
 gsm8k_path = os.path.join(DATA_DIR, 'datasets', 'gsm8k-200', 'gsm8k_200.jsonl')
 num_samples = 100  # 动态深度评测用较少题数以节省时间
 
@@ -405,10 +401,10 @@ with open(gsm8k_path, 'r', encoding='utf-8') as f:
     all_questions = [json.loads(line) for line in f]
 questions = all_questions[:num_samples]
 
-tokenizer = AutoTokenizer.from_pretrained(model_name)
+tokenizer = AutoTokenizer.from_pretrained(model_path)
 model = AutoModelForCausalLM.from_pretrained(
-    model_name, torch_dtype=torch.bfloat16, device_map="auto"
-)
+    model_path, dtype=torch.bfloat16
+).to("cuda")
 model.eval()
 
 def extract_answer(text):
@@ -548,7 +544,7 @@ from transformers import AutoTokenizer, AutoModelForCausalLM, BitsAndBytesConfig
 from dmla_progress import ProgressReporter
 
 # ========== 配置 ==========
-model_name = "Qwen/Qwen3.5-0.8B-Instruct"
+model_path = os.path.join(DATA_DIR, 'datasets', 'gsm8k-200')
 gsm8k_path = os.path.join(DATA_DIR, 'datasets', 'gsm8k-200', 'gsm8k_200.jsonl')
 num_eval = 50  # 量化评测用较少题数以节省时间
 
@@ -557,7 +553,7 @@ with open(gsm8k_path, 'r', encoding='utf-8') as f:
     all_questions = [json.loads(line) for line in f]
 questions = all_questions[:num_eval]
 
-tokenizer = AutoTokenizer.from_pretrained(model_name)
+tokenizer = AutoTokenizer.from_pretrained(model_path)
 
 def extract_answer(text):
     match = re.search(r'####\s*(-?[\d,]+\.?\d*)', text)
@@ -609,8 +605,8 @@ progress = ProgressReporter(total_steps=3, description="量化精度对比评测
 # FP16（基线）
 progress.update(1, message="加载 FP16 模型...")
 model_fp16 = AutoModelForCausalLM.from_pretrained(
-    model_name, torch_dtype=torch.bfloat16, device_map="auto"
-)
+    model_path, dtype=torch.bfloat16
+).to("cuda")
 fp16_size = sum(p.numel() * p.element_size() for p in model_fp16.parameters()) / 1024**3
 print(f"\nFP16 模型显存占用: {fp16_size:.2f} GB")
 progress.update(1, message="评测 FP16 模型...")
@@ -623,7 +619,7 @@ torch.cuda.empty_cache()
 progress.update(2, message="加载 INT8 模型...")
 int8_config = BitsAndBytesConfig(load_in_8bit=True)
 model_int8 = AutoModelForCausalLM.from_pretrained(
-    model_name, quantization_config=int8_config, device_map="auto"
+    model_path, quantization_config=int8_config, device_map="auto"
 )
 int8_size = sum(p.numel() * p.element_size() for p in model_int8.parameters()) / 1024**3
 print(f"INT8 模型显存占用: {int8_size:.2f} GB")
@@ -637,7 +633,7 @@ torch.cuda.empty_cache()
 progress.update(3, message="加载 INT4 模型...")
 int4_config = BitsAndBytesConfig(load_in_4bit=True, bnb_4bit_compute_dtype=torch.bfloat16)
 model_int4 = AutoModelForCausalLM.from_pretrained(
-    model_name, quantization_config=int4_config, device_map="auto"
+    model_path, quantization_config=int4_config, device_map="auto"
 )
 int4_size = sum(p.numel() * p.element_size() for p in model_int4.parameters()) / 1024**3
 print(f"INT4 模型显存占用: {int4_size:.2f} GB")
@@ -666,14 +662,15 @@ progress.complete(message="量化精度对比评测完成")
 $$M_{\text{KV}} = 2 \times n_{\text{layer}} \times d_{\text{head}} \times n_{\text{head}} \times n_{\text{max}} \times b \times sizeof(\text{dtype})$$
 
 ```python runnable gpu
+import os
 import torch
 from transformers import AutoTokenizer, AutoModelForCausalLM
 
-model_name = "Qwen/Qwen3.5-0.8B-Instruct"
-tokenizer = AutoTokenizer.from_pretrained(model_name)
+model_path = os.path.join(DATA_DIR, 'datasets', 'gsm8k-200')
+tokenizer = AutoTokenizer.from_pretrained(model_path)
 model = AutoModelForCausalLM.from_pretrained(
-    model_name, torch_dtype=torch.bfloat16, device_map="auto"
-)
+    model_path, dtype=torch.bfloat16
+).to("cuda")
 model.eval()
 
 # 提取模型结构参数
@@ -744,7 +741,7 @@ from transformers import AutoTokenizer, AutoModelForCausalLM
 from dmla_progress import ProgressReporter
 
 # ========== 配置 ==========
-model_name = "Qwen/Qwen3.5-0.8B-Instruct"
+model_path = os.path.join(DATA_DIR, 'datasets', 'gsm8k-200')
 gsm8k_path = os.path.join(DATA_DIR, 'datasets', 'gsm8k-200', 'gsm8k_200.jsonl')
 num_eval = 50
 
@@ -753,10 +750,10 @@ with open(gsm8k_path, 'r', encoding='utf-8') as f:
     all_questions = [json.loads(line) for line in f]
 questions = all_questions[:num_eval]
 
-tokenizer = AutoTokenizer.from_pretrained(model_name)
+tokenizer = AutoTokenizer.from_pretrained(model_path)
 model = AutoModelForCausalLM.from_pretrained(
-    model_name, torch_dtype=torch.bfloat16, device_map="auto"
-)
+    model_path, dtype=torch.bfloat16
+).to("cuda")
 model.eval()
 
 def extract_answer(text):

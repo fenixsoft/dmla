@@ -29,7 +29,9 @@ const SOFT_DEPS = [
   'transformers',
   'tokenizers',
   'datasets',
-  'ipywidgets'
+  'ipywidgets',
+  'accelerate',
+  'bitsandbytes'
 ]
 
 // 环境检测结果缓存
