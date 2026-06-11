@@ -83,6 +83,13 @@ RUN pip install --no-cache-dir -i https://pypi.tuna.tsinghua.edu.cn/simple \
     accelerate \
     bitsandbytes
 
+# 安装 Qwen3.5 FLA 加速依赖（需 triton + causal-conv1d + flash-linear-attention）
+# triton 需从 PyTorch 源安装预编译 wheel，FLA 依赖 triton 故需先装
+RUN pip install --no-cache-dir -i https://pypi.tuna.tsinghua.edu.cn/simple triton && \
+    pip install --no-cache-dir -i https://pypi.tuna.tsinghua.edu.cn/simple \
+    causal-conv1d \
+    flash-linear-attention
+
 # 复制执行器和诊断脚本
 COPY local-server/src/kernel_runner.py /workspace/kernel_runner.py
 COPY local-server/src/cuda_compat_check.py /workspace/cuda_compat_check.py
