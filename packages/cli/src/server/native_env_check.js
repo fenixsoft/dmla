@@ -31,9 +31,7 @@ const SOFT_DEPS = [
   'datasets',
   'ipywidgets',
   'accelerate',
-  'bitsandbytes',
-  'flash-linear-attention',
-  'causal-conv1d'
+  'bitsandbytes'
 ]
 
 // 环境检测结果缓存

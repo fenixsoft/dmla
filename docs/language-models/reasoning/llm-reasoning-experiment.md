@@ -15,8 +15,16 @@ GSM8K（Grade School Math 8K）是一个包含 1319 道小学数学应用题的�
 
 ```python runnable gpuonly
 import os
+import sys
 import torch
 from transformers import AutoTokenizer, AutoModelForCausalLM
+
+# 若 FLA 安装不完整（如缺少 triton），屏蔽 fla 模块避免模型加载崩溃
+# Qwen3.5 的 FLA 快速路径是可选加速，不可用时自动回退纯 PyTorch 实现
+try:
+    import fla
+except Exception:
+    sys.modules['fla'] = type(sys)('fla')  # 占位模块，使 FLA 可用性检测返回 False
 
 # 检查 GSM8K 评测数据
 gsm8k_dir = os.path.join(DATA_DIR, 'datasets', 'gsm8k-200')
@@ -55,10 +63,15 @@ Qwen3.5 系列模型原生支持 thinking/non-thinking 模式切换。thinking �
 
 ```python runnable gpu timeout=unlimited
 import os
+import sys
 import json
 import re
 import time
 import torch
+try:
+    import fla
+except Exception:
+    sys.modules['fla'] = type(sys)('fla')
 from transformers import AutoTokenizer, AutoModelForCausalLM
 from dmla_progress import ProgressReporter
 
@@ -220,11 +233,16 @@ progress.complete(message="思维链提示策略评测完成")
 
 ```python runnable gpu timeout=unlimited
 import os
+import sys
 import json
 import re
 import time
 import torch
 from collections import Counter
+try:
+    import fla
+except Exception:
+    sys.modules['fla'] = type(sys)('fla')
 from transformers import AutoTokenizer, AutoModelForCausalLM
 from dmla_progress import ProgressReporter
 
@@ -383,11 +401,16 @@ progress.complete(message="推理缩放策略评测完成")
 
 ```python runnable gpu timeout=unlimited
 import os
+import sys
 import json
 import re
 import math
 import torch
 from collections import Counter
+try:
+    import fla
+except Exception:
+    sys.modules['fla'] = type(sys)('fla')
 from transformers import AutoTokenizer, AutoModelForCausalLM
 from dmla_progress import ProgressReporter
 
@@ -536,10 +559,15 @@ progress.complete(message="动态推理深度评测完成")
 
 ```python runnable gpu timeout=unlimited
 import os
+import sys
 import json
 import re
 import time
 import torch
+try:
+    import fla
+except Exception:
+    sys.modules['fla'] = type(sys)('fla')
 from transformers import AutoTokenizer, AutoModelForCausalLM, BitsAndBytesConfig
 from dmla_progress import ProgressReporter
 
@@ -663,7 +691,12 @@ $$M_{\text{KV}} = 2 \times n_{\text{layer}} \times d_{\text{head}} \times n_{\te
 
 ```python runnable gpu
 import os
+import sys
 import torch
+try:
+    import fla
+except Exception:
+    sys.modules['fla'] = type(sys)('fla')
 from transformers import AutoTokenizer, AutoModelForCausalLM
 
 model_path = os.path.join(DATA_DIR, 'datasets', 'gsm8k-200')
@@ -732,11 +765,16 @@ Qwen3.5 的 MTP 机制在每次前向传播时，除了预测下一个 token 外
 
 ```python runnable gpu timeout=unlimited
 import os
+import sys
 import json
 import re
 import time
 import torch
 from collections import Counter
+try:
+    import fla
+except Exception:
+    sys.modules['fla'] = type(sys)('fla')
 from transformers import AutoTokenizer, AutoModelForCausalLM
 from dmla_progress import ProgressReporter
 
