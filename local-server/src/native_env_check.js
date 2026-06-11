@@ -31,11 +31,7 @@ const SOFT_DEPS = [
   'datasets',
   'ipywidgets',
   'accelerate',
-  'bitsandbytes',
-  // FLA 加速依赖（仅 Linux+CUDA 可安装，Windows 下安装失败不影响运行）
-  'triton',
-  'causal-conv1d',
-  'flash-linear-attention'
+  'bitsandbytes'
 ]
 
 // 环境检测结果缓存

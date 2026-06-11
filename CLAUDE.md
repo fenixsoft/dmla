@@ -110,8 +110,7 @@ dmla start --native --sync --dev
 ```
 numpy, pandas, matplotlib, scipy, scikit-learn, pillow,
 opencv-python-headless, jupyter_client, ipykernel, lmdb, requests,
-transformers, tokenizers, datasets, ipywidgets, accelerate, bitsandbytes,
-triton, causal-conv1d, flash-linear-attention
+transformers, tokenizers, datasets, ipywidgets, accelerate, bitsandbytes
 ```
 
 ### 镜像开发约束（Volume Mount 机制）
