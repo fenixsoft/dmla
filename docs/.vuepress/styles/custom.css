@@ -83,6 +83,34 @@
   overflow-y: auto;
 }
 
+/* 横向滚动条背景与代码框背景一致 */
+.runnable-code-block pre::-webkit-scrollbar:horizontal,
+.runnable-code-block code::-webkit-scrollbar:horizontal {
+  height: 8px;
+}
+
+.runnable-code-block pre::-webkit-scrollbar-track:horizontal,
+.runnable-code-block code::-webkit-scrollbar-track:horizontal {
+  background: #282C34;
+}
+
+.runnable-code-block pre::-webkit-scrollbar-thumb:horizontal,
+.runnable-code-block code::-webkit-scrollbar-thumb:horizontal {
+  background: #555;
+  border-radius: 4px;
+}
+
+.runnable-code-block pre::-webkit-scrollbar-thumb:horizontal:hover,
+.runnable-code-block code::-webkit-scrollbar-thumb:horizontal:hover {
+  background: #666;
+}
+
+/* Firefox 横向滚动条 */
+.runnable-code-block pre,
+.runnable-code-block code {
+  scrollbar-color: #555 #282C34;
+}
+
 .runnable-code-block pre code {
   font-family: 'Fira Code', 'SF Mono', Monaco, Consolas, monospace;
   font-size: 14px;
