@@ -15,7 +15,7 @@
 - `np.random.uniform(low, high, n)`：从任意区间 $[low, high]$ 的均匀分布采样。
 - `np.random.normal(mean, std, n)`：从任意参数的正态分布 $N(\mu, \sigma^2)$ 采样。
 
-下面的代码演示了均匀分布和正态分布的采样过程，并通过可视化对比采样数据的直方图与理论[概率密度函数](probability-basics.md#概率密度函数-pdf)（PDF），验证采样的正确性。
+下面的代码演示了均匀分布和正态分布的采样过程，并通过可视化对比采样数据的直方图与理论[概率密度函数](probability-basics.md#概率密度函数)（PDF），验证采样的正确性。
 
 ```python runnable
 import numpy as np

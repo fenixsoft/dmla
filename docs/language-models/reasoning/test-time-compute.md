@@ -1,6 +1,6 @@
 # 推理时缩放定律
 
-[预训练缩放定律](../pretraining/scaling-laws.md)揭示了更大的模型、更多的数据能够使模型具备更强的能力。2024 年 8 月，加州大学伯克利分校的查理·斯内尔（Charlie Snell）在论文《Scaling LLM Test-Time Compute Optimally can be More Effective than Scaling Model Parameters》中发现，在推理阶段投入更多计算，无论是生成更多候选答案、搜索更多推理路径，还是进行更深入的验证，同样可以系统地提升模型性能。一个参数量较小但推理计算充足的模型，在某些任务上可以超越参数量大 14 倍但推理计算不足的大模型。这项研究将推理阶段的计算投入与模型性能之间的定量关系呈现了出来，被称为**推理算力缩放**（Test-Time Compute Scaling）。
+[预训练缩放定律](../pretraining/scaling-laws.md)揭示了更大的模型、更多的数据能够使模型具备更强的能力。2024 年 8 月，加州大学伯克利分校的查理·斯内尔（Charlie Snell）在论文《Scaling LLM Test-Time Compute Optimally can be More Effective than Scaling Model Parameters》中发现，在推理阶段投入更多计算，无论是生成更多候选答案、搜索更多推理路径，还是进行更深入的验证，同样可以系统地提升模型性能。一个参数量较小但推理计算充足的模型，在某些任务上可以超越参数量大 14 倍但推理计算不足的大模型。这项研究将推理阶段的计算投入与模型性能之间的定量关系呈现了出来，被称为**推理时算力缩放**（Test-Time Compute Scaling）。
 
 早在 2022 年，谷歌研究院的论文《Self-Consistency Improves Chain of Thought Reasoning in Language Models》中就发现，对同一个问题生成多个推理路径并取多数投票，可以显著提升准确率，这是推理计算多采样策略的雏形。2023 年，普林斯顿大学的姚顺雨（Shunyu Yao）在论文《Tree of Thoughts: Deliberate Problem Solving with Large Language Models》中将搜索算法引入推理过程，让模型像下棋一样在推理空间中探索，进一步拓展了推理计算的利用方式。
 

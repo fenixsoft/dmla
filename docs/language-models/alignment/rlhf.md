@@ -68,7 +68,7 @@ $$P(y_w \succ y_l | x) = \sigma(r^*(x, y_w) - r^*(x, y_l))$$
 
 *图：Bradley-Terry 模型中奖励差值与偏好概率的关系*
 
-有了偏好概率的计算方法，奖励模型训练目标自然就出来了。我们希望训练一个模型 $r_\theta(x, y)$，使其预测的偏好概率与人类标注尽可能一致。在统计推断中曾经讲解过，对于以概率最大化为目标的寻找参数问题，可以使用[最大似然估计](../../maths/probability/statistical-inference.md#最大似然估计-mle)来处理，对应的损失函数为：
+有了偏好概率的计算方法，奖励模型训练目标自然就出来了。我们希望训练一个模型 $r_\theta(x, y)$，使其预测的偏好概率与人类标注尽可能一致。在统计推断中曾经讲解过，对于以概率最大化为目标的寻找参数问题，可以使用[最大似然估计](../../maths/probability/statistical-inference.md#最大似然估计)来处理，对应的损失函数为：
 
 $$\mathcal{L}_{RM} = -\mathbb{E}_{(x, y_w, y_l) \sim \mathcal{D}} \left[ \log \sigma(r_\theta(x, y_w) - r_\theta(x, y_l)) \right]$$
 

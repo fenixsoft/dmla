@@ -262,13 +262,13 @@ export default {
             collapsible: false,
             children: [
               { text: '思维链与推理模型', link: '/language-models/reasoning/chain-of-thought' },
-              { text: '推理时缩放定律', link: '/language-models/reasoning/test-time-compute' },
-              // { text: '推理效率优化', link: '/language-models/reasoning/inference-efficiency' },
-              // { text: '推理的可靠性与局限', link: '/language-models/reasoning/reasoning-reliability' },
+              { text: '推理缩放定律', link: '/language-models/reasoning/test-time-compute' },
+              { text: '推理效率优化', link: '/language-models/reasoning/inference-efficiency' },
+              // { text: '推理可靠性', link: '/language-models/reasoning/reasoning-reliability' },
             ]
           },
           {
-            text: '前沿与融合',
+            text: '模态融合与安全',
             collapsible: false,
             children: [
               // { text: '多模态大模型', link: '/language-models/frontier/multimodal-llm' },
@@ -278,12 +278,67 @@ export default {
         ]
       },
       {
-        text: 'AI Infra & 应用（名字待定）',
+        text: 'AI 基础设施与工程化',
         collapsible: false,
+          children: [
+            // {
+            //   text: '模型服务化',
+            //   collapsible: false,
+            //   children: [
+            //     { text: '推理服务架构原理', link: '/ai-infra-engineering/model-serving/inference-service-architecture' },
+            //     { text: '请求调度与批处理', link: '/ai-infra-engineering/model-serving/request-scheduling' },
+            //     { text: 'GPU 资源管理', link: '/ai-infra-engineering/model-serving/gpu-resource-management' },
+            //     { text: '工程实训：部署 LLM 推理服务', link: '/ai-infra-engineering/model-serving/llm-inference-experiment' },
+            //   ]
+            // },
+            // {
+            //   text: '工程化实践',
+            //   collapsible: false,
+            //   children: [
+            //     { text: '数据版本管理', link: '/ai-infra-engineering/mlops/data-versioning' },
+            //     { text: '特征存储', link: '/ai-infra-engineering/mlops/feature-store' },
+            //     { text: '数据质量监控', link: '/ai-infra-engineering/mlops/data-quality-monitoring' },
+            //     { text: '实验追踪', link: '/ai-infra-engineering/mlops/experiment-tracking' },
+            //     { text: '模型注册与生命周期', link: '/ai-infra-engineering/mlops/model-registry-lifecycle' },
+            //     { text: '自动化调参', link: '/ai-infra-engineering/mlops/hyperparameter-optimization' },
+            //     { text: '模型性能监控', link: '/ai-infra-engineering/mlops/model-performance-monitoring' },
+            //     { text: '漂移检测', link: '/ai-infra-engineering/mlops/drift-detection' },
+            //     { text: '在线实验与渐进发布', link: '/ai-infra-engineering/mlops/online-experimentation' },
+            //   ]
+            // },
+          ]
       },
       {
-        text: '机器学习经典论文',
+        text: '检索与 Agent 系统',
         collapsible: false,
+          children: [
+            // {
+            //   text: '向量检索与 RAG',
+            //   collapsible: false,
+            //   children: [
+            //     { text: '嵌入与向量检索', link: '/ai-infra-engineering/vector-retrieval-rag/embedding-and-indexing' },
+            //     { text: '检索质量评估与优化', link: '/ai-infra-engineering/vector-retrieval-rag/retrieval-quality' },
+            //     { text: '文档处理流水线', link: '/ai-infra-engineering/vector-retrieval-rag/document-processing-pipeline' },
+            //     { text: '检索增强生成', link: '/ai-infra-engineering/vector-retrieval-rag/retrieval-augmented-generation' },
+            //     { text: '工程实训：构建知识库问答系统', link: '/ai-infra-engineering/vector-retrieval-rag/rag-experiment' },
+            //   ]
+            // },
+            // {
+            //   text: 'Agent 系统',
+            //   collapsible: false,
+            //   children: [
+            //     { text: '从 LLM 到 Agent', link: '/ai-infra-engineering/agent-systems/llm-to-agent' },
+            //     { text: '工具调用', link: '/ai-infra-engineering/agent-systems/tool-use' },
+            //     { text: '规划与推理', link: '/ai-infra-engineering/agent-systems/planning-reasoning' },
+            //     { text: '记忆系统', link: '/ai-infra-engineering/agent-systems/memory-systems' },
+            //     { text: '协作模式', link: '/ai-infra-engineering/agent-systems/collaboration-patterns' },
+            //     { text: '通信协议', link: '/ai-infra-engineering/agent-systems/communication-protocols' },
+            //     { text: '编排与容错', link: '/ai-infra-engineering/agent-systems/orchestration-fault-tolerance' },
+            //     { text: '工程实训：构建自主 Agent', link: '/ai-infra-engineering/agent-systems/agent-experiment' },
+            //     { text: '工程实训：构建多智能体协作系统', link: '/ai-infra-engineering/agent-systems/multi-agent-experiment' },
+            //   ]
+            // },
+          ]
       },
       {
         text: '附录',
