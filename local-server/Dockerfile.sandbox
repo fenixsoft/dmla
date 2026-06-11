@@ -81,7 +81,9 @@ RUN pip install --no-cache-dir -i https://pypi.tuna.tsinghua.edu.cn/simple \
     datasets \
     ipywidgets \
     accelerate \
-    bitsandbytes
+    bitsandbytes \
+    flash-linear-attention \
+    causal-conv1d
 
 # 复制执行器和诊断脚本
 COPY local-server/src/kernel_runner.py /workspace/kernel_runner.py
