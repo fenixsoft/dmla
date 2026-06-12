@@ -1,21 +1,24 @@
 # LLM 推理策略与效率优化实验
 
-在前几章中，我们从理论层面了解了思维链、推理时缩放和推理效率优化。这些知识构成了理解推理模型的原理基础，但仅凭理论难以真正体会推理策略的工程抉择。本次实验中，我们将使用 Qwen3.5-0.8B-Instruct 模型，亲手实现从思维链提示到推理缩放再到效率优化的完整流程，在实践中理解"答得好"与"答得快"之间的权衡。
+在前几章中，我们从理论层面了解了思维链、推理时缩放和推理效率优化。这些知识构成了理解推理模型的原理基础，但仅凭理论难以真正体会推理策略的工程抉择。[此前实验](../architecture-basics/llm-pretrain-experiment.md)中训练的 64M 参数模型对于思维链和推理缩放来说规模过小，本次实验将使用开源的 [Qwen3.5-0.8B-Instruct](https://modelscope.cn/models/Qwen/Qwen3.5-0.8B) 模型，实现从思维链提示到推理缩放再到效率优化的完整流程，在实践中理解"答得好"与"答得快"之间的权衡。
 
 ## 实验准备
 
-在开始实验之前，请确保已[挂载数据目录](../../sandbox.md#数据管理)并下载好 GSM8K 评测子集，你可以通过 `DMLA-CLI` 工具自动完成该工作：
+在开始实验之前，请确保已[挂载数据目录](../../sandbox.md#数据管理)并下载好 GSM8K 评测子集，该数据集会一并下载 Qwen3.5-0.8B-Instruct 模型。你可以通过 `DMLA-CLI` 工具自动完成该工作：
 
 ```bash
 # 选择 "下载数据集" -> 选择 "GSM8K 200 (数学推理评测集)"
 dmla data
 ```
 
-GSM8K（Grade School Math 8K）是一个包含 1319 道小学数学应用题的推理基准，模型需要通过多步计算才能得出正确答案。本实验从中随机抽取了 200 道题作为评测子集，足以反映模型在不同推理策略下的性能差异，同时将评测时间控制在合理范围内。数据集下载完成后，以下代码可验证数据和模型加载是否正常：
+GSM8K（Grade School Math 8K）是一个包含训练集 7473 道，测试集 1319 道小学数学应用题的推理基准，模型需要通过多步计算才能得出正确答案。本实验从中随机抽取了 200 道题作为评测子集，足以反映模型在不同推理策略下的性能差异，同时将评测时间控制在合理范围内。数据集下载完成后，以下代码可验证数据和模型加载是否正常：
 
 ```python runnable gpuonly
 import os
+import logging
 import torch
+# 抑制 Qwen3Next 模型的 FLA 加速库缺失提示（不影响功能，仅回退到纯 PyTorch 实现）
+logging.getLogger("transformers.models.qwen3_next.modeling_qwen3_next").setLevel(logging.ERROR)
 from transformers import AutoTokenizer, AutoModelForCausalLM
 
 # 检查 GSM8K 评测数据
@@ -43,22 +46,29 @@ print(f"设备: {model.device}")
 
 ## 第一阶段：思维链与提示工程
 
-[思维链与推理模型](chain-of-thought.md)一章中，我们看到思维链提示能让模型从"凭直觉给答案"转变为"按步骤做推导"。本阶段将在 GSM8K 评测集上，对比三种提示策略的效果差异：零样本直接回答、零样本 CoT、少样本 CoT。
-
-三种策略的区别在于提示词的设计：
+[思维链与推理模型](chain-of-thought.md)一章中，我们看到思维链提示能让模型从"凭直觉给答案"转变为"按步骤做推导"。本阶段将在 GSM8K 评测集上，对比零样本直接回答、零样本 CoT、少样本 CoT 三种提示策略的效果差异，三种策略的区别在于提示词的设计：
 
 - **零样本直接回答**（Zero-Shot Direct）：直接提出问题，模型给出答案，不附加任何推理引导。
 - **零样本 CoT**（Zero-Shot CoT）：在问题后追加"请一步一步思考"的引导语，让模型自主生成推理步骤。这就是[思维链](chain-of-thought.md#思维链)一章中介绍的零样本思维链方法。
 - **少样本 CoT**（Few-Shot CoT）：在问题前提供 2-3 个带有完整推理过程的示例，让模型学习如何组织推理步骤。
 
-Qwen3.5 系列模型原生支持 thinking/non-thinking 模式切换。thinking 模式下，模型会在 `<think>...</think>` 标签内生成推理过程，然后给出最终答案，这与零样本 CoT 的效果类似但更结构化。non-thinking 模式下，模型直接输出答案。下面我们对比这几种策略的效果：
+Qwen3.5 系列模型原生支持 Thinking/Non-Thinking 模式切换。Thinking 模式下，模型会在 `<think>...</think>` 标签内生成推理过程，然后给出最终答案，这与零样本 CoT 的效果类似但更结构化。Non-Thinking 模式下，模型直接输出答案。
 
-```python runnable gpu timeout=unlimited
+::: info 推理耗时
+
+尽管 Qwen3.5-0.8B-Instruct 模型已经十分轻量，但对三种提示词各完成 200 次推理仍需耗费一定时间。在 RTX 5080 上约需要 90 分钟。
+
+:::
+
+```python runnable gpuonly timeout=unlimited
 import os
 import json
 import re
 import time
+import logging
 import torch
+# 抑制 Qwen3Next 模型的 FLA 加速库缺失提示（不影响功能，仅回退到纯 PyTorch 实现）
+logging.getLogger("transformers.models.qwen3_next.modeling_qwen3_next").setLevel(logging.ERROR)
 from transformers import AutoTokenizer, AutoModelForCausalLM
 from dmla_progress import ProgressReporter
 
@@ -205,7 +215,7 @@ progress.complete(message="思维链提示策略评测完成")
 运行上方代码后，你可以观察到以下规律：
 
 - 零样本直接回答的准确率最低，因为模型没有展示推理过程，容易在多步计算中出错。
-- 零样本 CoT（thinking 模式）准确率有提升，模型在 `<think>` 标签内生成了推理步骤，但 0.8B 模型的推理链质量有限，可能出现在推理过程中犯错的情况。
+- 零样本 CoT（Thinking 模式）准确率有提升，模型在 `<think>` 标签内生成了推理步骤，但 0.8B 模型的推理链质量有限，可能出现在推理过程中犯错的情况。
 - 少样本 CoT 准确率最高，示例为模型提供了推理格式的模板，让模型知道应该如何组织推理步骤。
 
 这些结果印证了[思维链](chain-of-thought.md#思维链)一章的分析：思维链通过分解复杂问题、激活相关知识和提供纠错机会来提升推理能力。同时也能观察到，0.8B 模型的 CoT 效果提升幅度有限，这与"模型规模越大 CoT 效果越明显"的研究结论一致。
@@ -216,15 +226,18 @@ progress.complete(message="思维链提示策略评测完成")
 
 ### Best-of-N 采样与自一致性投票
 
-[Best-of-N 采样](test-time-compute.md#best-of-n-采样)是最简单的推理缩放策略：对同一个问题生成 N 个候选答案，选择最好的一个。当评分函数是"多数投票"时，Best-of-N 就变成了[自一致性](test-time-compute.md#验证与自我纠错)（Self-Consistency）策略。本实验对比 N=1, 2, 4, 8 四种采样数下的准确率变化。
+[Best-of-N 采样](test-time-compute.md#best-of-n-采样)是最简单的推理缩放策略：对同一个问题生成 N 个候选答案，选择最好的一个。当评分函数是"多数投票"时，Best-of-N 就等同于[自一致性](test-time-compute.md#验证与自我纠错)（Self-Consistency）策略。本实验对比 N=1, 2, 4, 8 四种采样数下的准确率变化。
 
 ```python runnable gpu timeout=unlimited
 import os
 import json
 import re
 import time
+import logging
 import torch
 from collections import Counter
+# 抑制 Qwen3Next 模型的 FLA 加速库缺失提示（不影响功能，仅回退到纯 PyTorch 实现）
+logging.getLogger("transformers.models.qwen3_next.modeling_qwen3_next").setLevel(logging.ERROR)
 from transformers import AutoTokenizer, AutoModelForCausalLM
 from dmla_progress import ProgressReporter
 
@@ -371,7 +384,7 @@ for n in n_values:
 progress.complete(message="推理缩放策略评测完成")
 ```
 
-运行上方代码后，你可以观察到以下规律：
+运行上方代码后，可以观察到以下规律：
 
 - 自一致性投票的准确率随 N 增大而提升，但增长速度逐渐放缓，符合[推理衰减模型](test-time-compute.md#推理衰减模型)的边际收益递减规律。
 - "至少一个正确"的概率增长更快，因为只要 N 次采样中有一次碰巧答对就能被捕获。但这不意味着我们可以直接使用正确的那次采样，因为实际使用时我们并不知道哪个答案是正确的，仍需要评分函数（如多数投票）来选择。
@@ -381,13 +394,16 @@ progress.complete(message="推理缩放策略评测完成")
 
 [动态推理深度](test-time-compute.md#动态推理深度)的核心思想是根据问题难度分配不同的推理计算资源。简单问题用少量采样，困难问题用更多采样。本节将实现一个简单的问题难度评估器，并对比固定采样和动态采样的效率差异。
 
-```python runnable gpu timeout=unlimited
+```python runnable gpuonly timeout=unlimited
 import os
 import json
 import re
 import math
+import logging
 import torch
 from collections import Counter
+# 抑制 Qwen3Next 模型的 FLA 加速库缺失提示（不影响功能，仅回退到纯 PyTorch 实现）
+logging.getLogger("transformers.models.qwen3_next.modeling_qwen3_next").setLevel(logging.ERROR)
 from transformers import AutoTokenizer, AutoModelForCausalLM
 from dmla_progress import ProgressReporter
 
@@ -452,10 +468,7 @@ easy = [i for i, d in difficulty_map.items() if d >= 3]     # 通过率 >= 75%
 medium = [i for i, d in difficulty_map.items() if 1 <= d <= 2]  # 通过率 25%-50%
 hard = [i for i, d in difficulty_map.items() if d == 0]      # 通过率 0%
 
-print(f"\n题目难度分布:")
-print(f"  简单 (≥3/4): {len(easy)} 题")
-print(f"  中等 (1-2/4): {len(medium)} 题")
-print(f"  困难 (0/4):  {len(hard)} 题")
+print(f"\n题目难度分布: 简单={len(easy)}, 中等={len(medium)}, 困难={len(hard)}")
 
 # ========== 阶段二：对比固定采样 vs 动态采样 ==========
 # 动态策略：简单题 N=1, 中等题 N=4, 困难题 N=8
@@ -511,15 +524,73 @@ for i in range(num_samples):
 
 fixed_accuracy = fixed_correct / num_samples * 100
 
-print(f"\n" + "="*60)
-print(f"固定采样 vs 动态采样对比")
-print(f"="*60)
-print(f"{'策略':<20} {'准确率':>8} {'总生成次数':>12} {'平均N':>8}")
-print(f"-"*60)
-print(f"{'固定 N=4':<20} {fixed_accuracy:>7.1f}% {fixed_total_compute:>12} {fixed_n:>8}")
-avg_dynamic_n = dynamic_total_compute / num_samples
-print(f"{'动态 (1/4/8)':<20} {dynamic_accuracy:>7.1f}% {dynamic_total_compute:>12} {avg_dynamic_n:>8.1f}")
-print(f"\n动态策略节省计算量: {(1 - dynamic_total_compute/fixed_total_compute)*100:.1f}%")
+# ========== 可视化 ==========
+import matplotlib.pyplot as plt
+from matplotlib import font_manager
+
+font_path = '/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc'
+font_manager.fontManager.addfont(font_path)
+prop = font_manager.FontProperties(fname=font_path)
+plt.rcParams['font.family'] = prop.get_name()
+plt.rcParams['axes.unicode_minus'] = False
+plt.rcParams['figure.dpi'] = 150
+
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 5))
+
+# 左图：题目难度分布
+diff_labels = ['简单\n(≥3/4)', '中等\n(1-2/4)', '困难\n(0/4)']
+diff_counts = [len(easy), len(medium), len(hard)]
+diff_colors = ['#4CAF50', '#FF9800', '#F44336']
+bars = ax1.bar(diff_labels, diff_counts, color=diff_colors, edgecolor='white', width=0.6)
+for bar, count in zip(bars, diff_counts):
+    ax1.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 0.5,
+             f'{count} 题', ha='center', va='bottom', fontsize=12, fontweight='bold')
+ax1.set_title('题目难度分布', fontsize=14, fontweight='bold')
+ax1.set_ylabel('题目数量', fontsize=12)
+ax1.set_ylim(0, max(diff_counts) * 1.25)
+ax1.spines['top'].set_visible(False)
+ax1.spines['right'].set_visible(False)
+
+# 右图：固定采样 vs 动态采样对比
+strategies = ['固定 N=4', '动态\n(1/4/8)']
+accuracies = [fixed_accuracy, dynamic_accuracy]
+computes = [fixed_total_compute, dynamic_total_compute]
+x = range(len(strategies))
+width = 0.3
+
+bars_acc = ax2.bar([i - width/2 for i in x], accuracies, width, label='准确率 (%)',
+                   color='#42A5F5', edgecolor='white')
+ax2_twin = ax2.twinx()
+bars_comp = ax2_twin.bar([i + width/2 for i in x], computes, width, label='总生成次数',
+                         color='#EF5350', edgecolor='white', alpha=0.7)
+
+for bar, val in zip(bars_acc, accuracies):
+    ax2.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 0.5,
+             f'{val:.1f}%', ha='center', va='bottom', fontsize=11, fontweight='bold', color='#1565C0')
+for bar, val in zip(bars_comp, computes):
+    ax2_twin.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 5,
+                  f'{val}', ha='center', va='bottom', fontsize=11, fontweight='bold', color='#C62828')
+
+ax2.set_title('固定采样 vs 动态采样', fontsize=14, fontweight='bold')
+ax2.set_xticks(x)
+ax2.set_xticklabels(strategies, fontsize=11)
+ax2.set_ylabel('准确率 (%)', fontsize=12, color='#1565C0')
+ax2_twin.set_ylabel('总生成次数', fontsize=12, color='#C62828')
+ax2.set_ylim(0, max(accuracies) * 1.25)
+ax2_twin.set_ylim(0, max(computes) * 1.25)
+ax2.spines['top'].set_visible(False)
+ax2_twin.spines['top'].set_visible(False)
+
+lines1, labels1 = ax2.get_legend_handles_labels()
+lines2, labels2 = ax2_twin.get_legend_handles_labels()
+ax2.legend(lines1 + lines2, labels1 + labels2, loc='upper left', fontsize=10)
+
+savings = (1 - dynamic_total_compute / fixed_total_compute) * 100
+fig.text(0.5, -0.02, f'动态策略节省计算量: {savings:.1f}%    平均 N: 固定={fixed_n}, 动态={avg_dynamic_n:.1f}',
+         ha='center', fontsize=11, style='italic', color='#555555')
+
+plt.tight_layout()
+plt.show()
 
 progress.complete(message="动态推理深度评测完成")
 ```
@@ -539,7 +610,10 @@ import os
 import json
 import re
 import time
+import logging
 import torch
+# 抑制 Qwen3Next 模型的 FLA 加速库缺失提示（不影响功能，仅回退到纯 PyTorch 实现）
+logging.getLogger("transformers.models.qwen3_next.modeling_qwen3_next").setLevel(logging.ERROR)
 from transformers import AutoTokenizer, AutoModelForCausalLM, BitsAndBytesConfig
 from dmla_progress import ProgressReporter
 
@@ -663,7 +737,10 @@ $$M_{\text{KV}} = 2 \times n_{\text{layer}} \times d_{\text{head}} \times n_{\te
 
 ```python runnable gpu
 import os
+import logging
 import torch
+# 抑制 Qwen3Next 模型的 FLA 加速库缺失提示（不影响功能，仅回退到纯 PyTorch 实现）
+logging.getLogger("transformers.models.qwen3_next.modeling_qwen3_next").setLevel(logging.ERROR)
 from transformers import AutoTokenizer, AutoModelForCausalLM
 
 model_path = os.path.join(DATA_DIR, 'datasets', 'gsm8k-200')
@@ -735,8 +812,11 @@ import os
 import json
 import re
 import time
+import logging
 import torch
 from collections import Counter
+# 抑制 Qwen3Next 模型的 FLA 加速库缺失提示（不影响功能，仅回退到纯 PyTorch 实现）
+logging.getLogger("transformers.models.qwen3_next.modeling_qwen3_next").setLevel(logging.ERROR)
 from transformers import AutoTokenizer, AutoModelForCausalLM
 from dmla_progress import ProgressReporter
 

@@ -101,7 +101,7 @@ const DATASETS = [
     id: 'gsm8k-200',
     name: 'GSM8K 200 (数学推理评测集)',
     url: 'https://www.modelscope.cn/datasets/icyfenix/GSM8K_200.git',
-    size: '~109KB',
+    size: '1.75GB',
     format: 'git',
     targetDir: 'datasets/gsm8k-200',
     source: 'ModelScope (icyfenix)'

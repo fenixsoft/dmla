@@ -264,7 +264,7 @@ export default {
               { text: '思维链与推理模型', link: '/language-models/reasoning/chain-of-thought' },
               { text: '推理缩放定律', link: '/language-models/reasoning/test-time-compute' },
               { text: '推理效率优化', link: '/language-models/reasoning/inference-efficiency' },
-              // { text: '工程实训：LLM 推理策略与效率优化实验', link: '/language-models/reasoning/llm-reasoning-experiment' },
+              // { text: '工程实训：LLM 推理效率优化实验', link: '/language-models/reasoning/llm-reasoning-experiment' },
             ]
           },
           {
