@@ -271,7 +271,7 @@ export default {
             text: '模态融合与安全',
             collapsible: false,
             children: [
-              // { text: '多模态大模型', link: '/language-models/frontier/multimodal-llm' },
+              { text: '多模态大模型', link: '/language-models/frontier/multimodal-llm' },
               // { text: '模型评估与安全', link: '/language-models/frontier/evaluation-safety' },
             ]
           },

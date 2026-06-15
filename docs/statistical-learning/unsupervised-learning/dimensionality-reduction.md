@@ -303,36 +303,49 @@ $$S = \frac{1}{n-1}\tilde{X}^T \tilde{X} = \frac{1}{n-1}(U \Sigma V^T)^T(U \Sigm
 
 ```python runnable
 import numpy as np
+from PIL import Image
+import requests
+from io import BytesIO
+import matplotlib.pyplot as plt
 
-# 定义一个简单的矩阵
-A = np.array([
-    [3, 2, 1],
-    [1, 2, 3],
-    [2, 1, 2]
-])
+# 从网站读取图像并转为灰度矩阵
+url = "https://ai.icyfenix.cn/logo_min_size.png"
+img = Image.open(BytesIO(requests.get(url, timeout=10).content)).convert("L")
+A = np.array(img, dtype=float)
+m, n = A.shape
 
-print("矩阵 A：")
-print(A)
+print(f"原图尺寸：{m} × {n}")
+print(f"原始数据量：{A.size} 个像素")
 
-# 计算奇异值
-U, S, Vt = np.linalg.svd(A)
+# 对图像矩阵做 SVD 分解
+U, S, Vt = np.linalg.svd(A, full_matrices=False)
+print(f"奇异值总数：{len(S)}")
 
-print(f"\n奇异值：{S.round(4)}")
-print(f"奇异值之和（总能量）：{S.sum():.4f}")
+# 用不同数量的奇异值重建图像，对比压缩效果
+k_values = [5, 20, 50, len(S)]
+fig, axes = plt.subplots(1, 4, figsize=(14, 4))
 
-# 分析奇异值的信息占比
-print("\n奇异值信息占比分析：")
-cumulative_energy = 0
-for i, sigma in enumerate(S):
-    energy_ratio = sigma**2 / (S**2).sum()  # 单个奇异值的能量占比
-    cumulative_energy += energy_ratio
-    print(f"σ_{i+1} = {sigma:.4f} → 能量占比 {energy_ratio:.2%}，累计 {cumulative_energy:.2%}")
+for ax, k in zip(axes, k_values):
+    # 只保留前 k 个奇异值重建图像
+    A_k = U[:, :k] @ np.diag(S[:k]) @ Vt[:k, :]
+    # 压缩存储量：U 的 m×k + S 的 k + Vt 的 k×n，原始为 m×n
+    compressed_size = m * k + k + k * n
+    ratio = compressed_size / A.size
+    energy = (S[:k]**2).sum() / (S**2).sum()
+    label = f"k = {k} | 能量 {energy:.1%} | 存储量 {ratio:.0%}"
+
+    ax.imshow(A_k, cmap="gray")
+    ax.set_xlabel(label, fontsize=9)
+    ax.set_xticks([])
+    ax.set_yticks([])
+
+plt.suptitle("SVD 图像压缩：保留不同数量奇异值的重建效果", fontsize=12)
+plt.tight_layout()
+plt.show()
 ```
-从这个例子可以看出：第一个奇异值 $\sigma_1 = 4.89$ 占据了约 53% 的"能量"，前两个奇异值累计已覆盖近 90% 的信息。这意味着，前两个奇异值的平方和占全部奇异值平方和的近 90%，它们携带了矩阵绝大部分的能量。对于大规模矩阵，这种保留主要奇异值的方法可以实现显著的数据压缩。
+SVD 是图像压缩的基础，虽然图像矩阵包含大量数据，但其信息往往集中在少数几个主要方向上，大奇异值对应主要特征，小奇异值对应细节噪声。通过保留前 $k$ 个最大奇异值，忽略其余较小的奇异值，可以用远少于原始数据的存储量重建一幅近似图像。压缩率取决于保留的奇异值数量 $k$，保留越多，图像质量越接近原图；保留越少，压缩率越高但细节损失越多。这种保留主要能量、舍弃次要成分的思路，与人类视觉系统对图像的认知方式天然契合。人眼对图像的整体结构、主要轮廓敏感，而对细微纹理变化相对宽容。
 
-SVD 是图像压缩的基础，虽然图像矩阵包含大量数据，但其信息往往集中在少数几个主要方向上，大奇异值对应主要特征，小奇异值对应细节噪声。通过保留前 $k$ 个最大奇异值，忽略其余较小的奇异值，可以用远少于原始数据的存储量重建一幅近似图像。压缩率取决于保留的奇异值数量 $k$：保留越多，图像质量越接近原图；保留越少，压缩率越高但细节损失越多。这种保留主要能量、舍弃次要成分的思路，与人类视觉系统对图像的认知方式天然契合。人眼对图像的整体结构、主要轮廓敏感，而对细微纹理变化相对宽容。
-
-
+从上面代码的运行结果中可以直观地看到 SVD 压缩的效果：仅保留 5 个奇异值时，图像只剩模糊轮廓，但已经能辨认出大致形状；保留 20 个时细节明显恢复；保留 50 个时与原图几乎看不出差别，而存储量仅为原始数据的约 78%。值得注意的是，当 k 等于矩阵的秩（128）时，存储量反而超过 100%。这是因为完整 SVD 分解需要同时保存 $U$、$S$、$V^T$ 三个矩阵，总元素数比原始矩阵更多。SVD 压缩的优势恰恰体现在 k 远小于秩的时候，用少量奇异值就能逼近原图质量，这正是低秩近似的威力。
 
 ## 本章小结
 
