@@ -272,7 +272,8 @@ export default {
             collapsible: false,
             children: [
               { text: '多模态大模型', link: '/language-models/frontier/multimodal-llm' },
-              // { text: '模型评估与安全', link: '/language-models/frontier/evaluation-safety' },
+              { text: '模型评估与安全', link: '/language-models/frontier/evaluation-safety' },
+              { text: '工程实训：视觉语言模型训练实验', link: '/language-models/frontier/vlm-training-experiment' },
             ]
           },
         ]
@@ -281,16 +282,16 @@ export default {
         text: 'AI 基础设施与工程化',
         collapsible: false,
           children: [
-            // {
-            //   text: '模型服务化',
-            //   collapsible: false,
-            //   children: [
-            //     { text: '推理服务架构原理', link: '/ai-infra-engineering/model-serving/inference-service-architecture' },
-            //     { text: '请求调度与批处理', link: '/ai-infra-engineering/model-serving/request-scheduling' },
-            //     { text: 'GPU 资源管理', link: '/ai-infra-engineering/model-serving/gpu-resource-management' },
-            //     { text: '工程实训：部署 LLM 推理服务', link: '/ai-infra-engineering/model-serving/llm-inference-experiment' },
-            //   ]
-            // },
+            {
+              text: '模型服务化',
+              collapsible: false,
+              children: [
+                // { text: '推理服务架构', link: '/ai-infra-engineering/model-serving/inference-service-architecture' },
+                // { text: '请求调度与批处理', link: '/ai-infra-engineering/model-serving/request-scheduling' },
+                // { text: 'GPU 资源管理', link: '/ai-infra-engineering/model-serving/gpu-resource-management' },
+                // { text: '工程实训：部署 LLM 推理服务', link: '/ai-infra-engineering/model-serving/llm-inference-experiment' },
+              ]
+            },
             // {
             //   text: '工程化实践',
             //   collapsible: false,

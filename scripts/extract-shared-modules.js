@@ -50,7 +50,8 @@ const CHAPTER_MAPPING = {
   // language-models - 简化命名
   'language-models/architecture-basics': 'llm',
   'language-models/pretraining': 'llm',
-  'language-models/alignment': 'llm'
+  'language-models/alignment': 'llm',
+  'language-models/frontier': 'vlm'
 };
 
 // 将目录名转换为 snake_case 模块名
@@ -286,6 +287,11 @@ function detectAutoImports(combinedCode) {
   // JSON 处理
   if (combinedCode.includes('json.') || /\bjson\b/.test(combinedCode)) {
     imports.push('import json');
+  }
+
+  // io 模块
+  if (combinedCode.includes('io.') || /\bio\b/.test(combinedCode)) {
+    imports.push('import io');
   }
 
   // 正则表达式

@@ -108,9 +108,9 @@ const DATASETS = [
   },
   {
     id: 'minimind-vision',
-    name: 'MiniMind Vision (VLM视觉训练数据)',
+    name: 'MiniMind Vision (VLM视觉训练数据, 20%采样)',
     url: 'https://www.modelscope.cn/datasets/icyfenix/Vision.git',
-    size: '~8.9GB',
+    size: '~4GB (20% sampled)',
     format: 'git',
     targetDir: 'datasets/minimind-vision',
     source: 'ModelScope (icyfenix)'
