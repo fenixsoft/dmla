@@ -65,7 +65,7 @@ $$L(\beta) = e^T e = (y - X\beta)^T(y - X\beta) = \|y - X\beta\|^2$$
 
 上图清晰地展示了三个向量之间的关系，绿色向量 $y$ 是真实值，代表我们观测到的结果；蓝色向量 $X\beta$ 是预测值，落在 $X$ 的列空间内；红色向量 $e$ 是残差，从预测值指向真实值，代表"模型没能解释的部分"。关键洞察在于最小残差向量 $e$ 与列空间**正交**（垂直），只有当残差垂直于列空间时，长度才达到最小，这就像点到平面的最短距离永远是垂直线段。
 
-[投影定理](https://en.wikipedia.org/wiki/Hilbert_projection_theorem)（Projection Theorem）给出了更精确表述：**残差向量 $y - X\beta$ 与 $X$ 的所有列向量正交时，$\beta$ 为最优解**。正交的数学表达是[点积为零](../../maths/linear/vectors.md#内积与投影)，即 $X^T(y - X\beta) = 0$，这正是我们接下来推导闭式解的起点。
+[投影定理](https://en.wikipedia.org/wiki/Hilbert_projection_theorem)（Projection Theorem）给出了更精确表述：残差向量 $y - X\beta$ 与 $X$ 的所有列向量正交时，$\beta$ 为最优解。正交的数学表达是[点积为零](../../maths/linear/vectors.md#内积与投影)，即 $X^T(y - X\beta) = 0$，这正是我们接下来推导闭式解的起点。
 
 ## 线性回归闭式解
 

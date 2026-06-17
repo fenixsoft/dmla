@@ -24,6 +24,7 @@
                 sed 's#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g' | \
                 tee /etc/apt/sources.list.d/nvidia-container-toolkit.list
 
+
             # 安装并配置
             apt-get update && apt-get install -y nvidia-container-toolkit
             nvidia-ctk runtime configure --runtime=docker
@@ -50,13 +51,23 @@
     npx @icyfenix-dmla/install@latest
     ```
 
-    部署后，使用如下命令启动沙箱服务：
+    部署后，可使用如下命令启动沙箱服务：
+    - **CPU 模式**：默认模式，以 CPU Docker 镜像运行代码，服务能力可满足文章内代码片段的运行需要。
+    - **GPU 模式**：以 GPU Docker 镜像运行代码，服务能力可满足所有代码（含代码片段、完整实验）的需要。
+    - **Native 模式**：不使用 Docker 镜像，直接以本机原始环境运行代码，服务能力取决于本机的软硬件环境。Python、PyTorch、CUDA 需要用户自行准备，其他 PIP 依赖会自动安装。
+
     ``` bash
     # 启动服务
     dmla start                 # 默认端口 3001，自动选择镜像，CPU 优先
-    dmla start --port 3002     # 自定义端口
     dmla start --gpu           # GPU 模式
+    dmla start --native        # Native 模式
 
+    dmla start --help          # 查看其他功能，如设置端口、设置同步模式、设置开发模式等
+    ```
+
+    除启动服务外，`DMLA-CLI` 的其余功能还包括停止服务、查看服务状态、下载 Docker 镜像、下载/管理数据集、诊断环境等，如下所示：
+
+    ``` bash
     # 停止服务
     dmla stop
 
@@ -70,7 +81,7 @@
     dmla doctor
 
     # 数据管理
-    dmla data                    # 进入数据管理 TUI
+    dmla data
     ```
 
 - 如果你使用的是源码部署（[https://github.com/fenixsoft/dmla](https://github.com/fenixsoft/dmla)），除`DMLA-CLI`外，也可以直接拉取或者编译 Docker 镜像：
