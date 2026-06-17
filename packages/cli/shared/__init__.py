@@ -6,4 +6,4 @@
 #   from shared.cnn import AlexNet
 #   from shared.linear import LogisticRegression
 
-__all__ = ['bayesian', 'cnn', 'gan', 'linear', 'llm', 'neural', 'sequence_models', 'svm', 'tree', 'unsupervised']
+__all__ = ['agent_systems', 'bayesian', 'cnn', 'gan', 'linear', 'llm', 'neural', 'sequence_models', 'svm', 'tree', 'unsupervised', 'vlm']

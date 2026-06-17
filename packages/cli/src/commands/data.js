@@ -809,8 +809,16 @@ async function downloadDataset(dataPath, dataset) {
       }
 
       // 执行 git clone
+      // --progress: 强制显示 git 进度（即使非 TTY）
+      // GIT_LFS_SKIP_SMUDGE=1: 跳过 clone 时自动下载 LFS 文件，改为后续 git lfs pull 单独下载
+      //   原因：clone 期间 LFS smudge filter 在后台下载大文件，但不会输出进度，
+      //   导致下载几 GB 文件时长时间无输出；分离为 git lfs pull 后可通过
+      //   GIT_LFS_FORCE_PROGRESS 强制显示 LFS 下载进度
       await new Promise((resolve, reject) => {
-        const git = spawn('git', ['clone', dataset.url, targetDir], { stdio: 'inherit' })
+        const git = spawn('git', ['clone', '--progress', dataset.url, targetDir], {
+          stdio: 'inherit',
+          env: { ...process.env, GIT_LFS_SKIP_SMUDGE: '1' }
+        })
 
         git.on('close', (code) => {
           if (code === 0) {
@@ -829,13 +837,13 @@ async function downloadDataset(dataPath, dataset) {
 
       // 根据 LFS 状态显示不同提示
       if (hasGitLfs) {
-        console.log(chalk.green('下载完成'))
+        console.log(chalk.green('Git 仓库克隆完成'))
 
-        // 拉取 Git LFS 文件
+        // 拉取 Git LFS 文件（GIT_LFS_FORCE_PROGRESS 强制显示下载进度）
         console.log()
-        console.log(chalk.gray('拉取 LFS 大文件...'))
+        console.log(chalk.gray('下载 LFS 大文件...'))
         try {
-          execSync('git lfs pull', { cwd: targetDir, stdio: 'inherit' })
+          execSync('git lfs pull', { cwd: targetDir, stdio: 'inherit', env: { ...process.env, GIT_LFS_FORCE_PROGRESS: '1' } })
           console.log(chalk.green('LFS 文件拉取完成'))
         } catch (lfsError) {
           console.log(chalk.yellow(`⚠ LFS 拉取失败: ${lfsError.message}`))
