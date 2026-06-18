@@ -82,7 +82,6 @@ export default {
               { text: '引言：机器学习的语言', link: '/maths/linear/introduction' },
               { text: '向量基础', link: '/maths/linear/vectors' },
               { text: '矩阵基础', link: '/maths/linear/matrices' },
-              { text: '数据处理实践', link: '/maths/linear/numpy' },
             ]
           },
           {
@@ -92,7 +91,6 @@ export default {
               { text: '引言：变化与累积', link: '/maths/calculus/introduction' },
               { text: '极限、导数与微分', link: '/maths/calculus/derivative' },
               { text: '多元函数与复合函数求导', link: '/maths/calculus/gradient' },
-              { text: '微积分计算实践', link: '/maths/calculus/numpy' },
             ]
           },
           {
@@ -102,7 +100,6 @@ export default {
               { text: '引言：概率性思维', link: '/maths/probability/introduction' },
               { text: '概率基础', link: '/maths/probability/probability-basics' },
               { text: '统计推断', link: '/maths/probability/statistical-inference' },
-              { text: '概率统计实践', link: '/maths/probability/numpy-practice' },
             ]
           }
         ]
@@ -286,7 +283,7 @@ export default {
               text: '模型服务化',
               collapsible: false,
               children: [
-                // { text: '推理服务架构', link: '/ai-infra-engineering/model-serving/inference-service-architecture' },
+                { text: '推理服务架构', link: '/ai-infra-engineering/model-serving/inference-service-architecture' },
                 // { text: '请求调度与批处理', link: '/ai-infra-engineering/model-serving/request-scheduling' },
                 // { text: 'GPU 资源管理', link: '/ai-infra-engineering/model-serving/gpu-resource-management' },
                 // { text: '工程实训：部署 LLM 推理服务', link: '/ai-infra-engineering/model-serving/llm-inference-experiment' },
@@ -346,7 +343,15 @@ export default {
         collapsible: false,
         children: [
               { text: '构建沙箱环境', link: '/sandbox' },
-              // { text: '临时格式测试页面', link: '/test' },
+              {
+                text: 'Numpy 数学实践',
+                collapsible: false,
+                children: [
+                  { text: '数据处理实践', link: '/maths/linear/numpy' },
+                  { text: '微积分计算实践', link: '/maths/calculus/numpy' },
+                  { text: '概率统计实践', link: '/maths/probability/numpy-practice' },
+                ]
+              }
         ]
       },
     ]

@@ -88,33 +88,3 @@ print(f"查询：'{query}'")
 for i, sim in enumerate(similarities[0]):
     print(f"文档{i+1} 相似度：{sim:.4f}")
 ```
-
-## 学习路线图
-
-本章仅是一个引子，简要介绍了线性代数在机器学习中的地位和一个应用场景的案例。接下来的章节，我们将系统地学习向量和矩阵的运算，并通过 Python 实践加深理解。读者可以通过以下路线图来提前了解每个章节的学习目标。
-
-```mermaid compact
-graph LR
-    A[第 1 章 引言] -->|理解重要性| B[第 2 章 向量基础]
-    B -->|运算与几何意义| C[第 3 章 矩阵基础]
-    C -->|线性变换与矩阵运算| D[第 4 章 数据处理实践]
-    D -->|数据处理实践| E[第 5 章 应用场景]
-
-    classDef styleA fill:#e1f5fe,stroke:#01579b
-    classDef styleB fill:#e8f5e9,stroke:#1b5e20
-    classDef styleC fill:#fff3e0,stroke:#e65100
-    classDef styleD fill:#f3e5f5,stroke:#4a148c
-    classDef styleE fill:#fce4ec,stroke:#880e4f
-
-    class A styleA
-    class B styleB
-    class C styleC
-    class D styleD
-    class E styleE
-```
-
-- **第 2 章：向量基础**将深入讲解向量的定义、加法、数乘、内积、范数等核心概念，并通过几何图示建立直观理解。
-- **第 3 章：矩阵基础**将介绍矩阵的运算规则、特殊矩阵类型，以及最重要的概念 —— 线性变换，揭示矩阵乘法的几何意义。
-- **第 4 章：数据处理实践**将使用 NumPy 库实现上述运算，通过代码加深理解，掌握向量化编程的技巧。
-
-让我们开始这段旅程，掌握机器学习的底层语言 —— 线性代数。

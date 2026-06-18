@@ -63,30 +63,3 @@ $$\theta^* = \arg\min_{\theta} L(\theta)$$
 $$\theta_{t+1} = \theta_t - \eta \nabla L(\theta_t)$$
 
 其中 $\nabla L(\theta_t)$ 是损失函数在 $\theta_t$ 处的梯度，$\eta$ 是学习率（Learning Rate），控制每一步的步长。这个简单的算法，及其各种变体（随机梯度下降、动量法、Adam 等），是所有深度学习训练过程的共通思想。理解它，需要先理解导数（梯度）、链式法则（反向传播）等微积分核心概念。
-
-## 学习路线图
-
-本章作为引言，简要介绍了微积分在机器学习中的地位和应用场景。接下来的章节，我们将系统地学习微积分的核心概念，并通过 Python 实践加深理解。
-
-```mermaid compact
-graph LR
-    A[第 1 章 引言] -->|理解重要性| B[第 2 章 极限、导数与微分]
-    B -->|单变量微积分| C[第 3 章 多元函数与复合函数求导]
-    C -->|多变量微积分| D[第 4 章 微积分计算实践]
-
-    classDef styleA fill:#e1f5fe,stroke:#01579b
-    classDef styleB fill:#e8f5e9,stroke:#1b5e20
-    classDef styleC fill:#fff3e0,stroke:#e65100
-    classDef styleD fill:#f3e5f5,stroke:#4a148c
-
-    class A styleA
-    class B styleB
-    class C styleC
-    class D styleD
-```
-
-- **第 2 章：极限、导数与微分**将深入讲解极限的定义、导数的概念与几何意义、常见函数的导数公式、微分与线性近似、高阶导数等内容，建立单变量微积分的理论基础。
-- **第 3 章：多元函数与复合函数求导**将把导数概念推广到多元函数，介绍偏导数、梯度、链式法则、方向导数等核心概念以及积分的基础知识，为理解机器学习优化算法奠定基础。
-- **第 4 章：微积分计算实践**将使用程序代码实现数值微分、梯度计算和数值积分，并介绍 PyTorch 自动微分的使用方法，通过代码加深对概念的理解。
-
-让我们开始这段旅程，掌握机器学习的优化语言 —— 微积分。
