@@ -31,11 +31,6 @@ if (typeof document !== 'undefined' && !document.getElementById(styleId)) {
   const style = document.createElement('style')
   style.id = styleId
   style.textContent = `
-/* 全局隐藏所有代码块的行号 */
-.line-numbers {
-  display: none !important;
-}
-
 /* 可运行代码块样式 */
 .runnable-code-block {
   margin: 1rem 0;

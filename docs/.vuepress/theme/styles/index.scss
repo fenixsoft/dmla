@@ -350,9 +350,10 @@ body {
   pre {
     margin: 1rem 0;
     padding: 0;
+    max-width: 100%;
+    overflow-x: auto;
     background: var(--code-bg, #282C34);
     border-radius: 12px;
-    overflow: hidden;
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 
     code {
@@ -372,7 +373,7 @@ body {
   .runnable-code-block pre,
   .runnable-code-block pre code {
     background: transparent !important;
-    color: #ABB2BF !important;
+    color: var(--code-text, #ABB2BF) !important;
   }
 
   .runnable-code-block .code-header,

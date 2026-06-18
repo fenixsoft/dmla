@@ -11,8 +11,8 @@
         - Linux >= 570.28.03
         - Windows: >= 570.76
     - Docker GPU 支持：需要在宿主机安装 [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html)，使 Docker 容器能够访问 GPU 硬件。
-        1. Windows 用户使用 Docker Desktop 时，Container Toolkit 已自动集成，无需额外安装。
-        2. Linux 用户（包括 WSL2 中直接安装 Docker Engine 的情况）需要手动安装。
+        - Windows 用户使用 Docker Desktop 时，Container Toolkit 已自动集成，无需额外安装。
+        - Linux 用户（包括 WSL2 中直接安装 Docker Engine 的情况）需要手动安装。
             <details>
             <summary>安装方法</summary>
             

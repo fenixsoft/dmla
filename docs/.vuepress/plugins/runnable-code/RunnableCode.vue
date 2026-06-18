@@ -748,7 +748,8 @@ onUnmounted(() => {
 <style scoped>
 .runnable-code-block {
   margin: 1rem 0;
-  border: 1px solid var(--c-border, #eaecef);
+  max-width: 100%;
+border: 1px solid var(--c-border, #eaecef);
   border-radius: 8px;
   overflow: hidden;
 }

@@ -1,4 +1,4 @@
-/* IdeaSpaces 自定义样式 */
+﻿/* IdeaSpaces 自定义样式 */
 
 :root {
   --c-brand: #2563EB;
@@ -70,9 +70,10 @@
 /* 可运行代码块样式 - 与 pencil 设计稿一致 */
 .runnable-code-block {
   margin: 1.5rem 0;
-  border-radius: 12px;
+  max-width: 100%;
+border-radius: 12px;
   overflow: hidden;
-  background: #282C34;
+  background: var(--code-bg, #282C34);
 }
 
 .runnable-code-block pre {
@@ -81,6 +82,7 @@
   background: transparent;
   max-height: 1000px;
   overflow-y: auto;
+  overflow-x: auto;
 }
 
 /* 横向滚动条背景与代码框背景一致 */
@@ -91,7 +93,7 @@
 
 .runnable-code-block pre::-webkit-scrollbar-track:horizontal,
 .runnable-code-block code::-webkit-scrollbar-track:horizontal {
-  background: #282C34;
+  background: var(--code-bg, #282C34);
 }
 
 .runnable-code-block pre::-webkit-scrollbar-thumb:horizontal,
@@ -108,14 +110,14 @@
 /* Firefox 横向滚动条 */
 .runnable-code-block pre,
 .runnable-code-block code {
-  scrollbar-color: #555 #282C34;
+  scrollbar-color: #555 var(--code-bg, #282C34);
 }
 
 .runnable-code-block pre code {
   font-family: 'Fira Code', 'SF Mono', Monaco, Consolas, monospace;
   font-size: 14px;
   line-height: 1.6;
-  color: #ABB2BF;
+  color: var(--code-text, #ABB2BF);
 }
 
 /* 代码块头部 */
@@ -125,13 +127,13 @@
   gap: 8px;
   height: 40px;
   padding: 0 16px;
-  background: #21252B;
+  background: var(--code-header-bg, #21252B);
 }
 
 .runnable-code-block .code-lang {
   font-size: 12px;
   font-weight: 500;
-  color: #ABB2BF;
+  color: var(--code-text, #ABB2BF);
 }
 
 /* 工具栏样式 - 与 pencil 设计稿一致 */
@@ -141,8 +143,8 @@
   gap: 8px;
   height: 48px;
   padding: 8px 16px;
-  background: #1E1E1E;
-  border-top: 1px solid #333333;
+  background: var(--code-toolbar-bg, #1E1E1E);
+  border-top: 1px solid var(--code-c-highlight-bg, #333);
 }
 
 .runnable-code-block .run-btn {
@@ -252,8 +254,8 @@
 
 .runnable-code-block .output-container {
   padding: 12px 16px;
-  background: #1E1E1E;
-  border-top: 1px solid #333333;
+  background: var(--code-toolbar-bg, #1E1E1E);
+  border-top: 1px solid var(--code-c-highlight-bg, #333);
   font-family: 'Fira Code', monospace;
   font-size: 13px;
   line-height: 1.5;
@@ -300,4 +302,49 @@
 .mermaid svg .katex > math {
   display: inline-block;
   font-size: 16px !important;
+}
+/* runnable 代码块行号样式 — 弥补 runnable-code 插件剥离 line-numbers-mode 导致行号不显示的问题 */
+.runnable-code-block .code-area {
+  position: relative;
+}
+
+.runnable-code-block .line-numbers {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 3rem;
+  height: 100%;
+  padding-top: 13px;
+  border-right: 1px solid rgba(128, 128, 128, 0.3);
+  color: #6a737d;
+  font-family: 'Fira Code', 'SF Mono', Monaco, Consolas, monospace;
+  font-size: 14px;
+  line-height: 1.6;
+  text-align: right;
+  padding-right: 0.8em;
+  box-sizing: border-box;
+  user-select: none;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.runnable-code-block .line-number::before {
+  content: counter(line-number);
+  counter-increment: line-number;
+}
+
+.runnable-code-block .code-area pre {
+  margin-left: 3rem;
+}
+
+.runnable-code-block .code-area pre code {
+  padding-left: 1rem;
+}
+
+.runnable-code-block .floating-toolbar {
+  right: 8px;
+}
+/* 行号垂直微调 — 对齐代码行 */
+div[class*=language-].line-numbers-mode .line-numbers {
+  padding-top: calc(var(--code-padding-y) + 1px);
 }

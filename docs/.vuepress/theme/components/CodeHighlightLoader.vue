@@ -117,6 +117,8 @@ onUnmounted(() => {
 div[class*="language-"] {
   background: var(--code-theme-bg, #282C34);
   border-radius: 12px;
+  max-width: 100%;
+  overflow-x: auto;
   overflow: hidden;
 }
 
@@ -124,6 +126,8 @@ div[class*="language-"] {
 div[class*="language-"] > pre {
   background: transparent;
   margin: 0;
+max-width: 100%;
+  overflow-x: auto;
 }
 
 /* 保持代码字体样式 */

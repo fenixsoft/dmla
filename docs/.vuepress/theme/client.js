@@ -42,6 +42,22 @@ function loadThemeCSS(themeId) {
   const bgColor = THEME_BG_COLORS[themeId] || '#282C34'
   document.documentElement.style.setProperty('--code-theme-bg', bgColor)
 
+  // ??????????/????????????????
+  const isLight = ['prism', 'prism-coy', 'prism-solarizedlight'].includes(themeId)
+  if (isLight) {
+    document.documentElement.style.setProperty('--code-bg', bgColor)
+    document.documentElement.style.setProperty('--code-text', '#24292e')
+    document.documentElement.style.setProperty('--code-c-line-number', '#6a737d')
+    document.documentElement.style.setProperty('--code-header-bg', '#f0f0f0')
+    document.documentElement.style.setProperty('--code-toolbar-bg', '#f6f8fa')
+  } else {
+    document.documentElement.style.setProperty('--code-bg', bgColor)
+    document.documentElement.style.setProperty('--code-text', '#ABB2BF')
+    document.documentElement.style.setProperty('--code-c-line-number', 'rgba(248, 248, 242, 0.67)')
+    document.documentElement.style.setProperty('--code-header-bg', '#21252B')
+    document.documentElement.style.setProperty('--code-toolbar-bg', '#1E1E1E')
+  }
+
   // 如果主题不需要加载 CSS（如默认主题），添加标记类
   if (!themeConfig.cssPath) {
     document.body.classList.add('custom-highlight-theme')
