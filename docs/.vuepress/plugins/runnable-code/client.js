@@ -58,7 +58,7 @@ if (typeof document !== 'undefined' && !document.getElementById(styleId)) {
 /* 可编辑代码区域 */
 .runnable-code-block pre.runnable-editable {
   margin: 0;
-  padding: 16px;
+  padding: 16px 16px 16px 3rem;
   background: var(--code-bg-color, #282c34);
   overflow-x: auto;
   cursor: text;
@@ -440,10 +440,7 @@ function initCodeBlock(block) {
 
   if (!codeElement) return
 
-  // 移除行号元素
-  const lineNumbersDivs = codeArea.querySelectorAll('.line-numbers')
-  lineNumbersDivs.forEach(div => div.remove())
-
+  // 保留行号元素（由 Vue 组件渲染）
   // 让 code 元素可编辑（但默认不显示焦点样式）
   codeElement.contentEditable = 'true'
   codeElement.spellcheck = false

@@ -36,6 +36,9 @@
       </div>
 
       <pre><code :class="`language-${language}`">{{ code }}</code></pre>
+      <div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0">
+        <div class="line-number" v-for="n in lineCount" :key="n"></div>
+      </div>
     </div>
 
     <!-- 输出区域 -->
@@ -186,6 +189,8 @@ const props = defineProps({
     default: ''  // 留空则使用配置的端点
   }
 })
+
+const lineCount = computed(() => (props.code || '').split('\n').length)
 
 // 当前使用的端点（响应式，会在配置变化时更新）
 const currentEndpoint = ref(getSandboxEndpoint())

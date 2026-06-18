@@ -567,4 +567,8 @@ body {
   .vp-site-name {
     display: none;
   }
+
+  div[class*=language-] {
+    margin: 0.75rem -0.75rem !important;
+  }
 }

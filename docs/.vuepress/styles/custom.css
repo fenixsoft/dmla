@@ -314,9 +314,9 @@ border-radius: 12px;
   left: 0;
   width: 3rem;
   height: 100%;
-  padding-top: 13px;
-  border-right: 1px solid rgba(128, 128, 128, 0.3);
-  color: #6a737d;
+  padding-top: 17px;
+  border-right: 1px solid var(--code-c-highlight-bg, rgba(128, 128, 128, 0.3));
+  color: var(--code-c-line-number, rgba(248, 248, 242, 0.67));
   font-family: 'Fira Code', 'SF Mono', Monaco, Consolas, monospace;
   font-size: 14px;
   line-height: 1.6;
@@ -338,6 +338,7 @@ border-radius: 12px;
 }
 
 .runnable-code-block .code-area pre code {
+  padding: 0;
   padding-left: 1rem;
 }
 

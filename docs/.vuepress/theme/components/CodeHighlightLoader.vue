@@ -118,7 +118,6 @@ div[class*="language-"] {
   background: var(--code-theme-bg, #282C34);
   border-radius: 12px;
   max-width: 100%;
-  overflow-x: auto;
   overflow: hidden;
 }
 
