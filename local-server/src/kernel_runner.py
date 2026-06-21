@@ -64,7 +64,7 @@ CUDA 兼容性错误诊断
 
 常见原因:
   1. GPU 的 Compute Capability 高于 PyTorch 支持的版本
-     (例如: RTX 4090 需要 CUDA 11.8+ 的完整支持)
+     (譬如: RTX 4090 需要 CUDA 11.8+ 的完整支持)
   2. NVIDIA 驱动版本过低，不支持容器内的 CUDA 版本
   3. PyTorch 编译时未包含您 GPU 架构的 CUDA kernel
 

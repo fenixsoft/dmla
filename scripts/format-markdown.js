@@ -227,7 +227,7 @@ function addSpaceBetweenChineseAndOperator(content) {
   // - 包含 ——（全角破折号，中文语境中常作为连接符号）
 
   // 中文汉字后接运算符再接中文汉字 → 添加空格（运算符前后）
-  // 例如：天气=雨天 → 天气 = 雨天
+  // 譬如：天气=雨天 → 天气 = 雨天
   content = content.replace(/([\u4e00-\u9fff])([=+\-])([\u4e00-\u9fff])/g, (match, before, op, after) => {
     return `${before} ${op} ${after}`;
   });
@@ -239,7 +239,7 @@ function addSpaceBetweenChineseAndOperator(content) {
   });
 
   // 全角破折号（——）单独处理
-  // 例如：机器学习——深度学习 → 机器学习 —— 深度学习
+  // 譬如：机器学习——深度学习 → 机器学习 —— 深度学习
   // 扩展：允许破折号前后是中文汉字、引号、Markdown标记（* 和 _）
   // 处理情况如："标准件"——虽然、两类问题——**求切线**
   content = content.replace(/([\u4e00-\u9fff"'*_])(——)([\u4e00-\u9fff"'*_])/g, (match, before, dash, after) => {

@@ -1,5 +1,3 @@
-- BUG：参考答案只能在 oi 下同行显示，在 li 下会自动换行
-- BUG：手机模式下，部分代码框会略微撑开屏幕
 - FEAT：提供英文语言版本
     - 英文语言切换菜单
     - 文章英文翻译
@@ -7,7 +5,6 @@
     - 图片英文翻译
 - FEAT：所有应用论文增加链接
 - BUG：部分代码高亮的背景颜色不可用
-- BUG：代码高亮与原有样式混合，导致代码块亮度降低
 - BUG：代码块的输出样式存在圆角、背景颜色不一致的问题
 - FEAT：AI全文校验
     - 全文代码可执行性检测
@@ -16,4 +13,3 @@
 - BUG：Mermaid图中的Latex会导致字体变小，连线上会导致有灰色背景（http://localhost:8080/language-models/architecture-basics/transformer-architecture.html）
 - FEAT：NN-Arch支持\n换行
 - FEAT：Word文档/PDF文档生成
-- BUG：全文例如->譬如

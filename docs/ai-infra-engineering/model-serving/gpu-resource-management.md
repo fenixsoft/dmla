@@ -136,7 +136,7 @@ for name, m in models.items():
 ### 3.2 Kernel 优化与算子融合
 
 - GPU Kernel 是在 GPU 上执行的最小计算单元。LLM 推理涉及大量小 Kernel（LayerNorm、Attention、MLP、Activation），每个 Kernel 的启动开销和数据搬运开销累积起来不可忽视
-- 算子融合（Operator Fusion）：将多个连续的 Kernel 合并为一个，减少中间结果的显存写入和读取。例如将 LayerNorm + Attention + Residual 融合为一个 Kernel
+- 算子融合（Operator Fusion）：将多个连续的 Kernel 合并为一个，减少中间结果的显存写入和读取。譬如将 LayerNorm + Attention + Residual 融合为一个 Kernel
 - 框架实例：FlashAttention 是算子融合的典型代表，将 Attention 的分块计算与 Softmax 融合，避免了 $N \times N$ 注意力矩阵的显存写入，同时利用 SRAM 的局部性减少了 HBM 访问
 - TensorRT-LLM 的 Kernel 优化：针对 NVIDIA GPU 的 Tensor Core 专门优化的 GEMM Kernel，融合了多种算子，在 H100 上可以达到 50% 以上的算力利用率
 
@@ -161,7 +161,7 @@ for name, m in models.items():
 
 ### 4.2 MIG 的应用场景
 
-- 用 MIG 将一块 A100 80GB 划分为多个实例，分别运行不同大小的模型。例如划分 2 个 40GB 实例，一个运行 7B 模型，另一个运行 13B 模型
+- 用 MIG 将一块 A100 80GB 划分为多个实例，分别运行不同大小的模型。譬如划分 2 个 40GB 实例，一个运行 7B 模型，另一个运行 13B 模型
 - MIG 的局限：划分后的实例显存和算力都受限，不适合大模型（70B+）的推理。且 MIG 实例之间无法通过 NVLink 通信，不能用于张量并行
 - MIG 的最佳实践：用于多个小模型的并发推理，或开发测试环境中的多用户隔离
 

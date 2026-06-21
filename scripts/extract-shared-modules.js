@@ -69,7 +69,7 @@ function inferModulePath(docPath) {
   }
 
   // 2. 自动推断：取最后一级目录名转为 snake_case
-  // 例如: deep-learning/transformer-models → transformer_models
+  // 譬如: deep-learning/transformer-models → transformer_models
   const parts = docPath.split('/');
   const lastDir = parts[parts.length - 1];
   return dirToModuleName(lastDir);
@@ -86,7 +86,7 @@ const KNOWN_TERMS = [
 ];
 
 // 类名到文件名的转换 (PascalCase → snake_case)
-// 保留常见术语不拆分，例如 ImageNet → imagenet（而非 image_net）
+// 保留常见术语不拆分，譬如 ImageNet → imagenet（而非 image_net）
 function classNameToFileName(className) {
   // 术语到占位符的映射（使用不会被拆分的格式）
   const termMap = {};
