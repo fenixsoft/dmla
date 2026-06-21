@@ -1,5 +1,4 @@
 ﻿/* IdeaSpaces 自定义样式 */
-
 :root {
   --c-brand: #2563EB;
   --c-brand-light: #EFF6FF;
@@ -9,7 +8,6 @@
   --c-bg: #FFFFFF;
   --c-bg-light: #FAFAFA;
 }
-
 /* KaTeX 文本字体 - 让 \text{} 命令中的文字回归正文大小 */
 .katex .text {
   /* KaTeX 默认设置 font-size: 1.21em，此处调整为 1/1.21 ≈ 0.826 */
@@ -17,34 +15,28 @@
   font-size: 0.826em;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
 }
-
 /* KaTeX 公式 - 防止超出页面宽度，移动端横向滚动 */
 .katex-display {
   overflow-x: auto;
   overflow-y: hidden;
   max-width: 100%;
 }
-
 .katex-display > .katex {
   max-width: 100%;
 }
-
 /* 行内 KaTeX 公式也限制宽度 */
 .katex {
   max-width: 100%;
 }
-
 /* Mermaid 图表 - 防止超出页面宽度，移动端横向滚动 */
 .mermaid {
   max-width: 100% !important;
 }
-
 @media (max-width: 959px) {
   .mermaid {
     overflow-x: auto !important;
   }
 }
-
 /* 图注样式 - 只包含 em 的段落居中显示 */
 .theme-default-content p > em:only-child {
   display: block;
@@ -54,19 +46,16 @@
   margin-top: -0.5rem;
   margin-bottom: 1.5rem;
 }
-
 /* 图片居中 - 只包含图片的段落居中显示 */
 .theme-default-content p > img:only-child {
   display: block;
   margin: 1rem auto;
 }
-
 /* 表格宽度占满 */
 .theme-default-content table {
   width: 100%;
   display: table;
 }
-
 /* 可运行代码块样式 - 与 pencil 设计稿一致 */
 .runnable-code-block {
   margin: 1.5rem 0;
@@ -75,7 +64,6 @@ border-radius: 12px;
   overflow: hidden;
   background: var(--code-bg, #282C34);
 }
-
 .runnable-code-block pre {
   margin: 0;
   padding: 16px;
@@ -84,42 +72,35 @@ border-radius: 12px;
   overflow-y: auto;
   overflow-x: auto;
 }
-
 /* 横向滚动条背景与代码框背景一致 */
 .runnable-code-block pre::-webkit-scrollbar:horizontal,
 .runnable-code-block code::-webkit-scrollbar:horizontal {
   height: 8px;
 }
-
 .runnable-code-block pre::-webkit-scrollbar-track:horizontal,
 .runnable-code-block code::-webkit-scrollbar-track:horizontal {
   background: var(--code-bg, #282C34);
 }
-
 .runnable-code-block pre::-webkit-scrollbar-thumb:horizontal,
 .runnable-code-block code::-webkit-scrollbar-thumb:horizontal {
   background: #555;
   border-radius: 4px;
 }
-
 .runnable-code-block pre::-webkit-scrollbar-thumb:horizontal:hover,
 .runnable-code-block code::-webkit-scrollbar-thumb:horizontal:hover {
   background: #666;
 }
-
 /* Firefox 横向滚动条 */
 .runnable-code-block pre,
 .runnable-code-block code {
   scrollbar-color: #555 var(--code-bg, #282C34);
 }
-
 .runnable-code-block pre code {
   font-family: 'Fira Code', 'SF Mono', Monaco, Consolas, monospace;
   font-size: 14px;
   line-height: 1.6;
   color: var(--code-text, #ABB2BF);
 }
-
 /* 代码块头部 */
 .runnable-code-block .code-header {
   display: flex;
@@ -129,13 +110,11 @@ border-radius: 12px;
   padding: 0 16px;
   background: var(--code-header-bg, #21252B);
 }
-
 .runnable-code-block .code-lang {
   font-size: 12px;
   font-weight: 500;
   color: var(--code-text, #ABB2BF);
 }
-
 /* 工具栏样式 - 与 pencil 设计稿一致 */
 .runnable-code-block .toolbar {
   display: flex;
@@ -146,7 +125,6 @@ border-radius: 12px;
   background: var(--code-toolbar-bg, #1E1E1E);
   border-top: 1px solid var(--code-c-highlight-bg, #333);
 }
-
 .runnable-code-block .run-btn {
   display: inline-flex;
   align-items: center;
@@ -161,16 +139,13 @@ border-radius: 12px;
   cursor: pointer;
   transition: background 0.2s ease;
 }
-
 .runnable-code-block .run-btn:hover:not(:disabled) {
   background: #4CAF89;
 }
-
 .runnable-code-block .run-btn:disabled {
   background: #ccc;
   cursor: not-allowed;
 }
-
 .runnable-code-block .gpu-btn {
   display: inline-flex;
   align-items: center;
@@ -185,26 +160,21 @@ border-radius: 12px;
   cursor: pointer;
   transition: background 0.2s ease;
 }
-
 .runnable-code-block .gpu-btn:hover:not(:disabled) {
   background: #3b82f6 !important;
 }
-
 .runnable-code-block .sandbox-status {
   font-size: 12px;
   color: #4EC9B0;
 }
-
 /* 练习题答案样式 - 参考答案跟在题目同一行，保留三角形 */
 .theme-default-content div ol:last-of-type li:has(details) > p:first-child {
   display: inline;
   margin-bottom: 0;
 }
-
 .theme-default-content details {
   display: inline;
 }
-
 .theme-default-content details summary {
   display: inline;
   cursor: pointer;
@@ -214,44 +184,35 @@ border-radius: 12px;
   border-radius: 4px;
   transition: background-color 0.2s ease;
 }
-
-
 .theme-default-content details summary::before {
   content: '▶ ';
   font-size: 0.8em;
 }
-
 .theme-default-content details summary:hover {
   /* background-color: #EFF6FF; */
 }
-
 /* 展开后的三角形 */
 .theme-default-content details[open] summary::before {
   content: '▼ ';
 }
-
 /* 展开后的 summary 与内容间距 */
 .theme-default-content details[open] {
   /* display: block; */
   /* width: 100%; */
 }
-
 .theme-default-content details[open] summary {
   margin-bottom: 0.5em;
 }
-
 /* 答案内容 - 确保段落间距一致 */
 .theme-default-content details[open] p {
   margin-top: 0.5rem;
   margin-bottom: 0.5rem;
   line-height: 1.6;
 }
-
 /* 第一个段落紧跟 summary，不需要 margin-top */
 .theme-default-content details[open] p:first-of-type {
   margin-top: 0;
 }
-
 .runnable-code-block .output-container {
   padding: 12px 16px;
   background: var(--code-toolbar-bg, #1E1E1E);
@@ -264,26 +225,21 @@ border-radius: 12px;
   max-height: 1000px;
   overflow-y: auto;
 }
-
 .runnable-code-block .output-area {
   padding: 12px 16px;
 }
-
 .runnable-code-block .output-area.error {
   color: #f48771;
 }
-
 .runnable-code-block .output-title {
   font-size: 12px;
   font-weight: 500;
   color: #888888;
   margin-bottom: 4px;
 }
-
 .edgeLabel p {
     background-color: #fff !important;
 }
-
 /* Mermaid 图表中 KaTeX 公式节点尺寸与垂直居中修正 */
 /* KaTeX 在 SVG foreignObject 中渲染 MathML 时高度计算偏小，导致格子变小 */
 /* inline-block + vertical-align 无法在 foreignObject 中实现居中，需用 inline-flex */
@@ -293,11 +249,9 @@ border-radius: 12px;
   justify-content: center;
   min-height: 28px;
 }
-
 .mermaid svg math {
   display: inline-block;
 }
-
 /* 公式字体大小恢复到与正文匹配 */
 .mermaid svg .katex > math {
   display: inline-block;
@@ -305,15 +259,13 @@ border-radius: 12px;
 }
 /* runnable 代码块行号样式 — 弥补 runnable-code 插件剥离 line-numbers-mode 导致行号不显示的问题 */
 .runnable-code-block .code-area {
-  position: relative;
+  position: relative; overflow: hidden;
 }
-
 .runnable-code-block .line-numbers {
   position: absolute;
   top: 0;
   left: 0;
   width: 3rem;
-  height: 100%;
   padding-top: 17px;
   border-right: 1px solid var(--code-c-highlight-bg, rgba(128, 128, 128, 0.3));
   color: var(--code-c-line-number, rgba(248, 248, 242, 0.67));
@@ -325,23 +277,18 @@ border-radius: 12px;
   box-sizing: border-box;
   user-select: none;
   pointer-events: none;
-  overflow: hidden;
 }
-
 .runnable-code-block .line-number::before {
   content: counter(line-number);
   counter-increment: line-number;
 }
-
 .runnable-code-block .code-area pre {
   margin-left: 3rem;
 }
-
 .runnable-code-block .code-area pre code {
   padding: 0;
   padding-left: 1rem;
 }
-
 .runnable-code-block .floating-toolbar {
   right: 8px;
 }

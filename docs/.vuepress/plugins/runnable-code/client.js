@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 可运行代码插件客户端配置
  */
 import { defineClientConfig } from 'vuepress/client'
@@ -1010,6 +1010,13 @@ function initCodeBlock(block) {
       }
     })
   })
+  // 同步行号滚动 - 当 pre 代码区竖向滚动时，行号跟随滚动
+  var _lineNumbers = codeArea.querySelector(".line-numbers")
+  if (_lineNumbers && preElement) {
+    preElement.addEventListener("scroll", function() {
+      _lineNumbers.style.transform = "translateY(-" + preElement.scrollTop + "px)"
+    })
+  }
 }
 
 /**
