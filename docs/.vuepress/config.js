@@ -284,58 +284,78 @@ export default {
               collapsible: false,
               children: [
                 { text: '推理服务架构', link: '/ai-infra-engineering/model-serving/inference-service-architecture' },
-                // { text: '请求调度与批处理', link: '/ai-infra-engineering/model-serving/request-scheduling' },
+                { text: '请求调度与批处理', link: '/ai-infra-engineering/model-serving/request-scheduling' },
+                { text: 'GPU 资源管理'},
                 // { text: 'GPU 资源管理', link: '/ai-infra-engineering/model-serving/gpu-resource-management' },
+                { text: '工程实训：部署 LLM 推理服务'},
                 // { text: '工程实训：部署 LLM 推理服务', link: '/ai-infra-engineering/model-serving/llm-inference-experiment' },
               ]
             },
-            // {
-            //   text: '工程化实践',
-            //   collapsible: false,
-            //   children: [
-            //     { text: '数据版本管理', link: '/ai-infra-engineering/mlops/data-versioning' },
-            //     { text: '特征存储', link: '/ai-infra-engineering/mlops/feature-store' },
-            //     { text: '数据质量监控', link: '/ai-infra-engineering/mlops/data-quality-monitoring' },
-            //     { text: '实验追踪', link: '/ai-infra-engineering/mlops/experiment-tracking' },
-            //     { text: '模型注册与生命周期', link: '/ai-infra-engineering/mlops/model-registry-lifecycle' },
-            //     { text: '自动化调参', link: '/ai-infra-engineering/mlops/hyperparameter-optimization' },
-            //     { text: '模型性能监控', link: '/ai-infra-engineering/mlops/model-performance-monitoring' },
-            //     { text: '漂移检测', link: '/ai-infra-engineering/mlops/drift-detection' },
-            //     { text: '在线实验与渐进发布', link: '/ai-infra-engineering/mlops/online-experimentation' },
-            //   ]
-            // },
+            {
+              text: '工程化实践',
+              collapsible: false,
+              children: [
+                { text: '数据版本管理'},
+                // { text: '数据版本管理', link: '/ai-infra-engineering/mlops/data-versioning' },
+                { text: '特征存储' },
+                // { text: '特征存储', link: '/ai-infra-engineering/mlops/feature-store' },
+                { text: '数据质量监控'},
+                // { text: '数据质量监控', link: '/ai-infra-engineering/mlops/data-quality-monitoring' },
+                { text: '实验追踪'},
+                // { text: '实验追踪', link: '/ai-infra-engineering/mlops/experiment-tracking' },
+                { text: '模型注册与生命周期'},
+                // { text: '模型注册与生命周期', link: '/ai-infra-engineering/mlops/model-registry-lifecycle' },
+                { text: '自动化调参'},
+                // { text: '自动化调参', link: '/ai-infra-engineering/mlops/hyperparameter-optimization' },
+                { text: '模型性能监控'},
+                // { text: '模型性能监控', link: '/ai-infra-engineering/mlops/model-performance-monitoring' },
+                { text: '漂移检测'},
+                // { text: '漂移检测', link: '/ai-infra-engineering/mlops/drift-detection' },
+                { text: '在线实验与渐进发布'},
+                // { text: '在线实验与渐进发布', link: '/ai-infra-engineering/mlops/online-experimentation' },
+              ]
+            },
           ]
       },
       {
-        text: '检索与 Agent 系统',
+        text: '智能应用与 Agent 系统',
         collapsible: false,
           children: [
             // {
             //   text: '向量检索与 RAG',
             //   collapsible: false,
             //   children: [
-            //     { text: '嵌入与向量检索', link: '/ai-infra-engineering/vector-retrieval-rag/embedding-and-indexing' },
-            //     { text: '检索质量评估与优化', link: '/ai-infra-engineering/vector-retrieval-rag/retrieval-quality' },
-            //     { text: '文档处理流水线', link: '/ai-infra-engineering/vector-retrieval-rag/document-processing-pipeline' },
-            //     { text: '检索增强生成', link: '/ai-infra-engineering/vector-retrieval-rag/retrieval-augmented-generation' },
-            //     { text: '工程实训：构建知识库问答系统', link: '/ai-infra-engineering/vector-retrieval-rag/rag-experiment' },
+            //     { text: '嵌入与向量检索', link: '/agent-applications/vector-retrieval-rag/embedding-and-indexing' },
+            //     { text: '检索质量评估与优化', link: '/agent-applications/vector-retrieval-rag/retrieval-quality' },
+            //     { text: '文档处理流水线', link: '/agent-applications/vector-retrieval-rag/document-processing-pipeline' },
+            //     { text: '检索增强生成', link: '/agent-applications/vector-retrieval-rag/retrieval-augmented-generation' },
+            //     { text: '工程实训：构建知识库问答系统', link: '/agent-applications/vector-retrieval-rag/rag-experiment' },
             //   ]
             // },
-            // {
-            //   text: 'Agent 系统',
-            //   collapsible: false,
-            //   children: [
-            //     { text: '从 LLM 到 Agent', link: '/ai-infra-engineering/agent-systems/llm-to-agent' },
-            //     { text: '工具调用', link: '/ai-infra-engineering/agent-systems/tool-use' },
-            //     { text: '规划与推理', link: '/ai-infra-engineering/agent-systems/planning-reasoning' },
-            //     { text: '记忆系统', link: '/ai-infra-engineering/agent-systems/memory-systems' },
-            //     { text: '协作模式', link: '/ai-infra-engineering/agent-systems/collaboration-patterns' },
-            //     { text: '通信协议', link: '/ai-infra-engineering/agent-systems/communication-protocols' },
-            //     { text: '编排与容错', link: '/ai-infra-engineering/agent-systems/orchestration-fault-tolerance' },
-            //     { text: '工程实训：构建自主 Agent', link: '/ai-infra-engineering/agent-systems/agent-experiment' },
-            //     { text: '工程实训：构建多智能体协作系统', link: '/ai-infra-engineering/agent-systems/multi-agent-experiment' },
-            //   ]
-            // },
+            {
+              text: 'Agent 系统',
+              collapsible: false,
+              children: [
+                { text: '从 LLM 到 Agent'},
+                { text: '工具调用'},
+                { text: '规划与推理'},
+                { text: '记忆系统'},
+                { text: '协作模式'},
+                { text: '通信协议'},
+                { text: '编排与容错'},
+                { text: '工程实训：构建自主 Agent'},
+                { text: '工程实训：构建多智能体协作系统'},
+                // { text: '从 LLM 到 Agent', link: '/agent-applications/agent-systems/llm-to-agent' },
+                // { text: '工具调用', link: '/agent-applications/agent-systems/tool-use' },
+                // { text: '规划与推理', link: '/agent-applications/agent-systems/planning-reasoning' },
+                // { text: '记忆系统', link: '/agent-applications/agent-systems/memory-systems' },
+                // { text: '协作模式', link: '/agent-applications/agent-systems/collaboration-patterns' },
+                // { text: '通信协议', link: '/agent-applications/agent-systems/communication-protocols' },
+                // { text: '编排与容错', link: '/agent-applications/agent-systems/orchestration-fault-tolerance' },
+                // { text: '工程实训：构建自主 Agent', link: '/agent-applications/agent-systems/agent-experiment' },
+                // { text: '工程实训：构建多智能体协作系统', link: '/agent-applications/agent-systems/multi-agent-experiment' },
+              ]
+            },
           ]
       },
       {

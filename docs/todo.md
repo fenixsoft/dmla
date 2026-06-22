@@ -11,5 +11,6 @@
     - 全文知识性错误检测
     - 全文语法/笔误/错别字检测
 - BUG：Mermaid图中的Latex会导致字体变小，连线上会导致有灰色背景（http://localhost:8080/language-models/architecture-basics/transformer-architecture.html）
-- FEAT：NN-Arch支持\n换行
 - FEAT：Word文档/PDF文档生成
+- BUG：NN-ARCH改进（连线不准确）
+- BUG：NN-Arch支持\n换行
