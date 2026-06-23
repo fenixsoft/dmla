@@ -6,7 +6,7 @@
 
 - 已经部署好了 [Docker 环境](https://docs.docker.com/engine/install)。
 - 已经部署好了 [NodeJS 20.x+ 环境](https://nodejs.org/en/download)。
-- **可选**：代码片段与练习题使用 CPU 即可运行，但模型训练的内容需使用 GPU，需具备 NVIDIA GPU 且已经安装了 [NVIDIA 驱动](https://www.nvidia.com/en-us/drivers/)、满足 CUDA 12.8 GA 的驱动版本要求、磁盘空间等条件，具体为：
+- **可选**：代码片段与练习题使用 CPU 即可运行，但模型训练的内容需使用 GPU，需具备 NVIDIA GPU 且已经安装了 [NVIDIA 驱动](https://www.nvidia.com/en-us/drivers/)、满足 CUDA 13.0 GA 的驱动版本要求、磁盘空间等条件，具体为：
     - 驱动版本要求：
         - Linux >= 570.28.03
         - Windows: >= 570.76
@@ -23,7 +23,6 @@
             curl -s -L https://nvidia.github.io/libnvidia-container/stable/deb/nvidia-container-toolkit.list | \
                 sed 's#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g' | \
                 tee /etc/apt/sources.list.d/nvidia-container-toolkit.list
-
 
             # 安装并配置
             apt-get update && apt-get install -y nvidia-container-toolkit
@@ -107,7 +106,7 @@
 
 ## 环境建议
 
-- 对于文章内容的代码片段和课后练习题算法，只需纯 CPU 环境即可运行。在进入深度学习部分后，会出现专门的模型工程训练章节，它们需要有 GPU 异构计算环境的支持，当前 Docker 镜像使用的是 PyTorch with [CUDA 12.8](https://developer.nvidia.com/cuda-12-8-0-download-archive)，支持 20/30/40/50 系列显卡，A100/A800/H100/H800 专业计算卡。如果你的硬件不在此范畴，需要自行下载代码，调整 PyTorch 版本后重新编译镜像（譬如 AMD 显卡要自己处理 PyTorch + ROCm）。
+- 对于文章内容的代码片段和课后练习题算法，只需纯 CPU 环境即可运行。在进入深度学习部分后，会出现专门的模型工程训练章节，它们需要有 GPU 异构计算环境的支持，当前 Docker 镜像使用的是 PyTorch with [CUDA 13.0](https://developer.nvidia.com/cuda-13-0-0-download-archive)，支持 20/30/40/50 系列显卡，A100/A800/H100/H800 专业计算卡。如果你的硬件不在此范畴，需要自行下载代码，调整 PyTorch 版本后重新编译镜像（譬如 AMD 显卡要自己处理 PyTorch + ROCm）。
 
 - 基于以下硬性限制，笔者建议在 **Linux** 宿主环境下使用 GPU 进行模型训练
     - [NVIDIA NVML](https://developer.nvidia.com/management-library-nvml) 约束：本项目的模型训练虽不会直接调用 NVML 去调整 GPU 硬件参数，但会用到 DALI 等数据处理库，它们依赖 NVML 支持。DALI 本身仅支持 Linux 平台，Windows 上无法运行。即使在 WSL 2 中通过 NVIDIA Container Toolkit 获得 GPU 支持，NVML API 的可用性和功能完整性也有限，部分 API 仍不受支持。

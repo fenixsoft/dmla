@@ -1,6 +1,8 @@
 # ============================================
 # DMLA Python Sandbox Image (GPU Version)
-# 支持 CUDA 12.8 的 Python 执行环境
+# 支持 CUDA 13.0 的 Python 执行环境
+# PyTorch cu130 wheel 使用基础镜像的 CUDA 13.0 运行时
+# vLLM 通过 pip 安装 nvidia-*-13.3 包提供 flashinfer JIT 所需 CUDA 13.3 工具链
 # 镜像名称: dmla-sandbox:gpu
 #
 # 构建命令: docker build -t dmla-sandbox:gpu . -f local-server/Dockerfile.sandbox
@@ -14,7 +16,7 @@
 #   - H100/H200 (Hopper, sm_90)
 # ============================================
 
-FROM nvidia/cuda:12.8.0-cudnn-runtime-ubuntu22.04
+FROM nvidia/cuda:13.0.0-cudnn-devel-ubuntu22.04
 
 # 设置环境变量
 ENV DEBIAN_FRONTEND=noninteractive
@@ -22,6 +24,11 @@ ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV DMLA_CUDA_COMPAT=unknown
 ENV PYTHONPATH=/workspace
+# vLLM flashinfer JIT 编译需要 CUDA 13 工具链
+# pip 安装的 vLLM 自带 nvidia-cuda-nvcc + nvidia-cuda-runtime（13.3 版本）
+# 设置 CUDA_HOME 指向 pip 提供的路径以确保版本一致
+ENV CUDA_HOME=/usr/local/lib/python3.11/dist-packages/nvidia/cu13
+ENV LD_LIBRARY_PATH=/usr/local/lib/python3.11/dist-packages/nvidia/cu13/lib:/usr/local/cuda/lib64:$LD_LIBRARY_PATH
 
 # 替换为阿里云镜像源
 RUN sed -i 's|http://archive.ubuntu.com|http://mirrors.aliyun.com|g' /etc/apt/sources.list \
@@ -67,12 +74,13 @@ RUN pip install --no-cache-dir -i https://pypi.tuna.tsinghua.edu.cn/simple \
     jupyter_client \
     lmdb
 
-# 安装 PyTorch (GPU 版本，CUDA 12.8)
+# 安装 PyTorch (GPU 版本，CUDA 13.0，PyPI 默认)
+# PyTorch 2.11+ 在 PyPI 上默认为 CUDA 13.0，无需 --index-url
 RUN pip install --no-cache-dir \
-    torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu128
+    torch torchvision torchaudio
 
-# 安装 NVIDIA DALI（GPU 数据加载库，CUDA 12.x 版本）
-RUN pip install --no-cache-dir nvidia-dali-cuda120
+# 安装 NVIDIA DALI（GPU 数据加载库，CUDA 13.x 版本）
+RUN pip install --no-cache-dir nvidia-dali-cuda130
 
 # 安装 HuggingFace Transformers 生态（LLM 预训练实验所需）
 RUN pip install --no-cache-dir -i https://pypi.tuna.tsinghua.edu.cn/simple \
@@ -82,6 +90,11 @@ RUN pip install --no-cache-dir -i https://pypi.tuna.tsinghua.edu.cn/simple \
     ipywidgets \
     accelerate \
     bitsandbytes
+
+# 安装 vLLM 推理框架（PagedAttention、Continuous Batching）
+# vLLM pip 安装会自动拉取 nvidia-cuda-nvcc（13.3）+ nvidia-cuda-runtime（13.3）
+# CUDA_HOME 指向 pip 的 cu13 路径，flashinfer JIT 使用一致的 13.3 工具链
+RUN pip install --no-cache-dir vllm
 
 # 复制执行器和诊断脚本
 COPY local-server/src/kernel_runner.py /workspace/kernel_runner.py

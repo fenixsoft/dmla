@@ -1,261 +1,113 @@
 # GPU 资源管理
 
-## 核心问题
+GPU 是 LLM 推理服务中最昂贵也最稀缺的资源。如何让每块 GPU 的每一兆显存、每一个计算核心都被充分利用，是推理服务成本控制的关键。在[推理效率优化](../../language-models/reasoning/inference-efficiency.md)中，我们从算法层面分析了推理瓶颈和优化手段；在[请求调度与批处理](./request-scheduling.md)中，我们从系统层面讨论了如何组织多个请求的执行。本章则从 GPU 硬件本身出发，分析显存、算力和带宽三大资源的特征与瓶颈，讨论显存管理、算力调度、多实例共享以及量化等资源优化技术，帮助读者理解推理优化的物理边界和工程手段。
 
-GPU 是 LLM 推理服务中最昂贵也最稀缺的资源。一块 A100 80GB 价值数万元，运行 70B 模型时可能只能同时处理不到 10 个请求。如何让每块 GPU 的每一 MB 显存、每一个 Tensor Core 都被充分利用，是推理服务成本控制的关键。本文从 GPU 的硬件架构出发，分析显存、算力和带宽三大资源的特征与瓶颈，讨论显存管理、算力调度、多实例共享以及量化等资源优化技术。
+## GPU 硬件架构与资源特征
 
-## 第一章：GPU 硬件架构与资源特征
+一块 GPU 并非一个均匀的计算单元，而是由显存、计算核心和互连总线三部分组成的异构系统。不妨把 GPU 的工作过程想象成一家餐厅的运营。厨房面积决定能同时准备多少道菜（显存容量），厨师烹饪速度决定每分钟出菜量（算力），传菜员从冷库取食材到厨房的速度决定厨房能否满负荷运作（带宽）。厨房太小，再快的厨师也只能闲置；传菜太慢，再大的厨房也填不满。GPU 的资源关系与此类似，三者之间的关系可以用一个简单的逻辑串联：算力的发挥依赖带宽，因为数据必须从显存加载到计算单元才能参与运算；显存容量限制了能存储的数据量，约束了算力能被多少请求共享。GPU 的硬件约束关系是后续所有优化技术的物理基础：
 
-### 1.1 GPU 的三大资源：显存、算力、带宽
+- **显存**是 GPU 上的高速存储，用于存放模型权重和 KV Cache。以 NVIDIA A100 为例，其 HBM2e 显存容量为 80 GB。显存容量是模型能否部署的硬约束，KV Cache 放不下，并发也无法提升。
 
-- **显存**（HBM，High Bandwidth Memory）：存储模型权重和 KV Cache。A100 80GB、H100 80GB，容量固定且有限。显存决定了能部署多大的模型、能同时处理多少请求
-- **算力**（FLOPS，Floating Point Operations Per Second）：GPU 的计算能力。A100 的 FP16 算力为 312 TFLOPS，H100 为 990 TFLOPS。算力决定了每秒能处理多少 token
-- **带宽**（Memory Bandwidth）：GPU 与显存之间的数据传输速率。A100 的 HBM2e 带宽为 2 TB/s，H100 为 3.35 TB/s。带宽决定了 Decode 阶段能多快读取 KV Cache
-- 三者之间的关系：算力的发挥依赖带宽（数据必须从显存加载到计算单元），显存容量限制了能存储的数据量。三者必须匹配，任何一项成为瓶颈都会拖累其他两项
+- **算力**是衡量 GPU 每秒能执行多少次浮点运算。A100 的 FP16 算力为 312 TFLOPS（每秒 312 万亿次）。算力决定了每秒能处理多少数据，Prefill 阶段需要处理输入 Prompt 的所有 token，因此算力是 Prefill 阶段的主要瓶颈。
 
-### 1.2 算术强度与 Roofline 模型
+- **带宽**是 GPU 计算核心与显存之间的数据传输速率。A100 的 HBM2e 带宽为 2 TB/s。带宽决定了 Decode 阶段能多快读取 KV Cache。每生成一个 token，都需要从显存中读取所有层的 KV Cache 和模型权重，数据量巨大但计算量极小，因此 Decode 阶段的性能由带宽决定，与算力强弱关系不大。
 
-- **算术强度**（Arithmetic Intensity）：每字节显存访问对应的浮点运算次数，单位为 FLOP/Byte。算术强度高的是计算密集型（算力瓶颈），低的是访存密集型（带宽瓶颈）
-- **Roofline 模型**：以算术强度为横轴、性能（FLOPS）为纵轴，画出硬件的性能上限曲线。曲线分为两段：左侧上升段（带宽瓶颈区，性能 = 带宽 × 算术强度）和右侧平台段（算力瓶颈区，性能 = 峰值算力）
-- LLM 推理在 Roofline 上的位置：Prefill 阶段的算术强度高（矩阵乘法的计算量大），位于平台段（算力瓶颈）；Decode 阶段的算术强度极低（每步只生成一个 token），位于上升段（带宽瓶颈）
-- Roofline 模型对推理优化的指导：Decode 阶段优化带宽比优化算力更有效，Prefill 阶段则相反
+| 资源 | RTX 5090 32GB | A100 80GB | H100 80GB | 推理中的角色 |
+|:----:|:------------:|:---------:|:---------:|:----------:|
+| 显存容量 | 32 GB | 80 GB | 80 GB | 决定模型大小和并发上限 |
+| FP16 算力 | 104.8 TFLOPS | 312 TFLOPS | 990 TFLOPS | 决定 Prefill 速度 |
+| 显存带宽 | 1.79 TB/s | 2 TB/s | 3.35 TB/s | 决定 Decode 速度 |
 
-> **可视化建议**：
-> - Roofline 模型图：标注 Prefill 和 Decode 在曲线上的位置
-> - 对比表格：A100 与 H100 在显存、算力、带宽上的参数对比
+*表：A100、H100 与 RTX 5090 的三大资源参数对比*
 
-```python runnable
-# 绘制 Roofline 模型，展示 Prefill 和 Decode 的性能瓶颈
-import numpy as np
+### 算术强度与 Roofline 模型
 
-# A100 参数
-peak_flops = 312e12     # 312 TFLOPS (FP16)
-bandwidth = 2e12        # 2 TB/s (HBM2e)
+对于某个具体的计算任务，如何判断瓶颈到底出现在算力还是带宽呢？标准答案是取决于该任务的**算术强度**（Arithmetic Intensity）。算术强度是指每字节显存访问对应的浮点运算次数，单位为 FLOP/Byte。算术强度高的任务，读取一份数据后能执行大量计算，属于**计算密集型**（Compute-Bound），瓶颈在算力。算术强度低的任务，从显存读取一份数据后只执行少量计算，属于**访存密集型**（Memory-Bound），瓶颈在带宽。
 
-# 算术强度范围
-arithmetic_intensity = np.logspace(-1, 3, 1000)  # FLOP/Byte
+2009 年，加州大学伯克利分校的计算机科学家塞缪尔·威廉姆斯（Samuel Williams）等人在论文《Roofline: An Insightful Visual Performance Model for Multicore Architectures》中提出了 Roofline 模型，用一条简洁的曲线直观展示硬件的性能上限与算术强度的关系。这个模型以算术强度为横轴、可达性能（FLOPS）为纵轴，画出硬件的性能上限曲线。曲线分为两段，左侧的上升段代表带宽瓶颈区，性能随算术强度线性增长，公式为性能 = 带宽 × 算术强度。右侧的平台段代表算力瓶颈区，性能达到峰值算力后不再增长。两段的交点称为**拐点**，其算术强度等于峰值算力 / 峰值带宽，即刚好把算力和带宽同时用满的临界值。算术强度低于拐点时，算力有富余但数据供不上，性能受带宽限制；高于拐点时，带宽有富余但算力不够用，性能受算力限制。
 
-# Roofline 性能上限
-roofline = np.minimum(bandwidth * arithmetic_intensity, peak_flops)
+![Roofline 模型：A100 上 Prefill 与 Decode 的性能瓶颈位置](./assets/roofline-model.png)
 
-# Prefill 和 Decode 的典型算术强度
-prefill_intensity = 100   # FLOP/Byte（计算密集）
-decode_intensity = 1      # FLOP/Byte（访存密集）
+*图：A100 的 Roofline 模型*
 
-# 它们的实际性能
-prefill_perf = min(bandwidth * prefill_intensity, peak_flops)
-decode_perf = min(bandwidth * decode_intensity, peak_flops)
+上图以 A100 为例，拐点算术强度为 312 TFLOPS / 2 TB/s = 156 FLOP/Byte。这意味着如果一个任务的算术强度低于 156 FLOP/Byte，它就是访存密集型，性能由带宽决定；高于 156 FLOP/Byte 则是计算密集型，性能由算力决定。通过观察不同硬件的 Roofline 曲线，能够直观判断它们所适配的任务。反过来，也能通过 Roofline 曲线量化 Prefill 和 Decode 两阶段的计算特征差异。Prefill 阶段矩阵乘法的计算量大，算术强度通常超过 100 FLOP/Byte，接近或超过拐点，属于计算密集型。Decode 阶段每步只生成一个 token，需要从显存读取全部 KV Cache 和权重但只做极少量的计算，算术强度仅约 1-2 FLOP/Byte，远低于拐点，属于访存密集型。
 
-print("A100 Roofline 分析")
-print(f"峰值算力: {peak_flops/1e12:.0f} TFLOPS")
-print(f"峰值带宽: {bandwidth/1e12:.1f} TB/s")
-print(f"拐点算术强度: {peak_flops/bandwidth:.0f} FLOP/Byte")
-print()
-print(f"Prefill (算术强度={prefill_intensity}): 性能={prefill_perf/1e12:.1f} TFLOPS, 瓶颈={'算力' if bandwidth*prefill_intensity >= peak_flops else '带宽'}")
-print(f"Decode (算术强度={decode_intensity}): 性能={decode_perf/1e12:.1f} TFLOPS, 瓶颈={'算力' if bandwidth*decode_intensity >= peak_flops else '带宽'}")
-print()
-print(f"Decode 阶段算力利用率: {decode_perf/peak_flops*100:.1f}%")
-print(f"Prefill 阶段算力利用率: {prefill_perf/peak_flops*100:.1f}%")
-```
+### GPU 架构演进对推理的影响
 
-### 1.3 GPU 架构演进对推理的影响
+从 2020 年到 2026年，从 Ampere 到 Blackwell Ultra，NVIDIA 六年五代数据中心 GPU 的演进呈现出一个明显且在持续加剧的趋势：算力与带宽的增长长期失衡，算力增长远超带宽增长。具体如下表所示。
 
-- 从 A100 到 H100 的演进：算力提升 3 倍（312→990 TFLOPS），带宽提升 1.7 倍（2→3.35 TB/s），显存容量不变（80GB）
-- 算力增长快于带宽增长，意味着 Decode 阶段（带宽瓶颈）从 A100 到 H100 的加速比远小于 Prefill 阶段（算力瓶颈）。这进一步验证了 PD 分离架构的必要性
-- NVLink 与 NVSwitch：节点内 GPU 互连带宽（NVLink 4.0 900 GB/s）远高于节点间网络（InfiniBand 400 Gb/s），决定了张量并行（节点内）和流水线并行（节点间）的性能边界
+| GPU | 架构 | FP16 算力 | 显存带宽 | 显存容量 | NVLink |
+|:---:|:---:|:--------:|:-------:|:-------:|:------:|
+| A100 (2020) | Ampere | 312 TFLOPS | 2 TB/s | 80 GB | 600 GB/s |
+| H100 (2022) | Hopper | 989 TFLOPS | 3.35 TB/s | 80 GB | 900 GB/s |
+| H200 (2024) | Hopper | 989 TFLOPS | 4.8 TB/s | 141 GB | 900 GB/s |
+| B200 (2025) | Blackwell | 2,250 TFLOPS | 8 TB/s | 192 GB | 1,800 GB/s |
+| B300 (2026) | Blackwell Ultra | 3,500 TFLOPS | 8 TB/s | 288 GB | 1,800 GB/s |
 
-## 第二章：显存管理
+*表：五代 NVIDIA 数据中心 GPU 的三大资源参数演进（FP16 均为稠密算力，NVLink 为双向总带宽）*
 
-### 2.1 显存预算分析
+A100 到 H100 算力提升 3.17 倍（312 → 989 TFLOPS），带宽仅提升 1.675 倍（2 → 3.35 TB/s），显存容量未变（均 80 GB）。H100 到 H200 是一个特殊转折，H200 与 H100 使用相同的 Hopper 核心，算力未变，但凭借 HBM3e 显存将带宽推至 4.8 TB/s（提升 43%），容量翻倍至 141 GB，这是 NVIDIA 对 H100 带宽和容量短板的定向修补。然而 H200 到 B200 又回到了老路，算力增长 2.28 倍（989 → 2,250 TFLOPS），带宽增长仅 1.67 倍（4.8 → 8 TB/s）。到 B300，算力继续增长 56%（2,250 → 3,500 TFLOPS），而带宽完全未变（同为 8 TB/s）。五代累计，算力提升了 11.2 倍，带宽仅提升了 4 倍。
 
-- GPU 显存被三部分瓜分：模型权重、KV Cache、运行时临时缓冲区
-- 以 LLaMA-2 70B（float16）为例：模型权重约 140 GB（需要 2×A100 80GB 的张量并行）、每块 GPU 上的权重约 70 GB、剩余约 10 GB 给 KV Cache 和运行时、单个请求的 KV Cache 约 10 GB，意味着每块 GPU 只能容纳 1 个请求的 KV Cache
-- 显存预算决定了并发上限：并发数 = (可用显存 - 模型权重 - 运行时) / 单请求 KV Cache 大小
+用 Roofline 模型的拐点算术强度（峰值算力 / 峰值带宽）可以量化这个趋势的后果。A100 拐点为 156 FLOP/Byte，H100 升至 295，H200 因带宽补强回落至 206，B200 回升至 281，B300 达到 438。拐点越高，意味着更多的计算任务落在访存密集区。Decode 阶段的算术强度仅约 1-2 FLOP/Byte，远远低于任何一代 GPU 的拐点，因此 Decode 性能几乎完全由带宽决定。从 A100 到 B300，Decode 的理论加速比仅 4 倍（等于带宽增长比例），而 Prefill 的理论加速比接近 11.2 倍（等于算力增长比例）。这种不对称加速持续强化着 [PD 分离架构](../../language-models/reasoning/inference-efficiency.md#prefill-decode-分离架构)的必要性。将 Prefill 任务部署在最新一代高算力 GPU（如 B300）上，将 Decode 任务留在带宽性价比更高的 GPU（如 B200，8 TB/s 带宽相同但成本更低）上，更能充分发挥每一代硬件的优势。
 
-### 2.2 KV Cache 显存优化
+显存容量的发展同样值得关注。A100 和 H100 同停留在 80 GB 长达四年，单块 GPU 仅能容纳 40B 参数的 FP16 模型。H200 率先打破僵局（141 GB），B200 增至 192 GB，B300 达到 288 GB。一块 B300 即可在 FP16 下容纳完整的 70B 模型（权重约 140 GB），剩余约 148 GB 可用于 KV Cache。这种容量增长直接改变了推理部署的拓扑选择。以前 70B 模型至少需要 2 块 A100/H100 做张量并行，现在一块 B200 或 B300 即可独立运行，省去了张量并行带来的通信开销和 GPU 间负载不均问题。
 
-- KV Cache 的显存占用公式（回顾）：$M_{\text{KV}} = 2 \times n_{\text{layer}} \times d_{\text{head}} \times n_{\text{head}} \times n_{\text{max}} \times b \times sizeof(\text{dtype})$
-- 降低 KV Cache 显存占用的三个方向：
-  - 降低精度：从 float16 到 float8，显存减半。KV Cache 量化对生成质量的影响小于权重量化，因为注意力计算对精度的敏感度较低
-  - 降低序列长度上限：限制最大序列长度 $n_{\max}$，超出则截断。简单但限制了长文本处理能力
-  - 压缩 KV Cache：通过低秩近似或选择性丢弃不重要的注意力向量来减少 KV Cache 大小。如 Scissorhands（保留"重要"token 的 KV Cache，丢弃其余）和 GECKO（基于注意力权重的自适应压缩）
-- 框架实例：vLLM 支持的 KV Cache 量化（FP8 E5M2 格式），在 A100 上将 KV Cache 显存减半，生成质量损失可忽略
+除了单卡资源的演进，多卡互连技术也深刻影响着推理架构的选择。NVLink 是 NVIDIA 的 GPU 间高速互连协议，五代间经历了 NVLink 3（A100，600 GB/s）、NVLink 4（H100/H200，900 GB/s）到 NVLink 5（B200/B300，1,800 GB/s）的迭代，每代大幅跃升。相比之下，节点间网络带宽虽然也在增长，从 H100 时代的 InfiniBand NDR400（400 Gb/s，约 50 GB/s）到 B300 时代的 ConnectX-8（800 Gb/s 至 1.6 Tb/s，约 100-200 GB/s）。但与 NVLink 之间始终存在近 10-20 倍的差距。这种巨大的带宽差异决定了并行策略的性能边界。[张量并行](../../language-models/pretraining/distributed-training.md#张量并行)需要频繁的 AllReduce 通信，适合部署在节点内通过 NVLink 互连的 GPU 上；[流水线并行](../../language-models/pretraining/distributed-training.md#流水线并行)的通信量相对较小，可以考虑跨节点部署。
 
-### 2.3 显存碎片与内存池
+## 算力调度与利用率优化
 
-- GPU 显存分配器（如 PyTorch 的 CUDACachingAllocator）使用缓存分配策略：释放的内存块不立即归还给 CUDA，而是缓存在池中供后续分配使用
-- 碎片化问题：不同大小的分配请求可能将连续的显存空间切割成不连续的碎片块，即使总空闲显存充足，也无法分配大的连续块
-- PagedAttention 的 Block 分配器从根本上解决了 KV Cache 的碎片问题（固定大小的 Block 不会产生外部碎片），但非 KV Cache 的显存分配（如临时张量）仍可能面临碎片化
-- 显存池的监控与调优：跟踪显存使用率、碎片率、分配/释放频率，及时发现显存泄漏和碎片化问题
+在[请求调度与批处理](./request-scheduling.md)中，我们从系统层面讨论了如何通过连续批处理提高 GPU 利用率。本节从更底层的视角出发，分析 GPU 利用率的度量方法，以及通过 Kernel 优化和算子融合提升算力利用率的技术手段。
 
-> **可视化建议**：
-> - 饼图：GPU 显存预算分配（模型权重 vs KV Cache vs 运行时）
-> - 对比图：不同 KV Cache 优化策略下的并发容量
+### GPU 利用率的度量
 
-```python runnable
-# 分析不同模型在 A100 80GB 上的显存预算
-import numpy as np
+GPU 利用率是一个容易产生误解的指标。在任务管理器中看到的 GPU 利用率 100%，并不等于 GPU 在满负荷运算。正确理解利用率的度量方式，才能正确评估推理服务的效率。在不同的上下文语境中，GPU 利用率可能指代以下三个指标：
 
-models = {
-    "LLaMA-2 7B": {"params_B": 7, "layers": 32, "heads": 32, "head_dim": 128, "tp": 1},
-    "LLaMA-2 13B": {"params_B": 13, "layers": 40, "heads": 40, "head_dim": 128, "tp": 1},
-    "LLaMA-2 70B": {"params_B": 70, "layers": 80, "heads": 64, "head_dim": 128, "tp": 4},
-}
+- **SM 占用率**（SM Occupancy）衡量 GPU 流多处理器（Streaming Multiprocessor，SM）上活跃线程束（Warp）的比例。每个 SM 最多可以同时调度 64 个 Warp（以 A100/H100 为例，不同架构上限不同），如果当前只有 16 个 Warp 在活跃，SM 占用率就是 25%。SM 占用率反映了 GPU 计算单元的利用程度，但高占用率不等于高算力利用率，如果所有 Warp 都在等待显存数据返回，SM 占用率可能很高但实际计算量却很低。
 
-gpu_memory_gb = 80        # A100 80GB
-max_seq_len = 4096
-dtype_size = 2            # float16
-runtime_overhead_gb = 2   # 运行时临时缓冲区
+- **算力利用率**（FLOPS Utilization）是更直观的效率指标，定义为实际 FLOPS 与峰值 FLOPS 的比值。前文中多次提到 Decode 阶段的算力利用率通常只有 1-2%。结合 Roofline 模型便可以给出理论解释：由于 Decode 阶段的算术强度仅约 1-2 FLOP/Byte，远低于 A100 的拐点 156 FLOP/Byte，算力利用率的理论上限在 1/156 ≈ 0.64% 至 2/156 ≈ 1.28% 之间。实际利用率 1-2% 已经是乐观的估计。
 
-print(f"{'模型':<15} | {'权重(GB)':<10} | {'单请求KV(GB)':<12} | {'可用KV(GB)':<10} | {'最大并发'}")
-print("-" * 70)
+- **显存带宽利用率**（Bandwidth Utilization）定义为实际带宽 / 峰值带宽。Decode 阶段的带宽利用率通常在 30-60%，说明即使是访存密集型应用，带宽也没有被充分利用。剩余的带宽部分被 Kernel 启动开销、数据对齐、缓存未命中等因素消耗，部分受限于 GPU 的调度能力（同时活跃的 Warp 数量不足以隐藏显存延迟）。
 
-for name, m in models.items():
-    weight_gb = m["params_B"] * dtype_size  # float16 每参数 2 字节
-    weight_per_gpu = weight_gb / m["tp"]
+综上可见，利用率低不等于效率低。某些场景下利用率低是不可避免的，如批量大小为 1 的 Decode，算力利用率的理论上限就极低。优化的目标不是追求高利用率本身，而是在约束条件下尽可能提高利用率。通过增加批量大小、优化 Kernel、减少空闲时间等手段，让 GPU 在每个时间片都做有用的工作。
 
-    # 单请求 KV Cache
-    kv_per_request = (2 * m["layers"] * m["head_dim"] * m["heads"]
-                       * max_seq_len * dtype_size) / (1024**3)
+### Kernel 优化与算子融合
 
-    available_kv = gpu_memory_gb - weight_per_gpu - runtime_overhead_gb
-    max_concurrency = int(available_kv / kv_per_request) if kv_per_request > 0 else 0
+**GPU 内核函数**（GPU Kernel）是在 GPU 上执行的并行计算函数。与 CPU 函数不同，Kernel 由 CPU 端代码调用（称为 Host），但实际在 GPU 端（称为 Device）由大量线程并行执行。Kernel 遵循单指令多线程（SIMT）的执行模型，同一个 Kernel 代码被成千上万个线程同时运行，每个线程处理不同的数据片段。Kernel 是 GPU 编程模型（如 CUDA）的核心抽象，开发者编写一个 Kernel 函数来描述单个线程的计算逻辑，GPU 硬件负责将这份逻辑调度到成百上千个计算核心上并行执行。
 
-    print(f"{name:<15} | {weight_per_gpu:>7.1f}   | {kv_per_request:>9.2f}    | {available_kv:>7.1f}   | {max_concurrency}")
-```
+LLM 推理涉及大量小 Kernel，如 LayerNorm、Attention、MLP、Activation，等等。每个 Kernel 的启动开销和数据搬运开销都不算大，但累积起来就不可忽视。一个 Kernel 的执行过程包括 CPU 发出启动指令（约 5-10 微秒的启动延迟）、GPU 从显存读取输入数据、执行计算、将结果写回显存。对于计算量小的 Kernel，启动延迟和数据搬运的时间可能远超实际计算时间。**算子融合**（Operator Fusion）是解决这个问题的主要工具之一，将多个连续的 Kernel 合并为一个，减少中间结果的显存写入和读取。以 LayerNorm + Dropout + Residual 为例，未融合时需要三个 Kernel，中间结果需要写回显存再被下一个 Kernel 读取。融合后只需一个 Kernel，中间结果留在 GPU 的寄存器或 SRAM 中直接传递给下一步计算，省去了两次显存的写入与读取。
 
-## 第三章：算力调度与利用率优化
+FlashAttention 是算子融合最成功的案例。在[推理效率优化](../../language-models/reasoning/inference-efficiency.md)中我们了解到，标准 Attention 需要计算并存储 $N \times N$ 的注意力矩阵，显存占用和带宽消耗都很大。FlashAttention 将 Attention 的分块计算与 Softmax 融合，利用 GPU SRAM（片上存储，约 20 MB，带宽约 19 TB/s）的高带宽优势，将分块后的 Q、K、V 加载到 SRAM 中完成注意力计算，只将最终结果写回 HBM，避免了 $N \times N$ 注意力矩阵的显存写入。这种用 SRAM 换 HBM 访问的策略，使得 Attention 的显存访问量从 $O(N^2)$ 降低到 $O(N)$，在长序列场景下性能提升可达 2-4 倍。TensorRT-LLM 代表了厂商级优化的极致案例。它针对 NVIDIA GPU 的 Tensor Core 专门优化了 GEMM（通用矩阵乘法）Kernel，融合了 LayerNorm、Activation、Residual 等多种算子，在 H100 上可以达到 50% 以上的算力利用率。这种深度优化需要针对特定硬件架构手工调优，通用性较差，但在生产环境中能带来显著的性能收益。
 
-### 3.1 GPU 利用率的度量
+### CUDA Stream 与并行执行
 
-- SM 占用率（SM Occupancy）：GPU 流多处理器（Streaming Multiprocessor）上活跃线程束（Warp）的比例，反映了 GPU 计算单元的利用程度
-- 算力利用率（FLOPS Utilization）：实际 FLOPS / 峰值 FLOPS，是更直观的效率指标。LLM Decode 阶段的算力利用率通常只有 1-5%
-- 显存带宽利用率（Bandwidth Utilization）：实际带宽 / 峰值带宽。Decode 阶段的带宽利用率通常在 30-60%，说明带宽也没有被充分利用
-- 利用率低不等于效率低：某些场景下利用率低是不可避免的（如批量大小为 1 的 Decode），关键是在约束条件下尽可能提高利用率
+CUDA Stream 是 GPU 上的任务队列，同一 Stream 内的操作串行执行，不同 Stream 的操作可以并行执行。这类似于多线程编程中的线程概念，同一线程内的操作按顺序执行，不同线程的操作可以并发运行。
 
-### 3.2 Kernel 优化与算子融合
+LLM 推理中 CUDA Stream 的典型用法是将数据传输与计算放在不同 Stream 上。譬如将 KV Cache 从 CPU 内存传输到 GPU 显存（或从一块 GPU 传输到另一块 GPU）的操作放在传输 Stream 上，同时将当前批次的 Decode 计算放在计算 Stream 上。这样，当 GPU 在执行 Decode 计算时，PCIe 总线或 NVLink 可以同时传输下一批次需要的 KV Cache，实现计算与传输的并行。
 
-- GPU Kernel 是在 GPU 上执行的最小计算单元。LLM 推理涉及大量小 Kernel（LayerNorm、Attention、MLP、Activation），每个 Kernel 的启动开销和数据搬运开销累积起来不可忽视
-- 算子融合（Operator Fusion）：将多个连续的 Kernel 合并为一个，减少中间结果的显存写入和读取。譬如将 LayerNorm + Attention + Residual 融合为一个 Kernel
-- 框架实例：FlashAttention 是算子融合的典型代表，将 Attention 的分块计算与 Softmax 融合，避免了 $N \times N$ 注意力矩阵的显存写入，同时利用 SRAM 的局部性减少了 HBM 访问
-- TensorRT-LLM 的 Kernel 优化：针对 NVIDIA GPU 的 Tensor Core 专门优化的 GEMM Kernel，融合了多种算子，在 H100 上可以达到 50% 以上的算力利用率
+多 Stream 的调度挑战在于同步点的设计。计算 Stream 必须等待数据传输完成才能开始使用传输来的数据，如果同步点设置过早，计算 Stream 会空等。设置过晚，传输 Stream 又可能已经完成了传输但计算 Stream 还没准备好接收。过多的同步点会抵消并行收益，过少则可能导致数据竞争。在实际系统中，通常采用双缓冲（Double Buffering）策略。准备两个缓冲区交替使用，当一个缓冲区在被计算 Stream 使用时，传输 Stream 将数据填充到另一个缓冲区，两者交替进行，最大化计算与传输的重叠。
 
-### 3.3 CUDA Stream 与并行执行
+## 多实例 GPU 共享
 
-- CUDA Stream 是 GPU 上的任务队列，同一 Stream 内的操作串行执行，不同 Stream 的操作可以并行执行
-- LLM 推理中 CUDA Stream 的使用：将 KV Cache 的传输（CPU→GPU 或 GPU→GPU）与计算放在不同 Stream 上，实现计算与传输的并行
-- 多 Stream 的调度挑战：Stream 之间的同步点设计。计算 Stream 必须等待数据传输完成才能开始，过多的同步点会抵消并行收益
+我们曾经讨论过聚合多块 GPU 的算力来应对单个模型的方案（如流水线并行），反之，当一块 GPU 的算力远超单个模型的需求时，将整块 GPU 专用于一个模型就造成了资源浪费。譬如，一个 7B 模型在 A100 上的算力利用率可能只有 5%，剩余 95% 的算力被闲置。通过让多个推理实例共享同一块 GPU，可以提高资源利用率。共享方式分为时间分片和空间分片两种，各有适用场景。
 
-> **可视化建议**：
-> - Roofline 图：标注不同 Kernel 优化后的性能位置
-> - 时序图：CUDA Stream 的并行执行时序
+- **时间分片**（Time-Slicing）让多个推理实例轮流使用同一块 GPU，每个实例获得固定的时间片。NVIDIA 的 MPS（Multi-Process Service）是一种时分复用机制，允许多个 CUDA 进程共享同一块 GPU 的计算资源。时间分片只切换计算状态而不交换显存数据。所有推理实例的模型权重、KV Cache 等数据常驻在显存中，上下文切换仅涉及寄存器、Warp 调度状态、SM 执行上下文等计算资源，不搬运显存中的庞大数据。这意味着所有并发实例的显存占用之和必须小于 GPU 总显存，假如一张 80GB 的 A100 上每个实例需要 20GB，时间分片最多只能容纳 4 个实例。MPS 只做计算资源的时分复用，显存层面没有真正隔离，多个进程共享同一物理显存空间，靠地址映射区分，一个进程的显存泄漏可能波及同 GPU 上的其他进程。MPS 的另一个问题是延迟抖动。切换实例的上下文切换开销约数十微秒，而不同实例之间还会互相干扰，一个实例的长时间计算会延迟其他实例的执行。对延迟敏感的在线推理服务而言，这种抖动是不可接受的。
 
-## 第四章：多实例 GPU 共享
+- **空间分片**（Spatial Partitioning）将一块 GPU 的计算单元和显存划分为多个独立分区，每个分区运行一个推理实例，互不干扰。NVIDIA MIG（Multi-Instance GPU）是空间分片的硬件支持，在硬件层面实现隔离，每个 MIG 实例拥有独立的 SM、L2 缓存和显存带宽。A100 支持 7 个 MIG 实例（每个约 10 GB 显存），H100 支持更多配置选项。空间分片的优势是零干扰：一个实例的计算不会影响其他实例的延迟，适合对延迟稳定性有要求的场景。典型应用是将一块 GPU 划分为多个实例，分别运行不同大小的模型。MIG 在多个小模型的并发推理（如同时部署 7B 和 13B 模型）、开发测试环境中的多用户隔离（每个开发者获得独立的 MIG 实例）、以及 A/B 测试（同一模型的不同版本部署在不同 MIG 实例上，比较性能差异）等场景中都有所应用。譬如，将 A100 80GB 划分为 2 个 40 GB 实例，一个运行 7B 模型（权重约 14 GB，剩余 26 GB 给 KV Cache），另一个运行 13B 模型（权重约 26 GB，剩余 14 GB 给 KV Cache）。这样一块 GPU 就能同时服务两种不同规模的模型，资源利用率远高于独占模式。不过，划分后的实例显存和算力都按比例缩减，不适合大模型的推理。此外，MIG 实例之间无法通过 NVLink 通信，不能用于张量并行。这意味着 MIG 只适合能完整放入单个实例显存的小模型。
 
-### 4.1 时间分片与空间分片
-
-- **时间分片**（Time-Slicing）：多个推理实例轮流使用同一块 GPU，每个实例获得固定的时间片。NVIDIA 的 MPS（Multi-Process Service）是一种时间分片实现
-- **空间分片**：将一块 GPU 的计算单元和显存划分为多个独立分区，每个分区运行一个推理实例。NVIDIA MIG（Multi-Instance GPU）是空间分片的硬件支持
-- 时间分片的问题：上下文切换开销（切换实例时需要保存/恢复 GPU 状态），且不同实例可能互相干扰（一个实例的长时间计算会延迟其他实例）
-- 空间分片的优势：硬件级隔离，互不干扰。A100 支持 7 个 MIG 实例（每个约 10 GB 显存），H100 支持更多
-
-### 4.2 MIG 的应用场景
-
-- 用 MIG 将一块 A100 80GB 划分为多个实例，分别运行不同大小的模型。譬如划分 2 个 40GB 实例，一个运行 7B 模型，另一个运行 13B 模型
-- MIG 的局限：划分后的实例显存和算力都受限，不适合大模型（70B+）的推理。且 MIG 实例之间无法通过 NVLink 通信，不能用于张量并行
-- MIG 的最佳实践：用于多个小模型的并发推理，或开发测试环境中的多用户隔离
-
-### 4.3 推理框架的多模型调度
-
-- 不使用 MIG 的多模型共享：推理框架（如 Triton Inference Server）在同一块 GPU 上部署多个模型，通过调度器控制各模型的执行顺序
-- 动态批处理的多模型扩展：将不同模型的请求分开批处理，但共享 GPU 的执行时间
-- 模型热切换：在不重启服务的情况下加载/卸载模型。模型权重从磁盘加载到显存需要数十秒，通过权重预加载到 CPU 内存可以加速到数秒
-
-> **可视化建议**：
-> - 对比图：时间分片 vs MIG 空间分片的资源分配方式
-> - 示意图：A100 的 MIG 分区配置示例
-
-## 第五章：量化与精度优化
-
-### 5.1 量化的基本原理
-
-- 量化的核心思想：用更低精度的数值格式表示模型权重和/或激活值，减少显存占用和计算量。从 float32 到 float16 已经是一种量化（2 倍压缩），但推理优化的量化目标是 int8（4 倍压缩）甚至 int4（8 倍压缩）
-- 量化的分类：**训练后量化**（Post-Training Quantization，PTQ）不需要重新训练，直接量化已有模型；**量化感知训练**（Quantization-Aware Training，QAT）在训练过程中模拟量化误差，训练后量化的精度损失更小
-- 量化对推理的收益：显存占用减少（更多请求可以同时处理）、计算速度提升（int8 的 Tensor Core 吞吐量是 float16 的 2 倍）、带宽需求降低（每字节传输更多参数）
-
-### 5.2 权重量化：从 GPTQ 到 AWQ
-
-- **GPTQ**（2022 年，弗兰塔·伊莱亚斯（Elias Frantar）等人）：基于近似二阶信息的训练后量化方法，逐层量化权重矩阵，通过 Hessian 矩阵补偿量化误差。在 4-bit 量化下仍能保留原始模型 99% 的性能
-- **AWQ**（2023 年，林智杰（Ji Lin）等人）：激活感知权重量化，发现权重中只有约 1% 的通道对激活值敏感，对这些"重要通道"保持较高精度，其余通道激进量化。比 GPTQ 更快（无需逐行计算 Hessian），且精度相当
-- **GGUF**（2023 年，Georgi Gerganov）：为 CPU 推理优化的量化格式，支持多种量化精度（2-bit 到 8-bit 混合），使得 70B 模型可以在消费级硬件上运行。GGUF 的核心创新是按重要性对不同层使用不同精度
-
-### 5.3 KV Cache 量化
-
-- KV Cache 量化与权重量化的区别：权重是静态的（量化后不再变化），KV Cache 是动态的（每个请求都不同，且随生成过程增长）
-- KV Cache 量化的挑战：量化精度对注意力计算的影响。注意力分数 $\text{softmax}(QK^T/\sqrt{d})$ 对 Key 的精度敏感，量化可能导致注意力分布偏移
-- 实践中的 KV Cache 量化：FP8 E5M2 格式是当前最主流的 KV Cache 量化方案。与权重 FP8 量化不同，KV Cache 的 FP8 使用 E5M2（5 位指数、2 位尾数）而非 E4M3，因为 KV Cache 的数值范围更大、需要更多指数位
-- 框架实例：vLLM 的 KV Cache FP8 量化，在 A100 上将 KV Cache 显存减半，吞吐量提升 30-50%，而生成质量的影响在大多数任务上可忽略
-
-### 5.4 量化的精度-效率权衡
-
-- 量化不是免费的午餐：精度越低，显存和速度收益越大，但生成质量损失也越大。4-bit 量化在简单任务上损失可忽略，但在数学推理和代码生成等需要精确计算的任务上可能有明显退化
-- 混合精度量化：对模型的不同层使用不同的量化精度。Attention 层的精度对生成质量影响更大，可以保持较高精度；MLP 层的精度影响较小，可以更激进地量化
-- 量化评估方法：Perplexity（困惑度）评估量化对语言建模能力的影响、下游任务基准评估（如 MMLU、HumanEval）量化对推理和代码能力的影响、人工评估量化对对话质量的影响
-
-> **可视化建议**：
-> - 对比图：不同量化方案（float16、int8、int4）的显存占用与性能损失
-> - 表格：各量化方案在不同模型规模上的精度评估结果
-
-```python runnable
-# 模拟不同量化方案对显存和并发的影响
-import numpy as np
-
-model_params_B = 70  # 70B 参数模型
-gpu_memory_gb = 80   # A100 80GB
-tp = 4               # 张量并行度
-
-quantization_configs = [
-    {"name": "FP16", "weight_bytes": 2, "kv_bytes": 2, "perf_retention": 1.00},
-    {"name": "FP16 + KV FP8", "weight_bytes": 2, "kv_bytes": 1, "perf_retention": 0.995},
-    {"name": "INT8 Weight + KV FP8", "weight_bytes": 1, "kv_bytes": 1, "perf_retention": 0.99},
-    {"name": "INT4 Weight + KV FP8", "weight_bytes": 0.5, "kv_bytes": 1, "perf_retention": 0.97},
-]
-
-# KV Cache 参数（70B 模型）
-layers = 80
-heads = 64
-head_dim = 128
-max_seq = 4096
-
-print(f"模型: LLaMA-2 70B, GPU: A100 80GB × {tp}")
-print(f"{'配置':<25} | {'权重/卡(GB)':<12} | {'KV/请求(GB)':<12} | {'最大并发':<8} | {'性能保留'}")
-print("-" * 75)
-
-for cfg in quantization_configs:
-    weight_per_gpu = model_params_B * cfg["weight_bytes"] / tp
-    kv_per_request = (2 * layers * head_dim * heads * max_seq * cfg["kv_bytes"]) / (1024**3)
-    available = gpu_memory_gb - weight_per_gpu - 2  # 减去运行时开销
-    max_concurrency = max(0, int(available / kv_per_request))
-
-    print(f"{cfg['name']:<25} | {weight_per_gpu:>8.1f}     | {kv_per_request:>8.2f}     | {max_concurrency:>6}   | {cfg['perf_retention']:.1%}")
-```
+还有一类不使用 MIG 的多模型共享方案是由推理框架在同一块 GPU 上部署多个模型，通过调度器控制各模型的执行顺序。与 MIG 的硬件隔离不同，这种方案依赖软件调度来实现资源共享，灵活性更高但隔离性更弱。以多模型下的动态批处理为例，框架将不同模型的请求分开批处理，但它们仍共享同一块 GPU 的执行时间。调度器根据各模型的负载动态分配 GPU 时间片，负载高的模型获得更多执行机会。这种方式比 MIG 更灵活，可以动态调整资源分配比例，但缺乏硬件隔离，一个模型的长时间计算可能影响其他模型的延迟。
 
 ## 本章小结
 
-- GPU 的三大资源（显存、算力、带宽）各有瓶颈，Roofline 模型帮助识别 Prefill 阶段是算力瓶颈、Decode 阶段是带宽瓶颈
-- 显存管理是推理服务的命脉。模型权重占去大部分显存后，留给 KV Cache 的空间直接决定了并发上限。PagedAttention 和 KV Cache 量化是扩展并发数的两大利器
-- 算力利用率的提升依赖 Kernel 优化和算子融合。FlashAttention 是最成功的案例，TensorRT-LLM 的 Kernel 优化则代表了厂商级优化的极致
-- 多实例 GPU 共享通过时间分片或空间分片（MIG）提升 GPU 利用率，适合多小模型并发场景
-- 量化是降低资源需求最直接的手段。权重量化（GPTQ、AWQ）减少模型占用的显存和带宽，KV Cache 量化减少推理时的显存占用，两者通常组合使用
+本章从 GPU 硬件的物理本质出发，讨论了推理服务中资源管理的显存放什么、算力怎么用、带宽够不够三个基本问题。这三个问题并非彼此独立，带宽决定了算力能否被喂饱，显存容量决定了能同时服务多少请求，而算力则在 Prefill 阶段成为主要约束。GPU 硬件是软件算法和工程优化措施的物理基础与设计前提，它们都是为了弥合负载计算特征与硬件物理现状之间的差距而存在的。
 
 ## 练习题
 
-1. 使用 Roofline 模型分析：在 H100 上（峰值算力 990 TFLOPS FP16，带宽 3.35 TB/s），LLM Decode 阶段（算术强度约 1 FLOP/Byte）的理论性能是多少？相比 A100（312 TFLOPS，2 TB/s）提升多少倍？这说明了什么问题？
+1. 使用 Roofline 模型分析在 H100 上（峰值算力 990 TFLOPS FP16，带宽 3.35 TB/s），LLM Decode 阶段（算术强度约 1 FLOP/Byte）的理论性能是多少？相比 A100（312 TFLOPS，2 TB/s）提升多少倍？这说明了什么问题？
 
    <details>
    <summary>参考答案</summary>
 
-   Decode 阶段的算术强度为 1 FLOP/Byte，远低于拐点（A100 拐点 = 312/2 = 156 FLOP/Byte，H100 拐点 = 990/3.35 = 296 FLOP/Byte），因此 Decode 在两款 GPU 上都受带宽瓶颈。
+   Decode 阶段的算术强度为 1 FLOP/Byte，远低于拐点（A100 拐点 = 312/2 = 156 FLOP/Byte，H100 拐点 = 990/3.35 = 296 FLOP/Byte），因此 Decode 在两款 GPU 上都受带宽瓶颈制约。
 
    A100 Decode 性能 = 2 TB/s × 1 FLOP/Byte = 2 TFLOPS
    H100 Decode 性能 = 3.35 TB/s × 1 FLOP/Byte = 3.35 TFLOPS
@@ -266,38 +118,25 @@ for cfg in quantization_configs:
 
    </details>
 
-2. 一个 13B 模型（float16）部署在单块 A100 80GB 上。请计算：(1) 模型权重占多少显存？(2) 剩余显存可支持多少并发的 KV Cache（假设最大序列长度 4096，运行时开销 2 GB）？(3) 如果使用 INT4 权重量化 + KV Cache FP8 量化，并发数可以提升到多少？
+2. 一个 13B 模型（FP16）部署在单块 A100 80GB 上。请计算：
+    1. 模型权重占多少显存？
+    2. 剩余显存可支持多少并发的 KV Cache（假设最大序列长度 4096，运行时开销 2 GB）？
+    3. 如果使用 INT4 权重量化 + KV Cache FP8 量化，并发数可以提升到多少？
 
    <details>
    <summary>参考答案</summary>
 
-   (1) 模型权重：13B × 2 字节 = 26 GB
+   1. 模型权重：13B × 2 字节 = 26 GB
 
-   (2) 剩余显存：80 - 26 - 2 = 52 GB
-   单请求 KV Cache（13B 模型，40 层，40 头，每头 128 维，float16）：
-   $2 \times 40 \times 128 \times 40 \times 4096 \times 2$ = $2 \times 40 \times 5120 \times 4096 \times 2$ ≈ 3.33 GB
-   并发数 = 52 / 3.33 ≈ 15 个请求
+   2. 剩余显存：80 - 26 - 2 = 52 GB
+    单请求 KV Cache（13B 模型，40 层，40 头，每头 128 维，float16）：
+    $2_{\text{K+V}} \times 40_{\text{层}} \times 40_{\text{头}} \times 128_{\text{维/头}} \times 4096_{\text{序列}} \times 2_{\text{FP16字节}}$ = $2 \times 40 \times 5120 \times 4096 \times 2$ ≈ 3.33 GB
+    并发数 = 52 / 3.33 ≈ 15 个请求
 
-   (3) INT4 权重量化：权重 = 13B × 0.5 字节 = 6.5 GB
-   KV Cache FP8：单请求 KV Cache ≈ 3.33 / 2 = 1.67 GB
-   剩余显存：80 - 6.5 - 2 = 71.5 GB
-   并发数 = 71.5 / 1.67 ≈ 42 个请求
-
-   量化后并发数从 15 提升到 42，提升约 2.8 倍。
-
-   </details>
-
-3. 分析为什么 KV Cache 量化使用 FP8 E5M2 格式而非 E4M3 格式。提示：考虑 KV Cache 中数值的分布特征。
-
-   <details>
-   <summary>参考答案</summary>
-
-   FP8 有两种格式：E4M3（4 位指数、3 位尾数，精度更高但范围更小）和 E5M2（5 位指数、2 位尾数，精度更低但范围更大）。
-
-   KV Cache 中的数值分布特征：Key 和 Value 向量是 Transformer 各层的输出，经过 LayerNorm 等归一化后，大部分数值集中在较小范围内，但少数异常值（Outlier）可能非常大。这些异常值在注意力计算中起关键作用（决定了注意力的分布），如果被截断会导致严重的精度损失。
-
-   E5M2 格式可表示的数值范围更大（最大约 57344，而 E4M3 最大约 448），能容纳 KV Cache 中的异常值而不溢出。虽然尾数位数少了一位导致精度略低，但对于注意力计算来说，数值范围的正确性比精度更重要——一个被截断到最大值的大数值对注意力分布的影响远大于一个精度稍低的正常数值。
-
-   相比之下，权重是静态的，在量化时可以逐通道分析数值范围并选择合适的缩放因子，因此权重 FP8 量化通常使用 E4M3（精度更高，范围够用）。
+   3. INT4 权重量化：权重 = 13B × 0.5 字节 = 6.5 GB
+    KV Cache FP8：单请求 KV Cache ≈ 3.33 / 2 = 1.67 GB
+    剩余显存：80 - 6.5 - 2 = 71.5 GB
+    并发数 = 71.5 / 1.67 ≈ 42 个请求
+    量化后并发数从 15 提升到 42，提升约 2.8 倍。
 
    </details>

@@ -168,7 +168,8 @@ border-radius: 12px;
   color: #4EC9B0;
 }
 /* 练习题答案样式 - 参考答案跟在题目同一行，保留三角形 */
-.theme-default-content div ol:last-of-type li:has(details) > p:first-child {
+.theme-default-content div ol:last-of-type li:has(details) > p:first-child,
+.theme-default-content div ul li:has(details) > p:first-child {
   display: inline;
   margin-bottom: 0;
 }

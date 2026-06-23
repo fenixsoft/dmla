@@ -31,7 +31,8 @@ const SOFT_DEPS = [
   'datasets',
   'ipywidgets',
   'accelerate',
-  'bitsandbytes'
+  'bitsandbytes',
+  'vllm'
 ]
 
 // 环境检测结果缓存
