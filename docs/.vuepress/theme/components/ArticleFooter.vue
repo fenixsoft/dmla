@@ -1,31 +1,29 @@
-<template>
+﻿<template>
   <footer class="article-footer">
-    <!-- 左侧：字数统计 + 更新时间 -->
-    <div class="footer-meta">
-      <!-- 字数统计 -->
-      <div class="meta-item word-count" :title="wordCountHint">
-        <svg class="meta-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-          <polyline points="14 2 14 8 20 8"></polyline>
-          <line x1="16" y1="13" x2="8" y2="13"></line>
-          <line x1="16" y1="17" x2="8" y2="17"></line>
-          <polyline points="10 9 9 9 8 9"></polyline>
-        </svg>
-        <span class="meta-text">文章字数：{{ formattedWordCount }}</span>
-      </div>
-      <!-- 更新时间 -->
-      <div v-if="lastUpdated" class="meta-item update-time">
-        <svg class="meta-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-          <line x1="16" y1="2" x2="16" y2="6"></line>
-          <line x1="8" y1="2" x2="8" y2="6"></line>
-          <line x1="3" y1="10" x2="21" y2="10"></line>
-        </svg>
-        <span class="meta-text">更新于 {{ lastUpdated }}</span>
+    <div class="footer-left">
+      <div class="footer-meta">
+        <div class="meta-item word-count" :title="wordCountHint">
+          <svg class="meta-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <line x1="16" y1="13" x2="8" y2="13"></line>
+            <line x1="16" y1="17" x2="8" y2="17"></line>
+            <polyline points="10 9 9 9 8 9"></polyline>
+          </svg>
+          <span class="meta-text">文章字数：{{ formattedWordCount }}</span>
+        </div>
+        <div v-if="lastUpdated" class="meta-item update-time">
+          <svg class="meta-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+            <line x1="16" y1="2" x2="16" y2="6"></line>
+            <line x1="8" y1="2" x2="8" y2="6"></line>
+            <line x1="3" y1="10" x2="21" y2="10"></line>
+          </svg>
+          <span class="meta-text">更新于 {{ lastUpdated }}</span>
+        </div>
       </div>
     </div>
 
-    <!-- 右侧：GitHub Star 按钮 -->
     <div class="github-star">
       <a
         class="star-button"
@@ -88,7 +86,7 @@ onMounted(async () => {
     }
   } catch (e) {
     // API 获取失败时保持 '--'
-    console.warn('获取 GitHub Star 数失败:', e)
+    console.warn('获取 GitHub Star 数失败', e)
   }
 })
 </script>
@@ -104,6 +102,10 @@ onMounted(async () => {
 }
 
 /* 左侧元信息 */
+.footer-left {
+  display: flex;
+}
+
 .footer-meta {
   display: flex;
   flex-direction: column;
@@ -151,6 +153,7 @@ onMounted(async () => {
   align-items: center;
   gap: 12px;
   padding-right: 6px;
+  flex-shrink: 0;
 }
 
 .star-button {
@@ -193,15 +196,11 @@ onMounted(async () => {
 /* 响应式适配 */
 @media (max-width: 719px) {
   .article-footer {
-    flex-direction: column;
-    gap: 16px;
+    flex-direction: row;
     align-items: flex-start;
   }
 
-  .github-star {
-    width: 100%;
-    justify-content: flex-start;
-  }
+  .github-star { align-items: flex-end; }
 }
 
 @media (max-width: 419px) {
