@@ -622,13 +622,17 @@ function initCodeBlock(block) {
         // 连续的同一 stream name 消息合并到同一个 <pre> 元素，避免逐字输出时每个 token 换行
         const streamName = msg.name || 'stdout'
         const lastPre = textOutput.lastElementChild
+        // 将 \r（回车符，tqdm/vLLM 进度条使用的原地刷新控制符）转换为 \n
+        // 避免网页中所有进度更新堆叠在同一行
+        const sanitizedText = stripAnsi(msg.text || '').replace(/\r/g, '\n')
+
         if (lastPre && lastPre.classList.contains('output-stream') && lastPre.classList.contains(streamName)) {
           // 追加到已有的 <pre> 元素
-          lastPre.textContent += stripAnsi(msg.text || '')
+          lastPre.textContent += sanitizedText
         } else {
           const pre = document.createElement('pre')
           pre.className = `output-stream ${streamName}`
-          pre.textContent = stripAnsi(msg.text || '')
+          pre.textContent = sanitizedText
           textOutput.appendChild(pre)
         }
         break

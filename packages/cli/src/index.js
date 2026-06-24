@@ -11,6 +11,7 @@ import { startServer, startServerSync, stopServer, getStatus, startNativeServer,
 import { runDoctor } from './commands/manage.js'
 import { runDataTUI, runDataCommand } from './commands/data.js'
 import { runImagesTUI } from './commands/images.js'
+import { runModelTUI, runModelCommand } from './commands/model.js'
 import { runUpdate } from './commands/update.js'
 import { setVerbose } from './verbose.js'
 
@@ -105,7 +106,7 @@ program
   .option('--gpu', '使用 GPU 镜像（仅 Docker 模式）')
   .option('--sync', '同步模式：在当前进程运行，日志直接输出（用于调试）')
   .option('--dev', '开发模式：挂载本地代码到容器，无需重建镜像（仅 Docker 模式）')
-  .option('--shm-size <size>', 'Docker 共享内存大小（MB），用于 DataLoader 多线程。GPU 模式默认 1024MB，CPU 模式默认 64MB')
+  .option('--shm-size <size>', 'Docker 共享内存大小（MB）')
   .action(async (options) => {
     const port = parseInt(options.port, 10)
     const native = options.native
@@ -203,7 +204,7 @@ program
 // data 命令
 // ─────────────────────────────────────────────────────────────
 program
-  .command('data [subcommand]')
+  .command('data')
   .description('数据管理（挂载、下载、清理等）')
   .option('-p, --path <path>', '设置挂载路径')
   .action(async (subcommand, options) => {
@@ -211,6 +212,20 @@ program
       await runDataCommand(subcommand, options)
     } else {
       await runDataTUI()
+    }
+  })
+
+// ─────────────────────────────────────────────────────────────
+// model 命令
+// ─────────────────────────────────────────────────────────────
+program
+  .command('model')
+  .description('模型管理（下载、删除、查看等）')
+  .action(async (subcommand, options) => {
+    if (subcommand) {
+      await runModelCommand(subcommand, options)
+    } else {
+      await runModelTUI()
     }
   })
 

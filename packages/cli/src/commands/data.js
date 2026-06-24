@@ -63,7 +63,7 @@ const DATASETS = [
   },
   {
     id: 'chinese-poetry',
-    name: 'Chinese Poetry (古诗词)',
+    name: 'Chinese Poetry (中国古诗词)',
     url: 'https://www.modelscope.cn/datasets/icyfenix/Chinese-Poetry.git',
     size: '~380MB',
     format: 'git',
@@ -72,7 +72,7 @@ const DATASETS = [
   },
   {
     id: 'minimind-pretrain',
-    name: 'MiniMind Pretrain (LLM预训练语料)',
+    name: 'MiniMind Pretrain (LLM 预训练语料)',
     url: 'https://www.modelscope.cn/datasets/icyfenix/Minimind_Pretrain.git',
     size: '~1.2GB',
     format: 'git',
@@ -81,7 +81,7 @@ const DATASETS = [
   },
   {
     id: 'minimind-sft',
-    name: 'MiniMind SFT (LLM监督微调语料)',
+    name: 'MiniMind SFT (LLM 监督微调语料)',
     url: 'https://www.modelscope.cn/datasets/icyfenix/Minimind_SFT.git',
     size: '~90MB',
     format: 'git',
@@ -90,7 +90,7 @@ const DATASETS = [
   },
   {
     id: 'minimind-alignment',
-    name: 'MiniMind Alignment (LLM对齐语料)',
+    name: 'MiniMind Alignment (LLM 对齐语料)',
     url: 'https://www.modelscope.cn/datasets/icyfenix/Minimind_Alignment.git',
     size: '~54MB',
     format: 'git',
@@ -101,16 +101,16 @@ const DATASETS = [
     id: 'gsm8k-200',
     name: 'GSM8K 200 (数学推理评测集)',
     url: 'https://www.modelscope.cn/datasets/icyfenix/GSM8K_200.git',
-    size: '1.75GB',
+    size: '~4.5MB',
     format: 'git',
     targetDir: 'datasets/gsm8k-200',
     source: 'ModelScope (icyfenix)'
   },
   {
     id: 'minimind-vision',
-    name: 'MiniMind Vision (VLM视觉训练数据, 20%采样)',
+    name: 'MiniMind Vision (VLM 视觉训练数据, 20%采样)',
     url: 'https://www.modelscope.cn/datasets/icyfenix/Vision.git',
-    size: '~4GB (20% sampled)',
+    size: '~4GB',
     format: 'git',
     targetDir: 'datasets/minimind-vision',
     source: 'ModelScope (icyfenix)'

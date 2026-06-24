@@ -57,7 +57,7 @@ async function showImageStatus() {
       console.log(chalk.green(`   ✅ GPU 镜像已安装`))
     }
   } else {
-    console.log(chalk.yellow(`   ⚠️ GPU 镜像未安装 (~ 7.93GB)`))
+    console.log(chalk.yellow(`   ⚠️ GPU 镜像未安装 (~ 10.6GB)`))
   }
 
   console.log()
@@ -106,9 +106,9 @@ export async function runImagesTUI() {
     message: '请选择要拉取的镜像',
     initial: 0,
     choices: [
-      { name: 'all', message: '全部 (CPU + GPU, ~ 8.6GB)' },
+      { name: 'all', message: '全部 (CPU + GPU, ~ 11.3GB)' },
       { name: 'cpu', message: '仅 CPU 版本 (~ 683MB)' },
-      { name: 'gpu', message: '仅 GPU 版本 (~ 7.93GB)' }
+      { name: 'gpu', message: '仅 GPU 版本 (~ 10.6GB)' }
     ]
   })
 

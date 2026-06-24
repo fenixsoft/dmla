@@ -24,11 +24,11 @@ ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV DMLA_CUDA_COMPAT=unknown
 ENV PYTHONPATH=/workspace
-# vLLM flashinfer JIT 编译需要 CUDA 13 工具链
-# pip 安装的 vLLM 自带 nvidia-cuda-nvcc + nvidia-cuda-runtime（13.3 版本）
-# 设置 CUDA_HOME 指向 pip 提供的路径以确保版本一致
-ENV CUDA_HOME=/usr/local/lib/python3.11/dist-packages/nvidia/cu13
-ENV LD_LIBRARY_PATH=/usr/local/lib/python3.11/dist-packages/nvidia/cu13/lib:/usr/local/cuda/lib64:$LD_LIBRARY_PATH
+# vLLM flashinfer JIT 编译需要 CUDA 工具链
+# 使用基础镜像自带的 CUDA 13.0（/usr/local/cuda），与 flashinfer CCCL 头文件兼容
+# pip 安装的 nvidia-cu13 包（13.3 版本）与 flashinfer 的 CCCL 存在版本不兼容
+ENV CUDA_HOME=/usr/local/cuda
+ENV LD_LIBRARY_PATH=/usr/local/cuda/lib64:$LD_LIBRARY_PATH
 
 # 替换为阿里云镜像源
 RUN sed -i 's|http://archive.ubuntu.com|http://mirrors.aliyun.com|g' /etc/apt/sources.list \
@@ -92,8 +92,7 @@ RUN pip install --no-cache-dir -i https://pypi.tuna.tsinghua.edu.cn/simple \
     bitsandbytes
 
 # 安装 vLLM 推理框架（PagedAttention、Continuous Batching）
-# vLLM pip 安装会自动拉取 nvidia-cuda-nvcc（13.3）+ nvidia-cuda-runtime（13.3）
-# CUDA_HOME 指向 pip 的 cu13 路径，flashinfer JIT 使用一致的 13.3 工具链
+# flashinfer JIT 编译使用 CUDA_HOME 指向的 nvcc，需与 CCCL 头文件版本匹配
 RUN pip install --no-cache-dir vllm
 
 # 复制执行器和诊断脚本

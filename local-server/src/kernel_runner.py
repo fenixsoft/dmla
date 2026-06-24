@@ -13,10 +13,50 @@ IPython Kernel 执行器
 
 import sys
 import json
+import os
 import argparse
 import time
 import traceback
 from typing import Optional
+
+
+def _ensure_cuda_home():
+    """
+    确保 CUDA_HOME 指向与 flashinfer CCCL 兼容的 CUDA 工具链。
+    系统 CUDA（/usr/local/cuda）优先，pip nvidia-cu13 包存在版本兼容问题。
+    注意：不信任已有的 CUDA_HOME，因为 Docker 镜像可能预置了不兼容的路径。
+    """
+    import shutil, glob
+
+    # 强制优先系统 CUDA（与 flashinfer CCCL 头文件兼容）
+    system_cuda = '/usr/local/cuda'
+    if os.path.isdir(system_cuda) and os.path.isfile(os.path.join(system_cuda, 'bin', 'nvcc')):
+        os.environ['CUDA_HOME'] = system_cuda
+        return
+
+    # 回退到环境变量
+    if os.environ.get('CUDA_HOME'):
+        return
+
+    # 查找 PATH 中的 nvcc
+    nvcc = shutil.which('nvcc')
+    if nvcc:
+        cuda = os.path.dirname(os.path.dirname(nvcc))
+        if os.path.isdir(cuda):
+            os.environ['CUDA_HOME'] = cuda
+            return
+
+    # 查找 pip 安装的 nvidia-cu 包
+    patterns = [
+        os.path.join(sys.prefix, 'lib', 'python3.*', 'dist-packages', 'nvidia', 'cu*'),
+        os.path.join(sys.prefix, 'Lib', 'site-packages', 'nvidia', 'cu*'),
+        os.path.join(sys.prefix, 'local', 'lib', 'python3.*', 'dist-packages', 'nvidia', 'cu*'),
+    ]
+    for pat in patterns:
+        for p in sorted(glob.glob(pat)):
+            if os.path.isdir(p):
+                os.environ['CUDA_HOME'] = p
+                return
 
 
 def output_json(data):
@@ -184,6 +224,9 @@ def run_code(code: str, timeout: int = DEFAULT_TIMEOUT, stream: bool = False) ->
     """
     log_debug(f'run_code called, code length={len(code)}, timeout={timeout}, stream={stream}')
 
+    # 兜底确保 CUDA_HOME 已设置（Docker 容器创建时的 Env 参数可能覆盖镜像 ENV）
+    _ensure_cuda_home()
+
     # 注意：不再在执行期间抑制 stdout
     # stdout 只在导入阶段抑制（避免 matplotlib 等导入输出污染结果）
     # 执行代码阶段需要恢复 stdout，让 print 输出实时发送到 iopub channel
@@ -207,6 +250,9 @@ def run_code(code: str, timeout: int = DEFAULT_TIMEOUT, stream: bool = False) ->
         log_debug('stdout suppressed for kernel startup')
 
         km = KernelManager()
+        # 抑制 "Kernel is running over TCP without encryption" 警告
+        # 沙箱内 Kernel 与 Client 通过 localhost 通信，无实际安全风险
+        km.extra_arguments = ['--IPKernelApp.log_level=ERROR']
         log_debug('Starting kernel')
         km.start_kernel()
         log_debug('Kernel started, creating client')

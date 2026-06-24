@@ -194,6 +194,14 @@ async function doPullImageWithProgress(imageName) {
           const lines = chunk.toString().split('\n').filter(Boolean)
           for (const line of lines) {
             const event = JSON.parse(line)
+
+            // 检查错误事件（Docker Registry API 的错误消息没有 id 字段）
+            if (event.error) {
+              const errMsg = event.errorDetail?.message || event.error
+              reject(new Error(errMsg))
+              return
+            }
+
             if (!event.id) continue
 
             // 更新 layer 状态

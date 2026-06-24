@@ -4,11 +4,14 @@
 
 ## 实验准备
 
-在开始实验之前，请确保已[挂载数据目录](../../sandbox.md#数据管理)并下载好 GSM8K 评测子集，下载该数据集时会一并下载 Qwen3.5-0.8B-Instruct 模型。你可以通过 `DMLA-CLI` 工具自动完成该工作：
+在开始实验之前，请确保已[挂载数据目录](../../sandbox.md#数据管理)并下载好 GSM8K 评测子集和 Qwen3.5-0.8B-Instruct 模型。你可以通过 `DMLA-CLI` 工具分别完成这两项工作：
 
 ```bash
-# 选择 "下载数据集" -> 选择 "GSM8K 200 (数学推理评测集)"
+# 下载数据集：选择 "下载数据集" -> 选择 "GSM8K 200 (数学推理评测集)"
 dmla data
+
+# 下载模型：选择 "下载模型" -> 选择 "Qwen3.5-0.8B-Instruct"
+dmla model
 ```
 
 GSM8K（Grade School Math 8K）是一个包含 7473 道训练题和 1319 道测试题的小学数学应用题推理基准，模型需要通过多步计算才能得出正确答案。本实验从中随机抽取了 200 道题作为评测子集，在有限算力下尽可能体现不同推理策略的性能差异趋势，同时将评测时间控制在合理范围内。数据集下载完成后，运行以下代码验证数据和模型加载是否正常，并预先量化保存 INT8 和 INT4 模型供[第三阶段（推理效率优化）](#第三阶段：推理效率优化)使用：
@@ -38,7 +41,7 @@ else:
     print("GSM8K 评测子集: 未下载，请运行 'dmla data' 下载数据集")
 
 # ========== 加载模型 ==========
-model_path = os.path.join(DATA_DIR, 'datasets', 'gsm8k-200')
+model_path = os.path.join(DATA_DIR, 'models', 'llm', 'qwen3.5-0.8b-instruct')
 print(f"\n正在加载模型 {model_path}...")
 tokenizer = AutoTokenizer.from_pretrained(model_path)
 model = AutoModelForCausalLM.from_pretrained(model_path, dtype=torch.bfloat16).to("cuda")
@@ -140,7 +143,7 @@ from transformers import AutoTokenizer, AutoModelForCausalLM
 from dmla_progress import ProgressReporter
 
 # ========== 配置 ==========
-model_path = os.path.join(DATA_DIR, 'datasets', 'gsm8k-200')
+model_path = os.path.join(DATA_DIR, 'models', 'llm', 'qwen3.5-0.8b-instruct')
 gsm8k_path = os.path.join(DATA_DIR, 'datasets', 'gsm8k-200', 'gsm8k_200.jsonl')
 num_samples = 200  # 评测题数
 
@@ -340,7 +343,7 @@ from transformers import AutoTokenizer, AutoModelForCausalLM
 from dmla_progress import ProgressReporter
 
 # ========== 配置 ==========
-model_path = os.path.join(DATA_DIR, 'datasets', 'gsm8k-200')
+model_path = os.path.join(DATA_DIR, 'models', 'llm', 'qwen3.5-0.8b-instruct')
 gsm8k_path = os.path.join(DATA_DIR, 'datasets', 'gsm8k-200', 'gsm8k_200.jsonl')
 num_samples = 200
 n_values = [1, 2, 4, 8]  # 采样数
@@ -523,7 +526,7 @@ from transformers import AutoTokenizer, AutoModelForCausalLM, BitsAndBytesConfig
 from dmla_progress import ProgressReporter
 
 # ========== 配置 ==========
-model_path = os.path.join(DATA_DIR, 'datasets', 'gsm8k-200')
+model_path = os.path.join(DATA_DIR, 'models', 'llm', 'qwen3.5-0.8b-instruct')
 int8_path = os.path.join(DATA_DIR, 'models', 'qwen3.5-0.8b-int8')
 int4_path = os.path.join(DATA_DIR, 'models', 'qwen3.5-0.8b-int4')
 gsm8k_path = os.path.join(DATA_DIR, 'datasets', 'gsm8k-200', 'gsm8k_200.jsonl')
@@ -702,7 +705,7 @@ import torch
 logging.getLogger("transformers.models.qwen3_5.modeling_qwen3_5").setLevel(logging.ERROR)
 from transformers import AutoTokenizer, AutoModelForCausalLM
 
-model_path = os.path.join(DATA_DIR, 'datasets', 'gsm8k-200')
+model_path = os.path.join(DATA_DIR, 'models', 'llm', 'qwen3.5-0.8b-instruct')
 tokenizer = AutoTokenizer.from_pretrained(model_path)
 model = AutoModelForCausalLM.from_pretrained(
     model_path, dtype=torch.bfloat16
@@ -768,8 +771,8 @@ for seq_len in test_lengths:
 
 运行上方代码后，公式估算与实测值应该非常接近（误差在 1% 以内），验证了 KV Cache 显存估算公式的准确性。Qwen3.5-0.8B 有两个值得注意的结构特点：
 
-- **[GQA](../architecture-basics/architecture-evolution.md#gqa-分组查询注意力)（Grouped-Query Attention）**：`n_kv_head = 2`，远小于 `n_head = 8`。这意味着每 4 个 Query 头共享一组 KV 头，KV Cache 的显存占用仅为标准 MHA 的 1/4（2/8），这是 GQA 的核心优势，在不显著影响模型质量的前提下大幅降低 KV Cache 的显存需求。
-- **[FLA](../architecture-basics/architecture-evolution.md#线性注意力)（Flash Linear Attention）混合架构**：Qwen3.5 的部分层使用线性注意力，不产生 KV Cache。只有标准 Attention 层才有 KV Cache，因此公式中的层数应取 `n_attn_layers` 而非 `n_layer`。
+- **[GQA](../architecture-basics/architecture-evolution.md#gqa-分组查询注意力)**（Grouped-Query Attention）：`n_kv_head = 2`，远小于 `n_head = 8`。这意味着每 4 个 Query 头共享一组 KV 头，KV Cache 的显存占用仅为标准 MHA 的 1/4（2/8），这是 GQA 的核心优势，在不显著影响模型质量的前提下大幅降低 KV Cache 的显存需求。
+- **[FLA](../architecture-basics/architecture-evolution.md#线性注意力) 混合架构**（Flash Linear Attention）：Qwen3.5 的部分层使用线性注意力，不产生 KV Cache。只有标准 Attention 层才有 KV Cache，因此公式中的层数应取 `n_attn_layers` 而非 `n_layer`。
 
 实测中还可以观察到，KV Cache 的大小与序列长度严格成线性关系，序列长度翻倍，对应 KV Cache 也翻倍。这意味着在长文本推理场景中，KV Cache 的显存增长很容易会成为瓶颈。GQA 和 FLA 正是为了缓解这一瓶颈而设计的，GQA 将 KV Cache 缩减为 MHA 的 `n_kv_head / n_head` 倍，FLA 层则完全消除了 KV Cache，这些实践与 [Transformer 演进与变体](../architecture-basics/architecture-evolution.md)中对注意力机制改进的理论描述互相印证。
 
@@ -822,7 +825,7 @@ class MedusaHead(nn.Module):
         return self.out_up(nn.functional.silu(self.out_down(self.res_block(x))))
 
 # ========== 加载模型 ==========
-model_path = os.path.join(DATA_DIR, 'datasets', 'gsm8k-200')
+model_path = os.path.join(DATA_DIR, 'models', 'llm', 'qwen3.5-0.8b-instruct')
 tokenizer = AutoTokenizer.from_pretrained(model_path)
 base_model = AutoModelForCausalLM.from_pretrained(
     model_path, dtype=torch.bfloat16

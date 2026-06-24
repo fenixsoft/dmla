@@ -31,15 +31,97 @@ const SOFT_DEPS = [
   'datasets',
   'ipywidgets',
   'accelerate',
-  'bitsandbytes'
+  'bitsandbytes',
+  'vllm'
 ]
 
 // 环境检测结果缓存
 let cachedResult = null
+let cachedCudaHome = null  // 自动检测到的 CUDA_HOME 路径
 
 // Python/Pip 命令名缓存（跨平台兼容）
 let cachedPythonCommand = null
 let cachedPipCommand = null
+
+/**
+ * 获取自动检测到的 CUDA_HOME
+ * 需要在 checkNativeEnvironment() 之后调用以确保已检测
+ * @returns {string|null}
+ */
+export function getCudaHome() {
+  return cachedCudaHome
+}
+
+/**
+ * 自动检测 CUDA_HOME 路径（跨平台）
+ * 策略：先查 PATH 中的 nvcc，再查 pip nvidia 包路径，最后查固定路径
+ * @returns {Promise<string|null>}
+ */
+async function detectCudaHome() {
+  if (cachedCudaHome !== null) {
+    return cachedCudaHome
+  }
+
+  const pythonCmd = await detectPythonCommand()
+  if (!pythonCmd) {
+    cachedCudaHome = ''
+    return cachedCudaHome
+  }
+
+  const pythonScript = `
+import shutil, os, sys, glob
+
+# 强制优先系统 CUDA（与 flashinfer CCCL 头文件兼容，避免 pip nvidia-cu13 版本冲突）
+system_cuda = '/usr/local/cuda'
+if os.path.isdir(system_cuda) and os.path.isfile(os.path.join(system_cuda, 'bin', 'nvcc')):
+    print(system_cuda)
+    sys.exit(0)
+
+# 回退：检查环境变量
+cuda = os.environ.get('CUDA_HOME') or os.environ.get('CUDA_PATH')
+if cuda and os.path.isdir(cuda):
+    print(cuda)
+    sys.exit(0)
+
+# 查找 PATH 中的 nvcc，CUDA_HOME = nvcc 的上级目录
+nvcc = shutil.which('nvcc')
+if nvcc:
+    cuda = os.path.dirname(os.path.dirname(nvcc))
+    if os.path.isdir(cuda):
+        print(cuda)
+        sys.exit(0)
+
+# 查找 pip 安装的 nvidia-cu 包
+patterns = [
+    os.path.join(sys.prefix, 'lib', 'python3.*', 'dist-packages', 'nvidia', 'cu*'),
+    os.path.join(sys.prefix, 'Lib', 'site-packages', 'nvidia', 'cu*'),
+    os.path.join(sys.prefix, 'local', 'lib', 'python3.*', 'dist-packages', 'nvidia', 'cu*'),
+]
+for pat in patterns:
+    for p in sorted(glob.glob(pat)):
+        if os.path.isdir(p):
+            print(p)
+            sys.exit(0)
+
+print('')
+`.trim()
+
+  try {
+    const result = await runPythonCommand(['-c', pythonScript], 10000)
+    const detected = result.success ? result.output.trim() : ''
+    if (detected) {
+      console.log(chalk.gray(`   ✓ CUDA_HOME 自动检测: ${detected}`))
+    } else {
+      console.log(chalk.yellow('   ⚠ 未检测到 CUDA 工具链（nvcc），vLLM flashinfer 采样可能失败'))
+    }
+    cachedCudaHome = detected
+    return cachedCudaHome
+  } catch (e) {
+    console.log(chalk.yellow(`   ⚠ CUDA_HOME 检测失败: ${e.message}`))
+    cachedCudaHome = ''
+    return cachedCudaHome
+  }
+}
 
 /**
  * 检测可用的 Python 命令名
@@ -521,6 +603,11 @@ export async function checkNativeEnvironment() {
   console.log()
   const depsResult = await ensureSoftDependencies()
   console.log()
+
+  // 5. 自动检测 CUDA_HOME（vLLM flashinfer JIT 编译需要 nvcc）
+  if (cudaResult.available) {
+    await detectCudaHome()
+  }
 
   // 构建结果
   cachedResult = {

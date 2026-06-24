@@ -500,7 +500,7 @@ export async function runPythonCode(code, useGpu = false, imageOverride = null, 
       'PYTHONUNBUFFERED=1',
       'PYTHONPATH=/workspace',
       actualTimeout === null ? 'DMLA_NO_TIMEOUT=1' : '',
-      `DMLA_DATA_PATH=${getDataVolumePath() || '/data'}`
+      `DMLA_DATA_PATH=/data`
     ].filter(e => e)  // 过滤空字符串
   }
 

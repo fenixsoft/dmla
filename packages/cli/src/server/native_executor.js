@@ -9,7 +9,7 @@ import { fileURLToPath } from 'url'
 import os from 'os'
 import fs from 'fs'
 import chalk from 'chalk'
-import { getCachedEnvironment, getKernelRunnerPath, getSharedModulesPath, getServerPythonPath, getDataPath, getProgressPath, getPythonCommand, detectPythonCommand } from './native_env_check.js'
+import { getCachedEnvironment, getCudaHome, getKernelRunnerPath, getSharedModulesPath, getServerPythonPath, getDataPath, getProgressPath, getPythonCommand, detectPythonCommand } from './native_env_check.js'
 import chatManager from './chat-manager.cjs'
 
 const __filename = fileURLToPath(import.meta.url)
@@ -163,6 +163,12 @@ export async function runPythonCodeNative(code, useGpu = false, timeoutOverride 
     PYTHONIOENCODING: 'utf-8',  // Windows 下确保 Python 使用 UTF-8 输出
     DMLA_DATA_PATH: getDataPath(),
     DMLA_PROGRESS_PATH: getProgressPath()
+  }
+
+  // 注入自动检测到的 CUDA_HOME（vLLM flashinfer JIT 编译需要）
+  const cudaHome = getCudaHome()
+  if (cudaHome) {
+    env.CUDA_HOME = cudaHome
   }
 
   // 确保数据目录存在
@@ -442,6 +448,12 @@ export async function runPythonCodeStreamingNative(code, useGpu = false, res, ti
     PYTHONIOENCODING: 'utf-8',  // Windows 下确保 Python 使用 UTF-8 输出
     DMLA_DATA_PATH: getDataPath(),
     DMLA_PROGRESS_PATH: getProgressPath()
+  }
+
+  // 注入自动检测到的 CUDA_HOME
+  const cudaHome2 = getCudaHome()
+  if (cudaHome2) {
+    env.CUDA_HOME = cudaHome2
   }
 
   const kernelRunnerPath = getKernelRunnerPath()

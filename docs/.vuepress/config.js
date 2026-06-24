@@ -285,10 +285,9 @@ export default {
               children: [
                 { text: '推理服务架构', link: '/ai-infra-engineering/model-serving/inference-service-architecture' },
                 { text: '请求调度与批处理', link: '/ai-infra-engineering/model-serving/request-scheduling' },
-                // { text: 'GPU 资源管理'},
                 { text: 'GPU 资源管理', link: '/ai-infra-engineering/model-serving/gpu-resource-management' },
-                { text: '工程实训：部署 LLM 推理服务'},
-                // { text: '工程实训：部署 LLM 推理服务', link: '/ai-infra-engineering/model-serving/llm-inference-experiment' },
+                // { text: '工程实训：部署 LLM 推理服务'},
+                { text: '工程实训：部署 LLM 推理服务', link: '/ai-infra-engineering/model-serving/llm-inference-experiment' },
               ]
             },
             {
