@@ -10,14 +10,15 @@
     - 全文代码可执行性检测
     - 全文知识性错误检测
     - 全文语法/笔误/错别字检测
-- BUG：Mermaid图中的Latex会导致字体变小，连线上会导致有灰色背景（http://localhost:8080/language-models/architecture-basics/transformer-architecture.html）
+- FEAT：AI测试全文代码、实验正确性
 - FEAT：Word文档/PDF文档生成
 - BUG：NN-ARCH改进（连线不准确）
 - BUG：NN-Arch支持\n换行
 - TODO：补充量化内容
 - BUG：文章内连接跳转不正确
 - BUG：移动端点赞按钮挪到左边了
-- TODO：测试全文代码、实验正确性
+- FEAT：代码块提示未启动沙箱时，增加沙箱设置按钮
+- FEAT：自动微信公众号发布
 
 - TODO：增加模型量化的内容：docs/language-models/architecture-basics/architecture-evolution.md
 ## 量化与精度优化

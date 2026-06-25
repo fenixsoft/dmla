@@ -1,17 +1,17 @@
-﻿/**
- * Mermaid 瀹㈡埛绔厤缃?
- * 鍔ㄦ€佸姞杞?Mermaid 搴撳苟鍒濆鍖?
+/**
+ * Mermaid 客户端配置
+ * 动态加载 Mermaid 库并初始化
  */
 import { defineClientConfig, usePageData } from 'vuepress/client'
 import { onMounted, watch, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
-// 鍏ㄥ眬 mermaid 瀹炰緥
+// 全局 mermaid 实例
 let mermaidInstance = null
 let mermaidLoaded = false
 
 /**
- * 娓叉煋椤甸潰涓殑 mermaid 鍥捐〃
+ * 渲染页面中的 mermaid 图表
  */
 async function renderMermaid() {
   const mermaidModule = await import('mermaid').catch(() => null)
@@ -20,7 +20,7 @@ async function renderMermaid() {
   const mermaid = mermaidModule.default
   mermaidInstance = mermaid
 
-  // 鍒濆鍖?mermaid锛堝彧鎵ц涓€娆★級
+  // 初始化 mermaid（只执行一次）
   if (!mermaidLoaded) {
     mermaid.initialize({
       startOnLoad: false,
@@ -28,86 +28,86 @@ async function renderMermaid() {
       securityLevel: 'loose',flowchart: {
         useMaxWidth: true,
         htmlLabels: true,
-        // 澶у箙鍑忓皬鑺傜偣闂磋窛鍜屽眰绾ч棿璺濓紝浣垮浘琛ㄦ洿绱у噾
+        // 大幅减小节点间距和层级间距，使图表更紧凑
         nodeSpacing: 20,
         rankSpacing: 25,
-        // 浣跨敤璐濆灏旀洸绾匡紝杩炵嚎鏇寸揣鍑?
+        // 使用贝塞尔曲线，连线更紧凑
         curve: 'basis',
       },
       themeVariables: {
-        // 榛樿瀛椾綋浠?14px 鍑忓皬鍒?11px锛岃妭鐐逛細鏇村皬
-        fontSize: '11px',
-        // 鑺傜偣鏍峰紡 - 涓?SVG 鍥剧墖涓€鑷?
+        // 与主题 theme-default-content p 保持一致：16px
+        fontSize: '16px',
+        // 节点样式 - 与 SVG 图片一致
         primaryColor: '#eeeeee',
         primaryBorderColor: '#999999',
         primaryTextColor: '#333333',
-        // 鑺傜偣杈规瀹藉害浠?2px 鍑忓皬鍒?1px
+        // 节点边框宽度从 2px 减小到 1px
         nodeBorderWidth: '1px',
-        // 绾挎潯鏍峰紡
+        // 线条样式
         lineColor: '#333333',
-        // 绾挎潯瀹藉害鍙樼粏
+        // 线条宽度变细
         edgeLineWidth: '1px',
-        // 鑿卞舰鑺傜偣鏍峰紡
+        // 菱形节点样式
         secondaryColor: '#eeeeee',
         secondaryBorderColor: '#999999',
         secondaryTextColor: '#333333',
         edgeLabelBackground: `#ffffff`,
-        // 鍑忓皬鑺傜偣鍐呴儴 padding
-        nodePadding: 8
+        // nodePadding 配合 16px 字体需略增
+        nodePadding: 10
       }
     })
     mermaidLoaded = true
     window.mermaid = mermaid
   }
 
-  // 鏌ユ壘鎵€鏈夋湭娓叉煋鐨?mermaid pre 鍏冪礌
+  // 查找所有未渲染的 mermaid pre 元素
   const mermaidEls = document.querySelectorAll('pre.mermaid')
 
   for (const el of mermaidEls) {
-    // 璺宠繃宸茬粡娓叉煋杩囩殑鍏冪礌
+    // 跳过已经渲染过的元素
     if (el.dataset.rendered === 'true') continue
 
-    // 妫€鏌ョ埗鑺傜偣鏄惁瀛樺湪锛堥伩鍏?Vue 鍝嶅簲寮忔洿鏂板鑷村厓绱犺绉婚櫎锛?
+    // 检查父节点是否存在（避免 Vue 响应式更新导致元素被移除）
     if (!el.parentNode) {
       console.warn('Mermaid element has no parent node, skipping')
       continue
     }
 
-    // 浠?data-mermaid 灞炴€ц幏鍙栧師濮嬩唬鐮侊紙閬垮厤娴忚鍣ㄨВ鏋?HTML 鏍囩锛?
+    // 从 data-mermaid 属性获取原始代码（避免浏览器解析 HTML 标签）
     const code = el.dataset.mermaid ? decodeURIComponent(el.dataset.mermaid) : el.textContent
 
-    // 鎻愬彇灏哄淇グ绗︾被鍚嶏紙mermaid-small, mermaid-compact, mermaid-tiny锛?
+    // 提取尺寸修饰符类名（mermaid-small, mermaid-compact, mermaid-tiny）
     const sizeClasses = el.className.split(' ').filter(cls => cls.startsWith('mermaid-') && cls !== 'mermaid')
 
     if (code && code.trim()) {
       try {
-        // 鍏堟爣璁颁负宸叉覆鏌擄紝闃叉閲嶅澶勭悊
+        // 先标记为已渲染，防止重复处理
         el.dataset.rendered = 'true'
 
-        // 鍒涘缓鏂扮殑 div 瀹瑰櫒锛屼繚鐣欏昂瀵镐慨楗扮
+        // 创建新的 div 容器，保留尺寸修饰符
         const div = document.createElement('div')
         div.className = 'mermaid ' + sizeClasses.join(' ')
         div.style.textAlign = 'center'
         div.textContent = code.trim()
         div.dataset.rendered = 'true'
 
-        // 鏇挎崲鍘熸潵鐨?pre 鍏冪礌
+        // 替换原来的 pre 元素
         el.parentNode.replaceChild(div, el)
 
-        // 娓叉煋
+        // 渲染
         await mermaid.run({ nodes: [div] })
 
-        // 娓叉煋鍚庣‘淇濆眳涓紝骞舵牴鎹缉鏀捐皟鏁村鍣ㄥぇ灏?
+        // 渲染后确保居中，并根据缩放调整容器大小
         const svg = div.querySelector('svg')
         if (svg) {
           svg.style.display = 'inline-block'
           svg.style.margin = '0 auto'
 
-          // 淇 subgraph 鏍囬瑁佸壀锛歁ermaid 瀵?cluster label 鐨?<p> 鍏冪礌
-          // 浣跨敤 16px 瀛椾綋锛堜笉鍙?themeVariables.fontSize 鎺у埗锛夛紝瀵艰嚧鏍囬楂樺害
-          // 瓒呭嚭 foreignObject 鍜?cluster rect 鐨勯鐣欑┖闂达紝鏍囬涓婂崐閮ㄥ垎琚鍓€?
-          // 淇鏂瑰紡锛氬浐瀹?<p> 瀛椾綋涓?16px銆乴ineHeight 1.5锛屽皢 foreignObject
-          // 楂樺害璁句负 26px锛堣冻澶熷绾?16px*1.5=24px 琛岄珮鍔?2px 浣欓噺锛?
+          // 修正 subgraph 标题裁剪：Mermaid 对 cluster label 的 <p> 元素
+          // 使用 16px 字体（不受 themeVariables.fontSize 控制），导致标题高度
+          // 超出 foreignObject 和 cluster rect 的预留空间，标题上半部分被裁剪。
+          // 修正方式：固定 <p> 字体为 16px、lineHeight 1.5，将 foreignObject
+          // 高度设为 26px（足够容纳 16px*1.5=24px 行高加 2px 余量）
           const clusterLabels = svg.querySelectorAll('.cluster foreignObject p')
           for (const p of clusterLabels) {
             p.style.fontSize = '16px'
@@ -120,10 +120,10 @@ async function renderMermaid() {
             fo.setAttribute('height', '26')
           }
 
-          // 濡傛灉鏈夊昂瀵镐慨楗扮锛岃皟鏁村鍣ㄥぇ灏忎互閬垮厤瑁佸壀
+          // 如果有尺寸修饰符，调整容器大小以避免裁剪
           const sizeClass = sizeClasses.find(cls => cls.startsWith('mermaid-'))
           if (sizeClass) {
-            // 鑾峰彇缂╂斁姣斾緥
+            // 获取缩放比例
             const scales = {
               'mermaid-small': 0.85,
               'mermaid-compact': 0.75,
@@ -131,24 +131,24 @@ async function renderMermaid() {
             }
             const scale = scales[sizeClass] || 1
 
-            // 鑾峰彇 SVG 鐨勫師濮嬪昂瀵?
+            // 获取 SVG 的原始尺寸
             const viewBox = svg.getAttribute('viewBox')
             if (viewBox) {
               const parts = viewBox.split(' ')
               const width = parseFloat(parts[2])
               const height = parseFloat(parts[3])
 
-              // 璁剧疆瀹瑰櫒瀹介珮涓虹缉鏀惧悗鐨勫昂瀵?
+              // 设置容器宽高为缩放后的尺寸
               div.style.width = `${width * scale}px`
               div.style.height = `${height * scale}px`
               div.style.overflow = 'hidden'
               div.style.display = 'inline-block'
               div.style.textAlign = 'left'
 
-              // SVG 浣跨敤 transform scale
+              // SVG 使用 transform scale
               svg.style.transform = `scale(${scale})`
               svg.style.transformOrigin = 'top left'
-              // SVG 淇濇寔鍘熷灏哄
+              // SVG 保持原始尺寸
               svg.style.width = `${width}px`
               svg.style.height = `${height}px`
             }
@@ -163,7 +163,7 @@ async function renderMermaid() {
 
 export default defineClientConfig({
   enhance({ app }) {
-    // 棰勫姞杞?mermaid 搴?
+    // 预加载 mermaid 库
     if (typeof window !== 'undefined') {
       import('mermaid').then((mermaidModule) => {
         const mermaid = mermaidModule.default
@@ -175,37 +175,37 @@ export default defineClientConfig({
           securityLevel: 'loose',flowchart: {
             useMaxWidth: true,
             htmlLabels: true,
-            // 澶у箙鍑忓皬鑺傜偣闂磋窛鍜屽眰绾ч棿璺濓紝浣垮浘琛ㄦ洿绱у噾
+            // 大幅减小节点间距和层级间距，使图表更紧凑
             nodeSpacing: 20,
             rankSpacing: 25,
-            // 浣跨敤璐濆灏旀洸绾匡紝杩炵嚎鏇寸揣鍑?
+            // 使用贝塞尔曲线，连线更紧凑
             curve: 'basis',
-            // subgraph 鏍囬杈硅窛锛屼负鏍囬棰勭暀绌洪棿閬垮厤琚鍓?
+            // subgraph 标题边距，为标题预留空间避免被裁剪
             subGraphTitleMargin: {
               top: 4,
               bottom: 9
             }
           },
           themeVariables: {
-            // 榛樿瀛椾綋浠?14px 鍑忓皬鍒?11px锛岃妭鐐逛細鏇村皬
-            fontSize: '11px',
-            // 鑺傜偣鏍峰紡 - 涓?SVG 鍥剧墖涓€鑷?
+            // 与主题 theme-default-content p 保持一致：16px
+            fontSize: '16px',
+            // 节点样式 - 与 SVG 图片一致
             primaryColor: '#eeeeee',
             primaryBorderColor: '#999999',
             primaryTextColor: '#333333',
-            // 鑺傜偣杈规瀹藉害浠?2px 鍑忓皬鍒?1px
+            // 节点边框宽度从 2px 减小到 1px
             nodeBorderWidth: '1px',
-            // 绾挎潯鏍峰紡
+            // 线条样式
             lineColor: '#333333',
-            // 绾挎潯瀹藉害鍙樼粏
+            // 线条宽度变细
             edgeLineWidth: '1px',
-            // 鑿卞舰鑺傜偣鏍峰紡
+            // 菱形节点样式
             secondaryColor: '#eeeeee',
             secondaryBorderColor: '#999999',
             secondaryTextColor: '#333333',
             edgeLabelBackground: `#ffffff`,
-            // 鍑忓皬鑺傜偣鍐呴儴 padding
-            nodePadding: 8
+            // nodePadding 配合 16px 字体需略增
+            nodePadding: 10
           }
         })
         mermaidLoaded = true
@@ -217,23 +217,23 @@ export default defineClientConfig({
   },
 
   setup() {
-    // 浣跨敤 Vue Router 鐩戝惉璺敱鍙樺寲
+    // 使用 Vue Router 监听路由变化
     const router = useRouter()
     const isInitialized = ref(false)
     const pageData = usePageData()
 
-    // 缁勪欢鎸傝浇鏃舵覆鏌?
+    // 组件挂载时渲染
     onMounted(() => {
-      // 寤惰繜娓叉煋锛岀‘淇?DOM 宸插姞杞?
+      // 延迟渲染，确保 DOM 已加载
       setTimeout(renderMermaid, 100)
       setTimeout(renderMermaid, 300)
     })
 
-    // 鐩戝惉璺敱鍙樺寲锛屾瘡娆¤矾鐢卞垏鎹㈠悗閲嶆柊娓叉煋
+    // 监听路由变化，每次路由切换后重新渲染
     watch(
       () => router.currentRoute.value.path,
       (newPath, oldPath) => {
-        // 璺敱鍙樺寲鍚庡欢杩熸覆鏌?
+        // 路由变化后延迟渲染
         if (oldPath !== undefined) {
           setTimeout(renderMermaid, 100)
           setTimeout(renderMermaid, 300)
@@ -243,7 +243,7 @@ export default defineClientConfig({
       { immediate: false }
     )
 
-    // 鐩戝惉椤甸潰鏁版嵁鍙樺寲锛堢儹鏇存柊浼氳Е鍙戞鍙樺寲锛夛紝閲嶆柊娓叉煋 mermaid 鍥捐〃
+    // 监听页面数据变化（热更新会触发此变化），重新渲染 mermaid 图表
     watch(
       () => pageData.value,
       () => {
@@ -254,6 +254,3 @@ export default defineClientConfig({
     )
   }
 })
-
-
-

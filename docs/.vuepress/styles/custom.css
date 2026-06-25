@@ -253,10 +253,19 @@ border-radius: 12px;
 .mermaid svg math {
   display: inline-block;
 }
-/* 公式字体大小恢复到与正文匹配 */
+/* 防止主题 .theme-default-content p 的样式渗入 mermaid SVG foreignObject */
+/* 含 $$ 公式的节点 mermaid 用 flex div+裸文本渲染，不含公式的用 <p> 包裹 */
+/* mermaid 配置 fontSize 已统一调整为 16px，与主题正文一致 */
+.mermaid svg foreignObject p {
+  font-size: inherit !important;
+  margin: 0 !important;
+}
+/* KaTeX 公式字号同步到 16px，确保公式与中文文本视觉一致 */
+.mermaid svg .katex {
+  font-size: 16px !important;
+}
 .mermaid svg .katex > math {
   display: inline-block;
-  font-size: 16px !important;
 }
 /* runnable 代码块行号样式 — 弥补 runnable-code 插件剥离 line-numbers-mode 导致行号不显示的问题 */
 .runnable-code-block .code-area {
