@@ -60,7 +60,7 @@ COPY local-server/shared /workspace/shared
 
 # 配置 matplotlib 中文字体支持（包括 sans-serif 和 monospace）
 RUN mkdir -p /root/.config/matplotlib && \
-    printf "font.family: sans-serif\nfont.sans-serif: WenQuanYi Micro Hei, DejaVu Sans\nfont.monospace: WenQuanYi Micro Hei, DejaVu Sans Mono\naxes.unicode_minus: False\n" > /root/.config/matplotlib/matplotlibrc && \
+    printf "font.family: sans-serif\nfont.sans-serif: WenQuanYi Micro Hei, WenQuanYi Zen Hei, DejaVu Sans\nfont.monospace: WenQuanYi Micro Hei Mono, WenQuanYi Zen Hei Mono, DejaVu Sans Mono\naxes.unicode_minus: False\n" > /root/.config/matplotlib/matplotlibrc && \
     rm -rf /root/.cache/matplotlib
 
 # 设置默认命令

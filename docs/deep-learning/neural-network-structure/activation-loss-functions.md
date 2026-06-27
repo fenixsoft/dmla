@@ -90,7 +90,7 @@ $$\text{PReLU}(z) = \begin{cases} z & z > 0 \\ \alpha_i z & z \leq 0 \end{cases}
 
 其中 $\alpha_i$ 不再是人为设置的超参数，而是网络可学习的参数，每个神经元有独立的斜率。何凯明等人在 ResNet（深度残差网络，2015 年 ImageNet 冠军）中使用 PReLU，发现斜率通过反向传播学习，自动适应数据分布，比固定斜率更灵活。实验显示，PReLU 在 ImageNet 分类任务上比 ReLU 提升约 1% 的准确率（不要被 1% 数字误导，当年 ImageNet 分类任务冠军的错误率才 3.57%，准确率提升 1% 是一个巨大的进步）。
 
-实践中，今天 ReLU 仍是深度网络的常用的选择，简单高效，效果良好，其他 ReLU 系列激活函数也可以按需选用，如果担心神经元死亡，使用 Leaky ReLU（$\alpha = 0.01$）；如果追求零中心输出，使用 ELU；如果愿意增加参数量，使用 PReLU。其他随着大语言模型兴起的激活函数如 Swish（2017年 Google 提出，$\text{Swish}(z) = z \cdot \sigma(z)$）和 GELU（Transformer/BERT/GPT 系列模型广泛使用），本章暂未涉及，它们将在大语言模型的部分讨论。本节提到的 ReLU 系列激活函数各项特征对比如下表所示：
+实践中，今天 ReLU 仍是深度网络的常用的选择，简单高效，效果良好，其他 ReLU 系列激活函数也可以按需选用，如果担心神经元死亡，使用 Leaky ReLU（$\alpha = 0.01$）；如果追求零中心输出，使用 ELU；如果愿意增加参数量，使用 PReLU。随着大语言模型的兴起，Swish（2017 年谷歌提出，$\text{Swish}(z) = z \cdot \sigma(z)$）和 GELU（Transformer/BERT/GPT 系列模型广泛使用）等新一代激活函数走到了舞台中央，下节将详细介绍它们的设计思想和数学特性。本节提到的 ReLU 系列激活函数各项特征对比如下表所示：
 
 | 特性 | ReLU | Leaky ReLU | ELU | PReLU |
 |:-----|:-----|:-----------|:----|:------|
@@ -102,13 +102,41 @@ $$\text{PReLU}(z) = \begin{cases} z & z > 0 \\ \alpha_i z & z \leq 0 \end{cases}
 | 计算成本 | 低 | 低 | 中（指数） | 低 |
 | 参数 | 无 | 固定 $\alpha$ | 固定 $\alpha$ | 可学习 $\alpha_i$ |
 
+### GELU 与 Swish
+
+ReLU 的硬截断设计（负数区域完全置零）带来了神经元死亡的风险，Leaky ReLU 和 ELU 分别用微小斜率和指数平滑来修补负数区域，一定程度上缓解了该风险。但将输入分为"通过"和"截断"两类，这种非此即彼的二分法与真实世界中信息的连续性始终是存在冲突的。在自然语言中，一个词对语义信息的贡献几乎不会是纯粹的"有"或"无"，更多时候是多大程度上相关。大语言模型的兴起催生了对更精细激活函数的需求，GELU 和 Swish 便是这一趋势下的产物。
+
+**GELU 函数**（Gaussian Error Linear Unit，高斯误差线性单元）由美国计算机科学家丹·亨德里克斯（Dan Hendrycks）和凯文·金佩尔（Kevin Gimpel）在 2016 年提出。它将 ReLU 的确定性门控替换为概率性的加权，ReLU 根据输入的正负号决定输出是 $z$ 还是 $0$，GELU 则根据输入在标准正态分布下的累积概率来加权输出。ReLU 像一道闸门，水压为正就全开，水压为负就全关。GELU 像一个根据水压大小连续调节的阀门，水压越大开得越大，水压在零附近时只开一半，水压为负时也保留一丝缝隙。这种平滑过渡使得梯度在任意输入值下都能有效传递，不存在 ReLU 的导数突变问题。GELU 的数学定义是输入乘以标准正态分布的累积分布函数：
+
+$$GELU(z) = z \cdot \Phi(z) = z \cdot \frac{1}{2}\left(1 + erf\left(\frac{z}{\sqrt{2}}\right)\right)$$
+
+其中 $\Phi(z)$ 是标准正态分布的[累积分布函数](../../maths/probability/probability-basics.md#累积分布函数)（CDF），$erf$ 是[高斯误差函数](https://en.wikipedia.org/wiki/Error_function)。$z$ 很大时，$\Phi(z) \to 1$，GELU 趋近于恒等函数 $y = z$（类似 ReLU 的正数区域）；$z$ 很小时，$\Phi(z) \to 0$，GELU 趋近于 $0$（类似 ReLU 的负数区域，但并非完全置零）；$z = 0$ 时，$\Phi(0) = 0.5$，输出为 $0$。GELU 的精确形式涉及 $erf$ 函数，计算成本较高。实践中通常使用一个快速的 tanh 近似：
+
+$$GELU(z) \approx 0.5z\left(1 + \tanh\left(\sqrt{\frac{2}{\pi}}\left(z + 0.044715z^3\right)\right)\right)$$
+
+该近似与精确公式的误差在 $10^{-6}$ 量级，PyTorch 等框架默认的 GELU 实现就使用此近似版本。对于绝大多数应用场景，精确形式与 tanh 近似在实际效果上没有可察觉的差异。下图左边为 GELU、Swish 和 ReLU 三条曲线的对比，右边为 GELU 精确形式与 tanh 近似的对比：
+
+![GELU / Swish / ReLU 曲线对比](assets/gelu-swish-relu-comparison.png)
+
+*图：左为 GELU、Swish 和 ReLU 曲线对比，右为 GELU 精确形式与 tanh 近似的对比*
+
+**Swish 函数**由谷歌大脑团队在 2017 年的论文《Searching for Activation Functions》中提出。这篇论文本意是用自动搜索技术发现更好的激活函数，结果搜索到的最优函数恰好是 $x \cdot \sigma(x)$ 这个简洁的形式，谷歌将其命名为 Swish。有趣的是，同样的函数在亨德里克斯 2016 年的 GELU 论文中已经作为对照实验出现过（当时被称为 SiLU，即 Sigmoid Linear Unit），后来也被斯特凡·埃尔夫温（Stefan Elfwing）等人在强化学习研究中独立提出。学术界如今将 SiLU 和 Swish 视为同一函数的两个名称。Swish 的数学表达式为：
+
+$$Swish(z) = z \cdot \sigma(z) = \frac{z}{1 + e^{-z}}$$
+
+其中 $\sigma(z)$ 就是我们熟悉的 Sigmoid 函数。Swish 可以带有一个可学习的参数 $\beta$（完整形式 $\text{Swish}_\beta(z) = z \cdot \sigma(\beta z)$），$\beta$ 控制门控的陡峭程度。$\beta = 0$ 时退化为线性函数 $z/2$；$\beta = 1$ 时即为标准 SiLU；$\beta \to \infty$ 时趋近于 ReLU。因此 Swish 函数族可以看作在纯线性和 ReLU 之间的平滑插值。实践中绝大多数模型直接使用 $\beta = 1$ 的标准形式。
+
+GELU 和 Swish 的曲线形状十分相似。两者都是处处平滑、处处可导的非单调函数，在负数区域都有一个微小的凹陷（Swish 的凹陷略深，在 $z \approx -1.28$ 处达到约 $-0.28$），在正数区域都趋近于恒等函数。两者的细微差异来源于所用的概率分布不同。GELU 使用正态分布的 CDF 作为门控函数，Swish 使用 Sigmoid（逻辑分布）作为门控函数。正态分布的尾部更薄，因此 GELU 对极端负值的抑制更彻底。逻辑分布的尾部更厚，因此 Swish 在中等负值区域的抑制更缓和。在计算效率方面，Swish 需要一次 Sigmoid 计算（指数 + 除法），GELU 的精确形式需要一次 erf 计算（更昂贵），但 GELU 的 tanh 近似将成本降低到了与 Swish 相近的水平，两者在现代 GPU 上的实际运算时间差异不大。
+
 ### 激活函数选择策略
 
-前面介绍了 tanh 和 ReLU 系的激活函数，在加上之前我们已经接触过的 [Sigmoid](../../statistical-learning/linear-models/logistic-regression.md#sigmoid-函数) 和 [Softmax](../../statistical-learning/linear-models/logistic-regression.md#多项逻辑回归)，它们各有优缺点，下表给出实践中激活函数的选择策略，主要基于两个维度：网络位置（隐藏层或输出层）和任务类型（分类或回归）。
+前面介绍了 tanh、ReLU 系以及 GELU/Swish 激活函数，加上之前已经接触过的 [Sigmoid](../../statistical-learning/linear-models/logistic-regression.md#sigmoid-函数) 和 [Softmax](../../statistical-learning/linear-models/logistic-regression.md#多项逻辑回归)，它们各有优缺点，下表给出实践中激活函数的选择策略，主要基于网络架构类型（CNN、Transformer 或浅层网络）和任务类型（分类或回归）两个维度，如下表所示：
 
 | 场景 | 推荐激活函数 | 原因 |
 |:-----|:------------|:-----|
-| 隐藏层（深度网络） | ReLU / Leaky ReLU | 缓解梯度消失，计算高效 |
+| 隐藏层（CNN / 传统深度网络） | ReLU / Leaky ReLU | 缓解梯度消失，计算高效，配合批归一化效果稳定 |
+| 隐藏层（Transformer 编码器） | GELU | 平滑梯度流，无神经元死亡，匹配残差连接和层归一化 |
+| 隐藏层（Transformer 解码器 / LLM） | Swish（SwiGLU 门控） | 门控机制选择性抑制无关特征，困惑度更低 |
 | 隐藏层（浅层网络） | tanh / ReLU | 浅层网络梯度消失问题不严重 |
 | 输出层（二分类） | Sigmoid | 输出概率，符合二分类语义 |
 | 输出层（多分类） | Softmax | 输出概率分布，符合多分类语义 |
@@ -116,7 +144,7 @@ $$\text{PReLU}(z) = \begin{cases} z & z > 0 \\ \alpha_i z & z \leq 0 \end{cases}
 
 ### 激活函数实践
 
-前面的理论分析反复强调：Sigmoid 存在严重的梯度消失问题，ReLU 能缓解梯度消失但可能导致神经元死亡。本节通过代码实验验证，构建一个 10 层深度网络，每层 64 个神经元，使用相同输入和输出梯度，对比 Sigmoid、tanh、ReLU、Leaky ReLU 在梯度传递和神经元激活方面的表现。同时统计各层激活值为零的比例（ReLU 神经元死亡的指标）。
+前面的理论分析反复强调：Sigmoid 存在严重的梯度消失问题，ReLU 能缓解梯度消失但可能导致神经元死亡，GELU 和 Swish 以概率性平滑门控替代硬截断。本节通过代码实验验证，构建一个 10 层深度网络，每层 64 个神经元，使用相同输入和输出梯度，对比 Sigmoid、tanh、ReLU、Leaky ReLU、GELU、Swish 在梯度传递和神经元激活方面的表现。同时统计各层负值输出的比例，对比不同激活函数对神经元抑制行为的差异。
 
 ```python runnable
 import numpy as np
@@ -137,7 +165,7 @@ class DeepNetwork:
         self.biases = []
         
         # 根据激活函数选择初始化策略
-        if activation in ['relu', 'leaky_relu']:
+        if activation in ['relu', 'leaky_relu', 'gelu', 'swish']:
             scale_factor = np.sqrt(2.0)  # He初始化
         else:
             scale_factor = np.sqrt(1.0)  # Xavier初始化
@@ -159,6 +187,13 @@ class DeepNetwork:
             return np.maximum(0, Z)
         elif self.activation == 'leaky_relu':
             return np.where(Z > 0, Z, 0.01 * Z)
+        elif self.activation == 'gelu':
+            # GELU tanh 近似（与 PyTorch 默认行为一致）
+            alpha = np.sqrt(2.0 / np.pi)
+            return 0.5 * Z * (1.0 + np.tanh(alpha * (Z + 0.044715 * Z**3)))
+        elif self.activation == 'swish':
+            # Swish / SiLU: z * sigmoid(z)
+            return Z / (1.0 + np.exp(-Z))
         elif self.activation == 'linear':
             return Z
         else:
@@ -174,6 +209,17 @@ class DeepNetwork:
             return (Z > 0).astype(float)
         elif self.activation == 'leaky_relu':
             return np.where(Z > 0, 1.0, 0.01)
+        elif self.activation == 'gelu':
+            # GELU tanh 近似的导数
+            alpha = np.sqrt(2.0 / np.pi)
+            inner = alpha * (Z + 0.044715 * Z**3)
+            t = np.tanh(inner)
+            sech2 = 1.0 - t ** 2
+            return 0.5 * (1.0 + t) + 0.5 * Z * sech2 * alpha * (1.0 + 3.0 * 0.044715 * Z**2)
+        elif self.activation == 'swish':
+            # Swish 导数: sigma(z) * (1 + z * (1 - sigma(z)))
+            sigma = 1.0 / (1.0 + np.exp(-Z))
+            return sigma * (1.0 + Z * (1.0 - sigma))
         elif self.activation == 'linear':
             return np.ones_like(Z)
         else:
@@ -224,9 +270,9 @@ print()
 n_layers = 10
 n_neurons = 64
 
-activations = ['sigmoid', 'tanh', 'relu', 'leaky_relu']
-activation_colors = ['#e74c3c', '#3498db', '#2ecc71', '#f39c12']
-activation_labels = ['Sigmoid', 'tanh', 'ReLU', 'Leaky ReLU']
+activations = ['sigmoid', 'tanh', 'relu', 'leaky_relu', 'gelu', 'swish']
+activation_colors = ['#e74c3c', '#3498db', '#2ecc71', '#f39c12', '#9b59b6', '#1abc9c']
+activation_labels = ['Sigmoid', 'tanh', 'ReLU', 'Leaky ReLU', 'GELU', 'Swish']
 
 # 生成输入和输出梯度
 X = np.random.randn(n_neurons, 100)  # 100个样本
@@ -266,7 +312,7 @@ ax1.set_title('梯度传递：不同激活函数对比', fontsize=12, fontweight
 ax1.legend(loc='upper right')
 ax1.grid(True, alpha=0.3)
 
-# 图2：激活值分布对比
+# 图2：负值输出比例对比（抑制效应）
 ax2 = axes[1]
 
 # 重新运行前向传播，收集激活值统计
@@ -275,47 +321,49 @@ for activation in activations:
     network = DeepNetwork(n_layers, n_neurons, activation)
     network.forward(X)
     
-    # 统计各层激活值：零值比例（对于ReLU系列）、均值、标准差
-    zero_ratios = []
+    # 统计各层激活值：负值输出比例、均值、标准差
+    negative_ratios = []
     means = []
     stds = []
     
     for i, A in enumerate(network.activations[1:]):  # 跳过输入层
-        if activation == 'relu':
-            # ReLU: 统计精确为零的比例（神经元死亡）
-            zero_ratio = np.mean(A == 0)
-            zero_ratios.append(zero_ratio)
-        elif activation == 'leaky_relu':
-            # Leaky ReLU: 统计负值区域比例（被抑制但未完全死亡）
-            Z = network.pre_activations[i]
-            zero_ratio = np.mean(Z <= 0)  # Z <= 0 表示进入负值区域
-            zero_ratios.append(zero_ratio)
+        # 统计负值输出比例（反映不同激活函数对神经元的"抑制"程度）
+        negative_ratio = np.mean(A < 0)
+        negative_ratios.append(negative_ratio)
         means.append(np.mean(A))
         stds.append(np.std(A))
     
     activation_stats.append({
         'activation': activation,
-        'zero_ratios': zero_ratios,
+        'negative_ratios': negative_ratios,
         'means': means,
         'stds': stds
     })
 
-# 绘制ReLU的零值比例（神经元死亡指标）
-relu_stats = activation_stats[2]  # ReLU
-leaky_relu_stats = activation_stats[3]  # Leaky ReLU
+# 绘制 ReLU、Leaky ReLU、GELU、Swish 的负值输出比例
+# ReLU: 负面输入全部置零，负值输出比例恒为 0（无抑制，直接截断）
+# Leaky ReLU: 负面输入产生微小负值输出（α=0.01），负值输出比例 ≈ 负面输入比例
+# GELU: 仅在 z≈-0.17 附近产生微小负值（极弱的抑制）
+# Swish: 在 z≈-1.28 附近产生较深负值凹陷（更强的抑制效果）
+plot_activations = ['relu', 'leaky_relu', 'gelu', 'swish']
+plot_colors = ['#2ecc71', '#f39c12', '#9b59b6', '#1abc9c']
+plot_labels = ['ReLU', 'Leaky ReLU', 'GELU', 'Swish']
 
-# 使用并列条形图，避免覆盖
 x_positions = np.arange(1, n_layers + 1)
-bar_width = 0.35
+n_bars = len(plot_activations)
+bar_width = 0.2
 
-ax2.bar(x_positions - bar_width/2, relu_stats['zero_ratios'], 
-        width=bar_width, color='#2ecc71', alpha=0.7, label='ReLU 零值比例')
-ax2.bar(x_positions + bar_width/2, leaky_relu_stats['zero_ratios'], 
-        width=bar_width, color='#f39c12', alpha=0.7, label='Leaky ReLU 负值区域比例')
+for idx, (act_name, color, label) in enumerate(zip(plot_activations, plot_colors, plot_labels)):
+    # 找到对应的 stats
+    act_idx = activations.index(act_name)
+    stats = activation_stats[act_idx]
+    offset = (idx - (n_bars - 1) / 2) * bar_width
+    ax2.bar(x_positions + offset, stats['negative_ratios'],
+            width=bar_width, color=color, alpha=0.75, label=label)
 
 ax2.set_xlabel('层索引', fontsize=11)
-ax2.set_ylabel('零值比例（神经元"死亡"指标）', fontsize=11)
-ax2.set_title('ReLU vs Leaky ReLU：神经元激活稀疏性', fontsize=12, fontweight='bold')
+ax2.set_ylabel('负值输出比例', fontsize=11)
+ax2.set_title('激活函数抑制效应对比：负值输出比例', fontsize=12, fontweight='bold')
 ax2.legend(loc='upper right')
 ax2.grid(True, alpha=0.3, axis='y')
 
@@ -682,7 +730,7 @@ $$L_{Hinge} = \max(0, 1 - y \cdot \hat{y})$$
 
 本章详细介绍了神经网络的激活函数和损失函数两大核心组件：
 
-- **激活函数**为神经网络引入非线性，打破线性约束，赋予网络强大的表达能力。隐藏层首选 ReLU 系列激活函数（ReLU、Leaky ReLU），缓解梯度消失问题，计算高效。输出层根据任务类型选择：二分类用 Sigmoid，多分类用 Softmax，回归用 Linear（无激活）。
+- **激活函数**为神经网络引入非线性，打破线性约束，赋予网络强大的表达能力。隐藏层首选 ReLU 系列激活函数（ReLU、Leaky ReLU），缓解梯度消失问题，计算高效。在 Transformer 和大语言模型中，GELU 和 Swish 以概率性平滑门控替代硬截断，为深度残差网络提供更稳定的梯度流和内置正则化效果。输出层根据任务类型选择：二分类用 Sigmoid，多分类用 Softmax，回归用 Linear（无激活）。
 
 - **损失函数**定义了神经网络优化的目标，衡量预测与真实之间的差距。回归问题根据数据特征选择：无异常值用 MSE，有异常值用 MAE 或 Huber 损失。分类问题使用交叉熵损失，配合对应的激活函数，梯度计算高效。
 

@@ -168,8 +168,8 @@ log_debug('Suppressing stdout for imports')
 
 # 配置 matplotlib 中文字体支持（在导入 matplotlib 之前）
 import matplotlib
-matplotlib.rcParams['font.sans-serif'] = ['WenQuanYi Micro Hei', 'DejaVu Sans']
-matplotlib.rcParams['font.monospace'] = ['WenQuanYi Micro Hei', 'DejaVu Sans Mono']
+matplotlib.rcParams['font.sans-serif'] = ['WenQuanYi Micro Hei', 'WenQuanYi Zen Hei', 'DejaVu Sans']
+matplotlib.rcParams['font.monospace'] = ['WenQuanYi Micro Hei Mono', 'WenQuanYi Zen Hei Mono', 'DejaVu Sans Mono']
 matplotlib.rcParams['axes.unicode_minus'] = False
 
 # 强制重建 matplotlib 字体缓存，确保中文字体正确识别
@@ -187,6 +187,9 @@ DEFAULT_TIMEOUT = 60
 STDERR_FILTER_PATTERNS = [
     # ipykernel: Kernel 通过 localhost TCP 通信，无实际窃听风险
     "Kernel is running over TCP without encryption",
+    # matplotlib C 层字体字形缺失警告（中文字体缺失 CJK 字形、数学字体缺失 Unicode 减号等）
+    # 这些是纯展示性警告，不影响代码执行结果，但会污染用户输出
+    "does not have a glyph for",
 ]
 
 
@@ -312,6 +315,16 @@ for _p in _python_path_entries:
 # 配置 matplotlib inline 后端（在用户 import matplotlib 之前设置）
 import matplotlib
 matplotlib.use('module://matplotlib_inline.backend_inline')
+
+# 配置中文字体及数学符号支持
+# 注意：matplotlib.use() 后的字体配置确保 inline backend 下字体正确应用
+matplotlib.rcParams['font.sans-serif'] = ['WenQuanYi Zen Hei', 'WenQuanYi Micro Hei', 'DejaVu Sans']
+matplotlib.rcParams['font.monospace'] = ['WenQuanYi Zen Hei Mono', 'WenQuanYi Micro Hei Mono', 'DejaVu Sans Mono']
+matplotlib.rcParams['axes.unicode_minus'] = False
+
+# 强制重建字体缓存，确保中文字体正确识别
+import matplotlib.font_manager as fm
+fm._load_fontmanager(try_read_cache=False)
 '''
         kc.execute(setup_code, allow_stdin=False)
         # 等待 setup 执行完成（读取并丢弃 setup 的输出）
@@ -886,6 +899,16 @@ for _p in _python_path_entries:
 # 配置 matplotlib inline 后端（在用户 import matplotlib 之前设置）
 import matplotlib
 matplotlib.use('module://matplotlib_inline.backend_inline')
+
+# 配置中文字体及数学符号支持
+# 注意：matplotlib.use() 后的字体配置确保 inline backend 下字体正确应用
+matplotlib.rcParams['font.sans-serif'] = ['WenQuanYi Zen Hei', 'WenQuanYi Micro Hei', 'DejaVu Sans']
+matplotlib.rcParams['font.monospace'] = ['WenQuanYi Zen Hei Mono', 'WenQuanYi Micro Hei Mono', 'DejaVu Sans Mono']
+matplotlib.rcParams['axes.unicode_minus'] = False
+
+# 强制重建字体缓存，确保中文字体正确识别
+import matplotlib.font_manager as fm
+fm._load_fontmanager(try_read_cache=False)
 '''
         kc.execute(setup_code, allow_stdin=False)
         # 等待 setup 执行完成
