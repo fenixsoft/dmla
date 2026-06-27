@@ -120,7 +120,8 @@ const equationStylesContent = `
     opacity: 0;
     visibility: hidden;
     transition: opacity 0.2s, visibility 0.2s;
-    overflow-x: auto;
+    overflow-x: hidden;
+    overflow-y: auto;
   }
 
   .equation-preview.visible {
@@ -142,6 +143,7 @@ const equationStylesContent = `
 
   .equation-preview .katex-display {
     margin: 0 !important;
+    overflow-x: hidden !important;
   }
 
   .equation-preview-header {

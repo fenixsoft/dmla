@@ -374,6 +374,8 @@ body {
   .runnable-code-block pre code {
     background: transparent !important;
     color: var(--code-text, #ABB2BF) !important;
+    border-radius: 0px !important;
+    box-shadow: none !important;
   }
 
   .runnable-code-block .code-header,

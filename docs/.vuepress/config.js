@@ -294,22 +294,14 @@ export default {
               collapsible: false,
               children: [
                 { text: '数据版本管理', link: '/ai-infra-engineering/mlops/data-versioning' },
-                { text: '特征存储' },
                 // { text: '特征存储', link: '/ai-infra-engineering/mlops/feature-store' },
-                { text: '数据质量监控'},
-                // { text: '数据质量监控', link: '/ai-infra-engineering/mlops/data-quality-monitoring' },
-                // { text: '实验追踪'},
-                // { text: '实验追踪', link: '/ai-infra-engineering/mlops/experiment-tracking' },
-                // { text: '模型注册与生命周期'},
-                // { text: '模型注册与生命周期', link: '/ai-infra-engineering/mlops/model-registry-lifecycle' },
+                { text: '实验追踪与模型管理', link: '/ai-infra-engineering/mlops/model-lifecycle' },
                 { text: '自动化调参'},
                 // { text: '自动化调参', link: '/ai-infra-engineering/mlops/hyperparameter-optimization' },
                 { text: '模型性能监控'},
                 // { text: '模型性能监控', link: '/ai-infra-engineering/mlops/model-performance-monitoring' },
                 { text: '漂移检测'},
                 // { text: '漂移检测', link: '/ai-infra-engineering/mlops/drift-detection' },
-                // { text: '在线实验与渐进发布'},
-                // { text: '在线实验与渐进发布', link: '/ai-infra-engineering/mlops/online-experimentation' },
               ]
             },
           ]

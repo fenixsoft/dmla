@@ -183,6 +183,25 @@ log_debug('Imports completed, stdout restored')
 # 超时时间（秒）
 DEFAULT_TIMEOUT = 60
 
+# 需要从 stderr 输出中过滤掉的 Kernel 启动警告消息
+STDERR_FILTER_PATTERNS = [
+    # ipykernel: Kernel 通过 localhost TCP 通信，无实际窃听风险
+    "Kernel is running over TCP without encryption",
+]
+
+
+def filter_kernel_stderr(text: str) -> str:
+    """
+    过滤 Kernel stderr 中的无害启动警告（如 TCP 未加密警告）。
+    沙箱内 Kernel 与 Client 通过 localhost 通信，无实际安全风险。
+    """
+    for pattern in STDERR_FILTER_PATTERNS:
+        # 移除包含该模式的所有行
+        lines = text.split('\n')
+        lines = [line for line in lines if pattern not in line]
+        text = '\n'.join(lines)
+    return text
+
 
 def is_cuda_compat_error(error_message: str) -> bool:
     """检测是否为 CUDA 兼容性错误"""
@@ -250,11 +269,11 @@ def run_code(code: str, timeout: int = DEFAULT_TIMEOUT, stream: bool = False) ->
         log_debug('stdout suppressed for kernel startup')
 
         km = KernelManager()
-        # 抑制 "Kernel is running over TCP without encryption" 警告
-        # 沙箱内 Kernel 与 Client 通过 localhost 通信，无实际安全风险
-        km.extra_arguments = ['--IPKernelApp.log_level=ERROR']
         log_debug('Starting kernel')
-        km.start_kernel()
+        # 抑制 "Kernel is running over TCP without encryption" 警告
+        # 沙箱内 Kernel 与 Client 通过 localhost 通信，无实际安全风险；
+        # extra_arguments 必须作为 start_kernel() 的关键字参数传入，设置为属性无效
+        km.start_kernel(extra_arguments=['--IPKernelApp.log_level=ERROR'])
         log_debug('Kernel started, creating client')
         kc = km.client()
         kc.start_channels()
@@ -382,8 +401,9 @@ matplotlib.use('module://matplotlib_inline.backend_inline')
                             # JSON 解析失败，作为普通文本处理
                             other_lines.append(pline)
 
-                    # 剩余 stderr 内容正常传递
+                    # 剩余 stderr 内容正常传递，过滤已知的无害警告
                     stream_text = '\n'.join(other_lines)
+                    stream_text = filter_kernel_stderr(stream_text)
                     if not stream_text.strip():
                         continue
 
@@ -603,10 +623,15 @@ def _collect_kernel_outputs(kc, timeout, stream=False):
             continue
 
         if msg_type == 'stream':
+            stream_name = content.get('name', 'stdout')
+            stream_text = content.get('text', '')
+            # 过滤已知的无害 stderr 警告
+            if stream_name == 'stderr':
+                stream_text = filter_kernel_stderr(stream_text)
             stream_output = {
                 'type': 'stream',
-                'name': content.get('name', 'stdout'),
-                'text': content.get('text', '')
+                'name': stream_name,
+                'text': stream_text
             }
             if stream:
                 output_json(stream_output)
@@ -836,7 +861,7 @@ def main():
 
         km = KernelManager()
         suppress_stdout()
-        km.start_kernel()
+        km.start_kernel(extra_arguments=['--IPKernelApp.log_level=ERROR'])
         kc = km.client()
         kc.start_channels()
         kc.wait_for_ready(timeout=30)

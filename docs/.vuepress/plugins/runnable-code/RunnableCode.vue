@@ -137,7 +137,7 @@
         </div>
       </template>
       <template v-else-if="!isRunning">
-        点击 Run 按钮执行代码
+        点击 Run 按钮执行代码，点击代码区域可编辑
       </template>
       </div>
     </div>

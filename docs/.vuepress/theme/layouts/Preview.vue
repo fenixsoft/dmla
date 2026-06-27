@@ -2,7 +2,9 @@
   <div class="preview-layout">
     <!-- 代码高亮加载器 - 确保主题 CSS 正确加载 -->
     <CodeHighlightLoader />
-    <Content />
+    <div class="theme-default-content">
+      <Content />
+    </div>
   </div>
 </template>
 
@@ -47,16 +49,6 @@ onMounted(() => {
   display: none !important;
 }
 
-/* VuePress 代码块结构兼容：让 PrismJS 主题背景正确应用 */
-.preview-mode div[class*="language-"] > pre {
-  background: inherit;
-  border-radius: inherit;
-}
-
-.preview-mode div[class*="language-"] {
-  border-radius: 12px;
-  overflow: hidden;
-}
 </style>
 
 <style scoped>

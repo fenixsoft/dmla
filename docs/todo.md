@@ -4,8 +4,6 @@
     - 代码注释英文翻译
     - 图片英文翻译
 - FEAT：所有应用论文增加链接
-- BUG：部分代码高亮的背景颜色不可用
-- BUG：代码块的输出样式存在圆角、背景颜色不一致的问题
 - FEAT：AI全文校验
     - 全文代码可执行性检测
     - 全文知识性错误检测
@@ -14,12 +12,10 @@
 - FEAT：Word文档/PDF文档生成
 - BUG：NN-ARCH改进（连线不准确）
 - BUG：NN-Arch支持\n换行
-- TODO：补充量化内容
 - BUG：文章内连接跳转不正确
-- BUG：移动端点赞按钮挪到左边了
-- FEAT：代码块提示未启动沙箱时，增加沙箱设置按钮
 - FEAT：自动微信公众号发布
 
+- TODO：补充GELU激活函数
 - TODO：增加模型量化的内容：docs/language-models/architecture-basics/architecture-evolution.md
 ## 量化与精度优化
 

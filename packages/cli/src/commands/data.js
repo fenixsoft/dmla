@@ -130,6 +130,24 @@ function isUserCancel(error) {
 }
 
 /**
+ * 带超时保护的安全 prompt 包装
+ * enquirer 的 Promise executor 是 async 函数，如果初始化抛异常，
+ * Promise 可能永远不 settle。用 Promise.race 加超时兜底。
+ */
+async function safePrompt(options, timeoutMs = 30000) {
+  let timer
+  const timeout = new Promise((_, reject) => {
+    timer = setTimeout(() => reject(new Error('prompt timeout')), timeoutMs)
+  })
+  try {
+    const result = await Promise.race([prompt(options), timeout])
+    return result
+  } finally {
+    clearTimeout(timer)
+  }
+}
+
+/**
  * 显示 Banner
  */
 function showBanner() {
@@ -345,7 +363,7 @@ async function showMainMenu(dataPath) {
     { name: '7', message: '退出' }
   ]
 
-  const { action } = await prompt({
+  const { action } = await safePrompt({
     type: 'select',
     name: 'action',
     message: '选择操作',
@@ -1086,6 +1104,16 @@ async function downloadDataset(dataPath, dataset) {
 export async function runDataTUI() {
   showBanner()
 
+  // 清理并退出：移除所有事件监听，强制退出进程
+  // enquirer 的 readline 关闭后可能残留事件或异步操作，
+  // 仅 return 无法保证 Node.js 事件循环清空，必须显式 process.exit
+  const cleanupAndExit = () => {
+    process.off('uncaughtException', handleUncaught)
+    process.off('unhandledRejection', handleUnhandledRejection)
+    // 使用 setImmediate 让 Node.js 完成当前微任务队列再退出
+    setImmediate(() => process.exit(0))
+  }
+
   // 处理 enquirer 在 Ctrl+C 时抛出的 ERR_USE_AFTER_CLOSE
   // enquirer 的 cancel() 方法关闭 readline 后又调用 pause()，导致此错误
   const handleUncaught = (err) => {
@@ -1097,7 +1125,20 @@ export async function runDataTUI() {
     }
     throw err
   }
+
+  // 处理 enquirer Promise executor async 反模式导致的未处理 rejection
+  // 当 initialize() 在设置 cancel 监听器前抛异常时，Promise 既不 resolve 也不 reject
+  const handleUnhandledRejection = (reason) => {
+    if (reason && (reason.code === 'ERR_USE_AFTER_CLOSE' || isUserCancel(reason))) {
+      console.log()
+      console.log(chalk.gray('已退出数据管理'))
+      console.log()
+      process.exit(0)
+    }
+  }
+
   process.on('uncaughtException', handleUncaught)
+  process.on('unhandledRejection', handleUnhandledRejection)
 
   let dataPath = getDataVolumePath()
 
@@ -1112,7 +1153,7 @@ export async function runDataTUI() {
     console.log()
 
     try {
-      const { create } = await prompt({
+      const { create } = await safePrompt({
         type: 'confirm',
         name: 'create',
         message: '是否创建数据目录?',
@@ -1127,6 +1168,7 @@ export async function runDataTUI() {
       if (isUserCancel(error)) {
         console.log(chalk.gray('已退出数据管理'))
         console.log()
+        cleanupAndExit()
         return
       }
       throw error
@@ -1202,7 +1244,7 @@ export async function runDataTUI() {
           console.log()
           console.log(chalk.gray('已退出数据管理'))
           console.log()
-          process.off('uncaughtException', handleUncaught)
+          cleanupAndExit()
           return
       }
 
@@ -1214,7 +1256,7 @@ export async function runDataTUI() {
         console.log()
         console.log(chalk.gray('已退出数据管理'))
         console.log()
-        process.off('uncaughtException', handleUncaught)
+        cleanupAndExit()
         return
       }
       throw error

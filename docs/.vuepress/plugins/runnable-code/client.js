@@ -68,8 +68,8 @@ if (typeof document !== 'undefined' && !document.getElementById(styleId)) {
 
 /* 编辑模式下的样式 */
 .runnable-code-block pre.runnable-editable:focus {
-  background: #1e1e1e;
-  box-shadow: inset 0 0 0 2px rgba(62, 175, 124, 0.3);
+  background: var(--code-toolbar-bg, #1E1E1E);
+  box-shadow: none;
 }
 
 /* 非编辑模式下隐藏光标 */
@@ -83,6 +83,12 @@ if (typeof document !== 'undefined' && !document.getElementById(styleId)) {
   line-height: 1.5;
   display: block;
   white-space: pre;
+  outline: none;
+}
+
+/* 移除编辑模式下浏览器对 contenteditable 元素的默认 focus-visible 边框 */
+.runnable-code-block pre.runnable-editable code:focus-visible {
+  outline: none;
 }
 
 /* 工具栏 */
@@ -91,8 +97,8 @@ if (typeof document !== 'undefined' && !document.getElementById(styleId)) {
   gap: 8px;
   align-items: center;
   padding: 8px 16px;
-  background: #1E1E1E;
-  border-top: 1px solid #333333;
+  background: var(--code-toolbar-bg, #1E1E1E);
+  border-top: 1px solid var(--code-c-highlight-bg, #333333);
 }
 
 .runnable-code-block .run-btn {
@@ -151,12 +157,12 @@ if (typeof document !== 'undefined' && !document.getElementById(styleId)) {
 /* 输出区域 */
 .runnable-code-block .output-container {
   padding: 12px 16px;
-  background: #1E1E1E;
-  border-top: 1px solid #333333;
+  background: var(--code-toolbar-bg, #1E1E1E);
+  border-top: 1px solid var(--code-c-highlight-bg, #333333);
   font-family: 'Fira Code', monospace;
   font-size: 13px;
   line-height: 1.5;
-  color: #ffffff;
+  color: var(--code-text, #ABB2BF);
   white-space: pre-wrap;
   max-height: 1000px;
   overflow-y: auto;
@@ -167,8 +173,8 @@ if (typeof document !== 'undefined' && !document.getElementById(styleId)) {
 }
 
 .runnable-code-block .output-area:empty::before {
-  content: '点击 Run 按钮执行代码';
-  color: #666;
+  content: '点击 Run 按钮执行代码，点击代码区域可编辑';
+  color: var(--code-c-line-number, #666);
 }
 
 .runnable-code-block .output-area.loading {
@@ -304,7 +310,7 @@ if (typeof document !== 'undefined' && !document.getElementById(styleId)) {
 /* 进度条容器（固定在顶部，与文本输出分开） */
 .runnable-code-block .progress-container {
   padding: 12px 16px;
-  background: #1e1e1e;
+  background: transparent;
   border-bottom: 1px solid #333;
   display: grid;
 }
@@ -446,7 +452,21 @@ function initCodeBlock(block) {
   codeElement.spellcheck = false
   codeElement.dataset.editing = 'false'
   preElement.classList.add('runnable-editable')
-
+  // 去除末尾换行符，避免 contenteditable 聚焦/失焦时高度跳动
+  // （Prism 重新高亮后 HTML 结构不会渲染尾随空行，导致高度变化）
+  const rawText = codeElement.textContent
+  const trimmed = rawText.replace(/\n+$/, '')
+  if (trimmed !== rawText) {
+    // 用 Prism 重新高亮（覆盖原 textContent 赋值，避免丢失语法高亮）
+    const language = block.dataset.lang || 'python'
+    codeElement.innerHTML = Prism.highlight(trimmed, Prism.languages[language] || Prism.languages.python, language)
+    // 同步更新行号：移除多余的行号元素
+    const newLineCount = trimmed.split('\n').length
+    const lineNumbers = codeArea.querySelectorAll('.line-number')
+    for (let i = lineNumbers.length - 1; i >= newLineCount; i--) {
+      lineNumbers[i].remove()
+    }
+  }
   // 点击时进入编辑模式
   codeElement.addEventListener('focus', () => {
     codeElement.dataset.editing = 'true'
@@ -486,7 +506,7 @@ function initCodeBlock(block) {
   codeElement.addEventListener('blur', () => {
     if (codeElement.dataset.modified === 'true') {
       // 获取当前纯文本代码
-      const code = codeElement.textContent
+      const code = codeElement.textContent.replace(/\n+$/, '')
       const language = block.dataset.lang || 'python'
 
       // 保存光标位置（近似）
@@ -986,12 +1006,12 @@ function initCodeBlock(block) {
           // 连接超时 - 服务未启动
           progressContainer.innerHTML = ''
           textOutput.className = 'output-area error'
-          textOutput.textContent = '⚠️ 无法连接到沙箱服务（连接超时）\n\n请确保沙箱服务正在运行：\n• 源码模式：npm run server\n• CLI 模式：dmla start\n\n或在设置中检查沙箱地址配置'
+          textOutput.innerHTML = '⚠️ 无法连接到沙箱服务（连接超时）\n\n请确保沙箱服务正在运行：\n• 源码模式：npm run server\n• CLI 模式：dmla start\n\n或在设置 <a href="javascript:document.getElementsByTagName(\'button\')[0].click()"><svg data-v-9eec72c3="" class="settings-icon" style="width:18px; height:18px; color:#f48771" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle data-v-9eec72c3="" cx="12" cy="12" r="3"></circle><path data-v-9eec72c3="" d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg></a> 中检查沙箱地址配置'
         } else {
           progressContainer.innerHTML = ''
           textOutput.className = 'output-area error'
           if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
-            textOutput.textContent = '⚠️ 无法连接到沙箱服务\n\n请确保沙箱服务正在运行，或在设置中检查沙箱地址配置'
+            textOutput.innerHTML = '⚠️ 无法连接到沙箱服务\n\n请确保沙箱服务正在运行，或在设置 <a href="javascript:document.getElementsByTagName(\'button\')[0].click()"><svg data-v-9eec72c3="" class="settings-icon" style="width:18px; height:18px; color:#f48771" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle data-v-9eec72c3="" cx="12" cy="12" r="3"></circle><path data-v-9eec72c3="" d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg></a> 中检查沙箱地址配置'
           } else {
             textOutput.textContent = `❌ 错误: ${error.message}`
           }
