@@ -87,7 +87,7 @@ print(f"\n中心差分误差约为前向差分的 {abs(forward - analytical) / a
 
 $$\frac{\partial f}{\partial x_i} \approx \frac{f(x_1, \ldots, x_i + h, \ldots, x_n) - f(x_1, \ldots, x_i - h, \ldots, x_n)}{2h}$$
 
-为了表达简洁，我们用[标准基向量 $\mathbf{e}_i$](../linear/vectors.md#基、正交基与标准正交基) 来描述"只改变第 $i$ 个变量"这一操作。这样，$\mathbf{x} + h\mathbf{e}_i$ 就表示"把 $\mathbf{x}$ 的第 $i$ 个分量加上 $h$，其他分量不变"，正是我们需要的扰动方式。于是梯度计算公式可以简洁地写成：
+为了表达简洁，我们用[标准基向量 $\mathbf{e}_i$](../../maths/linear/vectors.md#基、正交基与标准正交基) 来描述"只改变第 $i$ 个变量"这一操作。这样，$\mathbf{x} + h\mathbf{e}_i$ 就表示"把 $\mathbf{x}$ 的第 $i$ 个分量加上 $h$，其他分量不变"，正是我们需要的扰动方式。于是梯度计算公式可以简洁地写成：
 
 $$\frac{\partial f}{\partial x_i} \approx \frac{f(\mathbf{x} + h \mathbf{e}_i) - f(\mathbf{x} - h \mathbf{e}_i)}{2h}$$
 

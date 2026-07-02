@@ -11,7 +11,4 @@
 - FEAT：Word文档/PDF文档生成
     - 脚注：多臂老虎机（Multi-Armed Bandit）--> 地址
 - FEAT：自动微信公众号发布
-- TODO：精简掉数学的引言部分
-- TODO：补充muon优化器
-- TODO：残差连接补充HC、mHC的演进
-- BUG：首页打开，没有语法高亮渲染
+
