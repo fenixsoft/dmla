@@ -239,19 +239,43 @@ export default defineClientConfig({
     setupHeaders()
     setupSidebarItems()
 
-    // 初始�?sidebar 自动滚动
+    // 初始 sidebar 自动滚动
     setupSidebarScroll()
 
-    // 禁止浏览器翻译（网站本身就是中文�?
+    // 禁止浏览器翻译（网站本身就是中文）
     if (typeof document !== 'undefined') {
       document.documentElement.setAttribute('translate', 'no')
 
-      // 初始化代码高亮主�?
+      // 初始化代码高亮主题
       const config = getSiteConfig()
       loadThemeCSS(config.highlightTheme || 'default')
 
       // 监听配置变更事件
       window.addEventListener('site-config-changed', handleConfigChange)
     }
+
+    // 页面挂载后对普通代码块执行 PrismJS 高亮
+    // runnable 代码块由 runnable-code 插件负责高亮，此处处理普通代码块
+    // VuePress hydration 可能清掉预渲染的 token span，需要重新执行高亮
+    onMounted(() => {
+      nextTick(() => {
+        setTimeout(() => {
+          if (typeof window !== 'undefined' && window.Prism) {
+            // 只处理标准 VuePress 代码块（div[class*="language-"]），跳过 runnable-code-block
+            document.querySelectorAll('div[class*="language-"]').forEach(wrapper => {
+              if (wrapper.closest('.runnable-code-block')) return
+              const codeBlock = wrapper.querySelector('pre code')
+              if (!codeBlock || codeBlock.querySelector('.token')) return
+              const langMatch = wrapper.className.match(/language-(\w+)/)
+              const language = langMatch ? langMatch[1] : 'bash'
+              const grammar = window.Prism.languages[language] || window.Prism.languages.bash
+              if (grammar) {
+                codeBlock.innerHTML = window.Prism.highlight(codeBlock.textContent, grammar, language)
+              }
+            })
+          }
+        }, 200)
+      })
+    })
   }
 })
