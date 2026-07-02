@@ -9,7 +9,8 @@ import { useRoute, useRouter } from 'vuepress/client'
 import { watch, nextTick, onMounted } from 'vue'
 import './styles/index.scss'
 
-// 导入 PrismJS 语言语法，确保客户端高亮可用
+// 导入 PrismJS 及语言语法，确保客户端高亮可用
+import Prism from 'prismjs'
 import 'prismjs/components/prism-bash'
 import 'prismjs/components/prism-javascript'
 import 'prismjs/components/prism-typescript'
