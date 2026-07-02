@@ -38,7 +38,7 @@ $$M_{\text{KV}} = 2 \times n_{\text{layer}} \times d_{\text{head}} \times n_{\te
 
 每个 token 在每一层都需要缓存 Key 和 Value 两个向量，所有层、所有 token、所有请求的缓存加起来就是总显存占用。代入 LLaMA-2 70B 的具体参数：80 层、128 个注意力头、每头维度 128、最大序列长度 4096、float16 精度。单个请求的 KV Cache 的容量 $M_{\text{KV}} = 2 \times 80 \times 128 \times 128 \times 4096 \times 1 \times 2 \approx 10.7 \text{ GB}$。A100 一共只有 80 GB 显存，而模型参数本身占用约 140 GB，需要张量并行分布在多张 GPU 上。以 2 张 GPU 的张量并行为例，每张 GPU 分担约 70 GB 的模型参数，剩余约 10 GB 可用于 KV Cache，仅能容纳 1 个请求的缓存，批量大小也根本提不上去。
 
-以上被称为 LLM 推理的显存墙（Memory Wall）问题。KV Cache 的巨大显存占用限制了批量大小和并发数，导致 GPU 算力无法被有效利用。Decode 阶段的算力利用率低下并不是因为没有足够的计算任务，而是因为没有足够的显存容纳更多并行处理请求。分析了推理效率的瓶颈后，我们就可以确定具体的优化目标。推理服务通常关注以下几个核心指标：
+以上被称为 LLM 推理的显存墙（Memory Wall）问题。KV Cache 的巨大显存占用限制了批量大小和并发数，导致 GPU 算力无法被有效利用。Decode 阶段的算力利用率低下并不是因为没有足够的计算任务，而是因为没有足够的显存容纳更多并行处理请求。分析了推理效率的瓶颈后，我们就可以确定具体的优化目标。推理服务通常关注以下几个主要指标：
 
 - **首 token 延迟**（Time to First Token，TTFT）是从用户发送请求到模型输出第一个 token 的时间，主要由 Prefill 阶段决定。用户在对话场景中最先感知到的就是 TTFT，过长的等待会让用户觉得系统卡顿。
 - **每 token 生成时间**（Time Per Output Token，TPOT）是 Decode 阶段生成每个 token 的平均时间，它是**每秒生成 token 数**（Tokens Per Second，TPS）的倒数。TPS 直接影响用户的阅读体验，如果生成速度低于人类的阅读速度（约每秒 10-15 个 token），用户就会感觉回复在慢慢"挤药膏"出来。

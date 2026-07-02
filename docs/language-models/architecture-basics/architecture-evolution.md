@@ -175,7 +175,7 @@ MQA 在实践中被一些追求极致推理效率的模型所采用。2022 年 G
 
 ### GQA：分组查询注意力
 
-**分组查询注意力**（Grouped Query Attention，GQA）在 2023 年的论文《GQA: Training-Generalized Multi-Query Transformer Models from Checkpoints》中提出，是 MHA 和 MQA 之间的折中方案。研究者观察到 MQA 虽然内存效率极高，但性能损失在某些任务上难以接受。MHA 虽然表达能力最强，但又有内存压力过大的问题。GQA 的核心思想是让多个头共享同一组 KV 缓存，但不是所有头都共享，而是将头进行分组，组内共享、组间独立。
+**分组查询注意力**（Grouped Query Attention，GQA）在 2023 年的论文《GQA: Training-Generalized Multi-Query Transformer Models from Checkpoints》中提出，是 MHA 和 MQA 之间的折中方案。研究者观察到 MQA 虽然内存效率极高，但性能损失在某些任务上难以接受。MHA 虽然表达能力最强，但又有内存压力过大的问题。GQA 的思想是让多个头共享同一组 KV 缓存，但不是所有头都共享，而是将头进行分组，组内共享、组间独立。
 
 GQA 的设计可以用图书馆的管理来类比。MHA 就像每个读者都有自己的一套书，虽然可以个性化标注，但书籍占用大量空间。MQA 则是所有读者共享一套书，节省空间但无法个性化。GQA 则是将读者按兴趣分组，同组（如文学组共享文学类书籍，科技组共享科技类书籍）的读者共享一套书，不同组之间的书籍独立。这样既节省了空间，又一定程度上保留了组间的差异性。
 

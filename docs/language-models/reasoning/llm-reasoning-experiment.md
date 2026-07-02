@@ -682,7 +682,7 @@ progress.complete(message="量化精度对比评测完成")
 压缩比（相对 FP16）为 INT8 权重 57.7%、显存 66.9%，INT4 权重 45.2%、显存 50.4%。质量损失（相对 FP16）为 INT8 -4.0%，INT4 -20.0%。从结果中可以观察到：
 
 - **量化后推理速度反而变慢**：这与直觉相悖，但完全符合 bitsandbytes 的实现原理。bitsandbytes 的 LLM.int8() 和 Q4_K 量化都是在线反量化方案，权重以低精度存储，推理时每步前向传播都需将量化权重动态反量化为 FP16 再做矩阵乘法。反量化本身是额外计算，且 0.8B 模型的 FP16 权重本就完全能放入 GPU 的显存中，量化节省的显存带宽收益微乎其微，反量化的开销反而拖慢了推理。INT8 比 INT4 更慢（11.5 vs 31.2 tok/s），是因为 INT8 的反量化路径涉及更复杂的分块矩阵乘法和异常值分离（Outlier Decomposition），而 INT4 的双量化（Double Quantization）结构更紧凑，反量化开销相对更小。
-- **量化的真正价值在于降低显存占用**：INT8 显存降至 FP16 的 67%，INT4 降至 50%。对于 0.8B 这样的小模型，显存节省意义不大；但对于 7B、70B 级别的模型，INT4 量化可以将显存需求从 140GB 降至 35GB，使单卡推理成为可能。这正是量化在工程上的核心应用场景。
+- **量化的真正价值在于降低显存占用**：INT8 显存降至 FP16 的 67%，INT4 降至 50%。对于 0.8B 这样的小模型，显存节省意义不大；但对于 7B、70B 级别的模型，INT4 量化可以将显存需求从 140GB 降至 35GB，使单卡推理成为可能。这正是量化在工程上的应用场景。
 - **准确率损失随量化粒度加剧**：INT8 仅损失 4%，INT4 损失 20%。0.8B 模型参数本就有限，INT4 的激进压缩直接损害了模型的表达能力。对于更大的模型（7B+），INT4 的准确率损失通常在 1%-3% 以内，因为大模型有更多的冗余参数来吸收量化误差。
 
 ::: info 真正的量化加速
@@ -771,7 +771,7 @@ for seq_len in test_lengths:
 
 运行上方代码后，公式估算与实测值应该非常接近（误差在 1% 以内），验证了 KV Cache 显存估算公式的准确性。Qwen3.5-0.8B 有两个值得注意的结构特点：
 
-- **[GQA](../architecture-basics/architecture-evolution.md#gqa-分组查询注意力)**（Grouped-Query Attention）：`n_kv_head = 2`，远小于 `n_head = 8`。这意味着每 4 个 Query 头共享一组 KV 头，KV Cache 的显存占用仅为标准 MHA 的 1/4（2/8），这是 GQA 的核心优势，在不显著影响模型质量的前提下大幅降低 KV Cache 的显存需求。
+- **[GQA](../architecture-basics/architecture-evolution.md#gqa-分组查询注意力)**（Grouped-Query Attention）：`n_kv_head = 2`，远小于 `n_head = 8`。这意味着每 4 个 Query 头共享一组 KV 头，KV Cache 的显存占用仅为标准 MHA 的 1/4（2/8），这是 GQA 的重要优势，在不显著影响模型质量的前提下大幅降低 KV Cache 的显存需求。
 - **[FLA](../architecture-basics/architecture-evolution.md#线性注意力) 混合架构**（Flash Linear Attention）：Qwen3.5 的部分层使用线性注意力，不产生 KV Cache。只有标准 Attention 层才有 KV Cache，因此公式中的层数应取 `n_attn_layers` 而非 `n_layer`。
 
 实测中还可以观察到，KV Cache 的大小与序列长度严格成线性关系，序列长度翻倍，对应 KV Cache 也翻倍。这意味着在长文本推理场景中，KV Cache 的显存增长很容易会成为瓶颈。GQA 和 FLA 正是为了缓解这一瓶颈而设计的，GQA 将 KV Cache 缩减为 MHA 的 `n_kv_head / n_head` 倍，FLA 层则完全消除了 KV Cache，这些实践与 [Transformer 演进与变体](../architecture-basics/architecture-evolution.md)中对注意力机制改进的理论描述互相印证。
