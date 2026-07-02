@@ -9,6 +9,13 @@ import { useRoute, useRouter } from 'vuepress/client'
 import { watch, nextTick, onMounted } from 'vue'
 import './styles/index.scss'
 
+// 导入 PrismJS 语言语法，确保客户端高亮可用
+import 'prismjs/components/prism-bash'
+import 'prismjs/components/prism-javascript'
+import 'prismjs/components/prism-typescript'
+import 'prismjs/components/prism-markdown'
+import 'prismjs/components/prism-yaml'
+
 // 各主题对应的背景�?
 const THEME_BG_COLORS = {
   'default': '#282C34',
