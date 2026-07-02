@@ -9,5 +9,9 @@
     - 全文语法/笔误/错别字检测
 - FEAT：所有应用论文增加链接
 - FEAT：Word文档/PDF文档生成
+    - 脚注：多臂老虎机（Multi-Armed Bandit）--> 地址
 - FEAT：自动微信公众号发布
-- BUG：文章内连接跳转不正确：http://localhost:8080/ai-infra-engineering/model-serving/gpu-resource-management.html
+- TODO：精简掉数学的引言部分
+- TODO：补充muon优化器
+- TODO：残差连接补充HC、mHC的演进
+- BUG：首页打开，没有语法高亮渲染

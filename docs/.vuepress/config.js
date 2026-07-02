@@ -294,10 +294,8 @@ export default {
               collapsible: false,
               children: [
                 { text: '数据版本管理', link: '/ai-infra-engineering/mlops/data-versioning' },
-                // { text: '特征存储', link: '/ai-infra-engineering/mlops/feature-store' },
                 { text: '实验追踪与模型管理', link: '/ai-infra-engineering/mlops/model-lifecycle' },
-                { text: '自动化调参'},
-                // { text: '自动化调参', link: '/ai-infra-engineering/mlops/hyperparameter-optimization' },
+                { text: '自动化调参', link: '/ai-infra-engineering/mlops/hyperparameter-optimization' },
                 { text: '模型性能监控'},
                 // { text: '模型性能监控', link: '/ai-infra-engineering/mlops/model-performance-monitoring' },
                 { text: '漂移检测'},
