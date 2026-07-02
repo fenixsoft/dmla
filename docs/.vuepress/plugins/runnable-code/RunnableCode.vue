@@ -767,7 +767,7 @@ border: 1px solid var(--c-border, #eaecef);
 .code-area pre {
   margin: 0;
   padding: 1rem;
-  background: var(--code-bg-color, #282c34);
+  background: var(--code-bg, #282C34);
   overflow-x: auto;
 }
 

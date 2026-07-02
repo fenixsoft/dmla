@@ -369,10 +369,10 @@ body {
   }
 
   // 保护 runnable-code-block 样式不受 PrismJS 主题影响
-  // runnable-code-block 有自己的 UI 元素（工具栏、按钮等）
+  // runnable-code-block 有自己的 UI 元素（工具栏、按钮等），但仍需设置暗色背景
   .runnable-code-block pre,
   .runnable-code-block pre code {
-    background: transparent !important;
+    background: var(--code-bg, #282C34) !important;
     color: var(--code-text, #ABB2BF) !important;
     border-radius: 0px !important;
     box-shadow: none !important;
