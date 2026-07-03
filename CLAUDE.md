@@ -598,3 +598,26 @@ aliyun fc GET /2023-03-30/functions/sandbox-cpu/triggers/http-trigger
 - 更新已存在的镜像 tag 时，仅需拉取变更层
 - 预热期间函数仍可能响应 `PreconditionFailed`，需等待 `lastUpdateStatus: Successful`
 - `accelerationType: Default` 仅 ACR 企业版支持，个人版默认为全量拉取
+
+**镜像更新流程（每次代码变更后）：**
+```bash
+# 1. 本地构建并推送新镜像
+docker build -f local-server/Dockerfile.sandbox.cpu -t dmla-sandbox:cpu .
+ACR="crpi-aani1ibpows293b8.cn-hangzhou.personal.cr.aliyuncs.com"
+echo '[efflying]' | docker login --username=icyfenix --password-stdin ${ACR}
+docker tag dmla-sandbox:cpu ${ACR}/fenixsoft/dmla-sandbox:cpu
+docker push ${ACR}/fenixsoft/dmla-sandbox:cpu
+
+# 2. 更新 FC 函数（触发新部署）
+CONFIG='{"image":"crpi-aani1ibpows293b8.cn-hangzhou.personal.cr.aliyuncs.com/fenixsoft/dmla-sandbox:cpu","port":9000,"command":["python3","/workspace/fc_handler.py"]}'
+aliyun fc update-function --function-name sandbox-cpu --custom-container-config "$CONFIG"
+
+# 3. 等待预热完成
+# 轮询直到 lastUpdateStatus == "Successful"
+aliyun fc GET /2023-03-30/functions/sandbox-cpu
+```
+**镜像构建注意事项（重要）：**
+- 构建 FC 镜像时必须禁用 provenance：`docker build --provenance=false --platform linux/amd64`
+- FC 不支持 OCI image index 格式（`application/vnd.oci.image.index.v1+json`）
+- 不支持时会导致 `invalid image, platform of image is unknown/unknown` 错误
+- GitHub Actions 的 `docker/build-push-action@v7` 默认生成 OCI 格式，需要在 CI 中也禁用 provenance
