@@ -189,7 +189,7 @@ graph LR
 
 ## VAE 生成 MNIST 实践
 
-在开始实验之前，请确保已[挂载数据目录](../../sandbox.md#数据管理)并下载好 MNIST 数据集，你可以通过 `DMLA-CLI` 工具自动完成该工作：
+在开始实验之前，请确保已[挂载数据目录](../../appendixes/sandbox.md#数据管理)并下载好 MNIST 数据集，你可以通过 `DMLA-CLI` 工具自动完成该工作：
 ```bash
 # 选择 "下载数据集" -> 选择 "MNIST"
 dmla data

@@ -9,7 +9,7 @@
 在开始实验之前，请确保已完成以下准备工作：
 
 1. 已完成 [SFT 模型对话实验](../pretraining/llm-sft-experiment.md)，模型权重文件 `full_sft_768.pth` 已在数据目录中正确生成。
-2. 已[挂载数据目录](../../sandbox.md#数据管理)并下载好 DPO 偏好语料。
+2. 已[挂载数据目录](../../appendixes/sandbox.md#数据管理)并下载好 DPO 偏好语料。
 
 ```bash
 # 选择 "下载数据集" -> 选择 "MiniMind Alignment (LLM对齐语料)"

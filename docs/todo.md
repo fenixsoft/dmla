@@ -11,4 +11,5 @@
 - FEAT：Word文档/PDF文档生成
     - 脚注：多臂老虎机（Multi-Armed Bandit）--> 地址
 - FEAT：自动微信公众号发布
-
+- FEAT：文章转可视化（视频、PPT）
+- TODO：腾讯云SCP跑CPU镜像

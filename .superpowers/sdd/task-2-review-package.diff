@@ -1,0 +1,222 @@
+# Task 2 Review Package
+
+## Commits
+df0195a 创建 FC 函数计算专用 Dockerfile (dmla-sandbox:fc)
+215060d feat: 创建 FC Function Compute HTTP Handler 入口文件
+
+## Diff Stat
+ local-server/Dockerfile.sandbox.fc |  73 ++++++++++++++++++++++
+ local-server/src/fc_handler.py     | 125 +++++++++++++++++++++++++++++++++++++
+ 2 files changed, 198 insertions(+)
+
+## Full Diff
+diff --git a/local-server/Dockerfile.sandbox.fc b/local-server/Dockerfile.sandbox.fc
+new file mode 100644
+index 0000000..36fd3b0
+--- /dev/null
++++ b/local-server/Dockerfile.sandbox.fc
+@@ -0,0 +1,73 @@
++# ============================================
++# DMLA FC Sandbox Image (Serverless CPU)
++# 适用于阿里云函数计算 Custom Container 运行时
++# 镜像名称: dmla-sandbox:fc
++# ============================================
++
++FROM python:3.11-slim
++
++# 设置环境变量
++ENV PYTHONUNBUFFERED=1
++ENV PYTHONDONTWRITEBYTECODE=1
++ENV PYTHONPATH=/workspace
++ENV FC_SERVER_PORT=9000
++
++# 替换为阿里云镜像源
++RUN sed -i 's|http://deb.debian.org|http://mirrors.aliyun.com|g' /etc/apt/sources.list.d/debian.sources \
++    && apt-get update && apt-get install -y \
++    curl \
++    libgl1 \
++    libglib2.0-0 \
++    fonts-wqy-microhei \
++    fonts-noto-cjk \
++    && rm -rf /var/lib/apt/lists/*
++
++# 升级 pip - 使用清华 PyPI 镜像
++RUN pip install --no-cache-dir --upgrade pip setuptools wheel -i https://pypi.tuna.tsinghua.edu.cn/simple
++
++# 安装科学计算库 - 使用清华镜像（移除 pandas 和 lmdb）
++RUN pip install --no-cache-dir -i https://pypi.tuna.tsinghua.edu.cn/simple \
++    numpy \
++    matplotlib \
++    scipy \
++    scikit-learn \
++    requests \
++    pillow \
++    opencv-python-headless \
++    ipykernel \
++    jupyter_client
++
++# 安装 PyTorch (CPU 版本) - 使用 PyTorch 官方镜像
++RUN pip install --no-cache-dir \
++    torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
++
++# 安装 HuggingFace Transformers 生态（LLM 预训练实验所需）
++RUN pip install --no-cache-dir -i https://pypi.tuna.tsinghua.edu.cn/simple \
++    transformers \
++    tokenizers \
++    datasets \
++    ipywidgets \
++    accelerate \
++    bitsandbytes
++
++# 复制 FC handler
++COPY local-server/src/fc_handler.py /workspace/fc_handler.py
++
++# 复制执行器和进度报告模块
++COPY local-server/src/kernel_runner.py /workspace/kernel_runner.py
++COPY local-server/src/dmla_progress.py /workspace/dmla_progress.py
++
++# 复制共享模块
++COPY local-server/shared /workspace/shared
++
++# 配置 matplotlib 中文字体支持
++RUN mkdir -p /root/.config/matplotlib && \
++    printf "font.family: sans-serif\nfont.sans-serif: WenQuanYi Micro Hei, WenQuanYi Zen Hei, DejaVu Sans\nfont.monospace: WenQuanYi Micro Hei Mono, WenQuanYi Zen Hei Mono, DejaVu Sans Mono\naxes.unicode_minus: False\n" > /root/.config/matplotlib/matplotlibrc && \
++    rm -rf /root/.cache/matplotlib
++
++# FC 需要的健康检查
++HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
++    CMD curl -f http://localhost:9000/api/sandbox/health || exit 1
++
++# 启动 FC handler
++CMD ["python3", "/workspace/fc_handler.py"]
+diff --git a/local-server/src/fc_handler.py b/local-server/src/fc_handler.py
+new file mode 100644
+index 0000000..fb146a4
+--- /dev/null
++++ b/local-server/src/fc_handler.py
+@@ -0,0 +1,125 @@
++#!/usr/bin/env python3
++"""
++FC (Function Compute) HTTP Handler
++轻量 HTTP 入口，接收代码执行请求并调用 kernel_runner.py
++"""
++
++import json
++import os
++import sys
++import traceback
++from http.server import HTTPServer, BaseHTTPRequestHandler
++
++# 将 /workspace 加入路径，确保可以 import kernel_runner
++sys.path.insert(0, '/workspace')
++
++# 延迟导入 kernel_runner（内部 import matplotlib，首次有开销）
++from kernel_runner import run_code
++
++FC_SERVER_PORT = int(os.environ.get('FC_SERVER_PORT', 9000))
++DEFAULT_TIMEOUT = 60
++
++
++class SandboxHandler(BaseHTTPRequestHandler):
++    """FC 沙箱 HTTP 请求处理器"""
++
++    def log_message(self, format, *args):
++        """重写日志方法，输出到 stderr（FC 日志采集）"""
++        print(f"[fc_handler] {format % args}", file=sys.stderr)
++
++    def _send_json(self, status_code, data):
++        """发送 JSON 响应"""
++        body = json.dumps(data, ensure_ascii=False).encode('utf-8')
++        self.send_response(status_code)
++        self.send_header('Content-Type', 'application/json; charset=utf-8')
++        self.send_header('Content-Length', str(len(body)))
++        self.end_headers()
++        self.wfile.write(body)
++
++    def do_GET(self):
++        """健康检查（Settings 测试连接使用）"""
++        self._send_json(200, {
++            'status': 'ok',
++            'mode': 'fc',
++            'timestamp': __import__('time').time()
++        })
++
++    def do_POST(self):
++        """代码执行"""
++        try:
++            content_length = int(self.headers.get('Content-Length', 0))
++            if content_length == 0:
++                self._send_json(400, {
++                    'success': False,
++                    'outputs': [{
++                        'type': 'error',
++                        'ename': 'EmptyRequest',
++                        'evalue': 'Request body is empty',
++                        'traceback': []
++                    }],
++                    'executionTime': 0
++                })
++                return
++
++            raw_body = self.rfile.read(content_length)
++            data = json.loads(raw_body)
++
++            code = data.get('code', '')
++            timeout = data.get('timeout', DEFAULT_TIMEOUT)
++            stream = data.get('stream', False)
++
++            if not code:
++                self._send_json(400, {
++                    'success': False,
++                    'outputs': [{
++                        'type': 'error',
++                        'ename': 'MissingCode',
++                        'evalue': 'No code provided in request',
++                        'traceback': []
++                    }],
++                    'executionTime': 0
++                })
++                return
++
++            result = run_code(code, timeout=timeout, stream=stream)
++
++            if stream:
++                self.send_response(200)
++                self.end_headers()
++            else:
++                self._send_json(200, result)
++
++        except json.JSONDecodeError:
++            self._send_json(400, {
++                'success': False,
++                'outputs': [{
++                    'type': 'error',
++                    'ename': 'InvalidJSON',
++                    'evalue': 'Request body is not valid JSON',
++                    'traceback': []
++                }],
++                'executionTime': 0
++            })
++        except Exception as e:
++            print(f"[fc_handler] Unexpected error: {e}", file=sys.stderr)
++            traceback.print_exc(file=sys.stderr)
++            self._send_json(500, {
++                'success': False,
++                'outputs': [{
++                    'type': 'error',
++                    'ename': type(e).__name__,
++                    'evalue': str(e),
++                    'traceback': traceback.format_exc().split('\n')
++                }],
++                'executionTime': 0
++            })
++
++
++def main():
++    server = HTTPServer(('0.0.0.0', FC_SERVER_PORT), SandboxHandler)
++    print(f"[fc_handler] Listening on port {FC_SERVER_PORT}", file=sys.stderr)
++    server.serve_forever()
++
++
++if __name__ == '__main__':
++    main()

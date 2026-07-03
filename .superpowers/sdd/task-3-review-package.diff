@@ -1,0 +1,393 @@
+# Task 3 Review Package
+
+## Commits
+474ab8a 修改 publish-docker.yml CI 工作流，新增 FC 函数计算流水线
+df0195a 创建 FC 函数计算专用 Dockerfile (dmla-sandbox:fc)
+215060d feat: 创建 FC Function Compute HTTP Handler 入口文件
+
+## Diff Stat
+ .github/workflows/publish-docker.yml | 124 +++++++++++++++++++++++++++++++++-
+ local-server/Dockerfile.sandbox.fc   |  73 ++++++++++++++++++++
+ local-server/src/fc_handler.py       | 125 +++++++++++++++++++++++++++++++++++
+ 3 files changed, 321 insertions(+), 1 deletion(-)
+
+## Full Diff
+diff --git a/.github/workflows/publish-docker.yml b/.github/workflows/publish-docker.yml
+index 9dc0df8..70d2647 100644
+--- a/.github/workflows/publish-docker.yml
++++ b/.github/workflows/publish-docker.yml
+@@ -168,40 +168,162 @@ jobs:
+           ACR_NS="fenixsoft"
+           IMAGE_NAME="dmla-sandbox"
+ 
+           docker tag ${IMAGE_NAME}:${{ matrix.type }} \
+             ${ACR_REGISTRY}/${ACR_NS}/${IMAGE_NAME}:${{ matrix.type }}
+           docker push ${ACR_REGISTRY}/${ACR_NS}/${IMAGE_NAME}:${{ matrix.type }}
+ 
+           echo "✅ Pushed to ACR:"
+           echo "  - ${ACR_REGISTRY}/${ACR_NS}/${IMAGE_NAME}:${{ matrix.type }}"
+ 
++  build-fc:
++    runs-on: ubuntu-latest
++    needs: build-images
++    steps:
++      - name: Free disk space
++        uses: jlumbroso/free-disk-space@main
++        with:
++          tool-cache: false
++          android: true
++          dotnet: true
++          haskell: true
++          large-packages: true
++          docker-images: true
++          swap-storage: true
++
++      - name: Checkout
++        uses: actions/checkout@v5
++
++      - name: Extract shared modules
++        run: npm run extract:shared
++
++      - name: Set up Docker Buildx
++        uses: docker/setup-buildx-action@v4
++
++      - name: Build FC image
++        uses: docker/build-push-action@v7
++        with:
++          context: .
++          file: local-server/Dockerfile.sandbox.fc
++          tags: ${{ env.IMAGE_NAME }}:fc
++          outputs: type=docker,dest=/tmp/image-fc.tar
++          cache-from: type=gha
++          cache-to: type=gha,mode=max
++
++      - name: Test FC image
++        run: |
++          docker load -i /tmp/image-fc.tar
++          docker run --rm -d --name test-fc ${{ env.IMAGE_NAME }}:fc
++          sleep 5
++          docker exec test-fc curl -f http://localhost:9000/api/sandbox/health
++          docker stop test-fc
++
++      - name: Upload FC image artifact
++        uses: actions/upload-artifact@v5
++        with:
++          name: image-fc
++          path: /tmp/image-fc.tar
++          retention-days: 1
++
++  push-acr-fc:
++    runs-on: ubuntu-latest
++    needs: build-fc
++    if: ${{ always() && github.event.inputs.skip_acr != 'true' && needs.build-fc.result == 'success' }}
++    steps:
++      - name: Free disk space
++        uses: jlumbroso/free-disk-space@main
++        with:
++          tool-cache: false
++          android: true
++          dotnet: true
++          haskell: true
++          large-packages: true
++          docker-images: true
++          swap-storage: true
++
++      - name: Download FC image artifact
++        uses: actions/download-artifact@v5
++        with:
++          name: image-fc
++          path: /tmp
++
++      - name: Load image
++        run: docker load -i /tmp/image-fc.tar
++
++      - name: Login to Alibaba Cloud ACR
++        uses: docker/login-action@v4
++        with:
++          registry: crpi-aani1ibpows293b8.cn-hangzhou.personal.cr.aliyuncs.com
++          username: ${{ secrets.ACR_USERNAME }}
++          password: ${{ secrets.ACR_PASSWORD }}
++
++      - name: Tag and push FC image to ACR
++        run: |
++          ACR_REGISTRY="crpi-aani1ibpows293b8.cn-hangzhou.personal.cr.aliyuncs.com"
++          ACR_NS="fenixsoft"
++          IMAGE_NAME="dmla-sandbox"
++
++          docker tag ${IMAGE_NAME}:fc \
++            ${ACR_REGISTRY}/${ACR_NS}/${IMAGE_NAME}:fc
++          docker push ${ACR_REGISTRY}/${ACR_NS}/${IMAGE_NAME}:fc
++
++          echo "✅ Pushed FC image to ACR:"
++          echo "  - ${ACR_REGISTRY}/${ACR_NS}/${IMAGE_NAME}:fc"
++
++  update-fc:
++    runs-on: ubuntu-latest
++    needs: [push-acr, push-acr-fc]
++    if: ${{ always() && needs.push-acr-fc.result == 'success' }}
++    steps:
++      - name: Setup Aliyun CLI
++        run: curl -fsSL https://aliyuncli.alicdn.com/install.sh | bash
++
++      - name: Configure Aliyun CLI
++        run: |
++          aliyun configure set \
++            --access-key-id ${{ secrets.ALIBABA_CLOUD_ACCESS_KEY_ID }} \
++            --access-key-secret ${{ secrets.ALIBABA_CLOUD_ACCESS_KEY_SECRET }} \
++            --region cn-hangzhou
++
++      - name: Update FC function image
++        run: |
++          IMAGE_URI="crpi-aani1ibpows293b8.cn-hangzhou.personal.cr.aliyuncs.com/fenixsoft/dmla-sandbox:fc"
++          aliyun fc update-function \
++            --service-name dmla \
++            --function-name sandbox-cpu \
++            --code "{\"imageUri\": \"$IMAGE_URI\"}"
++          echo "✅ FC function updated"
++
+   summary:
+     runs-on: ubuntu-latest
+-    needs: [build-images, push-dockerhub, push-acr]
++    needs: [build-images, build-fc, push-dockerhub, push-acr, push-acr-fc, update-fc]
+     if: ${{ always() }}
+     steps:
+       - name: Summary
+         run: |
+           echo "## 🐳 Docker 镜像发布完成" >> $GITHUB_STEP_SUMMARY
+           echo "" >> $GITHUB_STEP_SUMMARY
+ 
+           echo "#### Docker Hub" >> $GITHUB_STEP_SUMMARY
+           echo "- icyfenix/dmla-sandbox:cpu" >> $GITHUB_STEP_SUMMARY
+           echo "- icyfenix/dmla-sandbox:gpu" >> $GITHUB_STEP_SUMMARY
+           echo "" >> $GITHUB_STEP_SUMMARY
+ 
+           echo "#### 阿里云 ACR（国内加速）" >> $GITHUB_STEP_SUMMARY
+           echo "- crpi-aani1ibpows293b8.cn-hangzhou.personal.cr.aliyuncs.com/fenixsoft/dmla-sandbox:cpu" >> $GITHUB_STEP_SUMMARY
+           echo "- crpi-aani1ibpows293b8.cn-hangzhou.personal.cr.aliyuncs.com/fenixsoft/dmla-sandbox:gpu" >> $GITHUB_STEP_SUMMARY
+           echo "" >> $GITHUB_STEP_SUMMARY
+ 
++          echo "#### 阿里云 FC（Serverless 沙箱）" >> $GITHUB_STEP_SUMMARY
++          echo "- crpi-aani1ibpows293b8.cn-hangzhou.personal.cr.aliyuncs.com/fenixsoft/dmla-sandbox:fc" >> $GITHUB_STEP_SUMMARY
++          echo "" >> $GITHUB_STEP_SUMMARY
++
+           echo "### 拉取命令" >> $GITHUB_STEP_SUMMARY
+           echo '```bash' >> $GITHUB_STEP_SUMMARY
+           echo '# Docker Hub（全球）' >> $GITHUB_STEP_SUMMARY
+           echo 'docker pull icyfenix/dmla-sandbox:gpu' >> $GITHUB_STEP_SUMMARY
+           echo 'docker pull icyfenix/dmla-sandbox:cpu' >> $GITHUB_STEP_SUMMARY
+           echo '' >> $GITHUB_STEP_SUMMARY
+           echo '# 阿里云 ACR（国内加速）' >> $GITHUB_STEP_SUMMARY
+           echo 'docker pull crpi-aani1ibpows293b8.cn-hangzhou.personal.cr.aliyuncs.com/fenixsoft/dmla-sandbox:gpu' >> $GITHUB_STEP_SUMMARY
+           echo 'docker pull crpi-aani1ibpows293b8.cn-hangzhou.personal.cr.aliyuncs.com/fenixsoft/dmla-sandbox:cpu' >> $GITHUB_STEP_SUMMARY
+           echo '```' >> $GITHUB_STEP_SUMMARY
+\ No newline at end of file
+diff --git a/local-server/Dockerfile.sandbox.fc b/local-server/Dockerfile.sandbox.fc
+new file mode 100644
+index 0000000..36fd3b0
+--- /dev/null
++++ b/local-server/Dockerfile.sandbox.fc
+@@ -0,0 +1,73 @@
++# ============================================
++# DMLA FC Sandbox Image (Serverless CPU)
++# 适用于阿里云函数计算 Custom Container 运行时
++# 镜像名称: dmla-sandbox:fc
++# ============================================
++
++FROM python:3.11-slim
++
++# 设置环境变量
++ENV PYTHONUNBUFFERED=1
++ENV PYTHONDONTWRITEBYTECODE=1
++ENV PYTHONPATH=/workspace
++ENV FC_SERVER_PORT=9000
++
++# 替换为阿里云镜像源
++RUN sed -i 's|http://deb.debian.org|http://mirrors.aliyun.com|g' /etc/apt/sources.list.d/debian.sources \
++    && apt-get update && apt-get install -y \
++    curl \
++    libgl1 \
++    libglib2.0-0 \
++    fonts-wqy-microhei \
++    fonts-noto-cjk \
++    && rm -rf /var/lib/apt/lists/*
++
++# 升级 pip - 使用清华 PyPI 镜像
++RUN pip install --no-cache-dir --upgrade pip setuptools wheel -i https://pypi.tuna.tsinghua.edu.cn/simple
++
++# 安装科学计算库 - 使用清华镜像（移除 pandas 和 lmdb）
++RUN pip install --no-cache-dir -i https://pypi.tuna.tsinghua.edu.cn/simple \
++    numpy \
++    matplotlib \
++    scipy \
++    scikit-learn \
++    requests \
++    pillow \
++    opencv-python-headless \
++    ipykernel \
++    jupyter_client
++
++# 安装 PyTorch (CPU 版本) - 使用 PyTorch 官方镜像
++RUN pip install --no-cache-dir \
++    torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
++
++# 安装 HuggingFace Transformers 生态（LLM 预训练实验所需）
++RUN pip install --no-cache-dir -i https://pypi.tuna.tsinghua.edu.cn/simple \
++    transformers \
++    tokenizers \
++    datasets \
++    ipywidgets \
++    accelerate \
++    bitsandbytes
++
++# 复制 FC handler
++COPY local-server/src/fc_handler.py /workspace/fc_handler.py
++
++# 复制执行器和进度报告模块
++COPY local-server/src/kernel_runner.py /workspace/kernel_runner.py
++COPY local-server/src/dmla_progress.py /workspace/dmla_progress.py
++
++# 复制共享模块
++COPY local-server/shared /workspace/shared
++
++# 配置 matplotlib 中文字体支持
++RUN mkdir -p /root/.config/matplotlib && \
++    printf "font.family: sans-serif\nfont.sans-serif: WenQuanYi Micro Hei, WenQuanYi Zen Hei, DejaVu Sans\nfont.monospace: WenQuanYi Micro Hei Mono, WenQuanYi Zen Hei Mono, DejaVu Sans Mono\naxes.unicode_minus: False\n" > /root/.config/matplotlib/matplotlibrc && \
++    rm -rf /root/.cache/matplotlib
++
++# FC 需要的健康检查
++HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
++    CMD curl -f http://localhost:9000/api/sandbox/health || exit 1
++
++# 启动 FC handler
++CMD ["python3", "/workspace/fc_handler.py"]
+diff --git a/local-server/src/fc_handler.py b/local-server/src/fc_handler.py
+new file mode 100644
+index 0000000..fb146a4
+--- /dev/null
++++ b/local-server/src/fc_handler.py
+@@ -0,0 +1,125 @@
++#!/usr/bin/env python3
++"""
++FC (Function Compute) HTTP Handler
++轻量 HTTP 入口，接收代码执行请求并调用 kernel_runner.py
++"""
++
++import json
++import os
++import sys
++import traceback
++from http.server import HTTPServer, BaseHTTPRequestHandler
++
++# 将 /workspace 加入路径，确保可以 import kernel_runner
++sys.path.insert(0, '/workspace')
++
++# 延迟导入 kernel_runner（内部 import matplotlib，首次有开销）
++from kernel_runner import run_code
++
++FC_SERVER_PORT = int(os.environ.get('FC_SERVER_PORT', 9000))
++DEFAULT_TIMEOUT = 60
++
++
++class SandboxHandler(BaseHTTPRequestHandler):
++    """FC 沙箱 HTTP 请求处理器"""
++
++    def log_message(self, format, *args):
++        """重写日志方法，输出到 stderr（FC 日志采集）"""
++        print(f"[fc_handler] {format % args}", file=sys.stderr)
++
++    def _send_json(self, status_code, data):
++        """发送 JSON 响应"""
++        body = json.dumps(data, ensure_ascii=False).encode('utf-8')
++        self.send_response(status_code)
++        self.send_header('Content-Type', 'application/json; charset=utf-8')
++        self.send_header('Content-Length', str(len(body)))
++        self.end_headers()
++        self.wfile.write(body)
++
++    def do_GET(self):
++        """健康检查（Settings 测试连接使用）"""
++        self._send_json(200, {
++            'status': 'ok',
++            'mode': 'fc',
++            'timestamp': __import__('time').time()
++        })
++
++    def do_POST(self):
++        """代码执行"""
++        try:
++            content_length = int(self.headers.get('Content-Length', 0))
++            if content_length == 0:
++                self._send_json(400, {
++                    'success': False,
++                    'outputs': [{
++                        'type': 'error',
++                        'ename': 'EmptyRequest',
++                        'evalue': 'Request body is empty',
++                        'traceback': []
++                    }],
++                    'executionTime': 0
++                })
++                return
++
++            raw_body = self.rfile.read(content_length)
++            data = json.loads(raw_body)
++
++            code = data.get('code', '')
++            timeout = data.get('timeout', DEFAULT_TIMEOUT)
++            stream = data.get('stream', False)
++
++            if not code:
++                self._send_json(400, {
++                    'success': False,
++                    'outputs': [{
++                        'type': 'error',
++                        'ename': 'MissingCode',
++                        'evalue': 'No code provided in request',
++                        'traceback': []
++                    }],
++                    'executionTime': 0
++                })
++                return
++
++            result = run_code(code, timeout=timeout, stream=stream)
++
++            if stream:
++                self.send_response(200)
++                self.end_headers()
++            else:
++                self._send_json(200, result)
++
++        except json.JSONDecodeError:
++            self._send_json(400, {
++                'success': False,
++                'outputs': [{
++                    'type': 'error',
++                    'ename': 'InvalidJSON',
++                    'evalue': 'Request body is not valid JSON',
++                    'traceback': []
++                }],
++                'executionTime': 0
++            })
++        except Exception as e:
++            print(f"[fc_handler] Unexpected error: {e}", file=sys.stderr)
++            traceback.print_exc(file=sys.stderr)
++            self._send_json(500, {
++                'success': False,
++                'outputs': [{
++                    'type': 'error',
++                    'ename': type(e).__name__,
++                    'evalue': str(e),
++                    'traceback': traceback.format_exc().split('\n')
++                }],
++                'executionTime': 0
++            })
++
++
++def main():
++    server = HTTPServer(('0.0.0.0', FC_SERVER_PORT), SandboxHandler)
++    print(f"[fc_handler] Listening on port {FC_SERVER_PORT}", file=sys.stderr)
++    server.serve_forever()
++
++
++if __name__ == '__main__':
++    main()

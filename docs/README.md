@@ -63,7 +63,7 @@ footer: CC-BY-NC-SA-4.0 Licensed | Copyright © 2026
 - **在线阅读**：本文档在线阅读地址为 [https://ai.icyfenix.cn](https://ai.icyfenix.cn) 。
 网站由 GitHub Pages 提供网站存储空间；由 GitHub Actions 提供的持续集成服务实时把 Git 仓库的 Markdown 文档编译同步至网站，并推送至 CDN 提供国内的访问加速；由 GitHub Discussions 与 [Giscus](https://github.com/giscus/giscus) 提供讨论服务。
 
-- **代码沙箱**：本文档内包含大量可在网页中运行的代码实践，用于演示机器学习算法以及进行模型训练。对于第一部分数学基础和第二部分经典统计学习算法，只需纯 CPU 环境即可运行；对于深度学习及之后的内容，部分模型训练实验需要 GPU 支持（目前基于 PyTorch with CUDA 13.0）。更多详情请参见[构建沙箱环境](sandbox.md)。
+- **代码沙箱**：本文档内包含大量可在网页中运行的代码实践，用于演示机器学习算法以及进行模型训练。对于第一部分数学基础和第二部分经典统计学习算法，只需纯 CPU 环境即可运行；对于深度学习及之后的内容，部分模型训练实验需要 GPU 支持（目前基于 PyTorch with CUDA 13.0）。更多详情请参见[构建沙箱环境](./appendixes/sandbox.md)。
   ``` shell
   # 安装并运行沙箱环境
   npx @icyfenix-dmla/install@latest

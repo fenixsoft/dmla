@@ -1235,9 +1235,9 @@ git commit -m "chore: FC Serverless 迁移完成，集成验证通过
 Co-Authored-By: Claude <noreply@anthropic.com>"
 ```
 
-- [ ] **Step 5: 安全清理 —— 禁用/轮换 AccessKey**
+- [ ] **Step 5: CI 验证**
 
-部署验证完成后，**务必**在阿里云 RAM 控制台禁用或删除本次使用的 AccessKey（`REDACTED_KEY_ID`），生成新 Key 供 CI 使用。当前 AccessKey 已在聊天记录中暴露。
+确认 GitHub Actions 中 `ALIBABA_CLOUD_ACCESS_KEY_ID` 和 `ALIBABA_CLOUD_ACCESS_KEY_SECRET` secrets 已配置正确。
 
 ---
 

@@ -193,14 +193,23 @@ jobs:
       - name: Install FC CLI plugin
         run: aliyun plugin install --names aliyun-cli-fc
 
+      - name: Tag and push FC timestamp image
+        run: |
+          ACR="crpi-aani1ibpows293b8.cn-hangzhou.personal.cr.aliyuncs.com/fenixsoft"
+          TIMESTAMP_TAG="cpu-$(date +%Y%m%d-%H%M%S)"
+          docker tag dmla-sandbox:cpu ${ACR}/dmla-sandbox:${TIMESTAMP_TAG}
+          docker push ${ACR}/dmla-sandbox:${TIMESTAMP_TAG}
+          echo "FC_TAG=${TIMESTAMP_TAG}" >> $GITHUB_ENV
+          echo "✅ Pushed FC timestamp tag: ${TIMESTAMP_TAG}"
+
       - name: Update FC function image
         run: |
-          IMAGE_URI="crpi-aani1ibpows293b8.cn-hangzhou.personal.cr.aliyuncs.com/fenixsoft/dmla-sandbox:cpu"
+          IMAGE_URI="crpi-aani1ibpows293b8.cn-hangzhou.personal.cr.aliyuncs.com/fenixsoft/dmla-sandbox:${FC_TAG}"
           CONFIG='{"image":"'${IMAGE_URI}'","port":9000,"command":["python3","/workspace/fc_handler.py"]}'
           aliyun fc update-function \
             --function-name sandbox-cpu \
             --custom-container-config "$CONFIG"
-          echo "✅ FC function updated"
+          echo "✅ FC function updated to ${FC_TAG}"
 
   summary:
     runs-on: ubuntu-latest

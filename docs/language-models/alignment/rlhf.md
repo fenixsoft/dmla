@@ -241,12 +241,12 @@ RLHF 在打开偏好学习大门的同时也引入了新的问题，催生了一
 
    </details>
 
-2. 推导策略梯度中的对数似然技巧：证明
+2. 推导策略梯度中的对数似然技巧，证明：
+
 
    $$\nabla_\theta \mathbb{E}_{y \sim \pi_\theta}[r(x, y)] = \mathbb{E}_{y \sim \pi_\theta} \left[ r(x, y) \cdot \nabla_\theta \log \pi_\theta(y|x) \right]$$
 
    提示：先将期望展开为求和（或积分）形式，再对参数 $\theta$ 求梯度，利用 $\nabla_\theta \log f(\theta) = \frac{\nabla_\theta f(\theta)}{f(\theta)}$ 将梯度移入期望内部。
-
    <details>
    <summary>参考答案</summary>
 

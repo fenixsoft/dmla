@@ -601,21 +601,31 @@ aliyun fc GET /2023-03-30/functions/sandbox-cpu/triggers/http-trigger
 
 **镜像更新流程（每次代码变更后）：**
 ```bash
-# 1. 本地构建并推送新镜像
-docker build -f local-server/Dockerfile.sandbox.cpu -t dmla-sandbox:cpu .
+# 1. 构建并推送（同时打 :cpu 和时间戳 tag）
+docker build --provenance=false --platform linux/amd64 \
+  -f local-server/Dockerfile.sandbox.cpu -t dmla-sandbox:cpu .
 ACR="crpi-aani1ibpows293b8.cn-hangzhou.personal.cr.aliyuncs.com"
 echo '[efflying]' | docker login --username=icyfenix --password-stdin ${ACR}
 docker tag dmla-sandbox:cpu ${ACR}/fenixsoft/dmla-sandbox:cpu
 docker push ${ACR}/fenixsoft/dmla-sandbox:cpu
 
-# 2. 更新 FC 函数（触发新部署）
-CONFIG='{"image":"crpi-aani1ibpows293b8.cn-hangzhou.personal.cr.aliyuncs.com/fenixsoft/dmla-sandbox:cpu","port":9000,"command":["python3","/workspace/fc_handler.py"]}'
+# 推送时间戳 tag（FC 需要唯一 tag 才能触发重新解析）
+FC_TAG="cpu-$(date +%Y%m%d-%H%M%S)"
+docker tag dmla-sandbox:cpu ${ACR}/fenixsoft/dmla-sandbox:${FC_TAG}
+docker push ${ACR}/fenixsoft/dmla-sandbox:${FC_TAG}
+
+# 2. 用时间戳 tag 更新 FC 函数
+CONFIG='{"image":"crpi-aani1ibpows293b8.cn-hangzhou.personal.cr.aliyuncs.com/fenixsoft/dmla-sandbox:'${FC_TAG}'","port":9000,"command":["python3","/workspace/fc_handler.py"]}'
 aliyun fc update-function --function-name sandbox-cpu --custom-container-config "$CONFIG"
 
-# 3. 等待预热完成
-# 轮询直到 lastUpdateStatus == "Successful"
+# 3. 等待预热完成（lastUpdateStatus == "Successful"）
 aliyun fc GET /2023-03-30/functions/sandbox-cpu
 ```
+
+**重要：FC 镜像 tag 缓存机制**
+- FC 对同一 image URI 会缓存解析结果，重复推送同 tag 不会触发新部署
+- 必须每次使用唯一 tag（如 cpu-YYYYMMDD-HHMMSS）才能强制 FC 重新拉取
+- `:cpu` tag 仅供 docker pull 使用，FC 部署使用时间戳 tag
 **镜像构建注意事项（重要）：**
 - 构建 FC 镜像时必须禁用 provenance：`docker build --provenance=false --platform linux/amd64`
 - FC 不支持 OCI image index 格式（`application/vnd.oci.image.index.v1+json`）

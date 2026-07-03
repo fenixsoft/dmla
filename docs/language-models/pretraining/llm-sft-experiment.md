@@ -7,7 +7,7 @@
 在开始实验之前，请确保已完成以下准备工作：
 
 1. 已完成 [Transformer 模型训练实验](../architecture-basics/llm-pretrain-experiment.md)，模型权重文件 `pretrain_768.pth` 已在数据目录中正确生成。
-2. 已[挂载数据目录](../../sandbox.md#数据管理)并下载好 SFT 训练语料。与预训练实验相同，语料数据集来自 [MiniMind](https://github.com/jingyaogong/minimind) 开源项目。
+2. 已[挂载数据目录](../../appendixes/sandbox.md#数据管理)并下载好 SFT 训练语料。与预训练实验相同，语料数据集来自 [MiniMind](https://github.com/jingyaogong/minimind) 开源项目。
 
 ```bash
 # 选择 "下载数据集" -> 选择 "MiniMind SFT (LLM监督微调语料)"
