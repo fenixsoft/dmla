@@ -4,7 +4,6 @@ FC (Function Compute) HTTP Handler
 轻量 HTTP 入口，接收代码执行请求并调用 kernel_runner.py
 """
 
-import io
 import json
 import os
 import sys
@@ -96,19 +95,23 @@ class SandboxHandler(BaseHTTPRequestHandler):
                 })
                 return
 
-            # 流式输出：捕获 run_code(stream=True) 写入 stdout 的 JSON Lines
-            old_stdout = sys.stdout
-            capture = io.StringIO()
-            sys.stdout = capture
-            try:
-                run_code(code, timeout=timeout, stream=True)
-            finally:
-                sys.stdout = old_stdout
+            # 用非流式获取完整结果，然后逐条输出为 JSON Lines（客户端期望流式格式）
+            result = run_code(code, timeout=timeout)
 
-            body = capture.getvalue().encode('utf-8')
+            lines = []
+            for output in result.get('outputs', []):
+                lines.append(json.dumps(output, ensure_ascii=False))
+            # 最终结果消息
+            lines.append(json.dumps({
+                'type': 'result',
+                'success': result.get('success', True),
+                'executionTime': result.get('executionTime', 0)
+            }, ensure_ascii=False))
+
+            body = '\n'.join(lines).encode('utf-8')
             self.send_response(200)
             self._set_cors_headers()
-            self.send_header('Content-Type', 'application/json; charset=utf-8')
+            self.send_header('Content-Type', 'application/x-ndjson; charset=utf-8')
             self.send_header('Content-Length', str(len(body)))
             self.end_headers()
             self.wfile.write(body)
