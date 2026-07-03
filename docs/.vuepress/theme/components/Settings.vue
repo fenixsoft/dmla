@@ -140,6 +140,7 @@ import { ref, computed, watch, onMounted } from 'vue'
 import { ClientOnly } from 'vuepress/client'
 import { HIGHLIGHT_THEMES, DEFAULT_THEME } from '../config/highlightThemes.js'
 import { getSiteConfig, saveSiteConfig } from '../utils/configMigration.js'
+import { FC_DEFAULT_URL } from '../../plugins/runnable-code/sandbox-config.js'
 
 const props = defineProps({
   visible: {
@@ -158,11 +159,12 @@ const endpoint = ref('')
 const connectionStatus = ref('unknown')
 const testing = ref(false)
 
-// FC 模式相关
-const FC_DEFAULT_URL = 'https://sandbox-cpu-dcheerjqde.cn-hangzhou.fcapp.run'
-
+// FC 模式相关（FC_DEFAULT_URL 从 sandbox-config.js 导入）
 // 沙箱模式: 'fc' | 'custom'
 const sandboxMode = ref('fc')
+// 分别记忆两种模式的地址，切换时不丢失
+const customEndpoint = ref('http://localhost:3001')
+const fcEndpoint = ref(FC_DEFAULT_URL)
 
 // 高亮主题配置
 const highlightThemes = HIGHLIGHT_THEMES
@@ -180,18 +182,23 @@ const previewUrl = computed(() => {
 function loadConfig() {
   const config = getSiteConfig()
   sandboxMode.value = config.sandboxMode || 'fc'
-  endpoint.value = config.sandboxEndpoint || 'http://localhost:3001'
-
-  if (sandboxMode.value === 'fc') {
-    endpoint.value = FC_DEFAULT_URL
-  }
+  // 恢复分别保存的地址
+  customEndpoint.value = config.customEndpoint || 'http://localhost:3001'
+  fcEndpoint.value = config.fcEndpoint || FC_DEFAULT_URL
+  // 根据当前模式设置显示地址
+  endpoint.value = sandboxMode.value === 'fc' ? fcEndpoint.value : customEndpoint.value
 
   selectedTheme.value = config.highlightTheme || DEFAULT_THEME
 }
 
 function onModeChange() {
+  // 切换前保存当前地址，然后切换到新模式对应地址
   if (sandboxMode.value === 'fc') {
-    endpoint.value = FC_DEFAULT_URL
+    customEndpoint.value = endpoint.value
+    endpoint.value = fcEndpoint.value
+  } else {
+    fcEndpoint.value = endpoint.value
+    endpoint.value = customEndpoint.value
   }
   resetStatus()
 }
@@ -243,9 +250,19 @@ async function testConnection() {
 
 // 保存配置
 function save() {
+  const mode = sandboxMode.value
+  // 保存前更新当前模式地址
+  if (mode === 'fc') {
+    fcEndpoint.value = endpoint.value
+  } else {
+    customEndpoint.value = endpoint.value.trim() || 'http://localhost:3001'
+  }
+
   const config = {
-    sandboxMode: sandboxMode.value,
-    sandboxEndpoint: sandboxMode.value === 'fc' ? FC_DEFAULT_URL : (endpoint.value.trim() || 'http://localhost:3001'),
+    sandboxMode: mode,
+    sandboxEndpoint: mode === 'fc' ? fcEndpoint.value : customEndpoint.value,
+    fcEndpoint: fcEndpoint.value,
+    customEndpoint: customEndpoint.value,
     highlightTheme: selectedTheme.value
   }
 

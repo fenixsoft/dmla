@@ -8,7 +8,8 @@
 import { reactive } from 'vue'
 
 const STORAGE_KEY = 'site-config'  // 使用统一的存储键
-const DEFAULT_ENDPOINT = 'http://localhost:3001'
+const FC_DEFAULT_URL = 'https://sandbox-cpu-dcheerjqde.cn-hangzhou.fcapp.run'
+const LOCAL_DEFAULT_URL = 'http://localhost:3001'
 
 // ==================== 全局运行状态 ====================
 // 用于防止多段代码同时运行，支持中止操作
@@ -80,27 +81,30 @@ export async function abortCurrentExecution(endpoint) {
 
 /**
  * 获取沙箱配置
- * @returns {{ endpoint: string }}
+ * @returns {{ endpoint: string, mode: string }}
  */
 export function getSandboxConfig() {
   if (typeof window === 'undefined') {
-    return { endpoint: DEFAULT_ENDPOINT }
+    return { endpoint: FC_DEFAULT_URL, mode: 'fc' }
   }
 
   try {
     const stored = localStorage.getItem(STORAGE_KEY)
     if (stored) {
       const config = JSON.parse(stored)
-      // site-config 使用 sandboxEndpoint 字段
-      return {
-        endpoint: config.sandboxEndpoint || config.endpoint || DEFAULT_ENDPOINT
-      }
+      const mode = config.sandboxMode || 'fc'
+      // 根据模式选择对应地址，优先使用已保存的值
+      const endpoint = mode === 'fc'
+        ? (config.fcEndpoint || FC_DEFAULT_URL)
+        : (config.customEndpoint || config.sandboxEndpoint || config.endpoint || LOCAL_DEFAULT_URL)
+      return { endpoint, mode }
     }
   } catch {
     // 忽略解析错误
   }
 
-  return { endpoint: DEFAULT_ENDPOINT }
+  // 无已保存配置，默认 FC 模式
+  return { endpoint: FC_DEFAULT_URL, mode: 'fc' }
 }
 
 /**
@@ -112,30 +116,37 @@ export function getSandboxEndpoint() {
 }
 
 /**
- * 设置沙箱配置
- * @param {{ endpoint: string }} config
+ * 设置沙箱配置，分别保存 FC 和自定义地址
+ * @param {{ endpoint: string, sandboxMode?: string }} config
  */
 export function setSandboxConfig(config) {
   if (typeof window === 'undefined') {
     return
   }
 
-  // 读取现有配置，只更新 endpoint 部分
   try {
     const existing = localStorage.getItem(STORAGE_KEY)
     const existingConfig = existing ? JSON.parse(existing) : {}
 
-    // 合并配置（保留其他字段如 highlightTheme）
+    const mode = config.sandboxMode || 'fc'
+    const endpoint = config.endpoint || (mode === 'fc' ? FC_DEFAULT_URL : LOCAL_DEFAULT_URL)
+
+    // 合并配置，分别记忆两种模式的地址
     const newConfig = {
       ...existingConfig,
-      sandboxEndpoint: config.endpoint || DEFAULT_ENDPOINT,
-      sandboxMode: config.sandboxMode || 'custom'
+      sandboxMode: mode,
+      sandboxEndpoint: endpoint,
+    }
+    if (mode === 'fc') {
+      newConfig.fcEndpoint = endpoint
+    } else {
+      newConfig.customEndpoint = endpoint
     }
 
     localStorage.setItem(STORAGE_KEY, JSON.stringify(newConfig))
 
     // 更新全局配置
-    window.__SANDBOX_CONFIG__ = { endpoint: newConfig.sandboxEndpoint, mode: newConfig.sandboxMode }
+    window.__SANDBOX_CONFIG__ = { endpoint, mode }
     window.__SITE_CONFIG__ = newConfig
   } catch (error) {
     console.error('[Sandbox Config] 保存配置失败:', error)
@@ -157,6 +168,8 @@ export function initSandboxConfig() {
 // 自动初始化
 initSandboxConfig()
 
+export { FC_DEFAULT_URL }
+
 export default {
   getSandboxConfig,
   getSandboxEndpoint,
@@ -165,5 +178,6 @@ export default {
   globalRunningState,
   startExecution,
   endExecution,
-  abortCurrentExecution
+  abortCurrentExecution,
+  FC_DEFAULT_URL
 }
