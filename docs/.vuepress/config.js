@@ -299,8 +299,8 @@ export default {
                 { text: '自动化调参', link: '/ai-infra-engineering/mlops/hyperparameter-optimization' },
                 // { text: '模型性能监控'},
                 { text: '模型性能监控', link: '/ai-infra-engineering/mlops/model-performance-monitoring' },
-                // { text: '漂移检测'},
-                { text: '漂移检测', link: '/ai-infra-engineering/mlops/drift-detection' },
+                { text: '漂移检测'},
+                // { text: '漂移检测', link: '/ai-infra-engineering/mlops/drift-detection' },
               ]
             },
           ]

@@ -39,8 +39,8 @@
                       value="fc"
                       @change="onModeChange"
                     />
-                    <span class="mode-label">FC（默认）</span>
-                    <span class="mode-hint">云端 Serverless，闲置免费</span>
+                    <span class="mode-label">Serverless 函数</span>
+                    <span class="mode-hint">无需部署，可运行 Python 片段</span>
                   </label>
                   <label class="mode-option" :class="{ active: sandboxMode === 'custom' }">
                     <input
@@ -49,14 +49,14 @@
                       value="custom"
                       @change="onModeChange"
                     />
-                    <span class="mode-label">自定义地址</span>
-                    <span class="mode-hint">自建沙箱服务</span>
+                    <span class="mode-label">自定义沙箱</span>
+                    <span class="mode-hint">自行部署 DMLA 沙箱环境</span>
                   </label>
                 </div>
               </div>
 
               <div v-if="sandboxMode === 'fc'" class="form-group">
-                <label for="sandbox-endpoint">FC 沙箱地址</label>
+                <label for="sandbox-endpoint">函数服务地址</label>
                 <input
                   id="sandbox-endpoint"
                   :value="FC_DEFAULT_URL"
@@ -64,7 +64,7 @@
                   readonly
                   class="readonly-input"
                 />
-                <p class="help-text">阿里云函数计算提供，无需自行部署</p>
+                <p class="help-text">因费用原因未开放 GPU 支持，训练模型（工程实训章节）请自行部署 DMLA 沙箱</p>
               </div>
 
               <div v-if="sandboxMode === 'custom'" class="form-group">
@@ -76,7 +76,7 @@
                   placeholder="http://localhost:3001"
                   @input="resetStatus"
                 />
-                <p class="help-text">用于执行教程中的 Python 代码</p>
+                <p class="help-text">用户自行部署代码沙箱，可参见<a href="/appendixes/sandbox.html" target="_blank">环境构建说明</a></p>
               </div>
 
               <div class="connection-status">
