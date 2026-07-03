@@ -175,104 +175,10 @@ jobs:
           echo "✅ Pushed to ACR:"
           echo "  - ${ACR_REGISTRY}/${ACR_NS}/${IMAGE_NAME}:${{ matrix.type }}"
 
-  build-fc:
-    runs-on: ubuntu-latest
-    needs: build-images
-    steps:
-      - name: Free disk space
-        uses: jlumbroso/free-disk-space@main
-        with:
-          tool-cache: false
-          android: true
-          dotnet: true
-          haskell: true
-          large-packages: true
-          docker-images: true
-          swap-storage: true
-
-      - name: Checkout
-        uses: actions/checkout@v5
-
-      - name: Extract shared modules
-        run: npm run extract:shared
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v4
-
-      - name: Build FC image
-        uses: docker/build-push-action@v7
-        with:
-          context: .
-          file: local-server/Dockerfile.sandbox.fc
-          tags: ${{ env.IMAGE_NAME }}:fc
-          outputs: type=docker,dest=/tmp/image-fc.tar
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-      - name: Test FC image
-        run: |
-          docker load -i /tmp/image-fc.tar
-          docker run --rm -d --name test-fc ${{ env.IMAGE_NAME }}:fc
-          sleep 5
-          docker exec test-fc curl -f http://localhost:9000/api/sandbox/health
-          docker stop test-fc
-
-      - name: Upload FC image artifact
-        uses: actions/upload-artifact@v5
-        with:
-          name: image-fc
-          path: /tmp/image-fc.tar
-          retention-days: 1
-
-  push-acr-fc:
-    runs-on: ubuntu-latest
-    needs: build-fc
-    if: ${{ always() && github.event.inputs.skip_acr != 'true' && needs.build-fc.result == 'success' }}
-    steps:
-      - name: Free disk space
-        uses: jlumbroso/free-disk-space@main
-        with:
-          tool-cache: false
-          android: true
-          dotnet: true
-          haskell: true
-          large-packages: true
-          docker-images: true
-          swap-storage: true
-
-      - name: Download FC image artifact
-        uses: actions/download-artifact@v5
-        with:
-          name: image-fc
-          path: /tmp
-
-      - name: Load image
-        run: docker load -i /tmp/image-fc.tar
-
-      - name: Login to Alibaba Cloud ACR
-        uses: docker/login-action@v4
-        with:
-          registry: crpi-aani1ibpows293b8.cn-hangzhou.personal.cr.aliyuncs.com
-          username: ${{ secrets.ACR_USERNAME }}
-          password: ${{ secrets.ACR_PASSWORD }}
-
-      - name: Tag and push FC image to ACR
-        run: |
-          ACR_REGISTRY="crpi-aani1ibpows293b8.cn-hangzhou.personal.cr.aliyuncs.com"
-          ACR_NS="fenixsoft"
-          IMAGE_NAME="dmla-sandbox"
-
-          docker tag ${IMAGE_NAME}:fc \
-            ${ACR_REGISTRY}/${ACR_NS}/${IMAGE_NAME}:fc
-          docker push ${ACR_REGISTRY}/${ACR_NS}/${IMAGE_NAME}:fc
-
-          echo "✅ Pushed FC image to ACR:"
-          echo "  - ${ACR_REGISTRY}/${ACR_NS}/${IMAGE_NAME}:fc"
-
   update-fc:
     runs-on: ubuntu-latest
-    needs: [push-acr, push-acr-fc]
-    if: ${{ always() && needs.push-acr-fc.result == 'success' }}
+    needs: push-acr
+    if: ${{ always() && needs.push-acr.result == 'success' }}
     steps:
       - name: Setup Aliyun CLI
         run: curl -fsSL https://aliyuncli.alicdn.com/install.sh | bash
@@ -289,15 +195,16 @@ jobs:
 
       - name: Update FC function image
         run: |
-          IMAGE_URI="crpi-aani1ibpows293b8.cn-hangzhou.personal.cr.aliyuncs.com/fenixsoft/dmla-sandbox:fc"
+          IMAGE_URI="crpi-aani1ibpows293b8.cn-hangzhou.personal.cr.aliyuncs.com/fenixsoft/dmla-sandbox:cpu"
+          CONFIG='{"image":"'${IMAGE_URI}'","port":9000,"command":["python3","/workspace/fc_handler.py"]}'
           aliyun fc update-function \
             --function-name sandbox-cpu \
-            --custom-container-config "image=${IMAGE_URI} port=9000 accelerationType=Default"
+            --custom-container-config "$CONFIG"
           echo "✅ FC function updated"
 
   summary:
     runs-on: ubuntu-latest
-    needs: [build-images, build-fc, push-dockerhub, push-acr, push-acr-fc, update-fc]
+    needs: [build-images, push-dockerhub, push-acr, update-fc]
     if: ${{ always() }}
     steps:
       - name: Summary
