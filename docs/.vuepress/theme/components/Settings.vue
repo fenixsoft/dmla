@@ -30,6 +30,44 @@
             <!-- 沙箱服务配置 Tab -->
             <div v-show="activeTab === 'sandbox'" class="tab-content">
               <div class="form-group">
+                <label>服务模式</label>
+                <div class="mode-selector">
+                  <label class="mode-option" :class="{ active: sandboxMode === 'fc' }">
+                    <input
+                      type="radio"
+                      v-model="sandboxMode"
+                      value="fc"
+                      @change="onModeChange"
+                    />
+                    <span class="mode-label">FC（默认）</span>
+                    <span class="mode-hint">云端 Serverless，闲置免费</span>
+                  </label>
+                  <label class="mode-option" :class="{ active: sandboxMode === 'custom' }">
+                    <input
+                      type="radio"
+                      v-model="sandboxMode"
+                      value="custom"
+                      @change="onModeChange"
+                    />
+                    <span class="mode-label">自定义地址</span>
+                    <span class="mode-hint">自建沙箱服务</span>
+                  </label>
+                </div>
+              </div>
+
+              <div v-if="sandboxMode === 'fc'" class="form-group">
+                <label for="sandbox-endpoint">FC 沙箱地址</label>
+                <input
+                  id="sandbox-endpoint"
+                  :value="FC_DEFAULT_URL"
+                  type="text"
+                  readonly
+                  class="readonly-input"
+                />
+                <p class="help-text">阿里云函数计算提供，无需自行部署</p>
+              </div>
+
+              <div v-if="sandboxMode === 'custom'" class="form-group">
                 <label for="sandbox-endpoint">服务地址</label>
                 <input
                   id="sandbox-endpoint"
@@ -120,6 +158,12 @@ const endpoint = ref('')
 const connectionStatus = ref('unknown')
 const testing = ref(false)
 
+// FC 模式相关
+const FC_DEFAULT_URL = 'https://sandbox-cpu-dcheerjqde.cn-hangzhou.fcapp.run'
+
+// 沙箱模式: 'fc' | 'custom'
+const sandboxMode = ref('fc')
+
 // 高亮主题配置
 const highlightThemes = HIGHLIGHT_THEMES
 const selectedTheme = ref(DEFAULT_THEME)
@@ -135,8 +179,21 @@ const previewUrl = computed(() => {
 // 从配置加载状态
 function loadConfig() {
   const config = getSiteConfig()
+  sandboxMode.value = config.sandboxMode || 'fc'
   endpoint.value = config.sandboxEndpoint || 'http://localhost:3001'
+
+  if (sandboxMode.value === 'fc') {
+    endpoint.value = FC_DEFAULT_URL
+  }
+
   selectedTheme.value = config.highlightTheme || DEFAULT_THEME
+}
+
+function onModeChange() {
+  if (sandboxMode.value === 'fc') {
+    endpoint.value = FC_DEFAULT_URL
+  }
+  resetStatus()
 }
 
 // 重置连接状态
@@ -187,7 +244,8 @@ async function testConnection() {
 // 保存配置
 function save() {
   const config = {
-    sandboxEndpoint: endpoint.value.trim() || 'http://localhost:3001',
+    sandboxMode: sandboxMode.value,
+    sandboxEndpoint: sandboxMode.value === 'fc' ? FC_DEFAULT_URL : (endpoint.value.trim() || 'http://localhost:3001'),
     highlightTheme: selectedTheme.value
   }
 
@@ -470,5 +528,52 @@ onMounted(() => {
 
 .btn-secondary:hover {
   background: #F4F4F5;
+}
+
+.mode-selector {
+  display: flex;
+  gap: 12px;
+}
+
+.mode-option {
+  flex: 1;
+  padding: 12px 16px;
+  border: 2px solid #E4E4E7;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.mode-option input[type="radio"] {
+  display: none;
+}
+
+.mode-option:hover {
+  border-color: #A1A1AA;
+}
+
+.mode-option.active {
+  border-color: #2563EB;
+  background: #EFF6FF;
+}
+
+.mode-label {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  color: #18181B;
+  margin-bottom: 4px;
+}
+
+.mode-hint {
+  display: block;
+  font-size: 12px;
+  color: #71717A;
+}
+
+.readonly-input {
+  background: #F4F4F5 !important;
+  color: #71717A !important;
+  cursor: not-allowed;
 }
 </style>
