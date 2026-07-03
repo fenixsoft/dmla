@@ -128,13 +128,14 @@ export function setSandboxConfig(config) {
     // 合并配置（保留其他字段如 highlightTheme）
     const newConfig = {
       ...existingConfig,
-      sandboxEndpoint: config.endpoint || DEFAULT_ENDPOINT
+      sandboxEndpoint: config.endpoint || DEFAULT_ENDPOINT,
+      sandboxMode: config.sandboxMode || 'custom'
     }
 
     localStorage.setItem(STORAGE_KEY, JSON.stringify(newConfig))
 
     // 更新全局配置
-    window.__SANDBOX_CONFIG__ = { endpoint: newConfig.sandboxEndpoint }
+    window.__SANDBOX_CONFIG__ = { endpoint: newConfig.sandboxEndpoint, mode: newConfig.sandboxMode }
     window.__SITE_CONFIG__ = newConfig
   } catch (error) {
     console.error('[Sandbox Config] 保存配置失败:', error)

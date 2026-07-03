@@ -857,10 +857,10 @@ function initCodeBlock(block) {
       // 使用流式端点
       const endpoint = getSandboxEndpoint() + '/api/sandbox/stream'
 
-      // 连接超时检测（10秒）
+      // 连接超时检测（20秒）
       // 当服务未启动时，fetch 会长时间等待，需要主动超时
       // 首次运行时 Docker 启动容器较慢，需预留足够时间
-      const CONNECTION_TIMEOUT = 10000
+      const CONNECTION_TIMEOUT = 20000  // 从 10000ms 调整为 20000ms，适应 FC 冷启动
       let timeoutId = null
       const connectionTimeoutPromise = new Promise((_, reject) => {
         timeoutId = setTimeout(() => {
