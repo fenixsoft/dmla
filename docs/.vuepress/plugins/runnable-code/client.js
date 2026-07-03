@@ -778,6 +778,12 @@ function initCodeBlock(block) {
       const code = codeElement.textContent
       const useGpu = e.target.classList.contains('gpu-btn')
 
+      // FC 模式不支持 GPU，提前拦截，不创建 Stop 按钮
+      if (useGpu && getSandboxConfig().mode === 'fc') {
+        outputArea.innerHTML = '<div class="output-area error">GPU 仅在自行部署的 DMLA 沙箱中可用，请参见<a href="/appendixes/sandbox.html">环境构建说明</a>。</div>'
+        return
+      }
+
       // 创建 AbortController 用于中止请求
       const abortController = new AbortController()
 
@@ -800,14 +806,6 @@ function initCodeBlock(block) {
       outputArea.innerHTML = ''
       outputArea.appendChild(progressContainer)
       outputArea.appendChild(textOutput)
-
-      // FC 模式不支持 GPU
-      if (useGpu && getSandboxConfig().mode === 'fc') {
-        progressContainer.innerHTML = ''
-        textOutput.className = 'output-area error'
-        textOutput.textContent = 'GPU 仅在自行部署的 DMLA 沙箱中可用，请参见环境构建说明。'
-        return
-      }
 
       // 禁用按钮
       runButtons.forEach(b => {

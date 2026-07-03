@@ -35,7 +35,7 @@ actions:
     link: /contents.html
     type: secondary
   # - text: 构建沙箱
-  #   link: /sandbox.html
+  #   link: /appendixes/sandbox.html
   #   type: secondary
 # features:
 #   - title: 🧑‍💻 开发者与智能
