@@ -27,14 +27,27 @@ class SandboxHandler(BaseHTTPRequestHandler):
         """重写日志方法，输出到 stderr（FC 日志采集）"""
         print(f"[fc_handler] {format % args}", file=sys.stderr)
 
+    def _set_cors_headers(self):
+        """设置 CORS 响应头，允许跨域访问"""
+        self.send_header('Access-Control-Allow-Origin', '*')
+        self.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+        self.send_header('Access-Control-Allow-Headers', 'Content-Type')
+
     def _send_json(self, status_code, data):
         """发送 JSON 响应"""
         body = json.dumps(data, ensure_ascii=False).encode('utf-8')
         self.send_response(status_code)
+        self._set_cors_headers()
         self.send_header('Content-Type', 'application/json; charset=utf-8')
         self.send_header('Content-Length', str(len(body)))
         self.end_headers()
         self.wfile.write(body)
+
+    def do_OPTIONS(self):
+        """CORS 预检请求"""
+        self.send_response(204)
+        self._set_cors_headers()
+        self.end_headers()
 
     def do_GET(self):
         """健康检查（Settings 测试连接使用）"""
