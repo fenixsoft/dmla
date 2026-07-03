@@ -5,7 +5,7 @@ import { defineClientConfig } from 'vuepress/client'
 import { onMounted, onBeforeUnmount, watch, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
 import RunnableCode from './RunnableCode.vue'
-import { getSandboxEndpoint } from './sandbox-config.js'
+import { getSandboxEndpoint, getSandboxConfig } from './sandbox-config.js'
 
 // 导入 Prism.js 用于客户端语法高亮
 import Prism from 'prismjs'
@@ -778,12 +778,6 @@ function initCodeBlock(block) {
       const code = codeElement.textContent
       const useGpu = e.target.classList.contains('gpu-btn')
 
-      // 禁用按钮
-      runButtons.forEach(b => {
-        b.disabled = true
-        b.textContent = 'Running...'
-      })
-
       // 创建 AbortController 用于中止请求
       const abortController = new AbortController()
 
@@ -806,6 +800,20 @@ function initCodeBlock(block) {
       outputArea.innerHTML = ''
       outputArea.appendChild(progressContainer)
       outputArea.appendChild(textOutput)
+
+      // FC 模式不支持 GPU
+      if (useGpu && getSandboxConfig().mode === 'fc') {
+        progressContainer.innerHTML = ''
+        textOutput.className = 'output-area error'
+        textOutput.textContent = 'GPU 仅在自行部署的 DMLA 沙箱中可用，请参见环境构建说明。'
+        return
+      }
+
+      // 禁用按钮
+      runButtons.forEach(b => {
+        b.disabled = true
+        b.textContent = 'Running...'
+      })
 
       // 停止按钮点击事件
       stopBtn.addEventListener('click', async () => {
