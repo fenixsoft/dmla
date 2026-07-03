@@ -284,13 +284,15 @@ jobs:
             --access-key-secret ${{ secrets.ALIBABA_CLOUD_ACCESS_KEY_SECRET }} \
             --region cn-hangzhou
 
+      - name: Install FC CLI plugin
+        run: aliyun plugin install --names aliyun-cli-fc
+
       - name: Update FC function image
         run: |
           IMAGE_URI="crpi-aani1ibpows293b8.cn-hangzhou.personal.cr.aliyuncs.com/fenixsoft/dmla-sandbox:fc"
           aliyun fc update-function \
-            --service-name dmla \
             --function-name sandbox-cpu \
-            --code "{\"imageUri\": \"$IMAGE_URI\"}"
+            --custom-container-config "image=${IMAGE_URI} port=9000 accelerationType=Default"
           echo "✅ FC function updated"
 
   summary:
