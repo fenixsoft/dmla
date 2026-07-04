@@ -330,7 +330,7 @@ SVM 在图像识别领域有着经典的应用，下面我们使用 SciKit-Learn
 ```python runnable
 from sklearn.datasets import load_digits
 from sklearn.model_selection import train_test_split
-from shared.svm.simple_s_v_m import SimpleSVM
+from shared.svm.simple_svm import SimpleSVM
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -517,7 +517,7 @@ SVM 也展示了与其他机器学习方法一致的思维方式：为解决"如
     ```python runnable
     from sklearn.datasets import load_digits
     from sklearn.model_selection import train_test_split
-    from shared.svm.simple_s_v_m import SimpleSVM
+    from shared.svm.simple_svm import SimpleSVM
     import numpy as np
 
     # 加载手写数字数据集
