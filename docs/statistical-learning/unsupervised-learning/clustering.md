@@ -228,7 +228,7 @@ axes[0].scatter(kmeans.cluster_centers_[:, 0], kmeans.cluster_centers_[:, 1], c=
 
 axes[0].set_xlabel('特征 1', fontsize=12)
 axes[0].set_ylabel('特征 2', fontsize=12)
-axes[0].set_title('K-means 聚类结果', fontsize=14, fontweight='bold')
+axes[0].set_title('K-means 聚类结果', fontsize=14)
 axes[0].legend(loc='upper right', fontsize=10)
 axes[0].grid(True, alpha=0.3)
 
@@ -238,14 +238,14 @@ axes[1].set_xlim(0, 1)
 axes[1].set_ylim(0, 1)
 
 # 标题
-axes[1].text(0.5, 0.9, 'K-means 聚类结果统计', fontsize=16, fontweight='bold', ha='center', va='top')
+axes[1].text(0.5, 0.9, 'K-means 聚类结果统计', fontsize=16, ha='center', va='top')
 
 # 统计信息
 unique, counts = np.unique(kmeans.labels_, return_counts=True)
 y_pos = 0.75
 
 # 真实中心 vs 估计中心对比
-axes[1].text(0.1, y_pos, '真实中心 vs 估计中心:', fontsize=12, fontweight='bold')
+axes[1].text(0.1, y_pos, '真实中心 vs 估计中心:', fontsize=12)
 y_pos -= 0.08
 for i in range(len(centers_true)):
     true_c = centers_true[i]
@@ -255,10 +255,10 @@ for i in range(len(centers_true)):
     y_pos -= 0.06
 
 y_pos -= 0.05
-axes[1].text(0.1, y_pos, f'目标函数值 (Inertia): {kmeans.inertia_:.2f}', fontsize=11, fontweight='bold')
+axes[1].text(0.1, y_pos, f'目标函数值 (Inertia): {kmeans.inertia_:.2f}', fontsize=11)
 y_pos -= 0.08
 
-axes[1].text(0.1, y_pos, '各簇样本数:', fontsize=11, fontweight='bold')
+axes[1].text(0.1, y_pos, '各簇样本数:', fontsize=11)
 y_pos -= 0.06
 for u, c in zip(unique, counts):
     axes[1].text(0.15, y_pos, f'  簇{u+1}: {c} 个样本', fontsize=10)
@@ -380,7 +380,7 @@ ax1.scatter(random_init[:, 0], random_init[:, 1], c=init_colors, marker='X', s=3
             edgecolors='black', linewidths=2, label='初始中心', zorder=5)
 ax1.scatter(centers_true[:, 0], centers_true[:, 1], c='black', marker='x', s=200, 
             linewidths=3, label='真实中心', zorder=5)
-ax1.set_title('随机初始化：初始中心位置', fontsize=13, fontweight='bold')
+ax1.set_title('随机初始化：初始中心位置', fontsize=13)
 ax1.set_xlabel('特征 1', fontsize=11)
 ax1.set_ylabel('特征 2', fontsize=11)
 ax1.legend(loc='upper left', fontsize=9)
@@ -398,7 +398,7 @@ ax2.scatter(centers_true[:, 0], centers_true[:, 1], c='black', marker='x', s=200
             linewidths=3, label='真实中心')
 ax2.scatter(centers_r[:, 0], centers_r[:, 1], c='red', marker='*', s=300, 
             edgecolors='white', linewidths=2, label='估计中心')
-ax2.set_title(f'随机初始化：聚类结果\n目标函数值: {inertia_r:.2f}', fontsize=13, fontweight='bold')
+ax2.set_title(f'随机初始化：聚类结果\n目标函数值: {inertia_r:.2f}', fontsize=13)
 ax2.set_xlabel('特征 1', fontsize=11)
 ax2.set_ylabel('特征 2', fontsize=11)
 ax2.legend(loc='upper left', fontsize=9)
@@ -409,7 +409,7 @@ ax3 = plt.subplot(2, 3, 3)
 ax3.axis('off')
 ax3.set_xlim(0, 1)
 ax3.set_ylim(0, 1)
-ax3.text(0.5, 0.9, '随机初始化特点', fontsize=14, fontweight='bold', ha='center', va='top')
+ax3.text(0.5, 0.9, '随机初始化特点', fontsize=14, ha='center', va='top')
 features = [
     '• 完全随机选择初始中心',
     '• 可能出现中心聚集',
@@ -421,7 +421,7 @@ features = [
 ]
 y_pos = 0.75
 for feat in features:
-    weight = 'bold' if '目标函数值' in feat else 'normal'
+    weight = 'normal'
     ax3.text(0.1, y_pos, feat, fontsize=11, fontweight=weight)
     y_pos -= 0.12
 
@@ -438,9 +438,9 @@ ax4.scatter(centers_true[:, 0], centers_true[:, 1], c='black', marker='x', s=200
 for i in range(3):
     ax4.annotate(f'{i+1}', xy=(plusplus_init[i, 0], plusplus_init[i, 1]), 
                 xytext=(10, 10), textcoords='offset points', fontsize=12, 
-                fontweight='bold', color='white',
+                color='white',
                 bbox=dict(boxstyle='circle', facecolor='black', alpha=0.7))
-ax4.set_title('K-means++：初始中心位置', fontsize=13, fontweight='bold')
+ax4.set_title('K-means++：初始中心位置', fontsize=13)
 ax4.set_xlabel('特征 1', fontsize=11)
 ax4.set_ylabel('特征 2', fontsize=11)
 ax4.legend(loc='upper left', fontsize=9)
@@ -458,7 +458,7 @@ ax5.scatter(centers_true[:, 0], centers_true[:, 1], c='black', marker='x', s=200
             linewidths=3, label='真实中心')
 ax5.scatter(centers_pp[:, 0], centers_pp[:, 1], c='red', marker='*', s=300, 
             edgecolors='white', linewidths=2, label='估计中心')
-ax5.set_title(f'K-means++：聚类结果\n目标函数值: {inertia_pp:.2f}', fontsize=13, fontweight='bold')
+ax5.set_title(f'K-means++：聚类结果\n目标函数值: {inertia_pp:.2f}', fontsize=13)
 ax5.set_xlabel('特征 1', fontsize=11)
 ax5.set_ylabel('特征 2', fontsize=11)
 ax5.legend(loc='upper left', fontsize=9)
@@ -469,7 +469,7 @@ ax6 = plt.subplot(2, 3, 6)
 ax6.axis('off')
 ax6.set_xlim(0, 1)
 ax6.set_ylim(0, 1)
-ax6.text(0.5, 0.9, 'K-means++特点', fontsize=14, fontweight='bold', ha='center', va='top')
+ax6.text(0.5, 0.9, 'K-means++特点', fontsize=14, ha='center', va='top')
 features = [
     '• 第1个中心：完全随机',
     '• 后续中心：按距离概率选择',
@@ -482,12 +482,12 @@ features = [
 ]
 y_pos = 0.75
 for feat in features:
-    weight = 'bold' if '目标函数值' in feat else 'normal'
+    weight = 'normal'
     ax6.text(0.1, y_pos, feat, fontsize=11, fontweight=weight)
     y_pos -= 0.12
 
 plt.suptitle('K-means 初始化策略对比：随机初始化 vs K-means++', 
-             fontsize=16, fontweight='bold', y=0.98)
+             fontsize=16, y=0.98)
 plt.tight_layout(rect=[0, 0, 1, 0.96])
 plt.show()
 
@@ -723,7 +723,7 @@ def compute_silhouette(X, labels):
 
 # 创建可视化
 fig, axes = plt.subplots(2, 2, figsize=(14, 12))
-fig.suptitle('四种链接方法聚类结果对比', fontsize=16, fontweight='bold')
+fig.suptitle('四种链接方法聚类结果对比', fontsize=16)
 
 linkages = ['single', 'complete', 'average', 'ward']
 colors = ['#e74c3c', '#3498db', '#2ecc71', '#f39c12', '#9b59b6']
@@ -747,7 +747,7 @@ for linkage, (row, col) in zip(linkages, positions):
 
     ax.set_xlabel('特征 1', fontsize=11)
     ax.set_ylabel('特征 2', fontsize=11)
-    ax.set_title(f'{linkage.upper()} 链接 (轮廓系数: {silhouette:.4f})', fontsize=12, fontweight='bold')
+    ax.set_title(f'{linkage.upper()} 链接 (轮廓系数: {silhouette:.4f})', fontsize=12)
     ax.legend(loc='upper left', fontsize=9)
     ax.grid(True, alpha=0.3)
     ax.set_xlim(-1.5, 7)

@@ -353,11 +353,11 @@ for idx, (kernel_name, params) in enumerate(kernels):
     
     ax.set_xlabel('主成分 1', fontsize=11)
     ax.set_ylabel('主成分 2', fontsize=11)
-    ax.set_title(f'{kernel_name.upper()} 核 (准确率: {acc:.3f})', fontsize=12, fontweight='bold')
+    ax.set_title(f'{kernel_name.upper()} 核 (准确率: {acc:.3f})', fontsize=12)
     ax.legend(loc='upper right', fontsize=9)
     ax.grid(True, alpha=0.3)
 
-plt.suptitle('信用风险预测：不同核函数的决策边界对比', fontsize=14, fontweight='bold', y=1.02)
+plt.suptitle('信用风险预测：不同核函数的决策边界对比', fontsize=14, y=1.02)
 plt.tight_layout()
 plt.show()
 plt.close()

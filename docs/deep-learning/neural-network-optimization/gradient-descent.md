@@ -363,7 +363,7 @@ ax1.plot(0, 0, 'k*', markersize=15, label='最小值')
 
 ax1.set_xlabel('W1', fontsize=11)
 ax1.set_ylabel('W2', fontsize=11)
-ax1.set_title('参数路径对比', fontsize=12, fontweight='bold')
+ax1.set_title('参数路径对比', fontsize=12)
 ax1.legend(loc='upper right')
 ax1.grid(True, alpha=0.3)
 ax1.set_xlim(-12, 12)
@@ -376,7 +376,7 @@ for name, result in results.items():
 
 ax2.set_xlabel('迭代次数', fontsize=11)
 ax2.set_ylabel('损失值', fontsize=11)
-ax2.set_title('损失变化曲线', fontsize=12, fontweight='bold')
+ax2.set_title('损失变化曲线', fontsize=12)
 ax2.legend()
 ax2.grid(True, alpha=0.3)
 ax2.set_yscale('log')
@@ -390,7 +390,7 @@ for name, result in results.items():
 ax3.axhline(y=0, color='gray', linestyle='--', linewidth=1, alpha=0.5)
 ax3.set_xlabel('迭代次数', fontsize=11)
 ax3.set_ylabel('W2 值', fontsize=11)
-ax3.set_title('W2 方向收敛对比（震荡指标）', fontsize=12, fontweight='bold')
+ax3.set_title('W2 方向收敛对比（震荡指标）', fontsize=12)
 ax3.legend()
 ax3.grid(True, alpha=0.3)
 

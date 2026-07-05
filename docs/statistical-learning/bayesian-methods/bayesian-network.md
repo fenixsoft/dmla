@@ -281,7 +281,7 @@ bars1 = ax.bar(x - width/2, p_cancer_yes, width, label='是', color='#FF6B6B', e
 bars2 = ax.bar(x + width/2, p_cancer_no, width, label='否', color='#90EE90', edgecolor='#333', lw=2)
 
 ax.set_ylabel('概率', fontsize=12)
-ax.set_title('不同证据下的推断结果对比', fontsize=14, fontweight='bold')
+ax.set_title('不同证据下的推断结果对比', fontsize=14)
 ax.set_xticks(x)
 ax.set_xticklabels(scenarios)
 ax.legend(title='肺癌状态', fontsize=11)

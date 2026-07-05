@@ -417,7 +417,7 @@ else:
             # 显示真实图片（第一行）
             axes[0, digit].imshow(digit_samples[digit].squeeze().numpy(), cmap='gray')
             axes[0, digit].axis('off')
-            axes[0, digit].set_title(f'{digit}', fontsize=12, fontweight='bold')
+            axes[0, digit].set_title(f'{digit}', fontsize=12)
 
             # 显示生成图片（第二行）
             axes[1, digit].imshow(generated.numpy(), cmap='gray')

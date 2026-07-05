@@ -474,7 +474,7 @@ bars1 = ax1.bar(x_pos - width/2, train_accs, width, label='训练准确率', col
 bars2 = ax1.bar(x_pos + width/2, test_accs, width, label='测试准确率', color='#e74c3c', edgecolor='black', linewidth=0.5)
 ax1.set_xlabel('最大深度限制', fontsize=11)
 ax1.set_ylabel('准确率', fontsize=11)
-ax1.set_title('预剪枝效果：不同深度下的训练/测试准确率', fontsize=12, fontweight='bold')
+ax1.set_title('预剪枝效果：不同深度下的训练/测试准确率', fontsize=12)
 ax1.set_xticks(x_pos)
 ax1.set_xticklabels(labels)
 ax1.legend(loc='lower right')
@@ -535,7 +535,7 @@ for i, (color, marker, name) in enumerate(zip(colors, markers, class_names)):
 
 ax2.set_xlabel('花萼长度 (cm)', fontsize=11)
 ax2.set_ylabel('花萼宽度 (cm)', fontsize=11)
-ax2.set_title(f'决策边界可视化（深度=3，测试准确率: {tree_vis.score(X_test_vis, y_test_vis):.3f}）', fontsize=12, fontweight='bold')
+ax2.set_title(f'决策边界可视化（深度=3，测试准确率: {tree_vis.score(X_test_vis, y_test_vis):.3f}）', fontsize=12)
 ax2.legend(loc='upper right', fontsize=8)
 ax2.set_xlim([x_min, x_max])
 ax2.set_ylim([y_min, y_max])

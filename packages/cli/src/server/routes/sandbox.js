@@ -91,8 +91,8 @@ router.post('/run', async (req, res) => {
       return res.status(503).json({
         success: false,
         error: useGpu
-          ? 'GPU 镜像未安装。请运行以下命令安装：\n\nnpm run build:sandbox:gpu\n\n或使用 dmla CLI：\n\ndmla install --gpu'
-          : '沙箱镜像未安装。请运行以下命令安装：\n\nnpm run build:sandbox:cpu\n\n或使用 dmla CLI：\n\ndmla install --cpu\n\n注意：如果您已安装 GPU 镜像，它也支持 CPU 执行'
+          ? 'GPU 镜像未安装。请运行以下命令安装：\n\nnpm run build:sandbox:gpu\n\n或使用 dmla CLI：\n\ndmla images'
+          : '沙箱镜像未安装。请运行以下命令安装：\n\nnpm run build:sandbox:cpu\n\n或使用 dmla CLI：\n\ndmla images\n\n注意：如果您已安装 GPU 镜像，它也支持 CPU 执行'
       })
     }
 
@@ -176,8 +176,8 @@ router.post('/stream', async (req, res) => {
       return res.status(503).json({
         success: false,
         error: useGpu
-          ? 'GPU 镜像未安装。请运行 npm run build:sandbox:gpu 或 dmla install --gpu'
-          : '沙箱镜像未安装。请运行 npm run build:sandbox:cpu 或 dmla install --cpu'
+          ? 'GPU 镜像未安装。请运行 npm run build:sandbox:gpu 或 dmla images'
+          : '沙箱镜像未安装。请运行 npm run build:sandbox:cpu 或 dmla images'
       })
     }
 

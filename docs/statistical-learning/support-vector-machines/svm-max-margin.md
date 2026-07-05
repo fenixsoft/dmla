@@ -389,7 +389,7 @@ ax1.scatter(sv_2d[:, 0], sv_2d[:, 1], facecolors='none', edgecolors='green', s=1
 
 ax1.set_xlabel('第一主成分', fontsize=11)
 ax1.set_ylabel('第二主成分', fontsize=11)
-ax1.set_title('训练集分类结果（PCA降维可视化）', fontsize=12, fontweight='bold')
+ax1.set_title('训练集分类结果（PCA降维可视化）', fontsize=12)
 ax1.legend(loc='upper right', fontsize=9)
 plt.colorbar(contour, ax=ax1, label='决策函数值')
 
@@ -415,7 +415,7 @@ if np.any(pos_wrong) or np.any(neg_wrong):
 
 ax2.set_xlabel('第一主成分', fontsize=11)
 ax2.set_ylabel('第二主成分', fontsize=11)
-ax2.set_title(f'测试集预测结果（准确率: {svm.score(X_test, y_test):.3f}）', fontsize=12, fontweight='bold')
+ax2.set_title(f'测试集预测结果（准确率: {svm.score(X_test, y_test):.3f}）', fontsize=12)
 ax2.legend(loc='upper right', fontsize=9)
 
 plt.tight_layout()
@@ -445,7 +445,7 @@ for idx in range(n_show):
 for idx in range(n_show, 12):
     axes[idx // 6, idx % 6].axis('off')
 
-plt.suptitle('支持向量对应的原始图像（决定分类边界的关键样本）', fontsize=11, fontweight='bold')
+plt.suptitle('支持向量对应的原始图像（决定分类边界的关键样本）', fontsize=11)
 plt.tight_layout()
 plt.savefig('support_vectors.png', dpi=150, bbox_inches='tight', facecolor='white')
 plt.show()

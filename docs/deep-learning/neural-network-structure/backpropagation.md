@@ -396,7 +396,7 @@ ax1 = axes[0, 0]
 ax1.plot(nn.loss_history, color='#3498db', linewidth=2)
 ax1.set_xlabel('迭代次数', fontsize=11)
 ax1.set_ylabel('交叉熵损失', fontsize=11)
-ax1.set_title('训练过程损失变化', fontsize=12, fontweight='bold')
+ax1.set_title('训练过程损失变化', fontsize=12)
 ax1.grid(True, alpha=0.3)
 
 # 图2：梯度范数变化
@@ -413,7 +413,7 @@ for grad in nn.gradients_history:
 ax2.plot(gradient_norms, color='#e74c3c', linewidth=2)
 ax2.set_xlabel('迭代次数', fontsize=11)
 ax2.set_ylabel('梯度总范数', fontsize=11)
-ax2.set_title('梯度变化趋势', fontsize=12, fontweight='bold')
+ax2.set_title('梯度变化趋势', fontsize=12)
 ax2.grid(True, alpha=0.3)
 
 # 图3：各层梯度分布（最后一次迭代）
@@ -431,7 +431,7 @@ bars = ax3.bar(range(len(layer_values)), layer_values, color=colors, alpha=0.7)
 ax3.set_xticks(range(len(layer_values)))
 ax3.set_xticklabels(layer_names, fontsize=9)
 ax3.set_ylabel('梯度绝对值均值', fontsize=11)
-ax3.set_title('各层梯度分布（最后一次迭代）', fontsize=12, fontweight='bold')
+ax3.set_title('各层梯度分布（最后一次迭代）', fontsize=12)
 ax3.grid(True, alpha=0.3, axis='y')
 
 # 图4：误差信号传递可视化
@@ -460,7 +460,7 @@ ax4.plot(range(nn.num_layers), delta_approx[::-1], 'o-', color='#2ecc71',
          linewidth=2, markersize=8, label='误差信号近似范数')
 ax4.set_xlabel('层索引（从输出层到输入层）', fontsize=11)
 ax4.set_ylabel('误差信号范数', fontsize=11)
-ax4.set_title('误差信号反向传递过程', fontsize=12, fontweight='bold')
+ax4.set_title('误差信号反向传递过程', fontsize=12)
 ax4.invert_xaxis()  # 反向传播方向：从右（输出层）到左（输入层）
 ax4.legend()
 ax4.grid(True, alpha=0.3)

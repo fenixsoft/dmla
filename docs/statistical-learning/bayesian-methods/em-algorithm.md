@@ -240,7 +240,7 @@ ax1.scatter(gmm.means_[:, 0], gmm.means_[:, 1],
 
 ax1.set_xlabel('X1', fontsize=12)
 ax1.set_ylabel('X2', fontsize=12)
-ax1.set_title(f'GMM聚类结果 (n_components=3)', fontsize=13, fontweight='bold')
+ax1.set_title(f'GMM聚类结果 (n_components=3)', fontsize=13)
 ax1.legend(loc='upper left', fontsize=9)
 ax1.grid(True, alpha=0.3)
 ax1.set_aspect('equal', adjustable='box')
@@ -252,7 +252,7 @@ ax2.plot(iterations, gmm.log_likelihood_history_,
          'b-', linewidth=2, marker='o', markersize=4)
 ax2.set_xlabel('迭代次数', fontsize=12)
 ax2.set_ylabel('对数似然', fontsize=12)
-ax2.set_title('EM算法收敛过程', fontsize=13, fontweight='bold')
+ax2.set_title('EM算法收敛过程', fontsize=13)
 ax2.grid(True, alpha=0.3)
 
 # 添加收敛信息文本

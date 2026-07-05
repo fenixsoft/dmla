@@ -365,7 +365,7 @@ axes[1].set_ylim(0, 1)
 axes[1].set_ylabel('比例')
 axes[1].set_title('模型预测表现')
 for i, v in enumerate([accuracy, churn_rate]):
-    axes[1].text(i, v + 0.05, f'{v:.1%}', ha='center', fontsize=12, fontweight='bold')
+    axes[1].text(i, v + 0.05, f'{v:.1%}', ha='center', fontsize=12)
 
 # 图3：新客户流失概率预测
 new_customer = np.array([[12, 30, 3]])  # 12个月，活跃度30，投诉3次
@@ -384,7 +384,7 @@ axes[2].set_title(f'新客户预测\n(12个月, 活跃度30, 投诉3次)')
 # 在图3下方添加建议文字
 risk_level = "高危客户" if churn_prob > 0.5 else "稳定客户 ✓"
 fig.text(0.72, 0.02, f'建议: {risk_level}', ha='center', fontsize=11,
-         color='#e74c3c' if churn_prob > 0.5 else '#2ecc71', fontweight='bold')
+         color='#e74c3c' if churn_prob > 0.5 else '#2ecc71')
 
 plt.tight_layout()
 plt.subplots_adjust(bottom=0.12)

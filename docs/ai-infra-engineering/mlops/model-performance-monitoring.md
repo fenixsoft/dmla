@@ -46,9 +46,23 @@
 
     其中 $n$ 是将数值范围等分成的桶数（通常取 10），$P_i$ 是参考分布中落入第 $i$ 个桶的比例，$Q_i$ 是当前分布中落入同桶的比例。$(P_i - Q_i)$ 和 $\ln(P_i/Q_i)$ 分别衡量了绝对差异和相对差异程度。当 $P_i$ 和 $Q_i$ 完全相同时，这一项为 0。$P_i$ 与 $Q_i$ 的差异越大，该项对 PSI 的贡献越大。最终 PSI 是将所有桶的差异贡献求和。PSI 多用于衡量预测分数分布的稳定性，但其思想可以推广到任何连续特征。
 
-- **KS 检验**（Kolmogorov-Smirnov Test）则从另一个角度衡量分布差异。它计算两个[累积分布函数](../../maths/probability/probability-basics.md#累积分布函数)（CDF）之间的最大垂直距离。KS 统计量越大，两个分布来自同一总体的可能性越小。与 PSI 相比，KS 检验可以直接用于假设检验框架，回答如在显著性水平 $\alpha = 0.01$ 下，当前分布是否与基线分布有显著差异这样的问题。这使得告警决策可以建立在统计置信度的基础上，而不仅仅依赖固定阈值。
+    PSI 的常用阈值经验是 PSI < 0.1 表示分布基本稳定，0.1 ≤ PSI < 0.25 表示中度漂移，PSI ≥ 0.25 表示显著漂移。需要特别指出的是，这些阈值是经验性的，不同业务场景和特征类型应该根据历史数据校准自己的阈值。下图是一个 PSI 计算过程的可视化的例子。左图为参考分布和当前分布在各箱子中的占比对比，右图为每个箱子对最终 PSI 值的贡献，红色虚线标注了 0.1（显著漂移）的阈值。
 
-在实践中，统计检验并不会孤立使用。将多个检验方法组合起来，一层筛分布差异（PSI），一层做显著性判断（KS 检验），一层看趋势持续性（连续 N 个窗口都显著），可以有效降低误报率。
+    ![PSI 计算过程](assets/psi-calculation.png)
+
+    *图：PSI 计算过程*
+
+- **KS 检验**（Kolmogorov-Smirnov Test）则从另一个角度衡量分布差异。它计算两个[累积分布函数](../../maths/probability/probability-basics.md#累积分布函数)（CDF）之间的最大垂直距离，将它们画在同一张图上，找出两者之间垂直距离最大的那个点，这个最大距离就是 KS 统计量：
+
+    $$D_{\text{KS}} = \sup_{x} \left| F_{ref}(x) - F_{cur}(x) \right|$$
+
+    KS 统计量越大，两个分布来自同一总体的可能性越小。与 PSI 相比，KS 检验可以直接用于假设检验框架，回答如在显著性水平 $\alpha = 0.01$ 下，当前分布是否与基线分布有显著差异这样的问题。这使得告警决策可以建立在统计置信度的基础上，而不仅仅依赖固定阈值。KS 检验适用于连续型特征，不需要假设数据服从任何特定分布，对分布的形状变化、位置平移和尺度变化都敏感。下图是 KS 检验中两个经验分布函数的叠加比较。蓝色曲线为参考分布的 CDF，橙色曲线为当前分布的 CDF，黑色虚线标注了两者差异最大的位置，即 KS 统计量。
+
+    ![KS 检验可视化](assets/ks-test-visualization.png)
+
+    *图：KS 检验可视化*
+
+在实践中，统计检验并不会孤立使用。将多个检验方法组合起来，一层筛分布差异（PSI），一层做显著性判断（KS 检验），一层看趋势持续性（连续 N 个窗口都显著），可以有效降低误报率。在漂移监测中我们会再展开介绍这些[统计检测方法](drift-detection.md#统计检测方法)。
 
 ### 渐进退化检测
 
@@ -288,7 +302,7 @@ ax1.axvline(x=45, color='#FF9800', linestyle=':', alpha=0.6,
 ax1.fill_between([45, 90], 0.6, 0.95, alpha=0.08, color='#FF9800')
 ax1.set_xlabel('天数')
 ax1.set_ylabel('AUC')
-ax1.set_title('模型性能渐进退化检测', fontweight='bold')
+ax1.set_title('模型性能渐进退化检测')
 ax1.legend(loc='lower left', fontsize=9)
 ax1.set_ylim(0.60, 0.95)
 ax1.grid(True, alpha=0.3)
@@ -299,7 +313,7 @@ ax2.fill_between(timestamps, 0, drift_amounts,
 ax2.plot(timestamps, drift_amounts, color='#E87722', linewidth=2)
 ax2.set_xlabel('天数')
 ax2.set_ylabel('累积漂移量')
-ax2.set_title('数据漂移累积曲线', fontweight='bold')
+ax2.set_title('数据漂移累积曲线')
 ax2.legend(fontsize=9)
 ax2.grid(True, alpha=0.3)
 
@@ -318,13 +332,13 @@ psi_value = psi.compute(degraded_scores)
 fig2, (ax3, ax4) = plt.subplots(1, 2, figsize=(12, 4))
 ax3.hist(reference_scores, bins=20, alpha=0.6, color='#4A90D9',
          edgecolor='white', label='参考分布')
-ax3.set_title('参考分布（训练集）', fontweight='bold')
+ax3.set_title('参考分布（训练集）')
 ax3.set_xlabel('预测分数')
 ax3.legend()
 
 ax4.hist(degraded_scores, bins=20, alpha=0.6, color='#E87722',
          edgecolor='white', label='当前分布')
-ax4.set_title(f'当前分布（生产环境）\nPSI = {psi_value:.4f}', fontweight='bold')
+ax4.set_title(f'当前分布（生产环境）\nPSI = {psi_value:.4f}')
 ax4.set_xlabel('预测分数')
 ax4.legend()
 

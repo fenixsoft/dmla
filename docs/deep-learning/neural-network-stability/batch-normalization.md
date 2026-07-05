@@ -373,7 +373,7 @@ ax1.plot(train_losses_no_bn, label='训练损失', linewidth=2, color='#3498db')
 ax1.plot(test_losses_no_bn, label='测试损失', linewidth=2, color='#e74c3c')
 ax1.set_xlabel('训练轮数', fontsize=11)
 ax1.set_ylabel('损失值', fontsize=11)
-ax1.set_title('无 Batch Normalization', fontsize=12, fontweight='bold')
+ax1.set_title('无 Batch Normalization', fontsize=12)
 ax1.legend()
 ax1.grid(True, alpha=0.3)
 
@@ -383,7 +383,7 @@ ax2.plot(train_losses_bn, label='训练损失', linewidth=2, color='#3498db')
 ax2.plot(test_losses_bn, label='测试损失', linewidth=2, color='#e74c3c')
 ax2.set_xlabel('训练轮数', fontsize=11)
 ax2.set_ylabel('损失值', fontsize=11)
-ax2.set_title('有 Batch Normalization', fontsize=12, fontweight='bold')
+ax2.set_title('有 Batch Normalization', fontsize=12)
 ax2.legend()
 ax2.grid(True, alpha=0.3)
 
@@ -447,7 +447,7 @@ for idx, lr in enumerate(learning_rates):
     ax.plot(lr_results[lr]['bn'], label='有 BN', linewidth=2, color=colors['bn'])
     ax.set_xlabel('训练轮数', fontsize=11)
     ax.set_ylabel('测试损失', fontsize=11)
-    ax.set_title(f'学习率 = {lr}', fontsize=12, fontweight='bold')
+    ax.set_title(f'学习率 = {lr}', fontsize=12)
     ax.legend()
     ax.grid(True, alpha=0.3)
 
@@ -577,13 +577,13 @@ bars2 = ax.bar([i + width/2 for i in x], finite_bn,
 for i, exploded in enumerate(explode_flags):
     if exploded:
         ax.text(i, ax.get_ylim()[1] * 0.95, '训练崩溃',
-                ha='center', va='top', fontsize=11, color='#e74c3c', fontweight='bold')
+                ha='center', va='top', fontsize=11, color='#e74c3c')
 
 ax.set_xticks(x)
 ax.set_xticklabels([f'深度 {d}' for d in depths])
 ax.set_xlabel('网络深度', fontsize=11)
 ax.set_ylabel('最终测试损失 (对数尺度)', fontsize=11)
-ax.set_title('BN 对不同深度网络的影响', fontsize=12, fontweight='bold')
+ax.set_title('BN 对不同深度网络的影响', fontsize=12)
 ax.set_yscale('log')
 ax.legend()
 ax.grid(True, alpha=0.3, axis='y')

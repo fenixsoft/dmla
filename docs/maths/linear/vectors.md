@@ -265,10 +265,10 @@ print(f"v1, v2, v4 线性无关：{is_linearly_independent([v1, v2, v4])}")  # F
 
 ## 练习题
 
-1. 判断以下向量组是否线性相关，并说明理由：
-    $\mathbf{v}_1 = (1, 2, 3)$，$\mathbf{v}_2 = (2, 4, 6)$，$\mathbf{v}_3 = (1, 1, 1)$。
+1. 判断以下向量组是否线性相关，并说明理由：$\mathbf{v}_1 = (1, 2, 3)$，$\mathbf{v}_2 = (2, 4, 6)$，$\mathbf{v}_3 = (1, 1, 1)$。
     <details>
     <summary>参考答案</summary>
+
     这组向量线性相关。
 
     观察可以发现 $\mathbf{v}_2 = 2\mathbf{v}_1$，即 $\mathbf{v}_2$ 可以由 $\mathbf{v}_1$ 线性表示。因此存在不全为零的系数 $c_1 = 2, c_2 = -1, c_3 = 0$ 使得 $2\mathbf{v}_1 - \mathbf{v}_2 + 0\mathbf{v}_3 = \mathbf{0}$。
@@ -279,6 +279,7 @@ print(f"v1, v2, v4 线性无关：{is_linearly_independent([v1, v2, v4])}")  # F
 1. 计算向量 $\mathbf{u} = (1, 1)$ 和 $\mathbf{v} = (1, 0)$ 的内积、各自模长、以及它们之间的夹角 $\theta$。
     <details>
     <summary>参考答案</summary>
+
     内积：$\mathbf{u} \cdot \mathbf{v} = 1 \times 1 + 1 \times 0 = 1$
 
     模长：$\|\mathbf{u}\| = \sqrt{1^2 + 1^2} = \sqrt{2}$，$\|\mathbf{v}\| = \sqrt{1^2 + 0^2} = 1$
@@ -293,6 +294,7 @@ print(f"v1, v2, v4 线性无关：{is_linearly_independent([v1, v2, v4])}")  # F
 1. 在文本分析中，两个文档的词频向量分别为 $\mathbf{d}_1 = (3, 0, 1, 2)$ 和 $\mathbf{d}_2 = (1, 2, 0, 1)$。计算它们的余弦相似度，并解释其含义。
     <details>
     <summary>参考答案</summary>
+
     内积：$\mathbf{d}_1 \cdot \mathbf{d}_2 = 3 \times 1 + 0 \times 2 + 1 \times 0 + 2 \times 1 = 5$
 
     模长：$\|\mathbf{d}_1\| = \sqrt{9 + 0 + 1 + 4} = \sqrt{14}$，$\|\mathbf{d}_2\| = \sqrt{1 + 4 + 0 + 1} = \sqrt{6}$
@@ -305,6 +307,7 @@ print(f"v1, v2, v4 线性无关：{is_linearly_independent([v1, v2, v4])}")  # F
 1. 计算向量 $\mathbf{u} = (3, 4)$ 在向量 $\mathbf{v} = (1, 0)$ 上的投影。投影结果的几何意义是什么？
     <details>
     <summary>参考答案</summary>
+
     投影公式：$\text{proj}_{\mathbf{v}} \mathbf{u} = \frac{\mathbf{u} \cdot \mathbf{v}}{\mathbf{v} \cdot \mathbf{v}} \mathbf{v}$
 
     计算：$\mathbf{u} \cdot \mathbf{v} = 3 \times 1 + 4 \times 0 = 3$
@@ -319,6 +322,7 @@ print(f"v1, v2, v4 线性无关：{is_linearly_independent([v1, v2, v4])}")  # F
 1. 判断 $\mathbb{R}^3$ 中所有形如 $(x, y, x+y)$ 的向量集合是否构成子空间。需要验证哪些条件？
     <details>
     <summary>参考答案</summary>
+
     需要验证三条条件：
 
     1. **包含零向量**：当 $x = 0, y = 0$ 时，$(0, 0, 0)$ 属于该集合。✓
@@ -333,6 +337,7 @@ print(f"v1, v2, v4 线性无关：{is_linearly_independent([v1, v2, v4])}")  # F
 1. 验证向量组 $\mathbf{e}_1 = (1, 0, 0)$，$\mathbf{e}_2 = (0, 1, 0)$，$\mathbf{e}_3 = (0, 0, 1)$ 是否构成标准正交基，并写出向量 $\mathbf{v} = (2, -3, 5)$ 在这组基下的坐标表示。
     <details>
     <summary>参考答案</summary>
+
     验证正交性：
     $\mathbf{e}_1 \cdot \mathbf{e}_2 = 0$，$\mathbf{e}_1 \cdot \mathbf{e}_3 = 0$，$\mathbf{e}_2 \cdot \mathbf{e}_3 = 0$
 
@@ -352,6 +357,7 @@ print(f"v1, v2, v4 线性无关：{is_linearly_independent([v1, v2, v4])}")  # F
 1. 在神经网络中，某一层的输入向量 $\mathbf{x} = (1, 2)$，权重矩阵 $\mathbf{W} = \begin{bmatrix} 0.5 & 0.3 \\ 0.2 & 0.4 \end{bmatrix}$，偏置向量 $\mathbf{b} = (0.1, 0.2)$。计算该层的输出 $\mathbf{y} = \mathbf{Wx} + \mathbf{b}$，并从线性组合的角度解释这个计算过程。
     <details>
     <summary>参考答案</summary>
+    
     计算 $\mathbf{Wx}$：
     $\mathbf{Wx} = \begin{bmatrix} 0.5 & 0.3 \\ 0.2 & 0.4 \end{bmatrix} \begin{bmatrix} 1 \\ 2 \end{bmatrix} = \begin{bmatrix} 0.5 \times 1 + 0.3 \times 2 \\ 0.2 \times 1 + 0.4 \times 2 \end{bmatrix} = \begin{bmatrix} 1.1 \\ 1.0 \end{bmatrix}$
 

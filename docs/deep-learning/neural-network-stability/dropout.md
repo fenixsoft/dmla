@@ -296,7 +296,7 @@ ax1.fill_between(range(len(train_losses_no_drop)), train_losses_no_drop, test_lo
                  alpha=0.3, color='#f39c12', label='过拟合差距')
 ax1.set_xlabel('训练轮数', fontsize=11)
 ax1.set_ylabel('损失值', fontsize=11)
-ax1.set_title('无 Dropout - 过拟合明显', fontsize=12, fontweight='bold')
+ax1.set_title('无 Dropout - 过拟合明显', fontsize=12)
 ax1.legend()
 ax1.grid(True, alpha=0.3)
 
@@ -308,7 +308,7 @@ ax2.fill_between(range(len(train_losses_drop)), train_losses_drop, test_losses_d
                  alpha=0.3, color='#2ecc71', label='差距缩小')
 ax2.set_xlabel('训练轮数', fontsize=11)
 ax2.set_ylabel('损失值', fontsize=11)
-ax2.set_title('Dropout (p=0.5) - 过拟合缓解', fontsize=12, fontweight='bold')
+ax2.set_title('Dropout (p=0.5) - 过拟合缓解', fontsize=12)
 ax2.legend()
 ax2.grid(True, alpha=0.3)
 
@@ -445,7 +445,7 @@ ax.set_xticks([i + 0.2 for i in x])
 ax.set_xticklabels(sizes)
 ax.set_xlabel('训练集大小', fontsize=11)
 ax.set_ylabel('过拟合差距（测试-训练损失）', fontsize=11)
-ax.set_title('训练集大小对过拟合的影响', fontsize=12, fontweight='bold')
+ax.set_title('训练集大小对过拟合的影响', fontsize=12)
 ax.legend()
 ax.grid(True, alpha=0.3, axis='y')
 

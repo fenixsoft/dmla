@@ -293,21 +293,21 @@ if gpu_times:
     width = 0.35
     bars1 = ax1.bar([p - width/2 for p in x_pos], cpu_times, width, label='CPU', color='#3498db', alpha=0.8)
     bars2 = ax1.bar([p + width/2 for p in x_pos], gpu_times, width, label='GPU', color='#e74c3c', alpha=0.8)
-    ax1.set_title('不同批量大小：CPU vs GPU 前向传播时间', fontsize=12, fontweight='bold')
+    ax1.set_title('不同批量大小：CPU vs GPU 前向传播时间', fontsize=12)
     
     # 在柱状图上标注加速比
     for i, (cpu_t, gpu_t, sp) in enumerate(zip(cpu_times, gpu_times, speedups)):
         ax1.text(i, gpu_t * 0.5, f'{sp:.1f}x', ha='center', va='center',
-                 fontsize=9, fontweight='bold', color='white')
+                 fontsize=9, color='white')
 else:
     # GPU不可用：只显示CPU数据
     bars1 = ax1.bar(x_pos, cpu_times, color='#3498db', alpha=0.8)
-    ax1.set_title('不同批量大小：CPU 前向传播时间（GPU不可用）', fontsize=12, fontweight='bold')
+    ax1.set_title('不同批量大小：CPU 前向传播时间（GPU不可用）', fontsize=12)
     
     # 在柱状图上标注时间
     for i, cpu_t in enumerate(cpu_times):
         ax1.text(i, cpu_t * 0.5, f'{cpu_t:.1f}ms', ha='center', va='center',
-                 fontsize=9, fontweight='bold', color='white')
+                 fontsize=9, color='white')
 
 ax1.set_xlabel('批量大小 (Batch Size)', fontsize=11)
 ax1.set_ylabel('平均时间 (毫秒)', fontsize=11)
@@ -344,7 +344,7 @@ if speedups:
             ax2_twin.annotate(label, (x, y), xytext=(10, 10), textcoords='offset points',
                               fontsize=9, ha='left')
     
-    ax2.set_title('GPU加速比趋势分析', fontsize=12, fontweight='bold')
+    ax2.set_title('GPU加速比趋势分析', fontsize=12)
     
     # 添加图例
     lines1, labels1 = ax2.get_legend_handles_labels()
@@ -359,7 +359,7 @@ else:
              markersize=8, label='CPU时间')
     ax2.set_xlabel('批量大小', fontsize=11)
     ax2.set_ylabel('平均时间 (毫秒)', fontsize=11)
-    ax2.set_title('CPU 前向传播时间趋势（GPU不可用）', fontsize=12, fontweight='bold')
+    ax2.set_title('CPU 前向传播时间趋势（GPU不可用）', fontsize=12)
     ax2.grid(True, alpha=0.3)
     ax2.legend(loc='upper left')
 

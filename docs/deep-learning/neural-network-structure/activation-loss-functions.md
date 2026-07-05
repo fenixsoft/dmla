@@ -308,7 +308,7 @@ for i, (grads, color, label) in enumerate(zip(all_gradient_norms, activation_col
 
 ax1.set_xlabel('层索引（从输入层到输出层）', fontsize=11)
 ax1.set_ylabel('梯度范数（对数刻度）', fontsize=11)
-ax1.set_title('梯度传递：不同激活函数对比', fontsize=12, fontweight='bold')
+ax1.set_title('梯度传递：不同激活函数对比', fontsize=12)
 ax1.legend(loc='upper right')
 ax1.grid(True, alpha=0.3)
 
@@ -363,7 +363,7 @@ for idx, (act_name, color, label) in enumerate(zip(plot_activations, plot_colors
 
 ax2.set_xlabel('层索引', fontsize=11)
 ax2.set_ylabel('负值输出比例', fontsize=11)
-ax2.set_title('激活函数抑制效应对比：负值输出比例', fontsize=12, fontweight='bold')
+ax2.set_title('激活函数抑制效应对比：负值输出比例', fontsize=12)
 ax2.legend(loc='upper right')
 ax2.grid(True, alpha=0.3, axis='y')
 
@@ -581,7 +581,7 @@ $$L_{Hinge} = \max(0, 1 - y \cdot \hat{y})$$
 
     ax1.set_xlabel('X', fontsize=11)
     ax1.set_ylabel('y', fontsize=11)
-    ax1.set_title('回归损失函数对比：异常值影响', fontsize=12, fontweight='bold')
+    ax1.set_title('回归损失函数对比：异常值影响', fontsize=12)
     ax1.legend(loc='upper left')
     ax1.grid(True, alpha=0.3)
 
@@ -592,7 +592,7 @@ $$L_{Hinge} = \max(0, 1 - y \cdot \hat{y})$$
 
     ax2.set_xlabel('迭代次数', fontsize=11)
     ax2.set_ylabel('损失值', fontsize=11)
-    ax2.set_title('训练过程损失变化', fontsize=12, fontweight='bold')
+    ax2.set_title('训练过程损失变化', fontsize=12)
     ax2.legend()
     ax2.grid(True, alpha=0.3)
 
@@ -717,7 +717,7 @@ $$L_{Hinge} = \max(0, 1 - y \cdot \hat{y})$$
 
     ax1.set_xlabel('x1', fontsize=11)
     ax1.set_ylabel('x2', fontsize=11)
-    ax1.set_title('分类损失函数对比：决策边界', fontsize=12, fontweight='bold')
+    ax1.set_title('分类损失函数对比：决策边界', fontsize=12)
     ax1.grid(True, alpha=0.3)
 
     # 图2：损失变化
@@ -727,7 +727,7 @@ $$L_{Hinge} = \max(0, 1 - y \cdot \hat{y})$$
 
     ax2.set_xlabel('迭代次数', fontsize=11)
     ax2.set_ylabel('损失值', fontsize=11)
-    ax2.set_title('训练过程损失变化', fontsize=12, fontweight='bold')
+    ax2.set_title('训练过程损失变化', fontsize=12)
     ax2.legend()
     ax2.grid(True, alpha=0.3)
 

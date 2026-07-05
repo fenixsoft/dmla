@@ -378,7 +378,7 @@ ax1.plot(W_init[0], W_init[1], 'ko', markersize=10, label='起点')
 ax1.plot(0, 0, 'k*', markersize=15, label='最小值')
 ax1.set_xlabel('W1', fontsize=11)
 ax1.set_ylabel('W2', fontsize=11)
-ax1.set_title('参数路径对比', fontsize=12, fontweight='bold')
+ax1.set_title('参数路径对比', fontsize=12)
 ax1.legend(loc='upper right')
 ax1.grid(True, alpha=0.3)
 ax1.set_xlim(-6, 6)
@@ -391,7 +391,7 @@ for name, result in results.items():
 
 ax2.set_xlabel('迭代次数', fontsize=11)
 ax2.set_ylabel('损失值', fontsize=11)
-ax2.set_title('损失变化曲线', fontsize=12, fontweight='bold')
+ax2.set_title('损失变化曲线', fontsize=12)
 ax2.legend()
 ax2.grid(True, alpha=0.3)
 ax2.set_yscale('log')
@@ -412,7 +412,7 @@ for name, result in results.items():
 
 ax3.set_xlabel('迭代次数', fontsize=11)
 ax3.set_ylabel('有效学习率（W1方向）', fontsize=11)
-ax3.set_title('自适应学习率变化', fontsize=12, fontweight='bold')
+ax3.set_title('自适应学习率变化', fontsize=12)
 ax3.legend()
 ax3.grid(True, alpha=0.3)
 
@@ -426,7 +426,7 @@ for name, result in results.items():
 
 ax4.set_xlabel('迭代次数', fontsize=11)
 ax4.set_ylabel('每步损失下降量', fontsize=11)
-ax4.set_title('损失下降速度对比', fontsize=12, fontweight='bold')
+ax4.set_title('损失下降速度对比', fontsize=12)
 ax4.legend()
 ax4.grid(True, alpha=0.3)
 

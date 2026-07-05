@@ -23,14 +23,7 @@ dmla stop
 dmla status
 
 # 安装镜像
-dmla install               # 安装所有镜像（默认从 Docker Hub）
-dmla install --cpu         # 仅 CPU 版本
-dmla install --gpu         # 仅 GPU 版本
-dmla install --registry acr  # 从阿里云 ACR 安装（国内加速）
-
-# 更新
-dmla update                # 更新 npm 包和镜像
-dmla update --registry acr
+dmla images               # 安装所有镜像（默认从 Docker Hub）
 
 # 环境诊断
 dmla doctor

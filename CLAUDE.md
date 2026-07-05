@@ -1,25 +1,28 @@
 # CLAUDE.md
 
 ## 交互语言
+
 使用**中文**进行信息描述和文档编写，包括：
- - **GIT Commit：** GIT提交时的变更信息，内容使用中文描述
- - **Proposal、Design和归档后形成的Spec文档：** 所有涉及到的SDD文档，内容使用中文描述
- - **程序注释：** 程序代码中的注释，内容使用中文描述
+- **GIT Commit：** GIT提交时的变更信息，内容使用中文描述
+- **Proposal、Design和归档后形成的Spec文档：** 所有涉及到的SDD文档，内容使用中文描述
+- **程序注释：** 程序代码中的注释，内容使用中文描述
 
 ### 避免 AI 语言习惯
- - **禁止使用破折号 "——"**
- - 不要滥用"核心"、"关键"、"重要"、"洞察"等空洞强调词；
- - 不要滥用分号 "；"
- - 不要以短句罗列知识点来凑篇幅。写自然、连贯的中文，像给人讲解而非堆砌要点。
+
+- **禁止使用破折号 "——"**
+- 不要滥用"核心"、"关键"、"重要"、"洞察"等空洞强调词
+- 不要滥用分号 "；"、冒号 "："
+- 不要以短句罗列知识点来凑篇幅。写自然、连贯的中文，像给人讲解而非堆砌要点。
 
 ## 任务运作约束
 
 ### 项目运作模式
-- Goal: 在**不中断**的前提下，充分并行子任务，直到产出完整、可验证的交付物。
+
 - Autonomy: 允许在本仓库内创建/修改/删除文件；禁止写入 `node_modules`, `.git`, `dist`, `build`, `~` 与上级目录。
 - **Git 推送控制：** 除非得到用户的明确指令，否则禁止自动推送代码到 git 仓库。完成代码修改后，应告知用户变更内容并等待用户确认后再执行 `git push`。
 
 ### 项目与代码维护
+
 - **前端沙箱连接超时配置**：Run / Run on GPU 按钮的连接超时时间定义在 `docs/.vuepress/plugins/runnable-code/client.js` 的 `CONNECTION_TIMEOUT` 常量（当前值 10000ms）。首次运行时 Docker 启动容器较慢，若超时时间过短会导致"无法连接到沙箱服务（连接超时）"误报。
 - **及时清理：** 在完成开发任务时，如果发现任何已无用（过时）的代码、文件或注释，应主动提出清理建议。
 - **测试截图统一存放：** 所有测试产生的 Chrome 浏览器截图图片统一存放在 `.history` 目录，便于追踪测试历史和对比结果。
@@ -29,6 +32,7 @@
   3. 使用 patch-package 创建补丁（需在 package.json 中配置 postinstall 脚本）
 
 ### 进程管理规则
+
 - **禁止广泛杀进程：** 严禁使用 `killall node`、`pkill -f node`、`killall python` 等广泛匹配的命令终止进程。这些命令会误杀 VSCode 远程连接进程、其他用户的进程或系统关键服务。
 - **精确进程管理：** 需要终止进程时，必须使用精确匹配方式：
   1. **通过端口定位（监听状态）**：`lsof -ti:<PORT> -sTCP:LISTEN | xargs kill`（仅终止监听端口的进程，不杀连接状态的进程）
@@ -40,594 +44,58 @@
 - **服务管理优先：** 优先使用服务自带的停止命令（如 `npm run stop`）而非直接 kill 进程。
 - **检查影响范围：** 执行任何进程终止命令前，先用 `ps aux | grep <pattern>` 确认匹配到的进程列表，确保不会误杀。
 
-### CLI 包开发规则（重要）
+## 开发规范
 
-**修改源码目录而非构建产物**：
+### CLI 包开发规则
 
-CLI 包的构建脚本（`packages/cli/scripts/build.js`）会从 `local-server/src/` 复制文件到 `packages/cli/src/server/`。因此：
+> **📄 参考文件**: [references/cli-package-dev.md](references/cli-package-dev.md)
+> **用途**: CLI 包的源码-构建产物映射关系：构建脚本 `packages/cli/scripts/build.js` 从 `local-server/src/` 复制文件到 `packages/cli/src/server/`，因此所有服务端代码修改必须在 `local-server/src/` 源目录进行，禁止直接修改 `packages/cli/src/server/` 构建产物目录。文件中列出了各关键文件（`native_env_check.js`、`native_executor.js`、`kernel_runner.py`、`index.js`）的正确修改位置对照表。
+> **触发场景**: 修改 CLI 服务端代码（沙箱执行、环境检测、Python 内核运行器等）时，必须参考此文件确认正确的源码目录，避免修改被构建脚本覆盖。
 
-- **正确做法**：修改 `local-server/src/` 目录下的源文件
-- **错误做法**：直接修改 `packages/cli/src/server/` 目录下的文件（会被构建脚本覆盖）
+### 依赖管理
 
-**需要修改的正确位置**：
-| 文件 | 正确位置 | 说明 |
-|------|---------|------|
-| `native_env_check.js` | `local-server/src/native_env_check.js` | Native 模式环境检测 |
-| `native_executor.js` | `local-server/src/native_executor.js` | Native 模式代码执行器 |
-| `kernel_runner.py` | `local-server/src/kernel_runner.py` | Python 代码执行内核 |
-| `index.js` | `local-server/src/index.js` | 服务入口 |
-| 其他 `.js/.py` 文件 | `local-server/src/` | 所有服务端代码 |
-
-**构建流程**：
-1. 修改 `local-server/src/` 下的源文件
-2. 运行 `cd packages/cli && npm run build` 复制到 CLI 包
-3. 提交时确保两个目录都已更新（构建脚本会自动更新 `packages/cli/src/server/`）
-
-### Native 模式依赖管理（重要）
-
-**每次修改 Python 依赖关系后，必须通过 Native 模式启动验证依赖检测和自动安装是否正常工作。**
-
-**依赖定义位置**：
-
-| 文件 | 修改位置 | 说明 |
-|------|---------|------|
-| `local-server/src/native_env_check.js` | `SOFT_DEPS` 数组 | Native 模式软依赖列表（缺失时自动安装） |
-| `local-server/Dockerfile.sandbox` | `RUN pip install` 段落 | Docker GPU 镜像依赖 |
-| `local-server/Dockerfile.sandbox.cpu` | `RUN pip install` 段落 | Docker CPU 镜像依赖 |
-
-三处依赖定义需保持一致。新增 Python 包时，三个文件都要同步更新。
-
-**Native 模式启动方式**：
-
-```bash
-# 方式 1：源码目录直接启动（开发环境推荐）
-lsof -ti:3001 -sTCP:LISTEN | xargs kill 2>/dev/null
-DMLA_MODE=native node local-server/src/index.js
-
-# 方式 2：通过 CLI 启动
-dmla start --native
-
-# 方式 3：同步模式（前台运行，便于观察依赖安装过程）
-dmla start --native --sync --dev
-```
-
-**依赖变更验证流程**：
-
-1. 修改 `SOFT_DEPS` 数组，新增或移除包名
-2. 运行 `cd packages/cli && npm run build` 将改动同步到 CLI 包
-3. 以 Native 模式启动服务，观察输出：
-   - 已安装的包：不输出（静默跳过）
-   - 新增缺失的包：显示 `安装 xxx...` 并自动 pip install
-   - 安装成功：显示 `已安装: xxx, yyy`
-   - 安装失败：显示 `安装失败: xxx` 和手动安装命令
-4. 确认服务正常启动后，用 Python 验证包可导入：
-   ```bash
-   python3 -c "import transformers; print(transformers.__version__)"
-   ```
-5. 清理端口：`lsof -ti:3001 -sTCP:LISTEN | xargs kill 2>/dev/null`
-
-**当前 SOFT_DEPS 完整列表**：
-
-```
-numpy, pandas, matplotlib, scipy, scikit-learn, pillow,
-opencv-python-headless, jupyter_client, ipykernel, lmdb, requests,
-transformers, tokenizers, datasets, ipywidgets, accelerate, bitsandbytes
-```
+> **📄 参考文件**: [references/image-deps-and-dev.md](references/image-deps-and-dev.md)
+> **用途**: 项目 Python 依赖的三处统一定义位置（`native_env_check.js` 的 `SOFT_DEPS` 数组、`Dockerfile.sandbox`、`Dockerfile.sandbox.cpu`），新增包时三者需同步更新。文件中包含完整的依赖变更验证流程（修改 SOFT_DEPS → 构建 CLI → Native 模式启动观察自动安装 → Python 导入验证 → 清理端口）和当前 SOFT_DEPS 完整列表。
+> **触发场景**: 新增或移除 Python 依赖包时，必须读取此文件确认三处依赖定义位置，并按验证流程确认 Native 模式下的自动安装正常工作。
 
 ### 镜像开发约束（Volume Mount 机制）
 
-Docker 沙箱镜像高达 7GB，编译耗时约 15-30 分钟。为避免频繁重编译，**所有涉及镜像内容的改动必须先用 Volume Mount 机制验证通过后才能触发编译**。
+> **📄 参考文件**: [references/image-deps-and-dev.md](references/image-deps-and-dev.md)
+> **用途**: Docker 沙箱镜像高达 10GB、编译耗时 15-30 分钟，因此所有镜像内容改动必须先用 Volume Mount 机制验证。文件中详述了 Volume Mount 自动挂载的文件列表（`kernel_runner.py`、`dmla_progress.py`、`shared_modules/`）、两种开发模式启动方式（源码目录 vs CLI 开发模式）、环境变量控制（`MOUNT_KERNEL_RUNNER`/`MOUNT_SHARED_MODULES`）、必须先验证后编译的改动类型，以及验证检查清单。
+> **触发场景**: 修改 `kernel_runner.py`、`dmla_progress.py`、`shared_modules/` 或 Dockerfile 中 Python 脚本引用时，应参考此文件按 Volume Mount 验证流程操作，验证通过后才能触发 `npm run build:sandbox:gpu` 编译镜像。
 
-**Volume Mount 机制说明**：
+### DMLA CLI 命令
 
-开发模式下，以下文件通过 Volume Mount 自动挂载到容器，修改无需重建镜像：
-- `kernel_runner.py`: 挂载到 `/workspace/kernel_runner.py`
-- `dmla_progress.py`: 挂载到 `/workspace/dmla_progress.py`
-- `shared_modules/`: 挂载到 `/usr/local/lib/python3.11/site-packages/shared`
+> **📄 参考文件**: [references/dmla-cli-commands.md](references/dmla-cli-commands.md)
+> **用途**: DMLA CLI 工具的全部子命令及其参数说明，包括沙箱模式和 Native 模式启动方式、`stop`、`status`、`images`、`doctor`、`data` 子命令，以及 Docker 沙箱构建命令。
+> **触发场景**: 需要启动/停止 DMLA 服务、切换 Native/GPU/开发模式、管理数据挂载路径、下载数据集、诊断运行环境时，应读取此文件获取完整命令列表。
 
-**两种开发模式启动方式**：
+### 训练实验支持
 
-| 启动方式 | 命令 | 适用场景 | Volume Mount |
-|---------|------|---------|--------------|
-| 源码目录启动 | `npm run server` 或 `cd local-server && npm start` | 项目源码开发 | ✅ 自动启用 |
-| CLI 开发模式 | `dmla start --dev` | npm 包安装后开发 | ✅ 需指定 --dev |
+> **📄 参考文件**: [references/training-experiment-support.md](references/training-experiment-support.md)
+> **用途**: 包含两个关联主题：(1) `DATA_DIR` 数据路径自动注入机制，实现 Docker 与 Native 模式的数据路径自动适配，以及文档代码块中应使用 `os.path.join(DATA_DIR, ...)` 的规范；(2) 文档 runnable 代码块通过 `extract-class` 标记提取可复用类定义到 `local-server/shared/` 目录的共享模块机制，包含标记语法、导入路径约定和禁止手动创建共享模块的约束。
+> **触发场景**: 在文档或训练代码中引用数据集/模型/缓存路径、编写 runnable 代码块需要定义可复用类、运行 `npm run extract:shared` 提取类定义时，读取此文件获取正确用法。
 
-**验证流程**：
+### 进度报告机制
 
-1. **修改 Python 文件**：编辑 `local-server/src/kernel_runner.py`、`dmla_progress.py` 或 `shared_modules/` 下的文件
-2. **启动服务测试**：
-   - 源码目录：`npm run server`
-   - CLI 安装后：`dmla start --dev`
-3. **验证功能正确**：通过 API 或前端执行代码块，确认新功能正常工作
-4. **更新 tasks.md**：标记验证通过的子任务
-5. **触发镜像编译**：**仅在所有验证通过后**执行 `npm run build:sandbox:gpu`
-
-**环境变量控制**：
-
-```bash
-# 默认启用 Volume Mount（开发模式）
-MOUNT_KERNEL_RUNNER=true    # 挂载 kernel_runner.py
-MOUNT_SHARED_MODULES=true   # 挂载共享模块
-
-# 禁用挂载（生产模式，使用镜像内置文件）
-MOUNT_KERNEL_RUNNER=false
-MOUNT_SHARED_MODULES=false
-```
-
-**适用范围**：
-
-必须先验证后编译的改动类型：
-- 新增 Python 模块（如 `dmla_progress.py`）
-- 修改 `kernel_runner.py` 执行逻辑
-- 修改 `shared_modules/` 下的共享类
-- 修改 Dockerfile 中的 Python 脚本引用
-- 新增数据目录挂载点
-
-无需验证可直接编译的改动：
-- 修改系统依赖（apt 包）
-- 修改 Python 版本
-- 修改 PyTorch/CUDA 版本
-- 修改基础镜像（FROM 指令）
-
-**验证检查清单**：
-
-```bash
-# 1. 确认服务启动时 Volume Mount 生效
-# 日志应显示：
-# [Sandbox] kernel_runner.py Volume Mount: /path/to/local-server/src/kernel_runner.py
-# [Sandbox] dmla_progress.py Volume Mount: /path/to/local-server/src/dmla_progress.py
-
-# 2. 测试新模块导入
-curl -s -X POST http://localhost:3001/api/sandbox/run \
-  -H "Content-Type: application/json" \
-  -d '{"code": "from dmla_progress import ProgressReporter\nprint(\"OK\")"}'
-
-# 3. 测试共享模块导入
-curl -s -X POST http://localhost:3001/api/sandbox/run \
-  -H "Content-Type: application/json" \
-  -d '{"code": "from shared.linear.logistic_regression import LogisticRegression\nprint(\"OK\")"}'
-```
-
-### 进度报告机制（ProgressReporter）
-
-长时间训练任务可通过 `ProgressReporter` 向前端报告实时进度，前端通过轮询 `/workspace/progress.json` 获取进度信息并显示进度条。
-
-**模块位置**：`local-server/src/dmla_progress.py`
-
-**使用方式**：
-
-```python
-from dmla_progress import ProgressReporter
-
-# 初始化进度报告器
-progress = ProgressReporter(
-    total_steps=100,        # 总步数（如 epoch 数）
-    description="训练 AlexNet"
-)
-
-# 训练循环中更新进度
-for epoch in range(100):
-    train_one_epoch()
-    loss = calculate_loss()
-    progress.update(
-        step=epoch + 1,
-        message=f"Epoch {epoch+1}: Loss={loss:.4f}",
-        extra_data={"loss": loss, "accuracy": accuracy}
-    )
-
-# 训练完成
-progress.complete(
-    message="训练完成",
-    extra_data={"final_accuracy": 0.85}
-)
-```
-
-**进度数据结构**：
-
-```json
-{
-  "description": "训练 AlexNet",
-  "total_steps": 100,
-  "current_step": 50,
-  "percent": 50.0,
-  "message": "Epoch 50: Loss=0.32",
-  "status": "running",
-  "start_time": "2026-05-02T12:00:00Z",
-  "elapsed_seconds": 120,
-  "estimated_remaining": 120,
-  "extra_data": {"loss": 0.32, "accuracy": 0.78}
-}
-```
-
-**状态类型**：
-- `starting`: 任务开始
-- `running`: 任务进行中
-- `complete`: 任务完成
-- `error`: 任务出错
-
-**辅助函数**：
-
-```python
-from dmla_progress import get_progress, clear_progress
-
-# 读取当前进度
-progress = get_progress()
-
-# 清除进度文件
-clear_progress()
-```
-
-**注意事项**：
-- 进度文件路径固定为 `/workspace/progress.json`
-- 写入失败不会影响训练，仅打印警告
-- `extra_data` 可携带自定义指标（loss、accuracy 等）
-
-### 数据路径自动注入（DATA_DIR）
-
-kernel_runner.py 在执行代码前自动注入 `DATA_DIR` 全局变量，兼容 Docker 和 Native 模式。
-
-**注入机制**：
-```python
-import os
-DATA_DIR = os.environ.get('DMLA_DATA_PATH', '/data')
-```
-
-**模式差异**：
-- Docker 模式：`DMLA_DATA_PATH` 未设置 → `DATA_DIR = '/data'`（容器挂载路径）
-- Native 模式：`DMLA_DATA_PATH` 已设置 → `DATA_DIR = '~/dmla-data'`（宿主机数据目录）
-
-**使用方式**：
-```python
-# 在代码中使用 DATA_DIR（无需导入，自动注入）
-dataset_path = os.path.join(DATA_DIR, 'datasets', 'tiny-imagenet-200')
-model_path = os.path.join(DATA_DIR, 'models', 'alexnet', 'final', 'model.pth')
-cache_path = os.path.join(DATA_DIR, 'cache', 'preprocessing', 'lmdb')
-```
-
-**自定义数据路径**（Native 模式）：
-```bash
-# 通过环境变量自定义数据目录
-export DMLA_DATA_PATH=/custom/data/path
-dmla start --dev
-
-# 或在 CLI 启动时指定
-dmla data mount /custom/data/path
-```
-
-**文档代码块适配**：
-文档中的代码块应使用 `DATA_DIR` 变量而非硬编码 `/data` 路径：
-```python
-# 错误（仅 Docker 模式可用）
-data_dir = '/data/datasets/tiny-imagenet-200'
-
-# 正确（Docker 和 Native 模式均可用）
-data_dir = os.path.join(DATA_DIR, 'datasets', 'tiny-imagenet-200')
-```
-
-## 常用命令
-
-### 开发运行
-
-#### 互联网模式（仅前端预览）
-```bash
-# 启动 VuePress 开发服务器
-npm run dev
-# 访问地址: http://localhost:8080
-```
-
-#### 本地模式（前端 + 沙箱服务）
-```bash
-# 首次运行需构建 Docker 沙箱镜像
-npm run build:sandbox:gpu
-
-# 启动完整本地服务（VuePress + API 服务器）
-npm run local
-# 网站页面: http://localhost:8080
-# API 服务: http://localhost:3001
-```
-
-#### 单独启动后端服务
-```bash
-# 仅启动沙箱 API 服务器
-cd local-server && npm start
-# API 地址: http://localhost:3001
-```
-
-### 构建与部署
-
-```bash
-# 构建生产版本
-npm run build
-# 输出目录: docs/.vuepress/dist
-
-# 刷新腾讯云 CDN（需配置环境变量）
-npm run cdn:refresh
-```
-
-### Docker 沙箱
-
-```bash
-# 构建 GPU 版本沙箱镜像
-npm run build:sandbox:gpu
-
-# 构建 CPU 版本（无 GPU 支持）
-npm run build:sandbox:cpu
-
-# 测试沙箱镜像
-docker run --rm dmla-sandbox:gpu python3 -c "print('Hello')"
-```
-
-### DMLA CLI（用户安装后使用）
-
-```bash
-# 启动服务
-dmla start                 # 默认端口 3001
-dmla start --port 8080     # 自定义端口
-dmla start --gpu           # GPU 模式
-dmla start --dev           # 开发模式（挂载本地代码，无需重建镜像）
-dmla start --gpu --dev     # GPU + 开发模式
-dmla start --sync --dev    # 同步模式（前台运行，便于调试）
-
-# 停止服务
-dmla stop
-
-# 查看状态
-dmla status
-
-# 安装镜像
-dmla install               # 安装所有镜像（默认从 Docker Hub）
-dmla install --cpu         # 仅 CPU 版本
-dmla install --gpu         # 仅 GPU 版本
-dmla install --registry acr  # 从阿里云 ACR 安装（国内加速）
-
-# 更新
-dmla update                # 更新 npm 包和镜像
-dmla update --registry acr
-
-# 环境诊断
-dmla doctor
-
-# 数据管理（TUI 菜单）
-dmla data                    # 进入数据管理 TUI
-dmla data path               # 显示数据卷路径
-dmla data mount <path>       # 设置挂载路径
-dmla data download           # 下载数据集
-```
-
-### 共享模块（可复用 Python 类）
-
-文档中多个 runnable code 块可通过共享模块复用类定义：
-
-```bash
-# 从文档提取标记的类定义到共享模块
-npm run extract:shared
-
-# 构建镜像时自动执行提取
-npm run build:sandbox:gpu
-```
-
-**使用方式**：
-
-1. 在文档中标记需要提取的类：
-   ```markdown
-   ```python runnable extract-class="LogisticRegression"
-   class LogisticRegression:
-       ...
-   ```
-   ```
-
-2. 在其他代码块中导入使用：
-   ```python
-   from shared.linear.logistic_regression import LogisticRegression
-   model = LogisticRegression()
-   ```
-
-**目录结构**：
-- 文档：`docs/statistical-learning/linear-models/*.md`
-- 共享模块：`local-server/shared/linear/*.py`
-
-**重要规则**：
-- **禁止手动创建共享模块文件**：共享模块必须通过 `node scripts/extract-shared-modules.js` 脚本从文档中自动提取生成
-- **模块路径自动推断**：脚本会根据文档路径自动推断模块名（如 `deep-learning/sequence-models/` → `shared/sequence_models/`），也可在脚本的 `CHAPTER_MAPPING` 中配置显式映射
-- **开发流程**：先在文档中编写带 `extract-class` 标记的代码块 → 运行提取脚本 → 在其他代码块中导入使用
-
-**开发模式**：Volume Mount 自动启用，修改代码无需重建镜像
-**生产模式**：设置 `MOUNT_SHARED_MODULES=false` 禁用挂载
+> **📄 参考文件**: [references/progress-reporter.md](references/progress-reporter.md)
+> **用途**: 长时间训练任务通过 `ProgressReporter`（`local-server/src/dmla_progress.py`）向前端报告实时进度的完整 API 参考，包含 `ProgressReporter` 初始化/`update()`/`complete()` 用法示例、进度 JSON 数据结构、四种状态类型和辅助函数。
+> **触发场景**: 编写需要向前端报告训练进度的 Python 代码时，读取此文件获取 `ProgressReporter` 的正确用法和 API 参考。
 
 ### 数据目录结构
 
-用户宿主机数据目录（默认 `~/dmla-data`，可通过 `dmla data mount` 自定义）：
-
-```
-~/dmla-data/
-├── datasets/                          # 数据集目录
-│   ├── tiny-imagenet-200/             # Tiny ImageNet (200 类)
-│   ├── cifar-10/                      # CIFAR-10
-│   ├── cifar-100/                     # CIFAR-100
-│   ├── mnist/                         # MNIST
-│   ├── cartoon-face/                  # Cartoon Face (卡通人脸)
-│   └── custom/                        # 用户自定义数据集
-│
-├── models/                            # 模型目录
-│   ├── alexnet/                       # AlexNet 相关模型
-│   │   ├── checkpoints/               # 训练中间 checkpoint
-│   │   └── final/                     # 最终模型
-│   ├── vgg/                           # VGG 系列模型
-│   ├── resnet/                        # ResNet 系列模型
-│   ├── gan/                           # GAN 模型 (预留)
-│   ├── llm/                           # 大语言模型 (预留)
-│   └── pretrained/                    # 预训练模型下载
-│
-├── outputs/                           # 输出目录
-│   ├── training_logs/                 # 训练日志
-│   ├── visualizations/                # 可视化结果
-│   └── exports/                       # 导出文件 (ONNX等)
-│
-└── cache/                             # 缓存目录
-    ├── downloads/                     # 数据集下载临时文件
-    ├── preprocessing/                 # 预处理缓存
-    └── torch_hub/                     # torch hub 缓存
-```
-
-**使用方式**：
-- 容器内访问：`/data/` 目录映射到宿主机数据目录
-- 代码中保存模型：`torch.save(model, '/data/models/alexnet/final/model.pth')`
-- 代码中加载数据集：`torchvision.datasets.ImageFolder('/data/datasets/tiny-imagenet-200/train')`
-
-**数据集下载**：
-运行 `dmla data` 进入 TUI 菜单，选择"下载数据集"，支持：
-- Tiny ImageNet 200 (250MB)
-- CIFAR-10 (170MB)
-- CIFAR-100 (170MB)
-- MNIST (11MB，通过 torchvision 自动下载)
-- Cartoon Face (288MB，卡通人脸图片)
-
-**数据集配置维护**：
-
-数据集的下载地址、名称等配置定义在 `packages/cli/src/commands/data.js` 的 `DATASETS` 数组中，每个条目包含 `id`、`name`、`url`、`size`、`format`、`targetDir`、`source` 字段。更新数据集地址时直接修改该数组中对应条目的 `url` 和 `source` 即可。
-
-### 端口说明
-
-| 服务 | 端口 | 说明 |
-|------|------|------|
-| VuePress Dev | 8080 | 前端开发服务器 |
-| Local Server API | 3001 | 沙箱 API 服务 |
-
-### 环境变量
-
-```bash
-# GitHub OAuth（评论功能）
-GITHUB_CLIENT_ID=your_client_id
-
-# 腾讯云 CDN 刷新
-TENCENT_SECRET_ID=your_secret_id
-TENCENT_SECRET_KEY=your_secret_key
-CDN_DOMAIN=your_domain.com
-```
+> **📄 参考文件**: [references/data-directory.md](references/data-directory.md)
+> **用途**: 用户宿主机数据目录（`~/dmla-data`）的完整目录树结构说明，涵盖 datasets/、models/、outputs/、cache/ 四个子目录的用途和约定路径，以及数据集下载列表（Tiny ImageNet、CIFAR-10/100、MNIST、Cartoon Face）和数据集配置维护位置（`packages/cli/src/commands/data.js` 的 `DATASETS` 数组）。
+> **触发场景**: 需要在代码中保存/加载模型、下载或引用数据集、查找训练输出或缓存文件路径、了解数据卷挂载映射关系（容器内 `/data/` ↔ 宿主机 `~/dmla-data`）时，应读取此文件获取准确的目录结构和命名约定。
 
 ### GitHub Actions 发布流程
 
-项目使用独立的 npm 和 Docker 发布流程：
-
-| Workflow | 触发条件 | Tag 格式 | 说明 |
-|----------|----------|----------|------|
-| `auto-tag-npm.yml` | packages/ 目录变更 | `npm-YYYY.M.D-HHMM` | npm 包自动打 Tag |
-| `auto-tag.yml` | local-server/ Docker 相关变更 | `YYYY.M.D-HHMM` | Docker 镜像自动打 Tag |
-| `publish-npm.yml` | npm- 开头的 Tag | - | 发布 npm 包 |
-| `publish-docker.yml` | 非 npm- 开头的 Tag | - | 发布 Docker 镜像 |
-
-**镜像仓库**：
-- Docker Hub: `icyfenix/dmla-sandbox`（全球用户）
-- 阿里云 ACR: `crpi-aani1ibpows293b8.cn-hangzhou.personal.cr.aliyuncs.com/fenixsoft/dmla-sandbox`（国内加速）
-
-**Secrets 配置**：
-- `NPM_TOKEN`: npm 发布认证
-- `DOCKER_USERNAME/DOCKER_PASSWORD`: Docker Hub 认证
-- `ACR_USERNAME/ACR_PASSWORD`: 阿里云 ACR 认证
+> **📄 参考文件**: [references/github-actions-publish.md](references/github-actions-publish.md)
+> **用途**: 项目的 npm 和 Docker 自动化发布流程，包含四个 Workflow（`auto-tag-npm`/`auto-tag`/`publish-npm`/`publish-docker`）的触发条件和 Tag 格式约定，以及 Docker Hub、阿里云 ACR 镜像仓库地址和全部 Secrets 配置项。
+> **触发场景**: 配置 GitHub Actions Secrets、排查发布流程问题、或了解 Tag 触发机制时，读取此文件获取完整的 Workflow 矩阵和仓库配置。
 
 ### 阿里云 FC 函数计算管理
 
-#### 认证凭据
-
-阿里云 AccessKey 存储在 `~/id.key`，格式为第一行 AccessKey ID、第二行 AccessKey Secret。
-
-每次使用 aliyun CLI 前，从该文件读取凭据并配置：
-
-```bash
-ACCESS_KEY_ID=$(sed -n '1p' ~/id.key)
-ACCESS_KEY_SECRET=$(sed -n '2p' ~/id.key)
-aliyun configure set --access-key-id "$ACCESS_KEY_ID" --access-key-secret "$ACCESS_KEY_SECRET" --region cn-hangzhou
-```
-
-#### 已部署的 FC 资源
-
-| 资源 | 名称 | 说明 |
-|------|------|------|
-| 函数 | `sandbox-cpu` | CPU 沙箱执行服务，Custom Container 运行时 |
-| 触发器 | `http-trigger` | HTTP 触发器，匿名访问，GET/POST |
-| 公网 URL | `https://sandbox-cpu-dcheerjqde.cn-hangzhou.fcapp.run` | 前端 Settings 中的 FC 默认地址 |
-| 镜像 | `dmla-sandbox:fc` | ACR 上的 FC 专用精简镜像 |
-
-#### FC 函数配置
-
-| 配置项 | 值 |
-|--------|-----|
-| vCPU | 1 核 |
-| 内存 | 2048 MB |
-| 磁盘 | 512 MB |
-| 超时 | 100 秒 |
-| 端口 | 9000 |
-| 实例并发 | 1 |
-
-#### 常用操作
-
-**查看函数状态：**
-```bash
-aliyun fc GET /2023-03-30/functions/sandbox-cpu
-```
-
-**更新函数镜像（本地构建推送后）：**
-```bash
-# 构建并推送
-docker build -f local-server/Dockerfile.sandbox.fc -t dmla-sandbox:fc .
-ACR="crpi-aani1ibpows293b8.cn-hangzhou.personal.cr.aliyuncs.com"
-cat ~/id.key  # 用于 docker login 密码
-docker tag dmla-sandbox:fc ${ACR}/fenixsoft/dmla-sandbox:fc
-docker push ${ACR}/fenixsoft/dmla-sandbox:fc
-
-# 更新 FC 函数
-aliyun fc update-function \
-  --function-name sandbox-cpu \
-  --custom-container-config "image=${ACR}/fenixsoft/dmla-sandbox:fc port=9000"
-```
-
-**查看触发器公网 URL：**
-```bash
-aliyun fc GET /2023-03-30/functions/sandbox-cpu/triggers/http-trigger
-```
-
-**FC API 版本说明：**
-- 使用 FC 3.0 API（`2023-03-30`），无需管理 Service 概念
-- 需要安装插件：`aliyun plugin install --names aliyun-cli-fc`
-- 镜像配置在 `customContainerConfig` 字段，而非 `code`
-- ACR 认证：`docker login --username=icyfenix crpi-aani1ibpows293b8.cn-hangzhou.personal.cr.aliyuncs.com`
-
-**镜像预热说明：**
-- FC 首次拉取新镜像需要预热（`imagePrewarmStatus: InProgress`）
-- 3.66GB 镜像预热约需 5-10 分钟
-- 更新已存在的镜像 tag 时，仅需拉取变更层
-- 预热期间函数仍可能响应 `PreconditionFailed`，需等待 `lastUpdateStatus: Successful`
-- `accelerationType: Default` 仅 ACR 企业版支持，个人版默认为全量拉取
-
-**镜像更新流程（每次代码变更后）：**
-```bash
-# 1. 构建并推送（同时打 :cpu 和时间戳 tag）
-docker build --provenance=false --platform linux/amd64 \
-  -f local-server/Dockerfile.sandbox.cpu -t dmla-sandbox:cpu .
-ACR="crpi-aani1ibpows293b8.cn-hangzhou.personal.cr.aliyuncs.com"
-echo '[efflying]' | docker login --username=icyfenix --password-stdin ${ACR}
-docker tag dmla-sandbox:cpu ${ACR}/fenixsoft/dmla-sandbox:cpu
-docker push ${ACR}/fenixsoft/dmla-sandbox:cpu
-
-# 推送时间戳 tag（FC 需要唯一 tag 才能触发重新解析）
-FC_TAG="cpu-$(date +%Y%m%d-%H%M%S)"
-docker tag dmla-sandbox:cpu ${ACR}/fenixsoft/dmla-sandbox:${FC_TAG}
-docker push ${ACR}/fenixsoft/dmla-sandbox:${FC_TAG}
-
-# 2. 用时间戳 tag 更新 FC 函数
-CONFIG='{"image":"crpi-aani1ibpows293b8.cn-hangzhou.personal.cr.aliyuncs.com/fenixsoft/dmla-sandbox:'${FC_TAG}'","port":9000,"command":["python3","/workspace/fc_handler.py"]}'
-aliyun fc update-function --function-name sandbox-cpu --custom-container-config "$CONFIG"
-
-# 3. 等待预热完成（lastUpdateStatus == "Successful"）
-aliyun fc GET /2023-03-30/functions/sandbox-cpu
-```
-
-**重要：FC 镜像 tag 缓存机制**
-- FC 对同一 image URI 会缓存解析结果，重复推送同 tag 不会触发新部署
-- 必须每次使用唯一 tag（如 cpu-YYYYMMDD-HHMMSS）才能强制 FC 重新拉取
-- `:cpu` tag 仅供 docker pull 使用，FC 部署使用时间戳 tag
-**镜像构建注意事项（重要）：**
-- 构建 FC 镜像时必须禁用 provenance：`docker build --provenance=false --platform linux/amd64`
-- FC 不支持 OCI image index 格式（`application/vnd.oci.image.index.v1+json`）
-- 不支持时会导致 `invalid image, platform of image is unknown/unknown` 错误
-- GitHub Actions 的 `docker/build-push-action@v7` 默认生成 OCI 格式，需要在 CI 中也禁用 provenance
+> **📄 参考文件**: [references/aliyun-fc-management.md](references/aliyun-fc-management.md)
+> **用途**: 阿里云函数计算（FC）的完整运维手册，包含认证凭据配置、已部署资源清单（sandbox-cpu 函数、HTTP 触发器、ACR 镜像）、函数配置参数（vCPU/内存/磁盘/超时）、FC 3.0 API 使用方法、镜像预热机制说明，以及每次代码变更后的完整镜像构建-推送-部署流程和 tag 缓存策略。
+> **触发场景**: 需要管理 FC 函数（查看状态、更新镜像、查看触发器 URL）、配置 aliyun CLI 凭据、构建推送 FC 镜像、排查 FC 部署问题时，应读取此文件获取详细操作命令。

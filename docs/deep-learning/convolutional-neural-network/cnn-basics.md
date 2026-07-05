@@ -462,7 +462,7 @@ fig, axes = plt.subplots(2, 3, figsize=(14, 10))
 
 # 原图像
 axes[0, 0].imshow(test_image, cmap='gray', vmin=0, vmax=1)
-axes[0, 0].set_title('原始图像', fontsize=12, fontweight='bold')
+axes[0, 0].set_title('原始图像', fontsize=12)
 axes[0, 0].axis('off')
 
 # 卷积结果
@@ -509,7 +509,7 @@ print(f"二次最大池化: {max_pooled.shape} → {max_pooled_2.shape}")
 fig, axes = plt.subplots(2, 2, figsize=(10, 10))
 
 axes[0, 0].imshow(edge_output, cmap='RdBu', vmin=-edge_output.max(), vmax=edge_output.max())
-axes[0, 0].set_title(f'边缘检测结果\n尺寸: {edge_output.shape}', fontsize=12, fontweight='bold')
+axes[0, 0].set_title(f'边缘检测结果\n尺寸: {edge_output.shape}', fontsize=12)
 axes[0, 0].axis('off')
 
 axes[0, 1].imshow(max_pooled, cmap='RdBu', vmin=-max_pooled.max(), vmax=max_pooled.max())
