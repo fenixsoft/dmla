@@ -172,7 +172,7 @@ print(f"v1, v2, v4 线性无关：{is_linearly_independent([v1, v2, v4])}")  # F
 
 *图：向量内积的几何意义，从左到右分别为：同向（内积为正）、正交（内积为零）、反向（内积为负）*
 
-机器学习中广泛使用由内积衍生的**余弦相似度**（Cosine Similarity）来衡量文本、图像等数据相似性。余弦相似度的定义直接从内积几何定义而来：$\text{cosine\_similarity}(\mathbf{u}, \mathbf{v}) = \frac{\mathbf{u} \cdot \mathbf{v}}{\|\mathbf{u}\| \|\mathbf{v}\|}$，显而易见，它是内积去掉模长后的结果（内积公式 $\mathbf{u} \cdot \mathbf{v} = \|\mathbf{u}\| \|\mathbf{v}\| \cos\theta$ 两边同时除以 $\|\mathbf{u}\| \|\mathbf{v}\|$）。这表明余弦相似度只关心向量的方向，并不关心向量的长度。这个特点使其在处理文本相似度中十分有用，它对应的现实是"一小段话与一大篇文章完全有可能在描述同一个意思"。
+机器学习中广泛使用由内积衍生的**余弦相似度**（Cosine Similarity）来衡量文本、图像等数据相似性。余弦相似度的定义直接从内积几何定义而来：$cosine\_similarity(\mathbf{u}, \mathbf{v}) = \frac{\mathbf{u} \cdot \mathbf{v}}{\|\mathbf{u}\| \|\mathbf{v}\|}$，显而易见，它是内积去掉模长后的结果（内积公式 $\mathbf{u} \cdot \mathbf{v} = \|\mathbf{u}\| \|\mathbf{v}\| \cos\theta$ 两边同时除以 $\|\mathbf{u}\| \|\mathbf{v}\|$）。这表明余弦相似度只关心向量的方向，并不关心向量的长度。这个特点使其在处理文本相似度中十分有用，它对应的现实是"一小段话与一大篇文章完全有可能在描述同一个意思"。
 
 内积建立了代数与几何的桥梁。这个公式的含义是：通过代数计算可以得到向量间夹角（$\cos\theta = \frac{\mathbf{u} \cdot \mathbf{v}}{\|\mathbf{u}\| \|\mathbf{v}\|}$）、向量长度（$\|\mathbf{v}\| = \sqrt{\mathbf{v} \cdot \mathbf{v}}$）这些几何量，也可以用代数表达式精确描述正交（$\mathbf{u} \cdot \mathbf{v} = 0$）、投影（$\text{proj}_u(v) = \frac{v \cdot u}{u \cdot u} u$）这样的几何概念。不夸张地说，内积让向量的"计算"与"看见"完全统一了起来。
 

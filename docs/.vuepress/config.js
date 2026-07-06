@@ -311,13 +311,12 @@ export default {
               text: '向量检索与增强生成',
               collapsible: false,
               children: [
-                { text: '嵌入与向量检索'},
+                { text: '嵌入与向量检索', link: '/agent-applications/vector-retrieval-rag/embedding-and-indexing' },
                 { text: '检索质量评估与优化'},
-                { text: '检索增强生成'},
-                { text: '工程实训：构建知识库问答系统'},
-                // { text: '嵌入与向量检索', link: '/agent-applications/vector-retrieval-rag/embedding-and-indexing' },
                 // { text: '检索质量评估与优化', link: '/agent-applications/vector-retrieval-rag/retrieval-quality' },
+                { text: '检索增强生成'},
                 // { text: '检索增强生成', link: '/agent-applications/vector-retrieval-rag/retrieval-augmented-generation' },
+                { text: '工程实训：构建知识库问答系统'},
                 // { text: '工程实训：构建知识库问答系统', link: '/agent-applications/vector-retrieval-rag/rag-experiment' },
               ]
             },
