@@ -6,10 +6,8 @@
 
 - 已经部署好了 [Docker 环境](https://docs.docker.com/engine/install)。
 - 已经部署好了 [NodeJS 20.x+ 环境](https://nodejs.org/en/download)。
-- **可选**：代码片段与练习题使用 CPU 即可运行，但模型训练的内容需使用 GPU，需具备 NVIDIA GPU 且已经安装了 [NVIDIA 驱动](https://www.nvidia.com/en-us/drivers/)、满足 CUDA 13.0 GA 的驱动版本要求、磁盘空间等条件，具体为：
-    - 驱动版本要求：
-        - Linux >= 570.28.03
-        - Windows: >= 570.76
+- **可选**：文章中的代码片段无需任何设置即可运行。但模型工程实训章节的实验需使用 GPU 支持，环境需具备 NVIDIA GPU 且已经安装了 [NVIDIA 驱动](https://www.nvidia.com/en-us/drivers/)、满足 CUDA 13.0 GA 的驱动版本要求、磁盘空间等条件，具体为：
+    - NVIDIA 驱动版本要求 >= 580。
     - Docker GPU 支持：需要在宿主机安装 [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html)，使 Docker 容器能够访问 GPU 硬件。
         - Windows 用户使用 Docker Desktop 时，Container Toolkit 已自动集成，无需额外安装。
         - Linux 用户（包括 WSL2 中直接安装 Docker Engine 的情况）需要手动安装。
@@ -34,9 +32,9 @@
             ```
             </details>
     - 存储与内存：
-        - CPU 镜像约为 680 MB；GPU 镜像约 7.83 GB（其中 CUDA 官方镜像 > 4 GB，PyTorch GPU 版本 ≈ 3 GB）。
-        - CPU 镜像内存上限为 4 GB；GPU 镜像无内存上限，但模型训练通常至少需要 16 GB 内存和 8 GB 显存（具体评估见训练章节）。
-        - 宿主机还应预留 20 GB 以上空间，用于存放数据集、预处理缓存及模型 Checkpoint 等内容。
+        - CPU 镜像约为 880 MB；GPU 镜像约 11.1 GB（其中 CUDA 官方镜像 ≈ 4 GB，PyTorch GPU 版本 ≈ 2.7 GB, vLLM ≈ 3.1 GB）。
+        - CPU 镜像内存上限为 4 GB；GPU 镜像无内存上限，但模型训练通常至少需要 16 GB 显存（具体评估见训练章节）。
+        - 宿主机还应预留 20 GB 以上空间，用于存放模型、Checkpoint、数据集、预处理缓存等内容。
     - 其他工具要求：
         - [Git LFS](https://git-scm.com/install/)：模型训练/评估的数据集需使用 Git LFS 下载。
 - 其余依赖（如 Jupyter Notebook Kernel、Python、NumPy、PyTorch、CUDA 等）均通过 Docker 镜像自动提供，无需单独安装。
@@ -44,7 +42,7 @@
 ## 快速开始
 
 本文档内包含大量的代码用于演示机器学习算法以及进行模型训练，因此部署一套沙箱环境用于练习是有必要的。
-- 如果你使用的是互联网上部署的文档（[https://ai.icyfenix.cn](https://ai.icyfenix.cn)），可以在本地运行如下命令，使用`DMLA-CLI`部署沙箱环境，让网站上的代码能够在你本地执行：
+- 如果你使用的是互联网上部署的文档（[https://ai.icyfenix.cn](https://ai.icyfenix.cn)），默认可直接在 Serverless 服务支持下运行文章中的代码片。但强烈建议在本机部署沙箱，让网站上的全部代码（文章代码片段、工程实训章节）能够在你本地执行。可使用 `DMLA-CLI` 部署沙箱环境：
 
     ``` shell
     npx @icyfenix-dmla/install@latest
@@ -52,7 +50,7 @@
 
     部署后，可使用如下命令启动沙箱服务：
     - **CPU 模式**：默认模式，以 CPU Docker 镜像运行代码，服务能力可满足文章内代码片段的运行需要。
-    - **GPU 模式**：以 GPU Docker 镜像运行代码，服务能力可满足所有代码（含代码片段、完整实验）的需要。
+    - **GPU 模式**：以 GPU Docker 镜像运行代码，服务能力可满足所有代码（含代码片段、工程实训章节完整实验）的需要。
     - **Native 模式**：不使用 Docker 镜像，直接以本机原始环境运行代码，服务能力取决于本机的软硬件环境。Python、PyTorch、CUDA 需要用户自行准备，其他 PIP 依赖会自动安装。
 
     ``` bash
@@ -67,23 +65,17 @@
     除启动服务外，`DMLA-CLI` 的其余功能还包括停止服务、查看服务状态、下载 Docker 镜像、下载/管理数据集、诊断环境等，如下所示：
 
     ``` bash
-    # 停止服务
-    dmla stop
+    # 停止服务、查看状态、环境诊断
+    dmla [stop|status|doctor]
 
-    # 查看状态
-    dmla status
-
-    # 安装镜像
-    dmla images
-
-    # 环境诊断
-    dmla doctor
-
-    # 数据管理
-    dmla data
+    # 部署镜像、模型、数据集
+    dmla [images|model|data]
     ```
 
-- 如果你使用的是源码部署（[https://github.com/fenixsoft/dmla](https://github.com/fenixsoft/dmla)），除`DMLA-CLI`外，也可以直接拉取或者编译 Docker 镜像：
+- 如果你使用的是源码部署（[https://github.com/fenixsoft/dmla](https://github.com/fenixsoft/dmla)），除 `DMLA-CLI` 外，也可以直接拉取或者编译 Docker 镜像、用本地源码启动和调试服务。
+    <details>
+    <summary>以源码编译启动</summary>
+    
     ``` shell
     # 启动沙箱（需先在仓库根目录执行 npm install 安装依赖）
     npm run server
@@ -103,19 +95,17 @@
     # 本地编译镜像
     npm run build:sandbox:[cpu|gpu|all]
     ```
+    </details>
 
 ## 环境建议
 
-- 对于文章内容的代码片段和课后练习题算法，只需纯 CPU 环境即可运行。在进入深度学习部分后，会出现专门的模型工程训练章节，它们需要有 GPU 异构计算环境的支持，当前 Docker 镜像使用的是 PyTorch with [CUDA 13.0](https://developer.nvidia.com/cuda-13-0-0-download-archive)，支持 20/30/40/50 系列显卡，A100/A800/H100/H800 专业计算卡。如果你的硬件不在此范畴，需要自行下载代码，调整 PyTorch 版本后重新编译镜像（譬如 AMD 显卡要自己处理 PyTorch + ROCm）。
+- 当前 Docker GPU 镜像支持 NVIDIA RTX 20/30/40/50 系列显卡，A100/A800/H100/H800 专业计算卡。如果你的硬件不在此范畴，需要自行下载源码，调整 PyTorch 版本后重新编译镜像（譬如 AMD 显卡要自己处理 PyTorch + ROCm）。
 
-- 基于以下硬性限制，笔者建议在 **Linux** 宿主环境下使用 GPU 进行模型训练
-    - [NVIDIA NVML](https://developer.nvidia.com/management-library-nvml) 约束：本项目的模型训练虽不会直接调用 NVML 去调整 GPU 硬件参数，但会用到 DALI 等数据处理库，它们依赖 NVML 支持。DALI 本身仅支持 Linux 平台，Windows 上无法运行。即使在 WSL 2 中通过 NVIDIA Container Toolkit 获得 GPU 支持，NVML API 的可用性和功能完整性也有限，部分 API 仍不受支持。
-    - Docker SHM 约束：PyTorch 的 `DataLoader` 在 Windows 上使用多进程数据加载（`num_workers > 0`）时会遇到共享内存问题。Linux Docker 容器通过 `/dev/shm` 提供共享内存，而 Windows Docker 容器不具备此机制。即使通过 `--shm-size` 手动设置，在 WSL 2 环境下运行 Linux 容器时，`/dev/shm` 的行为也可能与原生 Linux 存在差异，导致 DataLoader 多进程模式不稳定。
-    - WSL 2 的跨宿主机 I/O 约束：[数据管理](#数据管理)中提到，训练数据和模型是存放在宿主机，通过 Volume Mount 到容器的，由于宿主机是 NTFS 磁盘格式，要通过 9P 协议翻译，会带来大量 I/O 损耗。
-    
-    尽管如此，本文档仍确保代码可在 Windows / Linux 环境下正常运行（功能完整，性能有差距）。macOS 或非 NVIDIA 硬件环境（如昇腾）可能需要额外适配。
+- 本项目所有代码均可在 Windows / Linux 环境下正常运行（功能完整，性能有差距），但笔者强烈建议在 **Linux** 宿主环境下完成模型训练实验。macOS 或非 NVIDIA 硬件环境（如昇腾）可能需要额外适配。
 
-- 如本地硬件不满足要求，可考虑通过云服务商的 GPU 异构计算服务，以按用量付费方式部署沙箱来完成练习（按 AutoDL 的 GeForce RTX 3090 GPU 约 1.6 元 / 小时计费，完成所有模型训练预计花费在十五元左右）。沙箱环境默认为 `http://localhost:3001`，如果你选择了其他端口或者非本机的沙箱（譬如云服务），请点击文档右上角设置图标 <a href="javascript:document.getElementsByTagName('button')[0].click()"><svg data-v-9eec72c3="" class="settings-icon" style="width:18px; height:18px; color:#000" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle data-v-9eec72c3="" cx="12" cy="12" r="3"></circle><path data-v-9eec72c3="" d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg></a> 手动填入沙箱地址。
+- 如本地硬件不满足要求，可考虑租用云服务商的 GPU 异构计算服务，以按用量付费方式部署沙箱来完成练习（以 AutoDL 的 GeForce RTX 3090 GPU 约 1.6 元 / 小时计算，完成所有模型训练预计花费在十五元左右）。
+
+- 沙箱环境默认为 `http://localhost:3001`，如果你选择了其他端口或者非本机的沙箱（譬如云服务），请点击文档右上角设置图标 <a href="javascript:document.getElementsByTagName('button')[0].click()"><svg data-v-9eec72c3="" class="settings-icon" style="width:18px; height:18px; color:#000" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle data-v-9eec72c3="" cx="12" cy="12" r="3"></circle><path data-v-9eec72c3="" d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg></a> 手动填入沙箱地址。
 
 ::: danger 安全提示
 

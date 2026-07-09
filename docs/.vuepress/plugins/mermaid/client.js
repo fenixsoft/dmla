@@ -53,7 +53,27 @@ async function renderMermaid() {
         secondaryTextColor: '#333333',
         edgeLabelBackground: `#ffffff`,
         // nodePadding 配合 16px 字体需略增
-        nodePadding: 10
+        nodePadding: 10,
+        // ── 时序图（sequenceDiagram）专用变量 ──
+        // 与 graph 节点配色一致：#e2e8f0 填充 / #cbd5e1 描边 / #333333 文字
+        actorBkg: '#e2e8f0',
+        actorBorder: '#cbd5e1',
+        actorTextColor: '#333333',
+        actorLineColor: '#cbd5e1',
+        // 信号（箭头）颜色
+        signalColor: '#333333',
+        signalTextColor: '#333333',
+        // 激活条样式（略浅于 actor 背景）
+        activationBkgColor: '#f1f5f9',
+        activationBorderColor: '#cbd5e1',
+        // 备注框样式
+        labelBoxBkgColor: '#e2e8f0',
+        labelBoxBorderColor: '#cbd5e1',
+        labelTextColor: '#333333',
+        // Loop 区域样式
+        loopTextColor: '#333333',
+        // 序号样式
+        sequenceNumberColor: '#333333',
       }
     })
     mermaidLoaded = true
@@ -205,7 +225,27 @@ export default defineClientConfig({
             secondaryTextColor: '#333333',
             edgeLabelBackground: `#ffffff`,
             // nodePadding 配合 16px 字体需略增
-            nodePadding: 10
+            nodePadding: 10,
+            // ── 时序图（sequenceDiagram）专用变量 ──
+            // 与 graph 节点配色一致：#e2e8f0 填充 / #cbd5e1 描边 / #333333 文字
+            actorBkg: '#e2e8f0',
+            actorBorder: '#cbd5e1',
+            actorTextColor: '#333333',
+            actorLineColor: '#cbd5e1',
+            // 信号（箭头）颜色
+            signalColor: '#333333',
+            signalTextColor: '#333333',
+            // 激活条样式（略浅于 actor 背景）
+            activationBkgColor: '#f1f5f9',
+            activationBorderColor: '#cbd5e1',
+            // 备注框样式
+            labelBoxBkgColor: '#e2e8f0',
+            labelBoxBorderColor: '#cbd5e1',
+            labelTextColor: '#333333',
+            // Loop 区域样式
+            loopTextColor: '#333333',
+            // 序号样式
+            sequenceNumberColor: '#333333',
           }
         })
         mermaidLoaded = true
