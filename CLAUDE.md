@@ -21,6 +21,8 @@
 
 - Autonomy: 允许在本仓库内创建/修改/删除文件；禁止写入 `node_modules`, `.git`, `dist`, `build`, `~` 与上级目录。
 - **Git 推送控制：** 除非得到用户的明确指令，否则禁止自动推送代码到 git 仓库。完成代码修改后，应告知用户变更内容并等待用户确认后再执行 `git push`。
+- **GitHub 工作流与部署流水线查询：** 当需要检查 GitHub Actions 工作流状态、查看部署流水线运行情况时，使用 `gh` 命令查询相关信息（如 `gh run list`、`gh workflow view` 等），而非直接读取本地文件。
+- **网页打开与 URL 访问：** 当用户要求打开网页、贴出网址 URL 时，使用 `playwright-cli` skill 调用浏览器打开页面。网络搜索和网页内容提取优先使用 anysearch skill。
 
 ### 项目与代码维护
 

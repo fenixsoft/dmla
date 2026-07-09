@@ -3,6 +3,7 @@
 
 import json
 
+# Agent 核心循环实现
 class AgentCore:
     """基于 ReAct 模式的 Agent 核心"""
     

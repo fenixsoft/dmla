@@ -313,10 +313,8 @@ export default {
               children: [
                 { text: '嵌入与向量检索', link: '/agent-applications/vector-retrieval-rag/embedding-and-indexing' },
                 { text: '检索质量评估与优化', link: '/agent-applications/vector-retrieval-rag/retrieval-quality' },
-                { text: '检索增强生成'},
-                // { text: '检索增强生成', link: '/agent-applications/vector-retrieval-rag/retrieval-augmented-generation' },
-                { text: '工程实训：构建知识库问答系统'},
-                // { text: '工程实训：构建知识库问答系统', link: '/agent-applications/vector-retrieval-rag/rag-experiment' },
+                { text: '检索增强生成', link: '/agent-applications/vector-retrieval-rag/retrieval-augmented-generation' },
+                { text: '工程实训：构建知识库问答系统', link: '/agent-applications/vector-retrieval-rag/rag-experiment' },
               ]
             },
             {
@@ -324,6 +322,7 @@ export default {
               collapsible: false,
               children: [
                 { text: '从 LLM 到 Agent'},
+                // { text: '从 LLM 到 Agent', link: '/agent-applications/agent-systems/llm-to-agent' },
                 { text: '工具调用'},
                 { text: '规划与推理'},
                 { text: '记忆系统'},
@@ -331,7 +330,6 @@ export default {
                 { text: '编排与容错'},
                 { text: '工程实训：构建自主 Agent'},
                 { text: '工程实训：构建多智能体协作系统'},
-                // { text: '从 LLM 到 Agent', link: '/agent-applications/agent-systems/llm-to-agent' },
                 // { text: '工具调用', link: '/agent-applications/agent-systems/tool-use' },
                 // { text: '规划与推理', link: '/agent-applications/agent-systems/planning-reasoning' },
                 // { text: '记忆系统', link: '/agent-applications/agent-systems/memory-systems' },

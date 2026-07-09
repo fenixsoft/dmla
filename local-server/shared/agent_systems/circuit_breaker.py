@@ -1,6 +1,7 @@
 # CircuitBreaker 定义
 # 从文档自动提取生成
 
+# 断路器实现
 class CircuitBreaker:
     """断路器：在 Agent 持续失败时暂停向其分配任务"""
     

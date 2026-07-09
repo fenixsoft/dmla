@@ -1,6 +1,7 @@
 # SpecializedAgent 定义
 # 从文档自动提取生成
 
+# 专业化 Agent 基类
 class SpecializedAgent:
     """专业化 Agent 基类，每个子类实现特定领域的逻辑"""
     

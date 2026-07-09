@@ -133,6 +133,7 @@ function extractClassDefinition(code, name) {
   let foundDef = false;
   let defBaseIndent = -1;
   let isClass = false;
+  let pendingLines = [];
 
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
@@ -141,6 +142,7 @@ function extractClassDefinition(code, name) {
 
     // 跳过开头的 import 语句（不属于定义）
     if (!foundDef && (/^(import|from)\s+/.test(trimmedLine) || trimmedLine === '')) {
+      pendingLines = [];
       continue;
     }
 
@@ -152,8 +154,15 @@ function extractClassDefinition(code, name) {
         foundDef = true;
         isClass = !!classMatch;
         defBaseIndent = lineIndent;
+        // 将之前暂存的装饰器行加入结果
+        result.push(...pendingLines);
+        pendingLines = [];
         result.push(line);
         continue;
+      }
+      // 不是目标定义也不是 import —— 可能是装饰器，暂存起来
+      if (trimmedLine !== '') {
+        pendingLines.push(line);
       }
     } else {
       // 已经找到定义，收集内容

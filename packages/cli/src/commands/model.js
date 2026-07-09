@@ -54,6 +54,18 @@ const MODELS = [
     source: 'ModelScope (icyfenix)',
     framework: 'PyTorch',
     task: '图像分类'
+  },
+  {
+    id: 'bge-small-zh-v1.5',
+    name: 'BGE-small-zh-v1.5',
+    description: 'BAAI 中文文本嵌入模型，适用于语义检索和文本相似度计算',
+    url: 'https://www.modelscope.cn/BAAI/bge-small-zh-v1.5.git',
+    size: '~191MB',
+    format: 'git',
+    targetDir: 'models/pretrained/bge-small-zh-v1.5',
+    source: 'ModelScope (BAAI)',
+    framework: 'Transformers',
+    task: '文本嵌入'
   }
 ]
 

@@ -1,6 +1,7 @@
 # MemoryManager 定义
 # 从文档自动提取生成
 
+# 记忆管理器实现
 class MemoryManager:
     """简单的记忆管理器，维护对话历史和关键信息"""
     
