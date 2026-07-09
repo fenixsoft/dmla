@@ -29,10 +29,10 @@
 
 ## 网站截图
 <p align="center">
-《<a href="https://ai.icyfenix.cn" target="_blank">设计机器学习应用系统</a>》
   <div align="center">
     <img src="https://github.com/fenixsoft/dmla/blob/main/docs/.vuepress/public/homepage.png?raw=true" >
   </div>
+《<a href="https://ai.icyfenix.cn" target="_blank">设计机器学习应用系统</a>》
 </p>
 
 ## 快速开始
