@@ -31,7 +31,7 @@
 <p align="center">
 《<a href="https://ai.icyfenix.cn" target="_blank">设计机器学习应用系统</a>》
   <div align="center">
-    <img src="https://ai.icyfenix.cn/homepage.png" >
+    <img src="https://github.com/fenixsoft/dmla/blob/main/docs/.vuepress/public/homepage.png?raw=true" >
   </div>
 </p>
 
