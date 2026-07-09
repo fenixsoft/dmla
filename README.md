@@ -31,8 +31,8 @@
 <p align="center">
   <div align="center">
     <img src="https://github.com/fenixsoft/dmla/blob/main/docs/.vuepress/public/homepage.png?raw=true" >
+    《<a href="https://ai.icyfenix.cn" target="_blank">设计机器学习应用系统</a>》
   </div>
-《<a href="https://ai.icyfenix.cn" target="_blank">设计机器学习应用系统</a>》
 </p>
 
 ## 快速开始
