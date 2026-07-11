@@ -321,8 +321,8 @@ export default {
               text: '构建 Agent 应用',
               collapsible: false,
               children: [
-                { text: '从 LLM 到 Agent'},
-                // { text: '从 LLM 到 Agent', link: '/agent-applications/agent-systems/llm-to-agent' },
+                // { text: '从 LLM 到 Agent'},
+                { text: '从 LLM 到 Agent', link: '/agent-applications/agent-systems/llm-to-agent' },
                 { text: '工具调用'},
                 { text: '规划与推理'},
                 { text: '记忆系统'},
@@ -343,7 +343,7 @@ export default {
       },
       {
         text: '附录',
-        collapsible: false,
+        collapsible: true,
         children: [
               { text: '构建沙箱环境', link: '/appendixes/sandbox' },
               {
