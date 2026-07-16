@@ -282,7 +282,7 @@ LSTM 语言模型的训练目标是最大化训练数据中字符序列的似然
 
 :::
 
-```python runnable gpu timeout=unlimited
+```python runnable gpuonly timeout=unlimited
 import torch
 import torch.nn as nn
 import torch.optim as optim

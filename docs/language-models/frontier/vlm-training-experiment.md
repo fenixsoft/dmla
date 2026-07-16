@@ -140,7 +140,7 @@ print(f"  hidden_dim={outputs.last_hidden_state.shape[2]}")
 
 视觉编码器的输出是 64 个 768 维的块 token，它们处于 SigLIP 的特征空间。语言模型的词嵌入也产生 768 维向量，但处于语言模型的语义空间。两个空间虽然维度相同，向量的分布和含义却完全不一样。投影层充当两个空间之间的翻译器，采用两层 MLP 结构（LayerNorm → Linear → GELU → Linear）。LayerNorm 先将视觉特征归一化，两次线性变换逐步将视觉特征从 SigLIP 的特征空间映射到语言模型的语义空间，GELU 激活函数在中间引入非线性，使投影层能够学习两个空间之间复杂的映射关系。
 
-```python runnable gpu extract-class="MMVisionProjector"
+```python runnable gpuonly extract-class="MMVisionProjector"
 import torch.nn as nn
 
 class MMVisionProjector(nn.Module):
@@ -167,7 +167,7 @@ print(f"投影层参数量: {total_params:,} ({total_params/1e6:.2f}M)")
 
 投影后的视觉 token 需要被插入到文本 token 序列中，才能被 Transformer 层处理。token 注入机制是在词表中预留一个特殊标记 `<|image_pad|>`，数据集构建时将图像对应的 `<image>` 标记替换为 64 个连续的 `<|image_pad|>` token。模型在词嵌入之后、送入 Transformer 层之前，找到序列中的 `<|image_pad|>` 位置，将这些位置上的词嵌入替换为投影后的视觉特征。
 
-```python runnable gpu extract-class="VLMConfig,MiniMindVLM"
+```python runnable gpuonly extract-class="VLMConfig,MiniMindVLM"
 import os
 import torch
 import torch.nn as nn
@@ -351,7 +351,7 @@ print(f"  可训练参数: {trainable_params:,} ({trainable_params/1e6:.2f}M)")
 - **视觉预训练**（`pretrain_i2t.parquet`）：约 25 万条图像-描述对，目标是让模型学会将视觉信息与语言描述对齐。对话格式很简单，通常是用户请求描述图像、模型给出描述。
 - **视觉指令微调**（`sft_i2t.parquet`）：约 58 万条多轮对话，目标是让模型学会根据图像回答各种问题。对话格式多样，涵盖视觉问答、图像分析、推理判断等任务。
 
-```python runnable gpu extract-class="VLMDataset"
+```python runnable gpuonly extract-class="VLMDataset"
 import json
 import io
 import torch

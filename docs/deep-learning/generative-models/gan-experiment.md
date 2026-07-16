@@ -128,7 +128,7 @@ DCGAN 是将卷积神经网络系统性地引入 GAN 的里程碑式改进，我
 5. **激活函数选择**：生成器中间层使用 ReLU，输出层使用 $\tanh$（输出范围 $[-1, 1]$，匹配归一化后的真实图像）；判别器中间层使用 LeakyReLU（斜率 0.2），输出层使用 Sigmoid（输出概率 $[0, 1]$）。LeakyReLU 比 ReLU 更适合判别器，因为它在负值区间保留了小梯度（$\alpha = 0.2$），防止梯度完全消失，这对判别器学习"假样本的特征"至关重要。
 6. **去掉卷积层的偏置**：使用 BN 的层不需要偏置，因为 BN 本身有偏移参数 $\beta$，两者功能重叠。
 
-```python runnable gpu extract-class="DCGANGenerator"
+```python runnable gpuonly extract-class="DCGANGenerator"
 import torch
 import torch.nn as nn
 

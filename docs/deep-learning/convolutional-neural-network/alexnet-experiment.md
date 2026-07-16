@@ -269,7 +269,7 @@ else:
 2. `classifier`（分类层）：3 个全连接层。前两层使用 `Dropout(p=0.5)` 随机丢弃 50% 的神经元激活，防止过拟合，这是 AlexNet 的标志性设计。最后将 4096 维特征映射到 200 个类别的 Softmax 分类器
 3. **输出从 1000 类改成 200 类：** 原始 AlexNet 最后一层输出 1000 类（对应完整 ImageNet），Tiny ImageNet 只有 200 类，所以 `num_classes=200`
 
-```python runnable gpu extract-class="AlexNet"
+```python runnable gpuonly extract-class="AlexNet"
 import torch
 import torch.nn as nn
 

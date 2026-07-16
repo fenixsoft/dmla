@@ -17,7 +17,7 @@ dmla data
 
 该语料包含预训练文本数据（`pretrain_t2t_mini.jsonl`，约 1.2 GB）以及配套的 BPE 分词器文件（`tokenizer.json` 和 `tokenizer_config.json`）。下载完成后，验证语料和分词器文件是否完整：
 
-```python runnable
+```python gpuonly runnable
 import os
 
 # 语料和分词器目录（DATA_DIR 由 kernel 自动注入）
@@ -91,7 +91,7 @@ print(f"压缩率: {compression:.2f} 字符/token")
 
 与 [AlexNet 实验](../../deep-learning/convolutional-neural-network/alexnet-experiment.md)中图像数据的预处理不同，文本数据的预处理开销极小，分词操作本身是 CPU 上的查表与字符串匹配，速度远快于 JPEG 解码和 Resize。预训练数据集不需要 LMDB 缓存等优化手段，直接从 JSONL 文件逐行读取并实时分词即可。因此以下数据集代码会在训练时被调用，无需手动执行。
 
-```python runnable gpu extract-class="PretrainDataset"
+```python runnable gpuonly extract-class="PretrainDataset"
 import torch
 from torch.utils.data import Dataset
 import json
@@ -181,7 +181,7 @@ class PretrainDataset(Dataset):
 | `vocab_size` | 6400 | 词表大小 |
 | `tie_word_embeddings` | True | 词嵌入与输出头共享权重 |
 
-```python runnable gpu extract-class="MiniMindConfig, RMSNorm, precompute_freqs_cis, apply_rotary_pos_emb, repeat_kv, Attention, FeedForward, MiniMindBlock, MiniMindModel, MiniMindForCausalLM"
+```python runnable gpuonly extract-class="MiniMindConfig, RMSNorm, precompute_freqs_cis, apply_rotary_pos_emb, repeat_kv, Attention, FeedForward, MiniMindBlock, MiniMindModel, MiniMindForCausalLM"
 import math
 import torch
 import torch.nn as nn
