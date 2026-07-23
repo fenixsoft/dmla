@@ -36,7 +36,7 @@
 
 有了依赖图之后，调度就转化为一个拓扑排序问题，找到一种节点的线性排列，使得每条边的起点都排在终点之前。拓扑排序的结果给出了一个合法的执行顺序。一个图中可能有多种拓扑排序结果，这意味着存在多个正确的执行方案，可以从中选择并行度最高的那个。拓扑排序过程中同一批入度为零的节点之间不存在依赖关系，它们可以被并行派发执行。下面的代码演示了依赖图的构建、拓扑排序以及并行组的识别。
 
-```python runnable extract-class="DependencyScheduler"
+```python runnable extract-class="DependencyScheduler, TaskNode"
 from collections import deque
 from dataclasses import dataclass, field
 

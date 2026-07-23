@@ -1,7 +1,6 @@
 # EmbeddingIndexer 定义
 # 从文档自动提取生成
 
-from __future__ import annotations
 import json as _json
 import numpy as np
 import os

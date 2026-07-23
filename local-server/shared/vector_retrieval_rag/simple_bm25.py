@@ -1,10 +1,10 @@
 # SimpleBM25, HybridRetriever 定义
 # 从文档自动提取生成
 
-from __future__ import annotations
 import numpy as np
 import re
 from collections import Counter, defaultdict, deque
+from shared.vector_retrieval_rag import (MarkdownChunker, EmbeddingIndexer,
 
 class SimpleBM25:
     """BM25 稀疏检索的简化实现
