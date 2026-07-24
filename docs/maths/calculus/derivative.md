@@ -59,7 +59,7 @@ $\varepsilon -\delta$ 语言所描述的图景是：你想让 $f(x)$ 多接近 $
 2. $\lim_{x \to a} f(x)$ 存在
 3. $\lim_{x \to a} f(x) = f(a)$
 
-第三个条件将极限值与函数值统一起来："极限等于函数值"正是"连续"的真正含义。连续函数有许多良好的性质。譬如，[介值定理](https://en.wikipedia.org/wiki/Intermediate_Value_Theorem)（Intermediate Value Theorem）告诉我们：如果连续函数 $f$ 在区间 $[a, b]$ 上取值 $f(a)$ 和 $f(b)$，那么对介于 $f(a)$ 和 $f(b)$ 之间的任何值 $c$，存在 $x \in (a, b)$ 使得 $f(x) = c$。这个定理常用于数值计算中求方程的根（如二分法）。
+第三个条件将极限值与函数值统一起来："极限等于函数值"正是"连续"的真正含义。连续函数有许多良好的性质。譬如，[介值定理](https://en.wikipedia.org/wiki/Intermediate_value_theorem)（Intermediate Value Theorem）告诉我们：如果连续函数 $f$ 在区间 $[a, b]$ 上取值 $f(a)$ 和 $f(b)$，那么对介于 $f(a)$ 和 $f(b)$ 之间的任何值 $c$，存在 $x \in (a, b)$ 使得 $f(x) = c$。这个定理常用于数值计算中求方程的根（如二分法）。
 
 ## 导数的定义与几何意义
 
@@ -77,7 +77,7 @@ $$f'(x_0) = \lim_{x \to x_0} \frac{f(x) - f(x_0)}{x - x_0}$$
 
 这两种定义是等价的，只需令 $x = x_0 + \Delta x$ 即可相互转换。
 
-导数有非常直观的几何意义：切线的斜率。考虑函数 $y = f(x)$ 的图像，在点 $(x_0, f(x_0))$ 处画一条[切线](https://en.wikipedia.org/wiki/Tangent)（Tangent Line）。这条切线的斜率就是 $f'(x_0)$。先考虑通过两个点 $(x_0, f(x_0))$ 和 $(x_0 + \Delta x, f(x_0 + \Delta x))$ 的一条[割线](https://en.wikipedia.org/wiki/Secant_line)（Secant Line）。割线的斜率为：
+导数有非常直观的几何意义：切线的斜率。考虑函数 $y = f(x)$ 的图像，在点 $(x_0, f(x_0))$ 处画一条[切线](https://en.wikipedia.org/wiki/Tangent_(geometry))（Tangent Line）。这条切线的斜率就是 $f'(x_0)$。先考虑通过两个点 $(x_0, f(x_0))$ 和 $(x_0 + \Delta x, f(x_0 + \Delta x))$ 的一条[割线](https://en.wikipedia.org/wiki/Secant_line)（Secant Line）。割线的斜率为：
 
 $$\text{割线斜率} = \frac{f(x_0 + \Delta x) - f(x_0)}{\Delta x}$$
 

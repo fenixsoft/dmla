@@ -291,8 +291,8 @@ class NeuralNetworkBP:
             # Softmax + Cross-Entropy的简化梯度
             delta = self.activations_cache[-1] - Y
         else:
-            # 其他激活函数
-            delta = (self.activations_cache[-1] - Y) * \
+            # 其他激活函数：交叉熵损失梯度为 -Y/A
+            delta = (-Y / self.activations_cache[-1]) * \
                     self._activation_derivative(
                         self.pre_activations_cache[-1],
                         self.activations_cache[-1],
@@ -496,7 +496,7 @@ plt.close()
     
     **导数最大值分析**：
     
-    $f'(z) = f(z)(1-f(z))$)，设 $f(z) = t$，则 $f'(z) = t(1-t)$。
+    $f'(z) = f(z)(1-f(z))$，设 $f(z) = t$，则 $f'(z) = t(1-t)$。
     
     当 $t = 0.5$ 时（即 $z=0$），$f'(z) = 0.5 \times 0.5 = 0.25$，这是导数的最大值。
     

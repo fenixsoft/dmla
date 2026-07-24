@@ -110,7 +110,7 @@ $$\int_0^1 2x \, dx = G(1) - G(0) = 1^2 - 0^2 = 1$$
 
 ## 练习题
 
-1. 证明方向向量的定义 $D_{\mathbf{u}} f(x_0, y_0) = \lim_{h \to 0} \frac{f(x_0 + h u_1, y_0 + h u_2) - f(x_0, y_0)}{h}$ 与 $D_{\mathbf{u}} f = \nabla f \cdot \mathbf{u}$ 是等价的。
+1. 证明方向导数的定义 $D_{\mathbf{u}} f(x_0, y_0) = \lim_{h \to 0} \frac{f(x_0 + h u_1, y_0 + h u_2) - f(x_0, y_0)}{h}$ 与 $D_{\mathbf{u}} f = \nabla f \cdot \mathbf{u}$ 是等价的。
     <details>
     <summary>参考答案</summary>
     这实际上是一个复合函数的导数问题：令 $g(h) = f(x_0 + h u_1, y_0 + h u_2)$，方向导数就是 $g'(0)$。定义路径函数 $x(h) = x_0 + h u_1$，$y(h) = y_0 + h u_2$。根据多元链式法则：

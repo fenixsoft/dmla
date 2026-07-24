@@ -32,7 +32,7 @@ AlexNet 的成功并非来自全新的数学理论，基于反向传播的可学
 
 ### 网络结构
 
-从架构演进的角度看，AlexNet 可以理解为 LeNet-5 的深度放大版，LeNet-5 只有 5 个可学习层（2 卷积 + 3 全连接），若计入池化层则共 7 层（池化层没有可学习的参数，一般不单独算作一层），参数量约 6 万，AlexNet 则设计有 8 层（5 卷积 + 3 全连接），参数量暴涨至约 6000 万，是 LeNet-5 的 1000 倍。这种规模的扩展不能靠简单堆叠，必须有精心设计的层次结构，每一层都有明确的职责。
+从架构演进的角度看，AlexNet 可以理解为 LeNet-5 的深度放大版，LeNet-5 只有 5 个可学习层（2 卷积 + 3 全连接），若计入池化层则共 7 层（池化层没有可学习的参数，一般不单独算作一层），参数量约 6 万，AlexNet 则设计有 8 层（5 卷积 + 3 全连接），参数量暴涨至约 6200 万，是 LeNet-5 的 1000 倍。这种规模的扩展不能靠简单堆叠，必须有精心设计的层次结构，每一层都有明确的职责。
 
 AlexNet 的网络结构如下图所示，它接受 $224 \times 224 \times 3$ 的 RGB 图像输入，经过 5 个卷积层逐级提取特征，最后通过 3 个全连接层输出 1000 个类别的分类概率。
 
@@ -45,7 +45,7 @@ sections:
     layers: [Input, Conv1, Pool1, Conv2, Pool2, Conv3, Conv4, Conv5, Pool5]
     row_label: "Flatten: 9216"
   - name: 分类器（Classifier）
-    layers: [FC1, FC2, FC3, Output]
+    layers: [FC6, FC7, FC8, Output]
 
 layers:
   - {name: Input, type: input, size: "224 x 224 x 3"}
@@ -57,9 +57,9 @@ layers:
   - {name: Conv4, type: conv, kernel: 3, stride: 1, channels: 384, out: "13 x 13 x 384", act: ReLU}
   - {name: Conv5, type: conv, kernel: 3, stride: 1, channels: 256, out: "13 x 13 x 256", act: ReLU}
   - {name: Pool5, type: pool, kernel: 3, stride: 2, out: "6 x 6 x 256"}
-  - {name: FC1, type: fc, size: "4096 维", act: ReLU, dropout: true}
-  - {name: FC2, type: fc, size: "4096 维", act: ReLU, dropout: true}
-  - {name: FC3, type: fc, size: "1000 维"}
+  - {name: FC6, type: fc, size: "4096 维", act: ReLU, dropout: true}
+  - {name: FC7, type: fc, size: "4096 维", act: ReLU, dropout: true}
+  - {name: FC8, type: fc, size: "1000 维"}
   - {name: Output, type: output, size: "1000", act: Softmax}
 ```
 *图：AlexNet 网络架构图*
@@ -124,7 +124,7 @@ layers:
 
 在分析完网络结构后，另一个值得探讨的工程细节是 AlexNet 的双 GPU 设计。这不是纯粹的学术创新，而是当时硬件限制下的务实工程方案。2012 年的高端显卡 NVIDIA GTX 580 只有 3GB 显存，而 AlexNet 在训练过程中需要存储参数、梯度、激活值、优化器状态等多份数据，单卡显存捉襟见肘。辛顿团队因此将网络劈开成两部分，分别部署在两块 GPU 上并行计算。
 
-具体而言，AlexNet 的卷积核被均匀分配到两块 GPU，Conv1-Conv2 的卷积核各取一半、两块 GPU 互不通信；Conv3 通过 GPU 间通信共享全部特征图，Conv4 各 GPU 仅处理本卡输出，Conv5 再次跨卡共享。下图展示了双 GPU 设计的通信模式：
+具体而言，AlexNet 的卷积核被均匀分配到两块 GPU，Conv1-Conv2 的卷积核各取一半、两块 GPU 互不通信；Conv3 通过 GPU 间通信共享全部特征图，Conv4-Conv5 各 GPU 仅处理本卡输出。下图展示了双 GPU 设计的通信模式：
 
 ```mermaid compact
 flowchart LR
@@ -134,7 +134,7 @@ flowchart LR
         A3["Conv3<br/>192 核"]
         A4["Conv4<br/>192 核"]
         A5["Conv5<br/>128 核"]
-        A6["FC1<br/>2048 神经元"]
+        A6["FC6<br/>2048 神经元"]
     end
     
     subgraph GPU1["GPU 1"]
@@ -143,11 +143,11 @@ flowchart LR
         B3["Conv3<br/>192 核"]
         B4["Conv4<br/>192 核"]
         B5["Conv5<br/>128 核"]
-        B6["FC1<br/>2048 神经元"]
+        B6["FC6<br/>2048 神经元"]
     end
     
     subgraph Shared["共享层"]
-        C["FC2<br/>4096 神经元<br/>（合并计算）"]
+        C["FC7<br/>4096 神经元<br/>（合并计算）"]
     end
     
     A1 --> A2
@@ -168,9 +168,8 @@ flowchart LR
     A5 --> A6
     B5 --> B6
 
-    A5 -.->|"特征图共享"| B5
-    B5 -.->|" "| A5
-    
+
+
     A6 -.->|"通信"| B6
     B6 -.->|"通信"| A6
     
@@ -179,7 +178,7 @@ flowchart LR
 ```
 *图：双 GPU 设计的通信模式*
 
-从图中可以看到，双 GPU 设计的难点在于通信时机，Conv1 和 Conv2 每块 GPU 独立处理一半卷积核，两卡之间不进行通信；Conv3 和 Conv5 两块 GPU 共享完整的特征图，数据需要跨卡拼接；FC1 每块 GPU 处理一半神经元，结果再次通信交换；FC2 将两块 GPU 的输出合并为 4096 维，统一计算后输出分类结果。
+从图中可以看到，双 GPU 设计的难点在于通信时机，Conv1 和 Conv2 每块 GPU 独立处理一半卷积核，两卡之间不进行通信；Conv3 两块 GPU 共享完整的特征图，数据需要跨卡拼接；Conv4 和 Conv5 每块 GPU 仅处理同卡上 Conv4 的输出，不再跨 GPU 通信；FC6 每块 GPU 处理一半神经元，结果再次通信交换；FC7 将两块 GPU 的输出合并为 4096 维，统一计算后输出分类结果。
 
 这种设计虽然巧妙，却也被迫大幅增加了代码复杂度和通信开销，是当年显存受限下的无奈之举。现代实现中已不再需要这种针对 AlexNet 的双 GPU 方案，但多 GPU 并行训练的理念在大语言模型时代再次变得重要，NVIDIA A100 显存达 80GB，哪怕是民用的 32GB RTX 5090 显卡，也完全可以单卡容纳 AlexNet 的全部训练数据。使用现代深度学习框架的 AlexNet 实现已将所有卷积核合并，使用单 GPU 即可高效训练。本书后续的实验代码也将采用单 GPU 版本。
 

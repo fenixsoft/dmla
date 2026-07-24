@@ -127,13 +127,13 @@ LLaMA 是采用过度训练策略的典型代表。以 LLaMA-7B 为例，它用 
 
 ## 练习题
 
-1. 从 Chinchilla 损失函数 $L(N, D) = L_{irr} + A/N^\alpha + B/D^\beta$ 出发，推导计算最优比例 $N_{opt} \propto C^{\alpha/(\alpha+\beta)}$ 和 $D_{opt} \propto C^{\beta/(\alpha+\beta)}$。
+1. 从 Chinchilla 损失函数 $L(N, D) = L_{irr} + A/N^\alpha + B/D^\beta$ 出发，推导计算最优比例 $N_{opt} \propto C^{\beta/(\alpha+\beta)}$ 和 $D_{opt} \propto C^{\alpha/(\alpha+\beta)}$。
    <details>
    <summary>参考答案</summary>
    
    固定计算预算 $C$，约束条件为 $C \approx 6ND$。用拉格朗日乘数法：
    
-   设拉格朗日函数 $\Lambda = L(N, D) + \lambda(6ND - C)$。对 $N$ 和 $D$ 求偏导并令其为零，得到 $\alpha A / N^{\alpha+1} = 6\lambda D$ 和 $\beta B / D^{\beta+1} = 6\lambda N$。两式相除得到 $N^{\alpha+1}/D^{\beta+1} = \alpha A / (\beta B) \cdot D/N$，整理后可得最优比例关系。
+   设拉格朗日函数 $\Lambda = L(N, D) + \lambda(6ND - C)$。对 $N$ 和 $D$ 求偏导并令其为零，得到 $\alpha A / N^{\alpha+1} = 6\lambda D$ 和 $\beta B / D^{\beta+1} = 6\lambda N$。两式相除得到 $N^{\alpha+1}/D^{\beta+1} = \alpha A / (\beta B) \cdot N/D$，整理后可得最优比例关系。
    
    </details>
 
@@ -141,6 +141,10 @@ LLaMA 是采用过度训练策略的典型代表。以 LLaMA-7B 为例，它用 
    <details>
    <summary>参考答案</summary>
    
-   由 $C/6 = 1.67 \times 10^{20}$ 和最优比例 $D/N \approx 20$，可得 $N \approx 2.9 \times 10^{9}$（约 3B 参数），$D \approx 5.8 \times 10^{10}$（约 58B tokens）。
+   由 $C/6 = 1.67 \times 10^{20}$。从最优性条件 $\alpha A N^{-\alpha} = \beta B D^{-\beta}$（由两偏导方程相除整理得出）出发，代入参数计算比例：
+
+$\frac{\alpha A}{\beta B} = \frac{0.336 \times 406.4}{0.283 \times 410.7} \approx 1.175$
+
+由 $N^\alpha / D^\beta = \alpha A / (\beta B)$ 和 $C = 6ND$，解得 $N = (\frac{\alpha A}{\beta B})^{1/(\alpha+\beta)} \cdot (\frac{C}{6})^{\beta/(\alpha+\beta)}$。代入 $\beta/(\alpha+\beta) \approx 0.457$，$1/(\alpha+\beta) \approx 1.615$，得 $N \approx 2.3 \times 10^{9}$（约 2.3B 参数），$D = C/(6N) \approx 7.3 \times 10^{10}$（约 73B tokens），$D/N \approx 32$。
    
    </details>

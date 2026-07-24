@@ -36,12 +36,12 @@ graph LR
 
 $$M_{\text{KV}} = 2 \times n_{\text{layer}} \times d_{\text{head}} \times n_{\text{head}} \times n_{\text{max}} \times b \times sizeof(\text{float16})$$
 
-每个 token 在每一层都需要缓存 Key 和 Value 两个向量，所有层、所有 token、所有请求的缓存加起来就是总显存占用。代入 LLaMA-2 70B 的具体参数：80 层、128 个注意力头、每头维度 128、最大序列长度 4096、float16 精度。单个请求的 KV Cache 的容量 $M_{\text{KV}} = 2 \times 80 \times 128 \times 128 \times 4096 \times 1 \times 2 \approx 10.7 \text{ GB}$。A100 一共只有 80 GB 显存，而模型参数本身占用约 140 GB，需要张量并行分布在多张 GPU 上。以 2 张 GPU 的张量并行为例，每张 GPU 分担约 70 GB 的模型参数，剩余约 10 GB 可用于 KV Cache，仅能容纳 1 个请求的缓存，批量大小也根本提不上去。
+每个 token 在每一层都需要缓存 Key 和 Value 两个向量，所有层、所有 token、所有请求的缓存加起来就是总显存占用。代入 LLaMA-2 70B 的具体参数：80 层、64 个注意力头、每头维度 128、最大序列长度 4096、float16 精度。单个请求的 KV Cache 的容量 $M_{\text{KV}} = 2 \times 80 \times 128 \times 128 \times 4096 \times 1 \times 2 \approx 10.7 \text{ GB}$。A100 一共只有 80 GB 显存，而模型参数本身占用约 140 GB，需要张量并行分布在多张 GPU 上。以 2 张 GPU 的张量并行为例，每张 GPU 分担约 70 GB 的模型参数，剩余约 10 GB 可用于 KV Cache，仅能容纳 1 个请求的缓存，批量大小也根本提不上去。
 
 以上被称为 LLM 推理的显存墙（Memory Wall）问题。KV Cache 的巨大显存占用限制了批量大小和并发数，导致 GPU 算力无法被有效利用。Decode 阶段的算力利用率低下并不是因为没有足够的计算任务，而是因为没有足够的显存容纳更多并行处理请求。分析了推理效率的瓶颈后，我们就可以确定具体的优化目标。推理服务通常关注以下几个主要指标：
 
 - **首 token 延迟**（Time to First Token，TTFT）是从用户发送请求到模型输出第一个 token 的时间，主要由 Prefill 阶段决定。用户在对话场景中最先感知到的就是 TTFT，过长的等待会让用户觉得系统卡顿。
-- **每 token 生成时间**（Time Per Output Token，TPOT）是 Decode 阶段生成每个 token 的平均时间，它是**每秒生成 token 数**（Tokens Per Second，TPS）的倒数。TPS 直接影响用户的阅读体验，如果生成速度低于人类的阅读速度（约每秒 10-15 个 token），用户就会感觉回复在慢慢"挤药膏"出来。
+- **每 token 生成时间**（Time Per Output Token，TPOT）是 Decode 阶段生成每个 token 的平均时间，它是**每秒生成 token 数**（Tokens Per Second，TPS）的倒数。TPS 直接影响用户的阅读体验，如果生成速度低于人类的阅读速度（约每秒 10-15 个 token），用户就会感觉回复在慢慢"挤牙膏"出来。
 - **吞吐量**（Throughput）是单位时间内系统处理的总 token 数，等于所有并发请求的 TPS 之和。吞吐量衡量的是系统的整体处理能力，对于批量处理场景（如文档翻译、数据标注）最为关键。
 - **并发数**（Concurrency）是系统同时处理的请求数。并发数受限于系统处理的最短板（目前主要是 KV Cache 占用的显存容量），而吞吐量等于并发数乘以每个请求的 TPS。
 
@@ -85,7 +85,7 @@ graph LR
 
 2024 年，加州大学圣迭戈分校的论文《[DistServe: Disaggregating Prefill and Decoding for Goodput-Optimized Large Language Model Serving](https://arxiv.org/abs/2401.09670)》验证了这种分离的优势。在相同硬件总量下，分离架构相比传统的混合部署，吞吐量提升了 1.4-2.4 倍，同时满足更严格的延迟约束。分离之后，Prefill 实例不再被 Decode 请求拖慢，TTFT 更稳定。Decode 实例不再被 Prefill 请求干扰，TPS 更均匀。
 
-不过，PD 分离架构又带来了新的工程挑战：KV Cache 该如何从 Prefill 实例快速传到 Decode 实例？前面我们以 LLaMA-2 70B 为例计算过，单个请求的 KV Cache 约需 10.7 GB 显存。在传统的 PCIe 4.0 总线连接下（带宽约 50 GB/s），传输 10 GB 需要约 200 ms，如果用 NVLink（带宽 300 GB/s），传输只需约 33 ms，延迟大为改善。因此，PD 分离架构通常要求 Prefill 和 Decode 实例之间有高速互连，即 NVLink、HCCS、InfiniBand 这些绕过 PCIe 的传输技术支持。
+不过，PD 分离架构又带来了新的工程挑战：KV Cache 该如何从 Prefill 实例快速传到 Decode 实例？前面我们以 LLaMA-2 70B 为例计算过，单个请求的 KV Cache 约需 10.7 GB 显存。在传统的 PCIe 4.0 总线连接下（带宽约 31.5 GB/s），传输 10 GB 需要约 200 ms，如果用 NVLink（带宽 300 GB/s），传输只需约 33 ms，延迟大为改善。因此，PD 分离架构通常要求 Prefill 和 Decode 实例之间有高速互连，即 NVLink、HCCS、InfiniBand 这些绕过 PCIe 的传输技术支持。
 
 此外，调度策略也是一个关键问题，它决定了新请求应该分配给哪一个 Decode 实例。最直观的调度策略是轮询（Round-Robin），各个实例轮流分配，足够简单却不够精细。更合理的策略考虑两个因素，一是 Decode 实例当前的负载情况（已经承载了多少请求，显存还剩多少空间），二是请求的预期生成长度（短请求分配给轻载实例以避免被拖慢，长请求分配给重载实例）。这种负载感知调度可以更好地平衡各 Decode 实例的工作量，减少请求之间的互相干扰。
 

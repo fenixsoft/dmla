@@ -10,12 +10,12 @@
 
 VGG 组的研究者决定用最朴素的实验方法来回答"深度学习是否越深越有效"这个问题，他们尝试固定模型的其他因素，只改变深度，看看会发生什么。实验的核心假设是在保持卷积核尺寸、宽度（通道数）等其他超参数不变的情况下，增加网络深度应该能提升精度。这个假设背后的逻辑很明确：更深的网络有更多的非线性变换层，每层都能学到比前一层更抽象的特征。从像素到边缘，从边缘到纹理，从纹理到部件，从部件到物体，这种层次化的特征提取，正是深度学习区别于传统机器学习的核心优势。
 
-从实验结果可以看到，层数越多，错误率越低，VGG-19 的 Top-5 错误率 7.0% 比 VGG-11 的 23.1% 降低了约 70%，但参数量增长相对有限（133M→144M），这说明深度增加带来的精度提升是"划算的"，深度是提升 CNN 性能的有效途径。
+从实验结果可以看到，层数越多，错误率越低，VGG-19 的 Top-5 错误率 7.0% 比 VGG-11 的约 10.4% 降低了约 33%，但参数量增长相对有限（133M→144M），这说明深度增加带来的精度提升是"划算的"，深度是提升 CNN 性能的有效途径。
 
 | 配置 | 带权重层数 | Block 结构 | 参数量 | Top-5 错误率 |
 |:----|:----------|:----------|:------|:------------|
-| VGG-A | 11 层 | 1-1-2-2-2 | ~133M | 23.1% |
-| VGG-B | 13 层 | 2-2-2-2-2 | ~132M | 22.4% |
+| VGG-A | 11 层 | 1-1-2-2-2 | ~133M | ~10.4% |
+| VGG-B | 13 层 | 2-2-2-2-2 | ~132M | ~9.9% |
 | VGG-D（VGG-16） | 16 层 | 2-2-3-3-3 | ~138M | 7.3% |
 | VGG-E （VGG-19） | 19 层 | 2-2-4-4-4 | ~144M | 7.0% |
 
@@ -120,7 +120,7 @@ blocks:
 
 layers_after_blocks:
   - {id: concat, name: "通道拼接", type: note, label: "Concatenate" }  
-  - {id: output, name: "输入特征图", type: output, size: "H×W×C'"}
+  - {id: output, name: "输出特征图", type: output, size: "H×W×C'"}
 ```
 *图：Inception 模块*
 
@@ -151,7 +151,7 @@ sections:
   - name: Inception 堆叠
     layers: [Inception_3a, Inception_3b, pool3, Inception_4a, Inception_4b, Inception_4c, Inception_4d, Inception_4e, pool4, Inception_5a, Inception_5b]
   - name: 分类输出
-    layers: [pool5, fc1, fc2, output]
+    layers: [pool5, fc, output]
 
 layers:
   - {id: input, name: Input, type: input, size: "224x224x3"}
@@ -284,8 +284,7 @@ blocks:
 
 layers_after_blocks:
   - {id: pool5, name: Pool5, type: pool, kernel: 7, stride: 1}
-  - {id: fc1, name: FC1, type: fc, size: 1024, act: ReLU, dropout: true}
-  - {id: fc2, name: FC2, type: fc, size: 1000}
+  - {id: fc, name: FC, type: fc, size: 1000, dropout: true}
   - {id: output, name: Output, type: output, size: 1000, act: Softmax}
 ```
 

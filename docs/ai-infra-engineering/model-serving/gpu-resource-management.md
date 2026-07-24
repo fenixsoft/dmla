@@ -15,7 +15,7 @@ GPU 是 LLM 推理服务中最昂贵也最稀缺的资源。如何让每块 GPU 
 | 资源 | RTX 5090 32GB | A100 80GB | H100 80GB | 推理中的角色 |
 |:----:|:------------:|:---------:|:---------:|:----------:|
 | 显存容量 | 32 GB | 80 GB | 80 GB | 决定模型大小和并发上限 |
-| FP16 算力 | 104.8 TFLOPS | 312 TFLOPS | 990 TFLOPS | 决定 Prefill 速度 |
+| FP16 算力 | 104.8 TFLOPS | 312 TFLOPS | 989 TFLOPS | 决定 Prefill 速度 |
 | 显存带宽 | 1.79 TB/s | 2 TB/s | 3.35 TB/s | 决定 Decode 速度 |
 
 *表：A100、H100 与 RTX 5090 的三大资源参数对比*
@@ -102,17 +102,17 @@ LLM 推理中 CUDA Stream 的典型用法是将数据传输与计算放在不同
 
 ## 练习题
 
-1. 使用 Roofline 模型分析在 H100 上（峰值算力 990 TFLOPS FP16，带宽 3.35 TB/s），LLM Decode 阶段（算术强度约 1 FLOP/Byte）的理论性能是多少？相比 A100（312 TFLOPS，2 TB/s）提升多少倍？这说明了什么问题？
+1. 使用 Roofline 模型分析在 H100 上（峰值算力 989 TFLOPS FP16，带宽 3.35 TB/s），LLM Decode 阶段（算术强度约 1 FLOP/Byte）的理论性能是多少？相比 A100（312 TFLOPS，2 TB/s）提升多少倍？这说明了什么问题？
 
    <details>
    <summary>参考答案</summary>
 
-   Decode 阶段的算术强度为 1 FLOP/Byte，远低于拐点（A100 拐点 = 312/2 = 156 FLOP/Byte，H100 拐点 = 990/3.35 = 296 FLOP/Byte），因此 Decode 在两款 GPU 上都受带宽瓶颈制约。
+   Decode 阶段的算术强度为 1 FLOP/Byte，远低于拐点（A100 拐点 = 312/2 = 156 FLOP/Byte，H100 拐点 = 989/3.35 ≈ 295 FLOP/Byte），因此 Decode 在两款 GPU 上都受带宽瓶颈制约。
 
    A100 Decode 性能 = 2 TB/s × 1 FLOP/Byte = 2 TFLOPS
    H100 Decode 性能 = 3.35 TB/s × 1 FLOP/Byte = 3.35 TFLOPS
 
-   提升倍数 = 3.35 / 2 = 1.675 倍。而 H100 的峰值算力是 A100 的 990/312 = 3.17 倍。
+   提升倍数 = 3.35 / 2 = 1.675 倍。而 H100 的峰值算力是 A100 的 989/312 = 3.17 倍。
 
    这说明对于 Decode 阶段（带宽瓶颈），从 A100 升级到 H100 的加速比远低于峰值算力的提升比例。算力的增长（3.17 倍）远快于带宽的增长（1.675 倍），这意味着新一代 GPU 对 Decode 阶段的性价比提升有限。这也是 PD 分离架构有吸引力的重要原因——Prefill 阶段能充分利用新 GPU 的算力增长。
 

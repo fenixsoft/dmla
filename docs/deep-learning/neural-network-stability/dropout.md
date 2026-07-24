@@ -134,20 +134,20 @@ def dropout(x, p, training=True):
     training: 是否训练模式
     """
     if not training or p == 1.0:
-        return x
+        return x, np.ones_like(x)
     mask = (np.random.rand(*x.shape) < p).astype(float)
-    return x * mask / p
+    return x * mask / p, mask
 
 # 多层网络（支持 Dropout）
 class NeuralNetwork:
-    def __init__(self, layer_sizes, dropout_rates=None, activation='relu'):
+    def __init__(self, layer_sizes, keep_probs=None, activation='relu'):
         self.layer_sizes = layer_sizes
         self.num_layers = len(layer_sizes) - 1
         
-        # 默认 Dropout 率
-        if dropout_rates is None:
-            dropout_rates = [0.0] * self.num_layers
-        self.dropout_rates = dropout_rates
+        # 默认保留概率
+        if keep_probs is None:
+            keep_probs = [0.0] * self.num_layers
+        self.keep_probs = keep_probs
         
         # 激活函数
         if activation == 'relu':
@@ -170,6 +170,7 @@ class NeuralNetwork:
         """前向传播"""
         self.activations = [X]
         self.pre_activations = []
+        self.dropout_masks = []
         
         a = X
         for i in range(self.num_layers):
@@ -179,7 +180,10 @@ class NeuralNetwork:
             
             # 应用 Dropout（除最后一层）
             if i < self.num_layers - 1:
-                a = dropout(a, self.dropout_rates[i], training)
+                a, mask = dropout(a, self.keep_probs[i], training)
+                self.dropout_masks.append(mask)
+            else:
+                self.dropout_masks.append(None)
             
             self.activations.append(a)
         
@@ -206,9 +210,9 @@ class NeuralNetwork:
             if i > 0:
                 delta = (delta @ self.weights[i].T) * self.activation_derivative(self.pre_activations[i-1])
                 # Dropout mask 反向传播（梯度乘 mask）
-                if self.dropout_rates[i-1] > 0:
+                if self.keep_probs[i-1] > 0:
                     # 复用前向传播时生成的 mask
-                    delta = delta * self.dropout_masks[i] / self.dropout_rates[i-1]
+                    delta = delta * self.dropout_masks[i-1] / self.keep_probs[i-1]
     
     def compute_loss(self, X, y, training=False):
         """计算损失"""
@@ -237,10 +241,10 @@ y_test = y_test.reshape(-1, 1)
 layer_sizes = [n_features, 64, 32, 1]
 
 # 无 Dropout
-net_no_dropout = NeuralNetwork(layer_sizes, dropout_rates=[0.0, 0.0], activation='relu')
+net_no_dropout = NeuralNetwork(layer_sizes, keep_probs=[0.0, 0.0], activation='relu')
 
 # Dropout (p=0.5)
-net_dropout = NeuralNetwork(layer_sizes, dropout_rates=[0.5, 0.5], activation='relu')
+net_dropout = NeuralNetwork(layer_sizes, keep_probs=[0.5, 0.5], activation='relu')
 
 # 训练参数
 n_epochs = 200
@@ -316,15 +320,15 @@ plt.show()
 plt.close()
 
 print("\n" + "=" * 60)
-print("实验2：不同 Dropout 率的效果对比")
+print("实验2：不同保留概率的效果对比")
 print("-" * 40)
 
-dropout_rates_list = [0.0, 0.2, 0.5, 0.7]
+keep_probs_list = [0.0, 0.2, 0.5, 0.7]
 results = {}
 
-for rate in dropout_rates_list:
-    dropout_config = [rate, rate] if rate > 0 else [0.0, 0.0]
-    net = NeuralNetwork(layer_sizes, dropout_rates=dropout_config, activation='relu')
+for rate in keep_probs_list:
+    keep_probs_config = [rate, rate] if rate > 0 else [0.0, 0.0]
+    net = NeuralNetwork(layer_sizes, keep_probs=keep_probs_config, activation='relu')
     
     train_losses = []
     test_losses = []
@@ -345,7 +349,7 @@ for rate in dropout_rates_list:
         'final_gap': test_losses[-1] - train_losses[-1]
     }
     
-    print(f"Dropout 率 {rate:.1f}:")
+    print(f"保留概率 {rate:.1f}:")
     print(f"  训练损失: {train_losses[-1]:.4f}")
     print(f"  测试损失: {test_losses[-1]:.4f}")
     print(f"  过拟合差距: {results[rate]['final_gap']:.4f}")
@@ -356,7 +360,7 @@ fig, axes = plt.subplots(2, 2, figsize=(12, 10))
 
 colors = ['#e74c3c', '#3498db', '#2ecc71', '#f39c12']
 
-for idx, rate in enumerate(dropout_rates_list):
+for idx, rate in enumerate(keep_probs_list):
     ax = axes[idx // 2, idx % 2]
     ax.plot(results[rate]['train_losses'], label='训练损失', 
             linewidth=2, color=colors[idx])
@@ -366,7 +370,7 @@ for idx, rate in enumerate(dropout_rates_list):
     gap = results[rate]['final_gap']
     ax.set_xlabel('训练轮数', fontsize=11)
     ax.set_ylabel('损失值', fontsize=11)
-    ax.set_title(f'Dropout 率 = {rate:.1f}\n过拟合差距 = {gap:.4f}', fontsize=12)
+    ax.set_title(f'保留概率 = {rate:.1f}\n过拟合差距 = {gap:.4f}', fontsize=12)
     ax.legend()
     ax.grid(True, alpha=0.3)
 
@@ -391,10 +395,10 @@ for n_train in train_sizes:
     y_train_small = y_train_small.reshape(-1, 1)
     
     # 无 Dropout
-    net_no = NeuralNetwork(layer_sizes, dropout_rates=[0.0, 0.0], activation='relu')
+    net_no = NeuralNetwork(layer_sizes, keep_probs=[0.0, 0.0], activation='relu')
     
     # Dropout
-    net_drop = NeuralNetwork(layer_sizes, dropout_rates=[0.5, 0.5], activation='relu')
+    net_drop = NeuralNetwork(layer_sizes, keep_probs=[0.5, 0.5], activation='relu')
     
     no_drop_gaps = []
     drop_gaps = []

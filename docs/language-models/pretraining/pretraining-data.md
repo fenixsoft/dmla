@@ -68,7 +68,7 @@ def detect_low_quality(text):
     
     # 2. 字符比例检查
     # 乱码检测：非 ASCII 字符比例异常
-    non_ascii_ratio = len(re.findall(r'[^\x00-\x7F]', text)) / len(text)
+    non_ascii_ratio = len(re.findall(r'[^\x00-\x7F]', text)) / max(len(text), 1)
     if non_ascii_ratio > 0.5 and not any(c in text for c in '中文日本語한국어'):
         issues.append(f"乱码嫌疑（非ASCII比例: {non_ascii_ratio:.1%}）")
     
@@ -240,13 +240,13 @@ for i, id1 in enumerate(doc_ids):
 |:---------|:-----|:-----------|
 | CommonCrawl | 67% | ~940B |
 | C4 | 15% | ~210B |
-| GitHub | 5% | ~70B |
+| GitHub | 4.5% | ~63B |
 | Wikipedia | 4.5% | ~63B |
 | Books3 | 4.5% | ~63B |
 | arXiv | 2.5% | ~35B |
 | StackExchange | 2% | ~28B |
 
-这个配比背后的逻辑值得深思：CommonCrawl 占据绝对主导地位，因为它提供了最广泛的通用知识和语言能力。尽管 CommonCrawl 在原始数据中的占比远高于 82%，但经过质量过滤后被大量淘汰，使用比例大幅降低，最终需要从其他高质量来源补充回来。代码数据虽然只占 5%，但对模型逻辑推理能力的提升效果显著。DeepSeek 在其技术报告中提到，代码数据的比例从 7% 提升到 14% 时，模型在 HumanEval 上的通过率提升了近 10 个百分点。Wikipedia 和书籍虽然比例不高，却为模型提供了高质量的知识基准，确保模型在事实准确性方面不偏离轨道。arXiv 和 StackExchange 则补充了专业领域的知识深度。
+这个配比背后的逻辑值得深思：CommonCrawl 占据绝对主导地位，因为它提供了最广泛的通用知识和语言能力。尽管 CommonCrawl 在原始数据中的占比远高于 82%，但经过质量过滤后被大量淘汰，使用比例大幅降低，最终需要从其他高质量来源补充回来。代码数据虽然只占 4.5%，但对模型逻辑推理能力的提升效果显著。DeepSeek 在其技术报告中提到，代码数据的比例从 7% 提升到 14% 时，模型在 HumanEval 上的通过率提升了近 10 个百分点。Wikipedia 和书籍虽然比例不高，却为模型提供了高质量的知识基准，确保模型在事实准确性方面不偏离轨道。arXiv 和 StackExchange 则补充了专业领域的知识深度。
 
 ### 按领域动态调权
 

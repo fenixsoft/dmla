@@ -121,7 +121,7 @@ $$\mathbf{u} = \begin{bmatrix}
     - $(c\mathbf{A})^T = c\mathbf{A}^T$
     - $(\mathbf{AB})^T = \mathbf{B}^T \mathbf{A}^T$（乘积的转置等于转置的反向乘积）
 
-    尤其是第四条性质，是后续学习误差反向传播算法的理论依据，$(\mathbf{AB})^T = \mathbf{B}^T\mathbf{A}^T$ 确保了反向传播时梯度能够正确地"逆流"回每一层，保持维度匹配，这是自动微分和深度学习框架（PyTorch、TensorFlow）能够高效计算梯度的数学基础。
+    尤其是第四条性质，为后续学习误差反向传播算法提供了维度匹配的数学保证，$(\mathbf{AB})^T = \mathbf{B}^T\mathbf{A}^T$ 确保了反向传播时梯度能够正确地"逆流"回每一层，保持维度匹配，这是自动微分和深度学习框架（PyTorch、TensorFlow）能够高效计算梯度的数学基础。
 
     以下是一个 $3 \times 3$ 矩阵与其转置的具体示例，可以看到，原矩阵的第一行 $(1, 2, 3)$ 变成了转置矩阵的第一列，第二行 $(4, 5, 6)$ 变成了第二列，第三行 $(7, 8, 9)$ 变成了第三列，实现了行列互换。
 
@@ -162,7 +162,7 @@ $$\mathbf{u} = \begin{bmatrix}
     0 & 1
     \end{bmatrix} = \mathbf{I}_2$$
 
-    不是所有操作都可以撤销，不是所有方阵都可逆。矩阵可逆的条件，需要同时满足行列式不为零（$\det(\mathbf{A}) \neq 0$）、满秩（对于 $n \times n$ 方阵有 $\text{rank}(\mathbf{A}) = n$）和所有特征值都不为零这三个条件的方阵才可逆。当矩阵不可逆或索性就不是方阵时，可以使用**伪逆**（Pseudoinverse）获得一个最接近的近似解。伪逆记为 $\mathbf{A}^+ = (\mathbf{A}^T \mathbf{A})^{-1} \mathbf{A}^T$（当 $\mathbf{A}^T \mathbf{A}$ 可逆时）。这个公式的含义是先通过 $\mathbf{A}^T \mathbf{A}$ 将 $m \times n$ 矩阵裁剪成 $n \times n$ 方阵，把多余的信息过滤掉，保留核心结构。然后在此基础上找到一个最接近的逆，最后乘以 $\mathbf{A}^T$ 映射回原始空间。伪逆具备如下性质：
+    不是所有操作都可以撤销，不是所有方阵都可逆。矩阵可逆的条件，可以从行列式不为零（$\det(\mathbf{A}) \neq 0$）、满秩（对于 $n \times n$ 方阵有 $\text{rank}(\mathbf{A}) = n$）和所有特征值都不为零这三种等价表述中的任意一种来判断，满足任意一条的方阵即可逆。当矩阵不可逆或索性就不是方阵时，可以使用**伪逆**（Pseudoinverse）获得一个最接近的近似解。伪逆记为 $\mathbf{A}^+ = (\mathbf{A}^T \mathbf{A})^{-1} \mathbf{A}^T$（当 $\mathbf{A}^T \mathbf{A}$ 可逆时）。这个公式的含义是先通过 $\mathbf{A}^T \mathbf{A}$ 将 $m \times n$ 矩阵裁剪成 $n \times n$ 方阵，把多余的信息过滤掉，保留核心结构。然后在此基础上找到一个最接近的逆，最后乘以 $\mathbf{A}^T$ 映射回原始空间。伪逆具备如下性质：
 
     - $\mathbf{A}\mathbf{A}^+\mathbf{A} = \mathbf{A}$
     - $\mathbf{A}^+\mathbf{A}\mathbf{A}^+ = \mathbf{A}^+$
@@ -194,7 +194,7 @@ $$\mathbf{u} = \begin{bmatrix}
     0 & 0 & d_3
     \end{bmatrix}$$
 
-- **对称矩阵**（Symmetric Matrix）：对称矩阵满足 $\mathbf{A} = \mathbf{A}^T$，即 $a_{ij} = a_{ji}$。对称矩阵包含的特征向量可以构成正交基，许多有用的矩阵如协方差矩阵、邻接矩阵、Hessian 矩阵都是对称矩阵。
+- **对称矩阵**（Symmetric Matrix）：对称矩阵满足 $\mathbf{A} = \mathbf{A}^T$，即 $a_{ij} = a_{ji}$。对称矩阵包含的特征向量可以构成正交基，许多有用的矩阵如协方差矩阵、Hessian 矩阵都是对称矩阵；无向图的邻接矩阵也是对称矩阵。
 
 - **正交矩阵**（Orthogonal Matrix）：正交矩阵满足 $\mathbf{Q}^T \mathbf{Q} = \mathbf{I}$，即其转置等于其逆：$\mathbf{Q}^{-1} = \mathbf{Q}^T$。正交矩阵的作用在于它保持向量的长度和角度不变，只进行旋转或反射。
 
@@ -204,7 +204,7 @@ $$\mathbf{u} = \begin{bmatrix}
 
 想象你站在原点，面前是坐标系和许多向量，每个向量 $\mathbf{v}$ 就像从原点出发的一支箭，指向空间中的某个位置。现在，你要把这整片空间中所有的向量进行"变形"，譬如沿着 x 轴拉长，沿着 y 轴方向压扁、再整体旋转 30 度，该怎么描述这个变形操作？一个有价值的洞察是你完全不需要为每个向量独立描述一套操作，只要知道基向量发生了什么变化（拉伸、旋转等），就能确定整个空间中所有向量共同的变形方式，因为一旦空间坐标轴的发生变化，这些向量都会同步被改变。从最简单的在二维平面出发，原来的基向量是 $\mathbf{e}_1 = \begin{bmatrix} 1 \\ 0 \end{bmatrix}$（沿 x 轴的单位向量）和 $\mathbf{e}_2 = \begin{bmatrix} 0 \\ 1 \end{bmatrix}$（沿 y 轴的单位向量）。
 
-如果变形后，$\mathbf{e}_1$ 被搬到了 $\begin{bmatrix} a \\ c \end{bmatrix}$，$\mathbf{e}_2$ 被搬到了 $\begin{bmatrix} b \\ d \end{bmatrix}$。那么任意一个向量 $\mathbf{v} = \begin{bmatrix} x \\ y \end{bmatrix} = x\mathbf{e}_1 + y\mathbf{e}_2$ 会被搬到哪里呢？由于线性变换保持"线性组合"不变的特性，即一旦基向量（空间中的坐标轴）自被移动了，它们的线性组合也会按同样的比例被移动。所以：
+如果变形后，$\mathbf{e}_1$ 被搬到了 $\begin{bmatrix} a \\ c \end{bmatrix}$，$\mathbf{e}_2$ 被搬到了 $\begin{bmatrix} b \\ d \end{bmatrix}$。那么任意一个向量 $\mathbf{v} = \begin{bmatrix} x \\ y \end{bmatrix} = x\mathbf{e}_1 + y\mathbf{e}_2$ 会被搬到哪里呢？由于线性变换保持"线性组合"不变的特性，即一旦基向量（空间中的坐标轴）自身被移动了，它们的线性组合也会按同样的比例被移动。所以：
 
 $$\mathbf{v}' = x\begin{bmatrix} a \\ c \end{bmatrix} + y\begin{bmatrix} b \\ d \end{bmatrix} = \begin{bmatrix} ax + by \\ cx + dy \end{bmatrix}$$
 

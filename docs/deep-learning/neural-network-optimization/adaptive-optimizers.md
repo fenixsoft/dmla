@@ -75,7 +75,7 @@ Adam 似乎已经集齐了动量法和自适应学习率的所有优点，成为
 
 权重衰减（Weight Decay）是防止过拟合的常用技术，在 SGD 中实质上等同于 [L2 正则化](../../statistical-learning/linear-models/regularization-glm.md#正则化原理)。在损失函数中添加参数惩罚项，迫使参数保持较小值 $L_{total} = L_{data} + \lambda \|\mathbf{W}\|^2$，相应地，梯度变为 $\nabla L_{total} = \nabla L_{data} + 2\lambda \mathbf{W}$，在 SGD 中，权重衰减的实现很简单直观：
 
-$$\mathbf{W}_{t+1} = \mathbf{W}_t - \eta \nabla L_{data} - \eta \lambda \mathbf{W}_t = \mathbf{W}_t(1 - \eta \lambda) - \eta \nabla L_{data}$$
+$$\mathbf{W}_{t+1} = \mathbf{W}_t - \eta \nabla L_{data} - 2\eta \lambda \mathbf{W}_t = \mathbf{W}_t(1 - 2\eta \lambda) - \eta \nabla L_{data}$$
 
 每步权重乘以 $(1 - \eta \lambda)$，逐渐衰减，所有参数同等对待。但 Adam 的实现方式不同。梯度 $\nabla L_{total} = \nabla L_{data} + 2\lambda \mathbf{W}$ 被累积到一阶矩 $\mathbf{m}_t$ 和二阶矩 $\mathbf{v}_t$ 中，权重衰减项 $2\lambda \mathbf{W}$ 也被自适应学习率缩放：
 
@@ -343,10 +343,10 @@ for name, opt in optimizers.items():
         'path': np.array(opt.path),
         'losses': losses,
         'final_W': W,
-        'final_loss': losses[-1]
+        'final_loss': loss_function(W)
     }
 
-    print(f"{name:10s}: 最终位置 ({W[0]:.4f}, {W[1]:.4f}), 最终损失 {losses[-1]:.6f}")
+    print(f"{name:10s}: 最终位置 ({W[0]:.4f}, {W[1]:.4f}), 最终损失 {loss_function(W):.6f}")
 
 print()
 

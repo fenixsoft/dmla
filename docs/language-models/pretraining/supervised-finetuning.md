@@ -62,7 +62,7 @@ graph LR
 ```
 *图：Self-Instruct 的工作流程*
 
-Self-Intract 的提出很快催生了一个标志性项目 —— Stanford Alpaca。2023 年，斯坦福大学的罗汉·塔里克（Rohan Taori）等人基于 LLaMA-7B 和 Self-Instruct 方法，仅花费不到 600 美元就训练出了一个在多项基准上接近 GPT-3.5 的模型，引发了一轮开源模型微调的热潮。Alpaca 的具体做法是对 Self-Instruct 做了一些简化，直接使用 GPT-3.5 一次性生成全部指令和回答，这样效率更高，且由于 GPT-3.5 本身的质量优秀，生成数据的整体质量也更好。最终 Alpaca 收集了约 52000 条指令回答对，用于微调 LLaMA-7B。
+Self-Instruct 的提出很快催生了一个标志性项目 —— Stanford Alpaca。2023 年，斯坦福大学的罗汉·塔里克（Rohan Taori）等人基于 LLaMA-7B 和 Self-Instruct 方法，仅花费不到 600 美元就训练出了一个在多项基准上接近 GPT-3.5 的模型，引发了一轮开源模型微调的热潮。Alpaca 的具体做法是对 Self-Instruct 做了一些简化，直接使用 GPT-3.5 一次性生成全部指令和回答，这样效率更高，且由于 GPT-3.5 本身的质量优秀，生成数据的整体质量也更好。最终 Alpaca 收集了约 52000 条指令回答对，用于微调 LLaMA-7B。
 
 Self-Instruct 和 Alpaca 的案例引发了社区对 SFT 数据规模的反思，SFT 的数据似乎不是越多越好。NeurIPS 2023 上发表的 LIMA（Less Is More for Alignment）实验最具说服力。研究者仅用 1000 条精心编写的高质量数据微调 LLaMA-65B，在人类评估中，其输出质量竟然接近 GPT-4。作为对比，Alpaca 用了 52000 条数据，效果却不如 LIMA 好。这并非意味着 1000 条数据就够了，而是说明数据质量的提升对效果的贡献远大于数据数量的增加。
 

@@ -20,7 +20,7 @@
 
 为了便于推导，习惯上会将偏置 $b$ 合并入权重向量。定义增广输入向量 $\tilde{\mathbf{x}} = (x_1, x_2, \ldots, x_n, 1)^T$ 和增广权重向量 $\tilde{\mathbf{w}} = (w_1, w_2, \ldots, w_n, b)^T$，则感知机的输出可简洁表示为 $y = \text{sign}(\tilde{\mathbf{w}}^T \tilde{\mathbf{x}})$。这种表示方式将偏置视为常数输入 1 对应的权重，简化了数学表示。后续讨论中，若无特殊说明，我们都使用增广向量形式，并省略增广标记，直接记为 $\mathbf{w}$ 和 $\mathbf{x}$。
 
-感知机的决策边界是超平面方程 $\mathbf{w}^T \mathbf{x} = 0$。在二维空间中，决策边界是一条直线；在三维或更高维空间中则是一个超平面。该超平面将输入空间划分为两个区域：$\mathbf{w}^T \mathbf{x} > 0$ 时输出 $y = 1$（正类），$\mathbf{w}^T \mathbf{x} < 0$ 时输出 $y = -1$（负类）。决策边界的位置和方向由权重向量 $\mathbf{w}$ 决定。权重向量的方向垂直于决策边界，因为 $\mathbf{w}$ 是超平面的[法向量](../../statistical-learning/support-vector-machines/svm-max-margin.md#超平面、距离与间隔)。权重向量的长度则决定了边界的"陡峭程度"，如下图所示。
+感知机的决策边界是超平面方程 $\mathbf{w}^T \mathbf{x} = 0$。在二维空间中，决策边界是一条直线；在三维或更高维空间中则是一个超平面。该超平面将输入空间划分为两个区域：$\mathbf{w}^T \mathbf{x} \geq 0$ 时输出 $y = 1$（正类），$\mathbf{w}^T \mathbf{x} < 0$ 时输出 $y = -1$（负类）。决策边界的位置和方向由权重向量 $\mathbf{w}$ 决定。权重向量的方向垂直于决策边界，因为 $\mathbf{w}$ 是超平面的[法向量](../../statistical-learning/support-vector-machines/svm-max-margin.md#超平面、距离与间隔)。权重向量的长度则决定了边界的"陡峭程度"，如下图所示。
 
 ![感知机超平面方程示意图](assets/perceptron-hyperplane.png)
 
@@ -92,7 +92,7 @@ class Perceptron:
                 # 计算预测值
                 prediction = np.sign(self.w @ X_aug[i])
                 if prediction == 0:
-                    prediction = -1  # 符号函数边界情况
+                    prediction = 1  # 符号函数边界情况（z=0时输出1，与正文定义一致）
                 
                 # 若预测错误，更新权重
                 if prediction != y[i]:
@@ -122,7 +122,7 @@ class Perceptron:
         n_samples = X.shape[0]
         X_aug = np.column_stack([X, np.ones(n_samples)])
         predictions = np.sign(X_aug @ self.w)
-        predictions[predictions == 0] = -1
+        predictions[predictions == 0] = 1
         return predictions
     
     def score(self, X, y):
