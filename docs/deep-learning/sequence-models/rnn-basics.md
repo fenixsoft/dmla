@@ -35,10 +35,10 @@ layers:
   - {id: y0, name: "y₀", type: output, size: "输出信息 0"}
   - {id: x1, name: "x₁", type: input, size: "输入信息 1"}
   - {id: h1, name: "RNN h₁", type: rnn, size: 256, act: tanh}
-  - {id: y1, name: "y₁", type: output, size: "输出信息 2"}
+  - {id: y1, name: "y₁", type: output, size: "输出信息 1"}
   - {id: x2, name: "x₂", type: input, size: "输入信息 2"}
   - {id: h2, name: "RNN h₂", type: rnn, size: 256, act: tanh}
-  - {id: y2, name: "y₂", type: output, size: "输出信息 3"}
+  - {id: y2, name: "y₂", type: output, size: "输出信息 2"}
 ```
 *图：Recurrent Connection 架构*
 

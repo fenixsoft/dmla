@@ -68,13 +68,13 @@ Dropout 率 $1-p$（丢弃概率）是关键的超参数，直接影响正则化
 2. **训练效率**：不需要训练多个独立网络，单次训练即可。
 3. **推理效率**：推理时不丢弃，单次前向传播即可获得"集成平均"的效果。
 
-从数学角度看，推理时的输出相当于对所有可能子网络的预测期望。设网络输出为 $f(\mathbf{x}; \mathbf{W})$，Dropout 后输出为 $f_{drop}(\mathbf{x}; \mathbf{W}, \mathbf{r}) = f(\mathbf{x}; \mathbf{W} \odot \mathbf{r})$，其中 $\mathbf{r}$ 是 Dropout Mask，决定每个神经元是否保留，$\odot$ 表示逐元素乘法。推理时的理想输出应该是：
+从数学角度看，推理时的输出相当于对所有可能子网络的预测期望。设网络输出为 $f(\mathbf{x}; \mathbf{W})$，Dropout 后输出为 $f_{drop}(\mathbf{x}; \mathbf{W}, \mathbf{r}) = f(\mathbf{x}; \mathbf{W} \cdot (\mathbf{r} \odot \mathbf{x}))$，其中 $\mathbf{r}$ 是 Dropout Mask，决定每个神经元是否保留，$\odot$ 表示逐元素乘法。推理时的理想输出应该是：
 
 $$f_{test}(\mathbf{x}; \mathbf{W}) = \mathbb{E}_{\mathbf{r}}[f_{drop}(\mathbf{x}; \mathbf{W}, \mathbf{r})] = \frac{1}{2^n}\sum_{\mathbf{r}} f(\mathbf{x}; \mathbf{W} \odot \mathbf{r})$$
 
 这个公式看起来很美，对所有 $2^n$ 种 mask 的预测结果取平均。但现实中 $2^n$ 是天文数字，无法遍历计算。幸运的是，对于线性操作（如矩阵乘法），期望可以直接计算：
 
-$$\mathbb{E}[\mathbf{W} \odot \mathbf{r} \cdot \mathbf{x}] = \mathbb{E}[\mathbf{W} \odot \mathbf{r}] \cdot \mathbf{x} = (p \cdot \mathbf{W}) \cdot \mathbf{x}$$
+$$\mathbb{E}[\mathbf{W} \cdot (\mathbf{r} \odot \mathbf{x})] = \mathbf{W} \cdot \mathbb{E}[\mathbf{r} \odot \mathbf{x}] = \mathbf{W} \cdot (p \cdot \mathbf{x}) = p \cdot \mathbf{W} \cdot \mathbf{x}$$
 
 这正是我们在"训练与推理的差异"中讨论的缩放方案：训练时保留的神经元被放大 $1/p$，推理时直接输出原值。对于非线性网络（包含 ReLU、Sigmoid 等激活函数），这种近似存在误差，但实践证明效果良好，因为深度网络中的大部分操作接近线性（ReLU 在正值区域是线性函数），且随机采样的多样性弥补了近似误差。
 
@@ -207,9 +207,8 @@ class NeuralNetwork:
                 delta = (delta @ self.weights[i].T) * self.activation_derivative(self.pre_activations[i-1])
                 # Dropout mask 反向传播（梯度乘 mask）
                 if self.dropout_rates[i-1] > 0:
-                    # 重新生成 mask（训练时）
-                    mask = (np.random.rand(*self.activations[i].shape) < self.dropout_rates[i-1]).astype(float)
-                    delta = delta * mask / self.dropout_rates[i-1]
+                    # 复用前向传播时生成的 mask
+                    delta = delta * self.dropout_masks[i] / self.dropout_rates[i-1]
     
     def compute_loss(self, X, y, training=False):
         """计算损失"""

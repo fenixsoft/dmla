@@ -157,7 +157,7 @@ MHA 的设计我们在 [Transformer 架构基础](./transformer-architecture.md#
 
 然而，MHA 的代价同样显著。推理时需要存储 $h$ 组完整的 Key 和 Value，前文中我们以 LLaMA-2 70B 为例（$h=64, d_k=128, n=4096$，FP16 精度）计算了 MHA 的内存消耗，巨大的内存压力严重限制了长上下文应用和并发推理能力。
 
-MHA 在 Transformer 原始论文及早期模型中被广泛使用。原始 Transformer（2017）的编码器和解码器默认配置各有 8 个注意力头，$d_{model}=512, d_k=64$。BERT（2018）采用 12 层编码器，每层 12 个头。GPT-1/2（2018-2019）使用 Decoder-only 结构，GPT-2 Small 有 12 层 12 头，GPT-2 Large 有 24 层 16 头。GPT-3（2020）更是扩展到 96 层，每层 96 个头，$d_{model}=12288, d_k=128$。
+MHA 在 Transformer 原始论文及早期模型中被广泛使用。原始 Transformer（2017）的编码器和解码器默认配置各有 8 个注意力头，$d_{model}=512, d_k=64$。BERT（2018）采用 12 层编码器，每层 12 个头。GPT-1/2（2018-2019）使用 Decoder-only 结构，GPT-2 Small 有 12 层 12 头，GPT-2 Medium 有 24 层 16 头。GPT-3（2020）更是扩展到 96 层，每层 96 个头，$d_{model}=12288, d_k=128$。
 
 随着模型规模扩大和长上下文需求增加，MHA 的 KV 缓存瓶颈日益突出。2023 年后的主流大语言模型（如 LLaMA-2、Mistral、Qwen、DeepSeek 等）普遍转向了 GQA 或 MLA 等优化方案，仅在训练阶段或短序列场景保留 MHA。MHA 作为标准多头注意力，其设计思想（让不同头学习不同表示）仍是现代注意力架构的理论基础，后续的 MQA、GQA、TPA 都是在 MHA 框架下对 KV 共享程度的调节优化。
 

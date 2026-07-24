@@ -397,7 +397,7 @@ class EmbeddingIndexer:
 
         results = []
         for dist, idx in zip(distances[0], indices[0]):
-            score = 1.0 - dist / 2.0   # 余弦距离转余弦相似度
+            score = 1.0 - dist   # 余弦距离转余弦相似度
             results.append((self.chunks[idx], float(score)))
 
         return results
@@ -742,7 +742,7 @@ if 'retriever' not in globals():
         def search(self, query, top_k=5):
             q_vec = self.encode([query], is_query=True)
             distances, indices = self.nn_index.kneighbors(q_vec)
-            return [(self.chunks[idx], float(1.0 - d/2.0))
+            return [(self.chunks[idx], float(1.0 - d))
                     for d, idx in zip(distances[0], indices[0])]
 
     # ---- BM25 稀疏检索器 ----

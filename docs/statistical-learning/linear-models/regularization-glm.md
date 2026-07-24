@@ -138,6 +138,7 @@ class LassoRegression:
         
         # 还原到原始尺度（迭代结束后执行一次）
         self.coef_ = self.coef_ / X_std
+        self.intercept_ = self.intercept_ - X_mean @ self.coef_
         
         return self
     

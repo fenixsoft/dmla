@@ -251,8 +251,8 @@ def loss_function(W1, W2):
     return W1**2 + 100 * W2**2
 
 def gradient(W1, W2):
-    """梯度 ∇L = (2W1, 16W2)"""
-    return np.array([2 * W1, 16 * W2])
+    """梯度 ∇L = (2W1, 200W2)"""
+    return np.array([2 * W1, 200 * W2])
 
 # SGD 优化器
 class SGD:

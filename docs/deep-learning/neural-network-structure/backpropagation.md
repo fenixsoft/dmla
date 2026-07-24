@@ -163,7 +163,7 @@ $$\Delta^k = \frac{\partial L}{\partial \mathbf{Z}^k} = \begin{bmatrix} \delta^k
 
 $$\bar{\delta}^k = \frac{1}{m} \sum_{i=1}^{m} \delta^k_i \in \mathbb{R}^{n_k}$$
 
-权重梯度为 $\frac{\partial L}{\partial \mathbf{W}^k} = \frac{1}{m} \Delta^k (\mathbf{A}^{k-1})^T = \bar{\delta}^k (\bar{\mathbf{a}}^{k-1})^T$，偏置梯度为 $\frac{\partial L}{\partial \mathbf{b}^k} = \bar{\delta}^k$。整个公式的意思就是**批量梯度等于各样本梯度的平均值**。
+权重梯度为 $\frac{\partial L}{\partial \mathbf{W}^k} = \frac{1}{m} \Delta^k (\mathbf{A}^{k-1})^T$，偏置梯度为 $\frac{\partial L}{\partial \mathbf{b}^k} = \bar{\delta}^k$。整个公式的意思就是**批量梯度等于各样本梯度的平均值**。
 
 ## 计算复杂度分析
 

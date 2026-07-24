@@ -71,7 +71,7 @@ $$L(N, D) = L_{irr} + \frac{A}{N^\alpha} + \frac{B}{D^\beta}$$
 
 这类带约束条件的优化问题，我们在[降维](../../statistical-learning/unsupervised-learning/dimensionality-reduction.md#pca-数学原理)和 [SVM 的对偶变换](../../statistical-learning/support-vector-machines/svm-max-margin.md#拉格朗日对偶变换)推导中都曾遇到过，解法是通过拉格朗日乘数法进行优化（推导过程略过，感兴趣的可以参考[练习题](#练习题)部分），得到最优解的比例关系：
 
-$$N_{opt} \propto C^{\frac{\alpha}{\alpha+\beta}}, \quad D_{opt} \propto C^{\frac{\beta}{\alpha+\beta}}$$
+$$N_{opt} \propto C^{\frac{\beta}{\alpha+\beta}}, \quad D_{opt} \propto C^{\frac{\alpha}{\alpha+\beta}}$$
 
 $\alpha$ 和 $\beta$ 具有对称关系，它们应该相等，这与 Chinchilla 的实验估计出 $\alpha \approx \beta$，两个指数就各占一半的结果相吻合，也是最终结论 $N_{opt} \propto C^{0.5}, D_{opt} \propto C^{0.5}$ 的理论依据。
 
