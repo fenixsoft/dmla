@@ -2,7 +2,7 @@
 
 2012 年 AlexNet 的成功验证了深度卷积神经网络在大规模视觉任务上的有效性，作为开山之作，AlexNet 的架构设计难免有些粗糙，如 8 层网络中使用大卷积核（$11 \times 11$、$5 \times 5$）粗暴降采样，卷积层与全连接层参数量不平衡（全连接层占总参数的 94%）等问题。所有人都好奇深度神经网络的潜力上限在哪里，性能提升的源泉是什么。是网络更深、更宽，还是卷积核更小？是训练技巧改进了，还是数据增强更好了？如果不搞清楚这些问题，后续的架构设计就如同盲人摸象，每次改进都可能只是在某个维度上偶然碰对了方向。
 
-2014 年，两篇里程碑式的研究工作从不同方向部分回答了这些问题。牛津大学视觉几何组（Visual Geometry Group，VGG）在论文《Very Deep Convolutional Networks for Large-Scale Image Recognition》中证明，将网络深度从 8 层推进到 16-19 层可以显著提升精度，后来据此实现了著名的 **VGGNet**。不久之后，Google 的克里斯蒂安·塞格迪（Christian Szegedy）在论文《Going Deeper with Convolutions》中提出了 **GoogLeNet**（也称 Inception-v1），通过精心设计的 Inception 模块实现多尺度特征融合，仅用 700 万参数就达到了比 VGG 更低的错误率。
+2014 年，两篇里程碑式的研究工作从不同方向部分回答了这些问题。牛津大学视觉几何组（Visual Geometry Group，VGG）在论文《[Very Deep Convolutional Networks for Large-Scale Image Recognition](https://arxiv.org/abs/1409.1556)》中证明，将网络深度从 8 层推进到 16-19 层可以显著提升精度，后来据此实现了著名的 **VGGNet**。不久之后，Google 的克里斯蒂安·塞格迪（Christian Szegedy）在论文《[Going Deeper with Convolutions](https://arxiv.org/abs/1409.4842)》中提出了 **GoogLeNet**（也称 Inception-v1），通过精心设计的 Inception 模块实现多尺度特征融合，仅用 700 万参数就达到了比 VGG 更低的错误率。
 
 这两项工作代表了 CNN 架构设计的两个核心探索方向：VGG 选择了深度优先，通过堆叠小卷积核增加层数，证明更深的网络能学到更抽象的特征；GoogLeNet 选择了宽度优先，通过并行多尺度分支增加有效宽度，让网络自己决定哪些尺度的特征最有价值。网络应该更深还是更宽、参数效率如何提升，这些探索开启了现代 CNN 架构设计的黄金时代。
 

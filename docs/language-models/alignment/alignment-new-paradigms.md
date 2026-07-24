@@ -2,7 +2,7 @@
 
 [RLHF](rlhf.md) 通过奖励模型和 PPO 算法，让模型从人类偏好中学习，显著提升了模型的有用性、真实性和无害性，GPT 模型的成功向世界展示了 RLHF 的价值。另一方面，RLHF 的工程代价同样不可忽视。训练需要同时部署与协调三个模型（策略模型、奖励模型、参考模型）、PPO 的超参数调优如同走钢丝、始终难以摆脱奖励黑客（Reward Hacking）的阴影，等等。这些痛点并非细枝末节，它们直接决定了 RLHF 能否在工程实践中大规模落地。
 
-2023 年 5 月，斯坦福大学的拉斐尔·拉法伊洛夫（Rafael Rafailov）等人发表论文《Direct Preference Optimization: Your Language Model is Secretly a Reward Model》，揭示了 RLHF 三模型架构中，奖励模型的信息已经隐含在策略模型的对数概率之中。基于这一发现，提出了**直接偏好优化**（Direct Preference Optimization，DPO）方法。DPO 绕过显式的奖励模型训练，直接用偏好数据优化策略模型，将复杂的强化学习问题转化为简单的分类问题，开启了对齐新范式的序幕。
+2023 年 5 月，斯坦福大学的拉斐尔·拉法伊洛夫（Rafael Rafailov）等人发表论文《[Direct Preference Optimization: Your Language Model is Secretly a Reward Model](https://arxiv.org/abs/2305.18290)》，揭示了 RLHF 三模型架构中，奖励模型的信息已经隐含在策略模型的对数概率之中。基于这一发现，提出了**直接偏好优化**（Direct Preference Optimization，DPO）方法。DPO 绕过显式的奖励模型训练，直接用偏好数据优化策略模型，将复杂的强化学习问题转化为简单的分类问题，开启了对齐新范式的序幕。
 
 2024 年 2 月，Contextual AI 的卡温·埃塔亚拉杰（Kawin Ethayarajh）等人从诺贝尔经济学奖得主丹尼尔·卡尼曼（Daniel Kahneman）和阿莫斯·特沃斯基（Amos Tversky）的前景理论（Prospect Theory）中获得灵感，提出了 **KTO**（Kahneman-Tversky Optimization）方法。KTO 优化只需要对答案给出简单的"好/坏"标签，无需成对比较的偏好数据。这意味着模型训练可以直接利用用户点赞、点踩这类天然存在的互联网反馈机制，而不必依赖专门的标注团队。
 
@@ -237,7 +237,7 @@ $$[grpo_loss]\mathcal{L}_{GRPO} = -\mathbb{E} \left[ \frac{1}{G} \sum_{i=1}^{G} 
 
 $$\mathbb{D}_{\text{KL}}[\pi_\theta \| \pi_{\text{ref}}] \approx \frac{\pi_{\text{ref}}(o)}{\pi_\theta(o)} - \log \frac{\pi_{\text{ref}}(o)}{\pi_\theta(o)} - 1$$
 
-精确的 KL 散度需要对所有 token 求和计算期望 $\mathbb{E}_{x \sim \pi_\theta}[\log \frac{\pi_\theta(x)}{\pi_{\text{ref}}(x)}]$，计算开销很大。舒尔曼的近似方法用单样本估计来替代，直接取当前采样到的 token，计算其对数概率比 $\log \frac{\pi_{\text{ref}}(o)}{\pi_\theta(o)}$，再通过上述公式得到一个非负的近似值。这个近似实际上是 $\mathbb{D}_{KL}[\pi_\theta \| \pi_{\text{ref}}]$ 的单样本无偏估计，且由于 $f(x) = x - \log x - 1$ 在 $x > 0$ 时恒非负，近似值不会出现负数，比直接用 $\log \frac{\pi_\theta}{\pi_{\text{ref}}}$ 作为 KL 估计更稳定。该方法出自舒尔曼在 OpenAI 2020 年的内部技术报告《Approximating KL Divergence》，虽未正式发表论文，但在 InstructGPT、ChatGPT 等产品的 RLHF 实践中被广泛采用。
+精确的 KL 散度需要对所有 token 求和计算期望 $\mathbb{E}_{x \sim \pi_\theta}[\log \frac{\pi_\theta(x)}{\pi_{\text{ref}}(x)}]$，计算开销很大。舒尔曼的近似方法用单样本估计来替代，直接取当前采样到的 token，计算其对数概率比 $\log \frac{\pi_{\text{ref}}(o)}{\pi_\theta(o)}$，再通过上述公式得到一个非负的近似值。这个近似实际上是 $\mathbb{D}_{KL}[\pi_\theta \| \pi_{\text{ref}}]$ 的单样本无偏估计，且由于 $f(x) = x - \log x - 1$ 在 $x > 0$ 时恒非负，近似值不会出现负数，比直接用 $\log \frac{\pi_\theta}{\pi_{\text{ref}}}$ 作为 KL 估计更稳定。该方法出自舒尔曼在 OpenAI 2020 年的内部技术报告《[Approximating KL Divergence](http://joschu.net/blog/kl-approx.html)》，虽未正式发表论文，但在 InstructGPT、ChatGPT 等产品的 RLHF 实践中被广泛采用。
 
 GRPO 的损失函数与 PPO 的策略梯度目标在形式上相似，不过对 KL 约束的依赖有所降低。PPO 必须依赖 KL 惩罚来防止策略偏离参考模型太远，因为奖励模型给出的绝对分数容易让模型找到钻空子的策略，生成奖励模型评分高但实际无意义的回答。GRPO 的奖励来自任务本身的规则函数（如答案是否正确），这些规则很难被钻空子，因此对 KL 约束的需求比 PPO 弱。在 DeepSeek-R1 和 [DAPO](https://arxiv.org/abs/2503.14476) 的实践中，设置 $\beta = 0$，即完全不使用 KL 惩罚，参考模型也不需要加载。但在其他场景下（如开放性较强的任务），$\beta > 0$ 的 KL 约束仍然是稳定训练的重要保障。
 

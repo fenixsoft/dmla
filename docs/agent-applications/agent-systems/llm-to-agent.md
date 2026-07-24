@@ -2,7 +2,7 @@
 
 语言模型擅长"说"，智能体（Agent）擅长"做"。让一个只会生成文本的系统学会自主行动，这个跨越并不是最近才开始的尝试。早在人工智能研究的初期，研究者们就梦想着建造能感知环境、制定计划、执行行动的自主系统。1970 年代，美国空军上校约翰·博伊德（John Boyd）提出了 OODA 循环（Observe-Orient-Decide-Act），用于描述战斗机飞行员在空战中的决策过程，包括观察敌机位置、理解战场态势、决定机动策略、执行操作，然后根据新状态重新开始循环。这个框架后来被借用到 AI 领域，成为智能体架构设计的重要参考。
 
-半个多世纪后，大语言模型的出现让智能体自主行动的梦想有了新的实现路径。2022 年，姚顺雨（Shunyu Yao）等人在论文《ReAct: Synergizing Reasoning and Acting in Language Models》中提出了 ReAct 模式，将语言模型的推理能力与外部工具的行动能力交织在一起，系统化地总结了从 LLM 到 Agent 的技术路线。随后，以 AutoGPT、LangChain 为代表的 Agent 框架在 2023 年集中涌现，标志着 LLM-based Agent 从学术概念走向工程实践。
+半个多世纪后，大语言模型的出现让智能体自主行动的梦想有了新的实现路径。2022 年，姚顺雨（Shunyu Yao）等人在论文《[ReAct: Synergizing Reasoning and Acting in Language Models](https://arxiv.org/abs/2210.03629)》中提出了 ReAct 模式，将语言模型的推理能力与外部工具的行动能力交织在一起，系统化地总结了从 LLM 到 Agent 的技术路线。随后，以 AutoGPT、LangChain 为代表的 Agent 框架在 2023 年集中涌现，标志着 LLM-based Agent 从学术概念走向工程实践。
 
 ## LLM 的能力边界
 
@@ -39,7 +39,7 @@ graph LR
 
 ### ReAct 模式
 
-2022 年，普林斯顿大学的姚顺雨（Shunyu Yao）在论文《ReAct: Synergizing Reasoning and Acting in Language Models》中提出了 ReAct 模式，首次将推理（Reasoning）和行动（Acting）在语言模型内部统一为一个交替进行的流程。ReAct 通俗理解就是让模型在行动之前先"想一想"，在行动之后根据结果再"想一想"，如此反复。ReAct 的每一次循环包含思考、行动、观察三个环节：
+2022 年，普林斯顿大学的姚顺雨（Shunyu Yao）在论文《[ReAct: Synergizing Reasoning and Acting in Language Models](https://arxiv.org/abs/2210.03629)》中提出了 ReAct 模式，首次将推理（Reasoning）和行动（Acting）在语言模型内部统一为一个交替进行的流程。ReAct 通俗理解就是让模型在行动之前先"想一想"，在行动之后根据结果再"想一想"，如此反复。ReAct 的每一次循环包含思考、行动、观察三个环节：
 - **思考**（Thought）环节，模型用自然语言分析当前状态并决定下一步做什么。
 - **行动**（Action）环节，模型生成一个工具调用指令，由外部系统执行。
 - **观察**（Observation）环节，工具的执行结果以文本形式追加到上下文中，成为下一轮思考的输入。
@@ -138,7 +138,7 @@ graph TD
 
 ## 从对话到自主行动
 
-讨论 Agent 的自主性时，一个常见的误区是把自主性当作一个二元离散值，要么完全手动，要么完全自主。实际上，**自主性**（Autonomy）是一个从低到高变化的连续值，不同等级适用于不同的任务场景和风险要求。华盛顿大学 2025 年发表的论文 《Levels of Autonomy for AI Agents》给出了 Agent 自主性等级划分：
+讨论 Agent 的自主性时，一个常见的误区是把自主性当作一个二元离散值，要么完全手动，要么完全自主。实际上，**自主性**（Autonomy）是一个从低到高变化的连续值，不同等级适用于不同的任务场景和风险要求。华盛顿大学 2025 年发表的论文 《[Levels of Autonomy for AI Agents](https://arxiv.org/abs/2506.12469)》给出了 Agent 自主性等级划分：
 
 - **零自主性**（L1）：在这个等级中 Agent 只是被动的工具调用器。人类发出每一步的具体指令，Agent 执行并返回结果，不做任何自主决策。在这个等级中，Agent 不主导决策流程，用户始终保持对工作流的完全控制。
 - **建议自主性**（L2）：Agent 与用户协作规划和执行任务，双方可以相互委派工作，用户可以随时接管 Agent 的工作或直接修改 Agent 的输出。这个等级适合高风险操作（如数据库写操作、生产环境变更），人类保留最终审批权，Agent 的角色是智能助理而非独立决策者。

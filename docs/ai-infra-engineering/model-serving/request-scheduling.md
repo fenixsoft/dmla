@@ -34,7 +34,7 @@ $$M_{\text{KV}} = 2 \times n_{\text{layer}} \times d_{\text{head}} \times n_{\te
 
 ### 连续批处理
 
-2022 年，韩国科学技术院（KAIST）的学者金圭澯（Gyuwan Kim）与李英旭（Young-Hoon Kim）在论文《Orca: A Distributed Serving System for Transformer-Based Generative Models》中提出了连续批处理（Continuous Batching，也称 Iteration-level Scheduling），从根本上解决了静态批处理的尾部膨胀问题。连续批处理的调度粒度从整个请求的生命周期细化到了单个 Decode 步（Iteration-level 指的就是单个 Decode 步），不再等所有请求都完成才接收新请求，而是每个 Decode 步结束后，将已完成的请求移出批量，将等待中的新请求加入批量。
+2022 年，首尔国立大学的论文《[Orca: A Distributed Serving System for Transformer-Based Generative Models](https://www.usenix.org/conference/osdi22/presentation/yu)》中提出了连续批处理（Continuous Batching，也称 Iteration-level Scheduling），从根本上解决了静态批处理的尾部膨胀问题。连续批处理的调度粒度从整个请求的生命周期细化到了单个 Decode 步（Iteration-level 指的就是单个 Decode 步），不再等所有请求都完成才接收新请求，而是每个 Decode 步结束后，将已完成的请求移出批量，将等待中的新请求加入批量。
 
 连续批处理让 GPU 在每个 Decode 步都处理尽可能多的活跃请求，消除了静态批处理中的空等浪费。回到长途客车的类比，连续批处理更像是一条公交线路，乘客可以随时上车，到站就下车，不需要等其他人。车上始终坐满了乘客，运力被充分利用。连续批处理的实现关键在于 Iteration-level 的调度决策。每个 Decode 步开始前，调度器需要检查哪些请求已经生成完毕、哪些等待中的请求可以被加入、当前显存是否足够容纳新请求的 KV Cache。这三项检查构成了连续批处理的调度循环，如下图所示。
 

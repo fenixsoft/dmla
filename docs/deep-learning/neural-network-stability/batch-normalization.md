@@ -2,7 +2,7 @@
 
 深度神经网络训练过程中存在一个隐蔽但致命的问题：随着网络深度增加，各层输入分布不断变化，导致梯度传播不稳定。这种现象称为**内部协变量偏移**（Internal Covariate Shift），它使得深层网络难以训练、收敛缓慢、对初始化高度敏感。
 
-2015 年，Google 的两位研究员谢尔盖·伊奥费（Sergey Ioffe）和克里斯蒂安·谢盖迪（Christian Szegedy） 在论文《Batch Normalization: Accelerating Deep Network Training by Reducing Internal Covariate Shift》中提出了**批归一化**（Batch Normalization，简称 BN）技术。这一方法的灵感来自传统机器学习中数据标准化预处理的思想，他们将其扩展到神经网络的每一层，实现了训练过程中实时、自适应的标准化。BN 使得深度网络训练更加稳定和快速，允许使用更大的学习率，也缓解了初始化敏感问题，甚至自带一定的正则化效果。从 ResNet 开始，BN 成为几乎所有现代深度网络的标准组成部件。
+2015 年，Google 的两位研究员谢尔盖·伊奥费（Sergey Ioffe）和克里斯蒂安·谢盖迪（Christian Szegedy） 在论文《[Batch Normalization: Accelerating Deep Network Training by Reducing Internal Covariate Shift](https://arxiv.org/abs/1502.03167)》中提出了**批归一化**（Batch Normalization，简称 BN）技术。这一方法的灵感来自传统机器学习中数据标准化预处理的思想，他们将其扩展到神经网络的每一层，实现了训练过程中实时、自适应的标准化。BN 使得深度网络训练更加稳定和快速，允许使用更大的学习率，也缓解了初始化敏感问题，甚至自带一定的正则化效果。从 ResNet 开始，BN 成为几乎所有现代深度网络的标准组成部件。
 
 本章将深入分析内部协变量偏移问题的本质，介绍 BN 的算法原理与计算流程，探讨 BN 如何提升训练稳定性，讲解 BN 在卷积神经网络中的特殊应用方式，辨析训练与推理模式的差异，并通过实验验证 BN 的实际效果。最后，我们将讨论 BN 的局限性及其变体方案，帮助读者在不同场景下做出正确选择。
 

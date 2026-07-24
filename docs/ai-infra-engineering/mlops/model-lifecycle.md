@@ -1,6 +1,6 @@
 # 实验追踪与模型注册
 
-2015 年，谷歌的论文《Hidden Technical Debt in Machine Learning Systems》描述了在一个真实的机器学习系统中，模型训练代码只占整个系统代码量的 5%，剩下 95% 是被他们称为"胶水代码"的数据管道、特征提取、模型部署、监控告警等基础设施。这篇论文后来成了 MLOps 这个实践领域的开山之作。
+2015 年，谷歌的论文《[Hidden Technical Debt in Machine Learning Systems](https://papers.nips.cc/paper/5656-hidden-technical-debt-in-machine-learning-systems)》描述了在一个真实的机器学习系统中，模型训练代码只占整个系统代码量的 5%，剩下 95% 是被他们称为"胶水代码"的数据管道、特征提取、模型部署、监控告警等基础设施。这篇论文后来成了 MLOps 这个实践领域的开山之作。
 
 三年后的 2018 年，Databricks 团队启动了 MLflow 项目，首次将实验追踪、模型注册和模型部署统一到一个开源平台中。同年，Weights & Biases 公司成立，将实验追踪的核心功能搬上云端。这两个事件标志着机器学习工程化正从谷歌这种行业巨头级别的内部实践，演变为普通团队也能使用的通用工具。如今，实验追踪和模型管理已经成为任何严肃的机器学习团队的标配基础设施。
 

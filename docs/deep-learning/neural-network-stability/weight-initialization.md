@@ -24,7 +24,7 @@
 
 ### Xavier 初始化
 
-通过分析信号在网络中的传播过程，推导出保持信号稳定所需的权重方差，精确计算出最佳的初始化参数。这种方法最早由加拿大计算机科学家泽维尔·格洛罗（Xavier Glorot）和他的导师约书亚·本吉奥（Yoshua Bengio，2018 年图灵奖得主）在 2010 年提出。他们在题为《Understanding the difficulty of training deep feedforward neural networks》的论文中，系统分析了深度网络训练困难的原因，并提出了著名的 Xavier 初始化方法。这篇论文揭示了初始化与训练稳定性的深层联系，成为深度学习优化领域的里程碑工作。
+通过分析信号在网络中的传播过程，推导出保持信号稳定所需的权重方差，精确计算出最佳的初始化参数。这种方法最早由加拿大计算机科学家泽维尔·格洛罗（Xavier Glorot）和他的导师约书亚·本吉奥（Yoshua Bengio，2018 年图灵奖得主）在 2010 年提出。他们在题为《[Understanding the difficulty of training deep feedforward neural networks](https://proceedings.mlr.press/v9/glorot10a.html)》的论文中，系统分析了深度网络训练困难的原因，并提出了著名的 Xavier 初始化方法。这篇论文揭示了初始化与训练稳定性的深层联系，成为深度学习优化领域的里程碑工作。
 
 让我们从最简单的情况开始分析什么样的权重方差能让信号穿过一层又一层的网络，如果有一个线性神经元（暂时忽略激活函数，或者假设激活函数是线性的），假设这个神经元接收 $n_{in}$ 个输入，产生一个输出 $y = \sum_{i=1}^{n_{in}} w_i x_i$，为了分析输出的方差，我们需要做一些合理的假设。设权重 $w_i$ 和输入 $x_i$ 满足以下条件：
 
@@ -88,7 +88,7 @@ tanh 在 0 附近的线性近似比 sigmoid 更精确（斜率为 1，而 Sigmoi
 
 ### He 初始化
 
-针对 Xavier 初始化不适配 ReLU 的问题，中国计算机科学家何恺明（Kaiming He）在 2015 年提出了专门为 ReLU 设计的初始化方法。他在论文《Delving Deep into Rectifiers: Surpassing Human-Level Performance on ImageNet Classification》中系统分析了 ReLU 网络的信号传播特性，提出了 He 初始化。这篇论文不仅在初始化理论上做出贡献，更重要的是，它首次展示了深度网络在图像分类任务上超越人类表现的可能性，何恺明团队使用深度残差网络（ResNet）在 ImageNet 竞赛中达到了 3.57% 的 Top-5 错误率，低于人类的 5.1%。这一里程碑成果证明了深度学习的巨大潜力，也确立了 He 初始化在 ReLU 网络中的核心地位。
+针对 Xavier 初始化不适配 ReLU 的问题，中国计算机科学家何恺明（Kaiming He）在 2015 年提出了专门为 ReLU 设计的初始化方法。他在论文《[Delving Deep into Rectifiers: Surpassing Human-Level Performance on ImageNet Classification](https://arxiv.org/abs/1502.01852)》中系统分析了 ReLU 网络的信号传播特性，提出了 He 初始化。这篇论文不仅在初始化理论上做出贡献，更重要的是，它首次展示了深度网络在图像分类任务上超越人类表现的可能性，何恺明团队使用深度残差网络（ResNet）在 ImageNet 竞赛中达到了 3.57% 的 Top-5 错误率，低于人类的 5.1%。这一里程碑成果证明了深度学习的巨大潜力，也确立了 He 初始化在 ReLU 网络中的核心地位。
 
 Xavier 初始化的问题来源于 ReLU 每层都会杀死一半信号，我们需要用更大的权重方差来补偿。同前面 Xavier 初始化的推导类似，我们考虑 ReLU 激活后的信号传播，推导出保持信号稳定所需的权重方差。设输入 $x_i$ 是上一层 ReLU 的输出，权重 $w_i$ 独立同分布、零均值，前向传播分为加权求和（$z = \sum_{i=1}^{n_{in}} w_i x_i$）和ReLU 激活（$y = \max(0, z)$）两步，第一步的方差推理过程不变（见 {{eq:var-sum}}），仍为：
 

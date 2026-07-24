@@ -2,9 +2,9 @@
 
 如果你手上有一笔定量的算力预算，是把算力花在堆参数上，还是喂更多数据能获得最大收益？这个问题听起来像是一条依靠经验的投资决策，实际上背后藏着精确的数学规律。
 
-2020 年 1 月，物理学家贾里德·卡普兰（Jared Kaplan）在 OpenAI 期间与达里奥·阿莫代伊（Dario Amodei，后来创立 Anthropic）等人合作发表了论文《Scaling Laws for Neural Language Models》。他们发现语言模型的测试损失与模型参数量、训练数据量、计算量之间存在幂律关系，把规模翻 10 倍，损失就降低一个固定倍数。这就是后来被称为 Kaplan Scaling Laws 的发现，它让大语言模型的训练从"多投钱总会好一点"的经验判断，变成了可预测的工程问题。
+2020 年 1 月，物理学家贾里德·卡普兰（Jared Kaplan）在 OpenAI 期间与达里奥·阿莫代伊（Dario Amodei，后来创立 Anthropic）等人合作发表了论文《[Scaling Laws for Neural Language Models](https://arxiv.org/abs/2001.08361)》。他们发现语言模型的测试损失与模型参数量、训练数据量、计算量之间存在幂律关系，把规模翻 10 倍，损失就降低一个固定倍数。这就是后来被称为 Kaplan Scaling Laws 的发现，它让大语言模型的训练从"多投钱总会好一点"的经验判断，变成了可预测的工程问题。
 
-两年后，DeepMind 的乔丹·霍夫曼（Jordan Hoffmann）等人在论文《Training Compute-Optimal Large Language Models》中推翻了卡普兰的结论。他们训练了超过 400 个模型后发现，模型参数和训练数据应该同步增长，而不是像卡普兰所说的参数比数据更重要。为验证这一点，他们训练了一个叫 Chinchilla 的 70 亿参数模型，用 1.4 万亿 token 数据训练，在相同计算预算下击败了参数量四倍于自己的 Gopher。这个发现解释了 GPT-3 等早期模型为何训练不充分，也揭示了 LLaMA 小模型配大数据策略背后的数学原理。
+两年后，DeepMind 的乔丹·霍夫曼（Jordan Hoffmann）等人在论文《[Training Compute-Optimal Large Language Models](https://arxiv.org/abs/2203.15556)》中推翻了卡普兰的结论。他们训练了超过 400 个模型后发现，模型参数和训练数据应该同步增长，而不是像卡普兰所说的参数比数据更重要。为验证这一点，他们训练了一个叫 Chinchilla 的 70 亿参数模型，用 1.4 万亿 token 数据训练，在相同计算预算下击败了参数量四倍于自己的 Gopher。这个发现解释了 GPT-3 等早期模型为何训练不充分，也揭示了 LLaMA 小模型配大数据策略背后的数学原理。
 
 ## Kaplan 缩放定律
 
@@ -42,7 +42,7 @@ $$D_{opt} \propto C^{0.27}$$
 
 ## Chinchilla 缩放定律
 
-卡普兰的"大模型小数据"策略影响了 GPT-3 等早期模型的设计方向，到了 2022 年，这个结论被证伪了。推翻它的是 DeepMind 的乔丹·霍夫曼（Jordan Hoffmann），他在论文《Training Compute-Optimal Large Language Models》中提出了截然不同的答案。这篇论文重新讨论了在给定固定的计算预算下，模型大小和训练数据量该怎么分配才能达到最优性能。
+卡普兰的"大模型小数据"策略影响了 GPT-3 等早期模型的设计方向，到了 2022 年，这个结论被证伪了。推翻它的是 DeepMind 的乔丹·霍夫曼（Jordan Hoffmann），他在论文《[Training Compute-Optimal Large Language Models](https://arxiv.org/abs/2203.15556)》中提出了截然不同的答案。这篇论文重新讨论了在给定固定的计算预算下，模型大小和训练数据量该怎么分配才能达到最优性能。
 
 DeepMind 内部给这篇论文起的代号 Chinchilla（毛丝鼠）。Chinchilla 的做法更彻底，训练了超过 400 个模型，规模从 7000 万到 160 亿参数，覆盖了比卡普兰更广的参数区间。在更全面的实验基础上，他们发现模型参数量 $N$ 和训练数据量 $D$ 应该同步增长：
 
@@ -103,7 +103,7 @@ LLaMA 是采用过度训练策略的典型代表。以 LLaMA-7B 为例，它用 
 
 缩放定律的讨论中经常伴随着涌现能力（Emergent Abilities）。当模型规模超过某个阈值时，某些能力似乎突然出现。譬如 Few-shot 能力在约 10B 参数时显著增强，Chain of Thought 推理在约 100B 参数时涌现，代码生成能力也在 10B 附近有质的提升。因此考量模型参数量时，要将这些涌现的跳跃点考虑进去。
 
-但 2023 年的论文《Are Emergent Abilities of Large Language Models a Mirage?》对涌现这种说法提出了质疑。作者指出，涌现能力可能是评估指标造成的幻觉。如果用精确匹配（Exact Match）这种非连续的指标来衡量，能力的提升看起来像是从 0 跳到 1 的突变；但如果换成词元编辑距离（Token Edit Distance，指把一个序列变换成另一个序列所需的最少编辑操作次数）这种平滑指标，同样的能力提升就变成了一条平滑曲线。这个争议提醒我们，缩放定律的观察结果取决于评估方式，不同的指标可能揭示出不同的规律。
+但 2023 年的论文《[Are Emergent Abilities of Large Language Models a Mirage?](https://arxiv.org/abs/2304.15004)》对涌现这种说法提出了质疑。作者指出，涌现能力可能是评估指标造成的幻觉。如果用精确匹配（Exact Match）这种非连续的指标来衡量，能力的提升看起来像是从 0 跳到 1 的突变；但如果换成词元编辑距离（Token Edit Distance，指把一个序列变换成另一个序列所需的最少编辑操作次数）这种平滑指标，同样的能力提升就变成了一条平滑曲线。这个争议提醒我们，缩放定律的观察结果取决于评估方式，不同的指标可能揭示出不同的规律。
 
 ## 推理时缩放定律
 

@@ -8,9 +8,9 @@ $$h_t = \tanh(W_{hh} h_{t-1} + W_{xh} x_t)$$
 
 人类阅读文章时，不会记住每个词的细节，而是记住关键信息（如主角名字、事件要点），遗忘无关细节（如形容词、过渡词）。RNN 缺乏这种选择性记忆能力，像是一个被迫记住所有流水账细节的糟糕记笔记者，最终什么都记不清楚。
 
-1997 年，德国计算机科学家塞普·霍赫赖特（Sepp Hochreiter）和他的导师尤尔根·施密德胡伯（Jürgen Schmidhuber）在神经计算期刊《Neural Computation》上发表了论文《Long Short-Term Memory》，首次提出了**长短期记忆网络**（Long Short Term Memory，LSTM）。这篇论文的主旨是如何让神经网络学会选择性记忆，记住重要信息，遗忘无关细节。文章的关键创新是引入细胞状态和门控机制，让网络自己学习哪些信息需要长期保留，哪些需要及时清除。LSTM 能够处理跨越超过 100 个时刻的长期依赖，在语音识别、机器翻译、时间序列预测等任务上都取得了突破性进展，成为深度学习处理序列数据的核心工具，直到注意力机制和 Transformer 架构出现之后局面才被改变。
+1997 年，德国计算机科学家塞普·霍赫赖特（Sepp Hochreiter）和他的导师尤尔根·施密德胡伯（Jürgen Schmidhuber）在神经计算期刊《Neural Computation》上发表了论文《[Long Short-Term Memory](https://doi.org/10.1162/neco.1997.9.8.1735)》，首次提出了**长短期记忆网络**（Long Short Term Memory，LSTM）。这篇论文的主旨是如何让神经网络学会选择性记忆，记住重要信息，遗忘无关细节。文章的关键创新是引入细胞状态和门控机制，让网络自己学习哪些信息需要长期保留，哪些需要及时清除。LSTM 能够处理跨越超过 100 个时刻的长期依赖，在语音识别、机器翻译、时间序列预测等任务上都取得了突破性进展，成为深度学习处理序列数据的核心工具，直到注意力机制和 Transformer 架构出现之后局面才被改变。
 
-2014 年，韩国计算机科学家曹庆铉（Cho Kyunghyun）在论文《Learning Phrase Representations using RNN Encoder-Decoder for Statistical Machine Translation》中提出了**门控循环单元**（Gated Recurrent Unit，GRU），作为 LSTM 的简化版本。GRU 将 LSTM 的三个门合并为两个，去除独立的细胞状态，减少参数量和计算开销，同时在多数任务上保持了相近的性能。本文将详细介绍 LSTM 和 GRU 的原理、结构设计、训练方法，以及两者的对比选择策略。
+2014 年，韩国计算机科学家曹庆铉（Cho Kyunghyun）在论文《[Learning Phrase Representations using RNN Encoder-Decoder for Statistical Machine Translation](https://arxiv.org/abs/1406.1078)》中提出了**门控循环单元**（Gated Recurrent Unit，GRU），作为 LSTM 的简化版本。GRU 将 LSTM 的三个门合并为两个，去除独立的细胞状态，减少参数量和计算开销，同时在多数任务上保持了相近的性能。本文将详细介绍 LSTM 和 GRU 的原理、结构设计、训练方法，以及两者的对比选择策略。
 
 ## LSTM 结构与门控机制
 
@@ -174,7 +174,7 @@ graph TB
 ```
 *图：GRU 单元内部结构*
 
-上图展示了 GRU 单元的完整结构。与 LSTM 相比，GRU 的信息流动更加简洁，LSTM 需要两条路径，细胞状态用于长期存储，隐藏状态用于对外输出。GRU 只有一条路径，隐藏状态直接存储信息，同时承担长期存储和对外输出的双重职责。这种简化牺牲了 LSTM 信息线性传递的设计，但依然相对于 RNN  缓解了梯度消失的影响，能够在中等长度依赖任务上与 LSTM 表现相近。
+上图展示了 GRU 单元的完整结构。与 LSTM 相比，GRU 的信息流动更加简洁，LSTM 需要两条路径，细胞状态用于长期存储，隐藏状态用于对外输出。GRU 只有一条路径，隐藏状态直接存储信息，同时承担长期存储和对外输出的双重职责。这种简化牺牲了 LSTM 信息线性传递的设计，但依然相对于 RNN 缓解了梯度消失的影响，能够在中等长度依赖任务上与 LSTM 表现相近。
 
 ### 梯度流动
 

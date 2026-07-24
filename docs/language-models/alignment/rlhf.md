@@ -2,7 +2,7 @@
 
 在[监督微调](../pretraining/supervised-finetuning.md)中，我们探讨了如何通过监督学习将预训练模型转化为可用的 AI 助手。SFT 让模型学会了回答问题，但模型真的理解它回答了什么吗？答案是否定的。一个模型可以学会生成语法正确、信息准确的回答，却可能在风格、安全性、有用性等方面与人类期望存在很大偏差。人类偏好是复杂且多维的，仅凭有限的 SFT 数据难以充分捕捉。
 
-**人类反馈强化学习**（Reinforcement Learning from Human Feedback，RLHF）正是为解决这一问题而生。它让模型从人类的偏好反馈中学习，而非仅仅模仿人类的回答。2022 年，OpenAI 的论文《Training Language Models to Follow Instructions with Human Feedback》系统阐述了 RLHF 中模型与人类需求对齐的监督微调、奖励模型、近端策略优化三阶段框架，后续成为几乎所有指令遵循模型的标准训练范式。
+**人类反馈强化学习**（Reinforcement Learning from Human Feedback，RLHF）正是为解决这一问题而生。它让模型从人类的偏好反馈中学习，而非仅仅模仿人类的回答。2022 年，OpenAI 的论文《[Training Language Models to Follow Instructions with Human Feedback](https://arxiv.org/abs/2203.02155)》系统阐述了 RLHF 中模型与人类需求对齐的监督微调、奖励模型、近端策略优化三阶段框架，后续成为几乎所有指令遵循模型的标准训练范式。
 
 ## SFT 的能力边界
 
@@ -54,7 +54,7 @@ InstructGPT 使用了约 33K 条偏好对比数据来训练奖励模型。这个
 
 ### Bradley-Terry 模型
 
-有了"回答 A 比回答 B 好"这种偏好对比数据，我们就可以从中推导出一个连续的函数，用来预测新数据的偏好概率。1952 年，统计学家布拉德利（Ralph A. Bradley）和特里（Milton E. Terry）在论文《Rank Analysis of Incomplete Block Designs: I. The Method of Paired Comparisons》中提出了一个优雅的解决方案 —— **Bradley-Terry 模型**。这个模型最初是为了分析体育比赛中的胜负概率而设计的。只要给出两支队伍的历史战绩，模型就能预测它们未来对决的胜负概率。七十年后，这个模型在 RLHF 中找到了新的应用场景：给定两个回答的偏好对比，预测人类选择其中一个的概率。Bradley-Terry 模型假设每个回答 $y$ 都有一个潜在的真实奖励值 $r^*(x, y)$，人类选择 $y_w$ 优于 $y_l$ 的概率随两者奖励差的增大而增大。数学上，这个概率可以表示为：
+有了"回答 A 比回答 B 好"这种偏好对比数据，我们就可以从中推导出一个连续的函数，用来预测新数据的偏好概率。1952 年，统计学家布拉德利（Ralph A. Bradley）和特里（Milton E. Terry）在论文《[Rank Analysis of Incomplete Block Designs: I. The Method of Paired Comparisons](https://doi.org/10.1093/biomet/39.3-4.324)》中提出了一个优雅的解决方案 —— **Bradley-Terry 模型**。这个模型最初是为了分析体育比赛中的胜负概率而设计的。只要给出两支队伍的历史战绩，模型就能预测它们未来对决的胜负概率。七十年后，这个模型在 RLHF 中找到了新的应用场景：给定两个回答的偏好对比，预测人类选择其中一个的概率。Bradley-Terry 模型假设每个回答 $y$ 都有一个潜在的真实奖励值 $r^*(x, y)$，人类选择 $y_w$ 优于 $y_l$ 的概率随两者奖励差的增大而增大。数学上，这个概率可以表示为：
 
 $$P(y_w \succ y_l | x) = \frac{\exp(r^*(x, y_w))}{\exp(r^*(x, y_w)) + \exp(r^*(x, y_l))}$$
 
@@ -130,7 +130,7 @@ $$\nabla_\theta \mathbb{E}_{y \sim \pi_\theta}[r(x, y)] = \mathbb{E}_{y \sim \pi
 
 ### 近端策略优化
 
-**近端策略优化**（Proximal Policy Optimization，PPO）由约翰·舒尔曼（John Schulman）在 2017 年的论文《Proximal Policy Optimization Algorithms》中提出。PPO 名称中的**近端**（Proximal）就是"附近、邻近"的意思，指每次参数更新只能让策略在旧策略的附近移动，不能一步跳到离旧策略很远的地方。在 PPO 之前，舒尔曼曾提出过信任域策略优化（Trust Region Policy Optimization，TRPO），通过约束新旧策略的 KL 散度来限制更新幅度。TRPO 的思路是正确的，实现上却很麻烦，需要求解一个带约束的优化问题，涉及二阶导数计算，复杂且计算代价高昂。PPO 的贡献在于用一种相对简洁的裁剪机制替代了 TRPO 的复杂约束，效果相当但实现简单得多。PPO 的训练目标函数为：
+**近端策略优化**（Proximal Policy Optimization，PPO）由约翰·舒尔曼（John Schulman）在 2017 年的论文《[Proximal Policy Optimization Algorithms](https://arxiv.org/abs/1707.06347)》中提出。PPO 名称中的**近端**（Proximal）就是"附近、邻近"的意思，指每次参数更新只能让策略在旧策略的附近移动，不能一步跳到离旧策略很远的地方。在 PPO 之前，舒尔曼曾提出过信任域策略优化（Trust Region Policy Optimization，TRPO），通过约束新旧策略的 KL 散度来限制更新幅度。TRPO 的思路是正确的，实现上却很麻烦，需要求解一个带约束的优化问题，涉及二阶导数计算，复杂且计算代价高昂。PPO 的贡献在于用一种相对简洁的裁剪机制替代了 TRPO 的复杂约束，效果相当但实现简单得多。PPO 的训练目标函数为：
 
 $$\max_\theta \mathbb{E}_{x \sim \mathcal{D}, y \sim \pi_{old}} \left[ \min\left( \frac{\pi_\theta(y|x)}{\pi_{old}(y|x)} \cdot A(x,y), \; clip\left(\frac{\pi_\theta(y|x)}{\pi_{old}(y|x)}, 1-\epsilon, 1+\epsilon\right) \cdot A(x,y) \right) - \beta \cdot KL[\pi_\theta \| \pi_{ref}] \right]$$
 

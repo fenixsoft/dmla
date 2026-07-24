@@ -2,7 +2,7 @@
 
 自适应学习率的思想源于一个朴素的观察，不同参数在训练过程中扮演着不同的角色，有些参数频繁更新，梯度大而稳定；有些参数更新稀疏，梯度小甚至偶尔为零。如果给所有参数配发同样的步长，频繁更新的参数可能步子太大、震荡难收敛，而稀疏更新的参数可能步子太小、前进缓慢。这就像校长给全校学生布置同样的作业量，高年级的学生觉得无聊，低年级的学生觉得吃力。
 
-**自适应优化器**（Adaptive Optimizers）正是为解决以上"一刀切"问题而生，它们根据参数的历史梯度自动调整学习率，为每个参数分配独立的更新步长。这种"因材施教"的策略最早由约翰·杜奇（John Duchi）于 2011 年提出，他的 AdaGrad 算法开创了自适应学习率的先河。随后，辛顿在 2012 年的 Coursera 课程中提出了 RMSprop，解决了 AdaGrad 学习率过早衰减的问题。2015 年，迪德里克·金玛（Diederik Kingma）和吉米·巴（Jimmy Ba）发表里程碑论文《Adam: A Method for Stochastic Optimization》，将动量法与自适应学习率有效结合，Adam 由此成为深度学习领域最流行的优化器。2019 年，伊利亚·洛希洛夫（Ilya Loshchilov）和弗兰克·赫特（Frank Hutter）发现 Adam 的权重衰减实现存在理论缺陷，提出了 AdamW，进一步提升了泛化能力。2024 年，凯勒·乔丹（Keller Jordan）提出了 Muon，不再沿袭逐参数自适应学习率的路线，而是利用参数矩阵的几何结构，通过牛顿-舒尔茨（Newton-Schulz）迭代将动量更新正交化，在 NanoGPT 和 CIFAR-10 速度竞赛中创下纪录。本章将会介绍以上四种自适应优化器以及代表新方向的 Muon，分析它们的设计原理、优缺点和适用场景。
+**自适应优化器**（Adaptive Optimizers）正是为解决以上"一刀切"问题而生，它们根据参数的历史梯度自动调整学习率，为每个参数分配独立的更新步长。这种"因材施教"的策略最早由约翰·杜奇（John Duchi）于 2011 年提出，他的 AdaGrad 算法开创了自适应学习率的先河。随后，辛顿在 2012 年的 Coursera 课程中提出了 RMSprop，解决了 AdaGrad 学习率过早衰减的问题。2015 年，迪德里克·金玛（Diederik Kingma）和吉米·巴（Jimmy Ba）发表里程碑论文《[Adam: A Method for Stochastic Optimization](https://arxiv.org/abs/1412.6980)》，将动量法与自适应学习率有效结合，Adam 由此成为深度学习领域最流行的优化器。2019 年，伊利亚·洛希洛夫（Ilya Loshchilov）和弗兰克·赫特（Frank Hutter）发现 Adam 的权重衰减实现存在理论缺陷，提出了 AdamW，进一步提升了泛化能力。2024 年，凯勒·乔丹（Keller Jordan）提出了 Muon，不再沿袭逐参数自适应学习率的路线，而是利用参数矩阵的几何结构，通过牛顿-舒尔茨（Newton-Schulz）迭代将动量更新正交化，在 NanoGPT 和 CIFAR-10 速度竞赛中创下纪录。本章将会介绍以上四种自适应优化器以及代表新方向的 Muon，分析它们的设计原理、优缺点和适用场景。
 
 ## AdaGrad
 
@@ -83,7 +83,7 @@ $$\Delta \mathbf{W}_{reg} = -\frac{\eta}{\sqrt{\hat{\mathbf{v}}_t} + \epsilon} \
 
 这导致一个问题，当 $\hat{\mathbf{v}}_t$ 很大（参数梯度历史活跃），自适应学习率 $\frac{\eta}{\sqrt{\hat{\mathbf{v}}_t}}$ 很小，权重衰减项被缩小，正则化效果减弱。当 $\hat{\mathbf{v}}_t$ 很小（参数梯度历史稀疏），自适应学习率很大，权重衰减项被放大，这与 L2 正则化均匀衰减所有权重的设计初衷明显不符。回顾 Adam 的机制，梯度更新被自适应学习率缩放，这是为了让频繁更新的参数放慢脚步、稀疏更新的参数加速前进。但权重衰减的目的是均匀约束所有参数，防止任何一个参数过大导致过拟合，与自适应调整的方向完全不同。将两者混在一起，相当于让本应"一视同仁"的正则化也被"因材施教"，逻辑上自相矛盾。
 
-**AdamW**（Adam with Decoupled Weight Decay）由伊利亚·洛希洛夫（Ilya Loshchilov）在 2019 年的论文《Decoupled Weight Decay Regularization》中提出，论文揭示了 Adam 的权重衰减问题，并给出简洁的解决方案，将权重衰减从梯度更新中分离，让梯度更新负责学习数据规律，权重衰减负责控制模型复杂度，两者应该独立运作、互不干扰。AdamW 的更新规则与 Adam 相比（见 {{adam-w-update}}），区别在于多了权重衰减项：
+**AdamW**（Adam with Decoupled Weight Decay）由伊利亚·洛希洛夫（Ilya Loshchilov）在 2019 年的论文《[Decoupled Weight Decay Regularization](https://arxiv.org/abs/1711.05101)》中提出，论文揭示了 Adam 的权重衰减问题，并给出简洁的解决方案，将权重衰减从梯度更新中分离，让梯度更新负责学习数据规律，权重衰减负责控制模型复杂度，两者应该独立运作、互不干扰。AdamW 的更新规则与 Adam 相比（见 {{adam-w-update}}），区别在于多了权重衰减项：
 
 $$\mathbf{W}_{t+1} = \mathbf{W}_t - \frac{\eta}{\sqrt{\hat{\mathbf{v}}_t} + \epsilon} \cdot \hat{\mathbf{m}}_t - \eta \lambda \mathbf{W}_t$$
 

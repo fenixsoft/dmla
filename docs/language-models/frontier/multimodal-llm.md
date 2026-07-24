@@ -2,7 +2,7 @@
 
 语言模型处理的对象是文字序列，但人类感知世界的方式远不止文字，我们用眼睛看图像，用耳朵听声音，用多种感官综合理解世界。如果语言模型只能"读"而不能"看"，那它在许多现实场景中的能力终究是受限的。本章将探讨语言模型如何突破纯文本的边界，学会看懂图像和视频。
 
-让计算机同时理解图像和文字，这个想法由来已久。2015 年，蒙特利尔大学约书亚·本吉奥实验室的论文《Show, Attend and Tell: Neural Image Caption Generation with Visual Attention》中引入注意力机制，模型在生成每个词时，会让文本解码器的隐状态去查询图像卷积特征图的不同区域，实现了跨模态信息检索。但真正让视觉/语言融合走向实用化的，是后来的**视觉 Transformer 编码器**（Vision Transformer，ViT）和**图文对比学习**（Contrastive Language-Image Pre-training，CLIP），ViT 解决了图像如何变成序列的问题，CLIP 解决了图像和文本如何在语义空间中对齐的问题。
+让计算机同时理解图像和文字，这个想法由来已久。2015 年，蒙特利尔大学约书亚·本吉奥实验室的论文《[Show, Attend and Tell: Neural Image Caption Generation with Visual Attention](https://arxiv.org/abs/1502.03044)》中引入注意力机制，模型在生成每个词时，会让文本解码器的隐状态去查询图像卷积特征图的不同区域，实现了跨模态信息检索。但真正让视觉/语言融合走向实用化的，是后来的**视觉 Transformer 编码器**（Vision Transformer，ViT）和**图文对比学习**（Contrastive Language-Image Pre-training，CLIP），ViT 解决了图像如何变成序列的问题，CLIP 解决了图像和文本如何在语义空间中对齐的问题。
 
 ## 视觉 - 语言融合架构
 

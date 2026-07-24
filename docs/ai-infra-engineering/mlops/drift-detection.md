@@ -1,8 +1,8 @@
 # 漂移检测
 
-**漂移**（Drift）指的是模型训练时的数据分布与部署后的数据分布之间出现不一致的现象。1986 年，美国加州大学尔湾分校（UC Irvine）的两位计算机科学家杰弗里·施利默（Jeffrey C. Schlimmer）和理查德·格兰杰（Richard H. Granger）在 AAAI 会议上发表题为《Beyond Incremental Processing: Tracking Concept Drift》的论文。他们设计了一个名为 STAGGER 的概念生成器，用三种离散属性（大小、颜色、形状）模拟突然发生的概念变化，并试图让学习系统自己发现规则已经变了这个事实。这篇论文的贡献不仅在于提出了一个至今仍在被广泛引用的实验基准，更在于它定义的漂移这个概念，成为后来数十年里机器学习运维主要关注点之一。
+**漂移**（Drift）指的是模型训练时的数据分布与部署后的数据分布之间出现不一致的现象。1986 年，美国加州大学尔湾分校（UC Irvine）的两位计算机科学家杰弗里·施利默（Jeffrey C. Schlimmer）和理查德·格兰杰（Richard H. Granger）在 AAAI 会议上发表题为《[Beyond Incremental Processing: Tracking Concept Drift](https://aaai.org/papers/00502-aaai86-084-beyond-incremental-processing-tracking-concept-drift/)》的论文。他们设计了一个名为 STAGGER 的概念生成器，用三种离散属性（大小、颜色、形状）模拟突然发生的概念变化，并试图让学习系统自己发现规则已经变了这个事实。这篇论文的贡献不仅在于提出了一个至今仍在被广泛引用的实验基准，更在于它定义的漂移这个概念，成为后来数十年里机器学习运维主要关注点之一。
 
-十年后的 1996 年，格哈德·维德默（Gerhard Widmer）和米罗斯拉夫·库巴特（Miroslav Kubat）发表了《Learning in the Presence of Concept Drift and Hidden Contexts》。这篇论文提出了 FLORA 系列自适应学习算法，首次系统区分了概念漂移的不同形式，并将漂移检测与模型自适应策略联系了起来。从此，漂移检测逐渐成为生产环境中机器学习系统必须应对的工程挑战。
+十年后的 1996 年，格哈德·维德默（Gerhard Widmer）和米罗斯拉夫·库巴特（Miroslav Kubat）发表了《[Learning in the Presence of Concept Drift and Hidden Contexts](https://link.springer.com/article/10.1007/BF00116900)》。这篇论文提出了 FLORA 系列自适应学习算法，首次系统区分了概念漂移的不同形式，并将漂移检测与模型自适应策略联系了起来。从此，漂移检测逐渐成为生产环境中机器学习系统必须应对的工程挑战。
 
 ## 漂移的必然性
 
