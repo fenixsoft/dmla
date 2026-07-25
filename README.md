@@ -15,7 +15,10 @@
     <img src="https://img.shields.io/npm/v/%40icyfenix-dmla%2Fcli?color=aquamarine" alt="NPM Version">
     <img src="https://img.shields.io/badge/license-creative%20commons%20by%204.0-red" alt="License">
     <img src="https://img.shields.io/badge/author-icyfenix-chocolate" alt="Author">
-</div>
+  </div>
+  <div align="center">
+	  中文版本 | <a href="README_en.md">English</a>
+  </div>
 </p>
 
 ## 文档简介
