@@ -112,7 +112,7 @@ When mathematics moves from studying "how one variable affects a result" to "how
 
 1. Prove that the definition of the directional derivative $D_{\mathbf{u}} f(x_0, y_0) = \lim_{h \to 0} \frac{f(x_0 + h u_1, y_0 + h u_2) - f(x_0, y_0)}{h}$ is equivalent to $D_{\mathbf{u}} f = \nabla f \cdot \mathbf{u}$.
     <details>
-    <summary>Solution</summary>
+    <summary>Reference Answer</summary>
     This is essentially a problem of differentiating a composite function: let $g(h) = f(x_0 + h u_1, y_0 + h u_2)$. The directional derivative is $g'(0)$. Define the path functions $x(h) = x_0 + h u_1$ and $y(h) = y_0 + h u_2$. By the multivariate chain rule:
 
     $$\frac{dg}{dh} = \frac{\partial f}{\partial x} \cdot \frac{dx}{dh} + \frac{\partial f}{\partial y} \cdot \frac{dy}{dh}$$
@@ -128,7 +128,7 @@ When mathematics moves from studying "how one variable affects a result" to "how
 
 1. Let $f(x, y) = x^2 y + y^3$. Find $\frac{\partial f}{\partial x}$, $\frac{\partial f}{\partial y}$, and $\nabla f$.
     <details>
-    <summary>Solution</summary>
+    <summary>Reference Answer</summary>
 
     To find $\frac{\partial f}{\partial x}$: treat $y$ as a constant, $\frac{\partial f}{\partial x} = 2xy$
 
@@ -141,7 +141,7 @@ When mathematics moves from studying "how one variable affects a result" to "how
 
 1. Let $z = x^2 + y^2$, $x = t + 1$, $y = t^2$. Use the chain rule to find $\frac{dz}{dt}$.
     <details>
-    <summary>Solution</summary>
+    <summary>Reference Answer</summary>
 
     Method 1 (chain rule):
     $$\frac{dz}{dt} = \frac{\partial z}{\partial x} \cdot \frac{dx}{dt} + \frac{\partial z}{\partial y} \cdot \frac{dy}{dt}$$
@@ -163,7 +163,7 @@ When mathematics moves from studying "how one variable affects a result" to "how
 
 1. Let $f(x, y) = x^2 - y^2$. Compute the directional derivative of $f$ at the point $(1, 1)$ in the direction $\mathbf{u} = (\frac{1}{\sqrt{2}}, \frac{1}{\sqrt{2}})$.
     <details>
-    <summary>Solution</summary>
+    <summary>Reference Answer</summary>
 
     First compute the gradient: $\nabla f = (2x, -2y)$
 
@@ -176,7 +176,7 @@ When mathematics moves from studying "how one variable affects a result" to "how
 
 1. Determine the convexity of the function $f(x, y) = x^2 + 2y^2 + 2xy$.
     <details>
-    <summary>Solution</summary>
+    <summary>Reference Answer</summary>
 
     Compute the first-order partial derivatives:
     - $\frac{\partial f}{\partial x} = 2x + 2y$
@@ -200,7 +200,7 @@ When mathematics moves from studying "how one variable affects a result" to "how
 
 1. Let $f(x) = e^{-x^2}$. Compute $\int_{-\infty}^{\infty} f(x) \, dx$ and explain its significance in probability theory.
     <details>
-    <summary>Solution</summary>
+    <summary>Reference Answer</summary>
 
     This integral is the famous Gaussian integral: $\int_{-\infty}^{\infty} e^{-x^2} \, dx = \sqrt{\pi}$
 
@@ -217,7 +217,7 @@ When mathematics moves from studying "how one variable affects a result" to "how
 
 1. Prove: If $\nabla f(\mathbf{x}^*) = \mathbf{0}$ and the Hessian matrix $\mathbf{H}$ is positive definite at $\mathbf{x}^*$, then $\mathbf{x}^*$ is a local minimum of $f$.
     <details>
-    <summary>Solution</summary>
+    <summary>Reference Answer</summary>
 
     This is a key conclusion of the second-order sufficient condition.
 

@@ -231,7 +231,7 @@ While RLHF opens the door to preference learning, it also introduces new problem
 1. Given two responses with reward values $r_w = 3.2$ and $r_l = 1.5$, calculate the preference probability that a human would choose $y_w$ under the Bradley-Terry model.
 
    <details>
-   <summary>Answer</summary>
+   <summary>Reference Answer</summary>
 
    According to the Sigmoid form of the Bradley-Terry model:
 
@@ -247,7 +247,7 @@ While RLHF opens the door to preference learning, it also introduces new problem
 
    Hint: First expand the expectation as a summation (or integral), then compute the gradient with respect to $\theta$, and use $\nabla_\theta \log f(\theta) = \frac{\nabla_\theta f(\theta)}{f(\theta)}$ to move the gradient inside the expectation.
    <details>
-   <summary>Answer</summary>
+   <summary>Reference Answer</summary>
 
    Expand the expectation by definition:
 

@@ -325,7 +325,7 @@ Given the following Bayesian Network structure, analyze the conditional independ
    - To infer `Mood`, which variables are relevant evidence variables?
 
    <details>
-   <summary>Answer Key</summary>
+   <summary>Reference Answer</summary>
 
    **Conditional Independence Analysis**:
 

@@ -334,7 +334,7 @@ This chapter introduced two landmark works from the 2014 ImageNet challenge, whi
 
 1. VGG uses two $3 \times 3$ convolutional layers to replace one $5 \times 5$ convolutional layer, achieving the same receptive field with fewer parameters. Assuming the input channel count is $C_{in}$ and the output channel count is $C_{out}$, calculate the parameter ratio of the two schemes and explain the nonlinear expression advantage of stacking small convolution kernels.
     <details>
-    <summary>Answer</summary>
+    <summary>Reference Answer</summary>
 
     **Parameter Calculation**:
 

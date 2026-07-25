@@ -402,12 +402,12 @@ gantt
 
 Scaling laws promise that as long as we invest more compute power, model performance will continue to improve. Distributed training infrastructure is the engineering foundation for delivering on that promise. As models have grown from billions to hundreds of billions and trillions of parameters, the memory and compute power of a single GPU have long since been insufficient. Data parallelism, pipeline parallelism, tensor parallelism, and ZeRO optimization dismantle the memory bottleneck from different dimensions. 3D parallelism combines them into a scalable training solution, while mixed precision training and gradient accumulation strike a practical balance between precision and efficiency. Communication optimization further ensures that when thousands of GPUs work together, communication overhead does not eat away the benefits of increased compute power. It is precisely this infrastructure that transforms the scaling laws from a power-law curve on paper into a practical engineering reality.
 
-## Practice Problems
+## Exercises
 
 1. Calculate the per-GPU memory requirements for a 70B model under different parallel strategies: data parallelism only (assuming 8 GPUs), DP + PP (4 pipeline stages), DP + PP + TP (PP=4, TP=8), and ZeRO-3 (64 GPUs).
 
    <details>
-   <summary>Answer Key</summary>
+   <summary>Reference Answer</summary>
 
    - DP only: 1120 GB per GPU (does not fit in a single GPU)
    - DP + PP (4 stages): Parameters and gradients each split by 1/4, optimizer states also split by 1/4, approximately $140/4 + 140/4 + 840/4 = 280$ GB
@@ -419,7 +419,7 @@ Scaling laws promise that as long as we invest more compute power, model perform
 2. Analyze the numerical characteristics of FP16 and BF16: determine the conditions under which $a + b$ may incur precision loss in each format, and explain why BF16 does not require loss scaling.
 
    <details>
-   <summary>Answer Key</summary>
+   <summary>Reference Answer</summary>
 
    In FP16, when $|a|$ and $|b|$ differ by more than $2^{10} = 1024$ times, the smaller number is truncated (because FP16 has only 10 mantissa bits). In BF16, this threshold drops to $2^7 = 128$ times — it has worse precision. However, BF16 does not require loss scaling because its exponent bits are the same as FP32 (8 bits), giving it a representable range of ±3.4e38, far exceeding FP16's ±65504, thus avoiding the gradient underflow problem entirely.
 

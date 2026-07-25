@@ -390,7 +390,7 @@ This chapter detailed the computational mechanism of forward propagation in neur
 
 1. Given a three-layer neural network, input dimension $n_0=3$, hidden layer neuron counts $n_1=5$, $n_2=4$, output dimension $n_3=2$. Batch size $B=10$. Calculate the shapes of each layer's weight matrix and pre-activation matrix.
     <details>
-    <summary>Answer</summary>
+    <summary>Reference Answer</summary>
 
     **Parameter shapes for each layer**:
 

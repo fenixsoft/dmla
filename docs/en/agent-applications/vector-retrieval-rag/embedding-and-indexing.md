@@ -326,7 +326,7 @@ This chapter provided a comprehensive introduction to the fundamental principles
 1. Plot the recall-latency tradeoff curve for IVF under different $n_{probe}$ values, and find the minimum parameter value needed to achieve 95% recall on your dataset.
 
    <details>
-   <summary>Solution</summary>
+   <summary>Reference Answer</summary>
 
    Refer to the visualization code in the Code Practice section. Under typical configuration (128 dimensions, 50,000 vectors), IVF requires approximately `nprobe=50` to achieve 95% recall. This value varies depending on data distribution and embedding dimensionality, so in practice you should benchmark on your own dataset.
    </details>
@@ -334,7 +334,7 @@ This chapter provided a comprehensive introduction to the fundamental principles
 2. Using an IVF-PQ index on 1 million vectors, compare the compression ratio and recall loss under different values of $m$ (number of subvectors). Pay attention to the difference in recall when $m$ is small (larger subspaces) versus when $m$ is large (smaller subspaces), and think about the underlying reasons.
 
    <details>
-   <summary>Solution</summary>
+   <summary>Reference Answer</summary>
 
    When $m$ is small, each subspace has higher dimensionality, and K-Means clustering struggles to adequately cover all patterns in the subspace with only 256 codewords, leading to increased quantization error and decreased recall. When $m$ is large (approaching $d$), each subspace has very low dimensionality (even just 1 dimension), improving quantization precision but reducing the compression ratio. In practice, a compromise between compression ratio and recall must be found, typically around $m = d/8$ (i.e., representing every 8 dimensions with one 8-bit codeword).
    </details>

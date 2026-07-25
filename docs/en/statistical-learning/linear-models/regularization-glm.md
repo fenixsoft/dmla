@@ -464,11 +464,11 @@ Overfitting is a major challenge in machine learning practice. A model that perf
 
 The GLM framework reveals the mathematical unity of models such as linear regression and logistic regression from a higher dimension. They all follow a three-element structure: the distribution family defines the data type, the linear predictor computes scores, and the link function transforms the output range. The differences are merely variations in expression — the underlying principles are the same.
 
-## Practice Problems
+## Exercises
 
 1. Given a dataset: the feature matrix $X$ contains two highly correlated features ($x_2 \approx x_1$), and the target is $y = 2x_1 + \epsilon$. Compare the parameter estimation stability of OLS and Ridge regression, and explain why Ridge regression is more stable.
     <details>
-    <summary>Solution</summary>
+    <summary>Reference Answer</summary>
     
     ```python runnable
     import numpy as np
@@ -506,7 +506,7 @@ The GLM framework reveals the mathematical unity of models such as linear regres
 
 2. Explain why the intercept term is typically not regularized, and what problems would arise if it were regularized?
     <details>
-    <summary>Solution</summary>
+    <summary>Reference Answer</summary>
     
     **Nature of the intercept**:
     

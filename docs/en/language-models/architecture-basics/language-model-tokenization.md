@@ -297,7 +297,7 @@ With the foundational prerequisites for training a Transformer-based language mo
 
 1. In BPE tokenization, the order of merge rules is critical. Suppose two rules were learned sequentially during training: Rule 1 merges `(e, r)`, and Rule 2 merges `(er, </w>)`. Now tokenize the word "lower," whose initial character sequence is `l o w e r`. Write the intermediate results after applying each rule during tokenization, and explain what happens to the tokenization result if the order of the two rules is swapped (Rule 2 applied first, then Rule 1).
     <details>
-    <summary>Answer</summary>
+    <summary>Reference Answer</summary>
 
     **Original order (Rule 1 → Rule 2)**:
 
@@ -324,7 +324,7 @@ With the foundational prerequisites for training a Transformer-based language mo
 
 1. In the Unigram tokenization model, suppose the vocabulary $V = \{\text{ab}, \text{a}, \text{b}, \text{c}\}$, with subword probabilities $P(\text{ab}) = 0.4$, $P(\text{a}) = 0.3$, $P(\text{b}) = 0.2$, $P(\text{c}) = 0.1$. For the input word "abc," list all possible tokenizations, compute the probability of each tokenization, and identify the tokenization with the highest probability.
     <details>
-    <summary>Answer</summary>
+    <summary>Reference Answer</summary>
 
     **List all tokenizations**:
 
@@ -361,7 +361,7 @@ With the foundational prerequisites for training a Transformer-based language mo
     | Llama 3 | 128,000 |
 
     <details>
-    <summary>Answer</summary>
+    <summary>Reference Answer</summary>
 
     **Output layer parameters for each model** ($|V| \times d$, $d = 4096$):
 

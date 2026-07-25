@@ -127,7 +127,7 @@ Orchestration and fault tolerance are two sides of the same engineering problem.
 1. Suppose you need to design a multi-agent system for code review, with the following flow: code submission → static analysis → unit test → (automatically merge on success / generate fix suggestions on failure). Draw a DAG diagram of this flow, determine whether it contains a fan-out/fan-in structure, and identify which nodes are suitable as checkpoints.
 
    <details>
-   <summary>Answer Key</summary>
+   <summary>Reference Answer</summary>
 
    The flow DAG contains the following nodes: code submission → static analysis → unit test (on success, enter the automatic merge node; on failure, enter the fix suggestion generation node). The overall structure is linear with a conditional branch. There is no fan-out/fan-in structure, because the two downstream nodes of the conditional branch do not execute in parallel -- at runtime, only one path is followed. However, a checkpoint can be introduced after static analysis completes, since it is the first quality gate in the entire flow. At this point, saving the original submission content, static analysis results, and workflow state has low cost, and if any subsequent step fails, recovery can start from the static analysis completion point without re-scanning.
 
@@ -138,7 +138,7 @@ Orchestration and fault tolerance are two sides of the same engineering problem.
 2. In a fan-out/fan-in orchestration, the orchestrator fans the task out to five Agents for parallel execution, and one of the Agents times out without responding. Propose two handling strategies and analyze their respective applicable scenarios and risks.
 
    <details>
-   <summary>Answer Key</summary>
+   <summary>Reference Answer</summary>
 
    **Strategy 1: Wait for All Results**. Continue waiting for the timed-out Agent until it responds. Alternatively, abandon the current Agent and retry: launch a new Agent to re-execute the sub-task, which is a variation of Strategy 1 but carries the additional risk of duplicate computation. This approach is suitable for scenarios where complete information is needed for decision-making (such as financial auditing requiring reconciliation of all accounts). The risk is that the timeout may persist for a long time, making overall latency uncontrollable.
 

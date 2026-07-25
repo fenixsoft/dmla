@@ -284,7 +284,7 @@ The EM algorithm demonstrates an elegant process of probabilistic modeling. When
 
 1. For a one-dimensional Gaussian mixture model with two components, the parameters are $\pi_1=0.3, \mu_1=0, \sigma_1^2=1$ and $\pi_2=0.7, \mu_2=5, \sigma_2^2=2$. Given an observation $x=2$, compute the responsibilities $\gamma_1$ and $\gamma_2$ of the sample belonging to the two components.
     <details>
-    <summary>Answer</summary>
+    <summary>Reference Answer</summary>
 
     The formula for responsibility is:
 

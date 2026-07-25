@@ -173,7 +173,7 @@ Word embedding is a foundational technique for neural networks to process natura
 
 1. Assume a vocabulary size of 10000 and an embedding dimension of 300. Calculate the number of parameters required to store all word vectors under One-Hot encoding and word embedding representations. How much memory is needed if using FP32 (4 bytes) storage?
    <details>
-   <summary>Answer</summary>
+   <summary>Reference Answer</summary>
 
    **One-Hot encoding**:
    - Dimension per word vector: 10000
@@ -190,7 +190,7 @@ Word embedding is a foundational technique for neural networks to process natura
 
 2. Given two word vectors $\mathbf{a} = [0.8, 0.6]$ and $\mathbf{b} = [0.6, 0.8]$, compute their cosine similarity and Euclidean distance. If $\mathbf{a}$ represents "cat" and $\mathbf{b}$ represents "dog", do these vectors indicate that the words are semantically similar or different?
    <details>
-   <summary>Answer</summary>
+   <summary>Reference Answer</summary>
 
    **Cosine similarity**:
    $$\cos(\mathbf{a}, \mathbf{b}) = \frac{0.8 \times 0.6 + 0.6 \times 0.8}{\sqrt{0.8^2 + 0.6^2} \times \sqrt{0.6^2 + 0.8^2}} = \frac{0.48 + 0.48}{1.0 \times 1.0} = 0.96$$

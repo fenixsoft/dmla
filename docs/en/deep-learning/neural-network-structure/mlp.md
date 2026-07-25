@@ -305,11 +305,11 @@ plt.close()
 
 This chapter traces the historical development of the multi-layer perceptron, covering its background, structural design, theoretical foundation, and practical verification. The multi-layer perceptron is a critical milestone in the history of neural network development. It demonstrates that adding a hidden layer of neurons can break through linear limitations, validates the powerful expressive capability of nonlinear transformations, and lays the foundation for subsequent deeper network architectures. The next chapter will delve into the computational details of the MLP, providing an in-depth introduction to how signals flow layer by layer in forward propagation, how matrix operations are efficiently implemented, and how computation graphs organize complex nested functions. Understanding these details is a necessary prerequisite for mastering the backpropagation algorithm.
 
-## Practice Problems
+## Exercises
 
 1. Explain why the Universal Approximation Theorem is an "existence proof" rather than a "constructive proof." What impact does this have on practical applications?
     <details>
-    <summary>Answer</summary>
+    <summary>Reference Answer</summary>
     
     **Existence proof vs. constructive proof**:
     
@@ -332,7 +332,7 @@ This chapter traces the historical development of the multi-layer perceptron, co
 
 2. Consider a single-hidden-layer MLP with input dimension $n=2$, hidden layer neurons $m=4$, and output dimension $k=1$ (binary classification). Calculate the total number of parameters in the network. If the number of hidden layer neurons is increased to $m=100$, how does the parameter count change? Analyze the growth trend of the parameter count.
     <details>
-    <summary>Answer</summary>
+    <summary>Reference Answer</summary>
     
     **Parameter calculation**:
     

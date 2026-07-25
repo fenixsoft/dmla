@@ -190,7 +190,7 @@ These techniques are not isolated -- in practice, they are often used in combina
 1. Calculate the total KV Cache memory usage for the LLaMA-2 7B model with batch size 16, maximum sequence length 2048, and float16 precision. Model parameters: 32 layers, 32 attention heads, 128 dimensions per head. If the available memory is 40 GB (after accounting for model parameters), how many more requests can be added?
 
    <details>
-   <summary>Answer</summary>
+   <summary>Reference Answer</summary>
 
    Using the KV Cache memory formula:
 
@@ -209,7 +209,7 @@ These techniques are not isolated -- in practice, they are often used in combina
    - Scenario C: A code assistance tool for researchers, with a small user base but requiring high-quality output
 
    <details>
-   <summary>Answer</summary>
+   <summary>Reference Answer</summary>
 
    **Scenario A**: Distilled small model + PagedAttention + Speculative Decoding. Real-time chat is extremely latency-sensitive. A distilled small model (e.g., 7B) inherently generates faster, combined with PagedAttention to improve concurrency and speculative decoding to further accelerate generation. PD Disaggregation could also be used here, but serving millions of users means high request volume, and a single cluster's Prefill instances could become a bottleneck -- separation should be decided based on load testing.
 

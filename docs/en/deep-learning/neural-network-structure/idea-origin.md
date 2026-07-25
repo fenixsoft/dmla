@@ -123,7 +123,7 @@ However, early neural networks also revealed limitations: single-layer networks 
 
 1. Explain how the McCulloch-Pitts model implements logical operations. Design an M-P neuron for a "three-input AND gate" (outputs 1 only when all three inputs are 1), writing down the weight and threshold settings.
     <details>
-    <summary>Answer</summary>
+    <summary>Reference Answer</summary>
 
     A three-input AND gate requires: output $y=1$ only when $x_1=1, x_2=1, x_3=1$ are all satisfied; otherwise output $y=0$.
 
@@ -141,7 +141,7 @@ However, early neural networks also revealed limitations: single-layer networks 
 
 2. The core idea of Hebbian learning is "cells that fire together, wire together." Explain the meaning and limitations of this rule from both a neuroscience and a machine learning perspective.
     <details>
-    <summary>Answer</summary>
+    <summary>Reference Answer</summary>
 
     **Neuroscience perspective**:
 
@@ -162,7 +162,7 @@ However, early neural networks also revealed limitations: single-layer networks 
 
 3. Explain why the perceptron cannot solve the XOR problem. Analyze from both a geometric and a mathematical perspective, and explain how a multi-layer perceptron solves this problem.
     <details>
-    <summary>Answer</summary>
+    <summary>Reference Answer</summary>
 
     **Geometric perspective**:
 

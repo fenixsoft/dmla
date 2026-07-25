@@ -711,7 +711,7 @@ In the next chapter, we will learn how to estimate the parameters of a distribut
 
 1. Explain the difference between PMF and PDF, and why the probability of a continuous random variable taking any specific value is 0.
    <details>
-   <summary>Answer</summary>
+   <summary>Reference Answer</summary>
 
    PMF (probability mass function) is used for discrete random variables and gives the probability of each specific value -- it is a probability value. PDF (probability density function) is used for continuous random variables and gives the probability density, not the probability itself.
 
@@ -721,7 +721,7 @@ In the next chapter, we will learn how to estimate the parameters of a distribut
 
 2. Using Bayes' theorem: if P(A) = 0.3, P(B|A) = 0.8, P(B|not A) = 0.2, find P(A|B).
    <details>
-   <summary>Answer</summary>
+   <summary>Reference Answer</summary>
 
    According to Bayes' theorem:
    - P(A) = 0.3

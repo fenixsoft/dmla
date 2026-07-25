@@ -682,7 +682,7 @@ The significance of Transformer goes far beyond a single technical invention. It
 
 1. Compare the similarities and differences between Self-Attention and Bahdanau attention, including the sources of Query, Key, and Value, computational complexity, and parallelism.
     <details>
-    <summary>Answer</summary>
+    <summary>Reference Answer</summary>
 
     **Sources of Query, Key, and Value**:
     - Self-Attention: Q, K, V all come from the same input sequence
@@ -700,7 +700,7 @@ The significance of Transformer goes far beyond a single technical invention. It
 
 2. Analyze the relative position property of Sinusoidal positional encoding: prove that $PE_{pos+k}$ can be expressed as a linear function of $PE_{pos}$.
     <details>
-    <summary>Answer</summary>
+    <summary>Reference Answer</summary>
 
     Using trigonometric identities:
 

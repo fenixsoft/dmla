@@ -366,7 +366,7 @@ The random forest algorithm is a typical example of the ensemble learning princi
     | 5 | 0.2 | 0.7 | 0.1 |
 
     <details>
-    <summary>Answer Reference</summary>
+    <summary>Reference Answer</summary>
 
     **Hard Voting**:
 
@@ -403,7 +403,7 @@ The random forest algorithm is a typical example of the ensemble learning princi
 
 2. Suppose a dataset has 20 features and is used for a classification task. How many features ($m$) should be selected at each split according to the random forest rule of thumb? If used for a regression task, how should $m$ be chosen? Explain the reasoning behind these choices.
     <details>
-    <summary>Answer Reference</summary>
+    <summary>Reference Answer</summary>
 
     **Rule of Thumb**:
 
@@ -428,7 +428,7 @@ The random forest algorithm is a typical example of the ensemble learning princi
 
 3. Implement the Bootstrap sampling process in code and verify the theoretical result that "approximately 36.8% of samples are not selected." Compute the proportion of OOB samples across 10 Bootstrap samples and observe the stability of the results.
     <details>
-    <summary>Answer Reference</summary>
+    <summary>Reference Answer</summary>
 
     ```python runnable
     import numpy as np

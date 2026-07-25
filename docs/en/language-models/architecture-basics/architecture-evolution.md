@@ -470,7 +470,7 @@ After nearly a decade of evolution, modern LLM architectures have formed a relat
 1. Prove the relative position property of RoPE: $(R_m q) \cdot (R_n k) = q \cdot R_{n-m} k$.
 
     <details>
-    <summary>Answer Key</summary>
+    <summary>Reference Answer</summary>
 
     For the two-dimensional case, the rotation matrix is:
 
@@ -488,7 +488,7 @@ After nearly a decade of evolution, modern LLM architectures have formed a relat
 
 2. Compare the memory access patterns of Flash Attention and standard attention, explaining why Flash Attention reduces HBM read/write operations.
     <details>
-    <summary>Answer Key</summary>
+    <summary>Reference Answer</summary>
 
     **Memory Access Pattern of Standard Attention**:
 
@@ -510,7 +510,7 @@ After nearly a decade of evolution, modern LLM architectures have formed a relat
 
 3. Analyze the pros and cons of Top-1 routing and Top-2 routing: computational cost, expert utilization, and model performance.
     <details>
-    <summary>Answer Key</summary>
+    <summary>Reference Answer</summary>
 
     **Computational Cost**:
 
@@ -533,7 +533,7 @@ After nearly a decade of evolution, modern LLM architectures have formed a relat
 
 4. Explain how linear attention reduces complexity from $O(n^2)$ to $O(n)$, and what is the low-rank dilemma it faces?
     <details>
-    <summary>Answer Key</summary>
+    <summary>Reference Answer</summary>
 
     **Complexity Reduction Principle**:
 
@@ -558,7 +558,7 @@ After nearly a decade of evolution, modern LLM architectures have formed a relat
 
 5. Compare the KV cache efficiency and expressiveness trade-offs of MHA, MQA, GQA, and TPA.
     <details>
-    <summary>Answer Key</summary>
+    <summary>Reference Answer</summary>
 
     | Mechanism | KV Groups | Memory Efficiency | Expressiveness | Use Case |
     |:----------|:----------|:-----------------|:---------------|:---------|

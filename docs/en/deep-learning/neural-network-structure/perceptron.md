@@ -207,11 +207,11 @@ plt.close()
 
 This chapter provides a detailed introduction to Rosenblatt's perceptron model, including its structure, geometric interpretation, learning algorithm, and convergence theorem. In 1958, Rosenblatt implemented the first learnable neural network on the Mark I perceptron at the Cornell Aeronautical Laboratory. Its core contribution is the error-driven learning mechanism: when a classification error occurs, the model automatically adjusts its weights until the correct decision boundary is found. The decision boundary of a perceptron is a linear hyperplane, which limits its expressive power to linearly separable classification problems and implies inevitable failure on non-linearly separable data. In 1969, the book *[Perceptrons](https://mitpress.mit.edu/9780262631112/perceptrons/)* rigorously proved the limitations of single-layer perceptrons, a conclusion that plunged neural network research into nearly a decade of winter. But the predicament also pointed the way forward: add hidden layers, build multi-layer networks, and let the model first extract combined features before making decisions. The key issue is how to train multi-layer networks, which will be discussed in the next chapter on [Multilayer Perceptrons](mlp.md) and resolved in the subsequent chapter on the backpropagation algorithm.
 
-## Practice Problems
+## Exercises
 
 1. Prove that the perceptron weight update rule $\mathbf{w} \leftarrow \mathbf{w} + \eta \cdot y_i \cdot \mathbf{x}_i$ moves the predicted value of a misclassified sample in the correct direction. That is, prove that after the update, $y_i \cdot (\mathbf{w}_{new}^T \mathbf{x}_i) > y_i \cdot (\mathbf{w}_{old}^T \mathbf{x}_i)$.
     <details>
-    <summary>Answer</summary>
+    <summary>Reference Answer</summary>
     
     Let the weight before the update be $\mathbf{w}$, and the sample $(\mathbf{x}_i, y_i)$ be misclassified, i.e., $y_i \cdot (\mathbf{w}^T \mathbf{x}_i) < 0$.
     
@@ -235,7 +235,7 @@ This chapter provides a detailed introduction to Rosenblatt's perceptron model, 
 
 2. Design a two-layer perceptron to solve the OR logical operation, write down the weight and threshold settings for each layer's neurons, and verify its correctness. OR operation definition: $(0,0)\rightarrow 0$, $(0,1)\rightarrow 1$, $(1,0)\rightarrow 1$, $(1,1)\rightarrow 1$.
     <details>
-    <summary>Answer</summary>
+    <summary>Reference Answer</summary>
     Consider the perceptron model $y = \text{sign}(w_1 x_1 + w_2 x_2 + b)$. Choose weights $w_1 = 1, w_2 = 1, b = -0.5$.
 
     Verification:

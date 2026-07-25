@@ -412,7 +412,7 @@ Currently, there are still unresolved challenges with model degradation. For ins
 1. A recommendation model has an AUC of 0.92 on the training set, 0.90 on the test set, and an estimated AUC of 0.84 on production data one month after deployment. List at least three possible reasons why the production AUC is lower than the test AUC, and for each reason, describe how to investigate it.
 
    <details>
-   <summary>Reference Answers</summary>
+   <summary>Reference Answer</summary>
 
    - Possible reason one: Insufficient training data recency. The training data is more than four months old, and the distribution of user behavior and content preferences has already changed (data drift). Investigation method: Use PSI to compare the feature distributions of the training set and production data, checking which features have significantly elevated PSI values.
 
@@ -427,7 +427,7 @@ Currently, there are still unresolved challenges with model degradation. For ins
 2. The Population Stability Index (PSI) formula is $PSI = \sum_{i=1}^{n} (P_i - Q_i) \cdot \ln\frac{P_i}{Q_i}$. Explain what information the $(P_i - Q_i)$ term and the $\ln(P_i/Q_i)$ term each contribute, and why PSI is designed as the product-sum of these two terms.
 
    <details>
-   <summary>Reference Answers</summary>
+   <summary>Reference Answer</summary>
 
    $(P_i - Q_i)$ contributes the absolute difference of the distribution: the proportion in the reference bin minus the proportion in the current bin. It measures "how much has changed," with a positive sign indicating a decrease in that bin's proportion (the reference value is larger) and a negative sign indicating an increase. However, looking only at the absolute difference is not enough, because a bin that goes from 0.01 to 0.02 and a bin that goes from 0.20 to 0.21 both have an absolute difference of 0.01, but the former's change ratio (doubling) is far greater than the latter's (a 5% increase).
 

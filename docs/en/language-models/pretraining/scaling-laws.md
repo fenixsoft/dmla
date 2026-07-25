@@ -128,7 +128,7 @@ Together, these findings paint an increasingly complete picture: performance imp
 
 1. Starting from the Chinchilla loss function $L(N, D) = L_{irr} + A/N^\alpha + B/D^\beta$, derive the compute-optimal ratios $N_{opt} \propto C^{\beta/(\alpha+\beta)}$ and $D_{opt} \propto C^{\alpha/(\alpha+\beta)}$.
    <details>
-   <summary>Reference Solution</summary>
+   <summary>Reference Answer</summary>
 
    Given a fixed compute budget $C$, the constraint is $C \approx 6ND$. Using the Lagrange multiplier method:
 
@@ -138,7 +138,7 @@ Together, these findings paint an increasingly complete picture: performance imp
 
 2. Given a compute budget $C = 10^{21}$ FLOPs, using the Chinchilla loss function parameters ($A=406.4, B=410.7, \alpha=0.336, \beta=0.283$), calculate the optimal number of model parameters and amount of training data.
    <details>
-   <summary>Reference Solution</summary>
+   <summary>Reference Answer</summary>
 
    $C/6 = 1.67 \times 10^{20}$. Starting from the optimality condition $\alpha A N^{-\alpha} = \beta B D^{-\beta}$ (derived by dividing the two partial derivative equations), substitute the parameters to calculate the ratio: $\frac{\alpha A}{\beta B} = \frac{0.336 \times 406.4}{0.283 \times 410.7} \approx 1.175$. From $N^\alpha / D^\beta = \alpha A / (\beta B)$ and $C = 6ND$, solve to get $N = (\frac{\alpha A}{\beta B})^{1/(\alpha+\beta)} \cdot (\frac{C}{6})^{\beta/(\alpha+\beta)}$. Substituting $\beta/(\alpha+\beta) \approx 0.457$, $1/(\alpha+\beta) \approx 1.615$, yields $N \approx 2.3 \times 10^{9}$ (approximately 2.3B parameters), $D = C/(6N) \approx 7.3 \times 10^{10}$ (approximately 73B tokens), $D/N \approx 32$.
 

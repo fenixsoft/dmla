@@ -164,7 +164,7 @@ The value of multi-path exploration lies in cross-validation: when different met
 
 Reasoning is not a single leap to the answer but a journey that requires pausing, looking back, and even retracing steps. The significance of chain of thought lies in transforming the model from intuitively guessing answers to methodically deriving them step by step. The process reward model further tells the model whether each step is correct, ensuring that learning signals no longer focus only on the destination while ignoring the journey. Reasoning ability is an inherent potential of language models that grows naturally at sufficient scale — chain of thought merely awakens it, and reinforcement learning simply unleashes this potential. This is precisely the significance of reasoning models: they not only perform better at answering questions but also, for the first time, enable machines to exhibit a way of thinking that resembles human reasoning.
 
-## Practice Questions
+## Exercises
 
 1. Analyze why chain-of-thought prompting improves model reasoning ability from the three perspectives of cognitive load, knowledge activation, and error correction opportunities.
 

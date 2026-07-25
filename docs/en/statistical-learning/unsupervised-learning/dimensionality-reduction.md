@@ -361,11 +361,11 @@ The value of dimensionality reduction lies in its role as a bridge connecting hi
 
 On a deeper level, the ideas of dimensionality reduction have transcended the scope of pure data compression and permeated every aspect of modern machine learning. [Autoencoders](../../deep-learning/generative-models/vae.md) in deep learning are essentially nonlinear extensions of PCA; [word embedding](../../deep-learning/sequence-models/word-embedding.md#word-embedding) compresses high-dimensional one-hot encodings into low-dimensional dense vector spaces; low-rank approximation in image processing directly applies the principles of singular value decomposition. Understanding dimensionality reduction means understanding how to extract core structure from massive information, how to find the balance between information loss and computational efficiency — this is a fundamental skill that every data practitioner must master.
 
-## Practice Problems
+## Exercises
 
 1. Why does PCA choose to maximize projection variance rather than minimize projection error? What is the relationship between the two?
    <details>
-   <summary>Answer</summary>
+   <summary>Reference Answer</summary>
 
    PCA maximizing projection variance is equivalent to minimizing reconstruction error. This is because:
 
@@ -379,7 +379,7 @@ On a deeper level, the ideas of dimensionality reduction have transcended the sc
 
 2. What is the maximum number of dimensions LDA can reduce to? Why is there this limit?
    <details>
-   <summary>Answer</summary>
+   <summary>Reference Answer</summary>
 
    LDA can reduce data to at most $C-1$ dimensions (number of classes minus one). This is because:
 
@@ -392,7 +392,7 @@ On a deeper level, the ideas of dimensionality reduction have transcended the sc
 3. Suppose the eigenvalues of a dataset's covariance matrix are $\lambda = [100, 50, 20, 5, 1]$. If the cumulative explained variance ratio needs to reach 95%, how many principal components should be selected?
 
    <details>
-   <summary>Answer</summary>
+   <summary>Reference Answer</summary>
 
    Total variance = $100 + 50 + 20 + 5 + 1 = 176$
 
@@ -407,7 +407,7 @@ On a deeper level, the ideas of dimensionality reduction have transcended the sc
 
 4. Implement a function that automatically determines the number of principal components based on a target explained variance ratio.
    <details>
-   <summary>Answer</summary>
+   <summary>Reference Answer</summary>
 
    ```python runnable
    import numpy as np

@@ -206,7 +206,7 @@ ResNet-152 achieved a breakthrough result on ImageNet: a Top-5 error rate of 3.5
 
 1. Compute and compare the parameter counts of a Basic Block and a Bottleneck Block. Given that both input and output channels are 256, calculate the parameter counts of both residual block types and analyze why the Bottleneck Block has fewer parameters.
     <details>
-    <summary>Answer</summary>
+    <summary>Reference Answer</summary>
 
     **Basic Block Parameter Calculation**:
 
@@ -230,7 +230,7 @@ ResNet-152 achieved a breakthrough result on ImageNet: a Top-5 error rate of 3.5
 
 2. Demonstrate how residual connections improve gradient flow. Based on the formula $\frac{\partial L}{\partial x} = \frac{\partial L}{\partial y} \cdot (\frac{\partial F}{\partial x} + 1)$, explain why residual connections can prevent vanishing gradients.
     <details>
-    <summary>Answer</summary>
+    <summary>Reference Answer</summary>
 
     **Gradient Formula Analysis**:
 
@@ -265,7 +265,7 @@ ResNet-152 achieved a breakthrough result on ImageNet: a Top-5 error rate of 3.5
 
 3. ResNet-34 uses Basic Blocks with a configuration of [3, 4, 6, 3]. Calculate the total number of layers (layers with weight parameters) in this network, and explain why switching to Bottleneck Blocks would increase the layer count.
     <details>
-    <summary>Answer</summary>
+    <summary>Reference Answer</summary>
 
     **ResNet-34 Layer Count Calculation**:
 

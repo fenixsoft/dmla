@@ -478,7 +478,7 @@ This chapter has provided a detailed introduction to the principles and implemen
 
 1. Suppose a neural network uses the Sigmoid activation function $f(z) = \frac{1}{1+e^{-z}}$. Prove that its derivative is $f'(z) = f(z)(1-f(z))$. Analyze the maximum value of the Sigmoid derivative and its impact on gradient propagation.
     <details>
-    <summary>Answer</summary>
+    <summary>Reference Answer</summary>
     
     **Proof of Sigmoid derivative**:
     
@@ -515,7 +515,7 @@ This chapter has provided a detailed introduction to the principles and implemen
 
 2. Explain why the gradient of Softmax + Cross-Entropy $\frac{\partial l}{\partial \mathbf{z}^L} = \mathbf{a}^L - \mathbf{y}$ is so concise. What is the practical significance of this simplification?
     <details>
-    <summary>Answer</summary>
+    <summary>Reference Answer</summary>
     
     **Reason for simplification**:
     
@@ -553,7 +553,7 @@ This chapter has provided a detailed introduction to the principles and implemen
 
 3. The computational complexity of backpropagation is comparable to that of forward propagation. What implications does this have for hardware design?
     <details>
-    <summary>Answer</summary>
+    <summary>Reference Answer</summary>
     The fact that backpropagation complexity is comparable to forward propagation means that hardware optimizations for matrix operations can simultaneously improve both training and inference efficiency. Modern AI hardware (GPUs, TPUs) is designed precisely around matrix multiplication.
 
     1. **Matrix operations are core**: The main computation in both forward and backward propagation is matrix multiplication. GPUs should optimize matrix computation capabilities.

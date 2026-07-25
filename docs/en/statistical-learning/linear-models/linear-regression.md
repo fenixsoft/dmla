@@ -195,7 +195,7 @@ This chapter starts from the application scenarios of linear regression and esta
 
 The true value of linear regression is not in the specific problems it can directly solve, but rather that many more complex models share with it the same thinking paradigm of **learning patterns from data**: first assume a model structure (some relational hypothesis), then define an optimization criterion (what kind of solution is "good"), and finally find the optimal parameters (how to solve). This paradigm runs throughout the entire field of statistical learning — logistic regression, support vector machines, neural networks — all are different variants of this paradigm. Understanding linear regression means understanding the starting point of this paradigm.
 
-## Practice Problems
+## Exercises
 
 1. Given the design matrix $X = \begin{bmatrix} 1 & 2 \\ 1 & 4 \\ 1 & 6 \end{bmatrix}$ and target vector $y = \begin{bmatrix} 3 \\ 5 \\ 7 \end{bmatrix}$, use the closed-form solution formula $\hat{\beta} = (X^TX)^{-1}X^Ty$ to compute the regression coefficients and write the final regression equation.
     <details>

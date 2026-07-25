@@ -262,11 +262,11 @@ These concepts are interconnected and build upon each other: vector space define
 
 The next chapter introduces matrices -- the natural extension of vectors -- and the geometric meaning of linear transformations.
 
-## Practice Problems
+## Exercises
 
 1. Determine whether the following set of vectors is linearly dependent. Provide your reasoning: $\mathbf{v}_1 = (1, 2, 3)$, $\mathbf{v}_2 = (2, 4, 6)$, $\mathbf{v}_3 = (1, 1, 1)$.
     <details>
-    <summary>Answer</summary>
+    <summary>Reference Answer</summary>
 
     This set of vectors is linearly dependent.
 
@@ -277,7 +277,7 @@ The next chapter introduces matrices -- the natural extension of vectors -- and 
 
 1. Compute the dot product of vectors $\mathbf{u} = (1, 1)$ and $\mathbf{v} = (1, 0)$, their magnitudes, and the angle $\theta$ between them.
     <details>
-    <summary>Answer</summary>
+    <summary>Reference Answer</summary>
 
     Dot product: $\mathbf{u} \cdot \mathbf{v} = 1 \times 1 + 1 \times 0 = 1$
 
@@ -292,7 +292,7 @@ The next chapter introduces matrices -- the natural extension of vectors -- and 
 
 1. In text analysis, the term frequency vectors of two documents are $\mathbf{d}_1 = (3, 0, 1, 2)$ and $\mathbf{d}_2 = (1, 2, 0, 1)$. Compute their cosine similarity and explain its meaning.
     <details>
-    <summary>Answer</summary>
+    <summary>Reference Answer</summary>
 
     Dot product: $\mathbf{d}_1 \cdot \mathbf{d}_2 = 3 \times 1 + 0 \times 2 + 1 \times 0 + 2 \times 1 = 5$
 
@@ -305,7 +305,7 @@ The next chapter introduces matrices -- the natural extension of vectors -- and 
 
 1. Compute the projection of vector $\mathbf{u} = (3, 4)$ onto vector $\mathbf{v} = (1, 0)$. What is the geometric meaning of the projection result?
     <details>
-    <summary>Answer</summary>
+    <summary>Reference Answer</summary>
 
     Projection formula: $\text{proj}_{\mathbf{v}} \mathbf{u} = \frac{\mathbf{u} \cdot \mathbf{v}}{\mathbf{v} \cdot \mathbf{v}} \mathbf{v}$
 
@@ -320,7 +320,7 @@ The next chapter introduces matrices -- the natural extension of vectors -- and 
 
 1. Determine whether the set of all vectors of the form $(x, y, x+y)$ in $\mathbb{R}^3$ forms a subspace. Which conditions need to be verified?
     <details>
-    <summary>Answer</summary>
+    <summary>Reference Answer</summary>
 
     Three conditions must be verified:
 
@@ -335,7 +335,7 @@ The next chapter introduces matrices -- the natural extension of vectors -- and 
 
 1. Verify whether the set of vectors $\mathbf{e}_1 = (1, 0, 0)$, $\mathbf{e}_2 = (0, 1, 0)$, $\mathbf{e}_3 = (0, 0, 1)$ forms an orthonormal basis, and write the coordinate representation of vector $\mathbf{v} = (2, -3, 5)$ under this basis.
     <details>
-    <summary>Answer</summary>
+    <summary>Reference Answer</summary>
 
     Verify orthogonality:
     $\mathbf{e}_1 \cdot \mathbf{e}_2 = 0$, $\mathbf{e}_1 \cdot \mathbf{e}_3 = 0$, $\mathbf{e}_2 \cdot \mathbf{e}_3 = 0$
@@ -355,7 +355,7 @@ The next chapter introduces matrices -- the natural extension of vectors -- and 
 
 1. In a neural network, the input vector of a certain layer is $\mathbf{x} = (1, 2)$, the weight matrix is $\mathbf{W} = \begin{bmatrix} 0.5 & 0.3 \\ 0.2 & 0.4 \end{bmatrix}$, and the bias vector is $\mathbf{b} = (0.1, 0.2)$. Compute the output of this layer $\mathbf{y} = \mathbf{Wx} + \mathbf{b}$, and explain the computation process from the perspective of linear combination.
     <details>
-    <summary>Answer</summary>
+    <summary>Reference Answer</summary>
 
     Compute $\mathbf{Wx}$:
     $\mathbf{Wx} = \begin{bmatrix} 0.5 & 0.3 \\ 0.2 & 0.4 \end{bmatrix} \begin{bmatrix} 1 \\ 2 \end{bmatrix} = \begin{bmatrix} 0.5 \times 1 + 0.3 \times 2 \\ 0.2 \times 1 + 0.4 \times 2 \end{bmatrix} = \begin{bmatrix} 1.1 \\ 1.0 \end{bmatrix}$

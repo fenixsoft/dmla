@@ -460,7 +460,7 @@ SVM presents a new paradigm that differs from other machine learning methods: ra
 
 SVM also demonstrates a way of thinking consistent with other machine learning methods: to solve "how to measure classification quality," it defines functional margin and geometric margin; to solve "how to find the best hyperplane," it derives the maximum margin optimization problem; to solve "how to efficiently solve this optimization problem," it introduces the Lagrangian dual method; to solve "how to handle imperfections in real data," it proposes the soft margin and slack variables. Like many classical machine learning methods, SVM begins with an intuitive geometric idea, progressively builds a mathematical framework, and ultimately forms a solvable, applicable, and theoretically guaranteed algorithm.
 
-## Practice Problems
+## Exercises
 
 1. Given the hyperplane equation $w^T x + b = 0$, where $w = (2, -1)$, $b = 3$, and the point is a positive-class sample $y=+1$. Compute the functional margin and geometric margin of the point $x = (1, 4)$ to this hyperplane, and determine which side of the hyperplane the point lies on.
     <details>

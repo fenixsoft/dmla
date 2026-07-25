@@ -659,7 +659,7 @@ Batch Normalization is a landmark technology in the history of deep learning dev
 
 1. Given 4 sample values of a feature in a Mini-Batch as $\{2, 4, 6, 8\}$, let $\epsilon = 0$, $\gamma = 2$, $\beta = 1$. Follow the three steps of BN (computing statistics, standardization, scaling and shifting) to manually compute the BN output value for each sample.
     <details>
-    <summary>Answer</summary>
+    <summary>Reference Answer</summary>
 
     **Step 1: Compute Batch Statistics**
 
@@ -682,7 +682,7 @@ Batch Normalization is a landmark technology in the history of deep learning dev
 
 1. Let $\gamma = \sigma_B$ and $\beta = \mu_B$. Substitute these into BN's scaling and shifting formula $y_i = \gamma \hat{x}_i + \beta$ to prove that the BN layer completely restores the original input $x_i$, and explain the significance of this property for the network's representational capacity.
     <details>
-    <summary>Answer</summary>
+    <summary>Reference Answer</summary>
     Substituting $\gamma = \sigma_B$ and $\beta = \mu_B$ into the scaling and shifting formula (ignoring $\epsilon$ to simplify the derivation):
 
     $$y_i = \sigma_B \cdot \hat{x}_i + \mu_B = \sigma_B \cdot \frac{x_i - \mu_B}{\sigma_B} + \mu_B = x_i - \mu_B + \mu_B = x_i$$
@@ -694,7 +694,7 @@ Batch Normalization is a landmark technology in the history of deep learning dev
 
 1. BN uses current Batch statistics during training while maintaining global statistics for inference. Assume the initial global mean $\mu_{global} = 0$, global variance $\sigma_{global}^2 = 1$, and decay coefficient $\alpha = 0.9$. If the statistics of the first 3 Batches are $(\mu_{B1}=2,\; \sigma_{B1}^2=3)$, $(\mu_{B2}=1,\; \sigma_{B2}^2=2)$, $(\mu_{B3}=-1,\; \sigma_{B3}^2=4)$ respectively, compute step by step the values of the global mean and global variance after processing the 3rd Batch.
     <details>
-    <summary>Answer</summary>
+    <summary>Reference Answer</summary>
     Global mean update formula: $\mu_{global} \leftarrow \alpha \cdot \mu_{global} + (1 - \alpha) \cdot \mu_B$
     Global variance update formula: $\sigma_{global}^2 \leftarrow \alpha \cdot \sigma_{global}^2 + (1 - \alpha) \cdot \sigma_B^2$
 
@@ -715,7 +715,7 @@ Batch Normalization is a landmark technology in the history of deep learning dev
 
 1. In the extreme case of Batch Size = 1, during BN training $\mu_B = x_1$ and $\sigma_B^2 = 0$. Starting from the standardization formula, analyze BN's behavior in this case, and explain why Batch statistics cannot be used during inference.
     <details>
-    <summary>Answer</summary>
+    <summary>Reference Answer</summary>
     When Batch Size = 1, substituting into the standardization formula:
 
     $$\hat{x}_1 = \frac{x_1 - \mu_B}{\sqrt{\sigma_B^2 + \epsilon}} = \frac{x_1 - x_1}{\sqrt{0 + \epsilon}} = \frac{0}{\sqrt{\epsilon}} = 0$$
@@ -729,7 +729,7 @@ Batch Normalization is a landmark technology in the history of deep learning dev
 
 1. BN, Layer Normalization (LN), Group Normalization (GN), and Instance Normalization (IN) are four commonly used normalization methods. From the perspective of the scope of statistic computation, use a table to compare their differences, and explain why the Transformer architecture uses LN by default instead of BN.
     <details>
-    <summary>Answer</summary>
+    <summary>Reference Answer</summary>
     **Comparison Table**:
 
     | Method | Scope of Statistic Computation | Depends on Batch | Applicable Architectures |

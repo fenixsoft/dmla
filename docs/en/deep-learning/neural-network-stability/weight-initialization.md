@@ -486,7 +486,7 @@ Initialization is the starting point of training, determining whether the networ
 
 1. Given a fully-connected layer with input dimension $n_{in} = 512$ and output dimension $n_{out} = 256$, calculate the parameter ranges for Xavier uniform initialization and Xavier normal initialization respectively.
     <details>
-    <summary>Answer</summary>
+    <summary>Reference Answer</summary>
 
     **Xavier Uniform Initialization**:
 
@@ -507,7 +507,7 @@ Initialization is the starting point of training, determining whether the networ
 
 2. Explain why Xavier initialization uses the harmonic mean of $\frac{1}{n_{in}}$ and $\frac{1}{n_{out}}$, i.e., $\frac{2}{n_{in} + n_{out}}$, instead of the arithmetic mean $\frac{1}{2}\left(\frac{1}{n_{in}} + \frac{1}{n_{out}}\right)$. Explain the advantage of the harmonic mean from the perspective of gradient stability.
     <details>
-    <summary>Answer</summary>
+    <summary>Reference Answer</summary>
 
     Forward propagation requires $\text{Var}(w) = \frac{1}{n_{in}}$, while backpropagation requires $\text{Var}(w) = \frac{1}{n_{out}}$. When $n_{in} \neq n_{out}$, a compromise is needed.
 
@@ -527,7 +527,7 @@ Initialization is the starting point of training, determining whether the networ
 
 3. Consider a three-layer fully-connected network with dimensions $[784, 512, 128, 10]$ using the ReLU activation function. If Xavier initialization is mistakenly used instead of He initialization, analyze how the signal changes during forward propagation and calculate the factor by which the signal variance changes after three layers.
     <details>
-    <summary>Answer</summary>
+    <summary>Reference Answer</summary>
 
     **Problem of using Xavier initialization for ReLU**:
 

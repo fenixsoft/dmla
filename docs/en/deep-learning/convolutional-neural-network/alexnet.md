@@ -210,7 +210,7 @@ AlexNet's emergence marked the rise of deep learning in the field of vision, ush
 
 1. AlexNet's Conv3, Conv4, and Conv5 all use $3 \times 3$ kernels with stride $1$ and padding $1$, keeping the spatial size at $13 \times 13$ unchanged. Calculate the effective receptive field after stacking these three layers, and compare the parameter count with that of a single $7 \times 7$ convolution layer.
     <details>
-    <summary>Answer</summary>
+    <summary>Reference Answer</summary>
 
     **Receptive Field Calculation**:
 
@@ -256,7 +256,7 @@ AlexNet's emergence marked the rise of deep learning in the field of vision, ush
 
 2. Explain why AlexNet uses an $11 \times 11$ kernel with stride $4$ in Conv1, while modern CNNs (such as ResNet) typically use only a $7 \times 7$ kernel with stride $2$ in the first layer. Analyze the reasons for this design evolution from the perspectives of computational efficiency and feature extraction.
     <details>
-    <summary>Answer</summary>
+    <summary>Reference Answer</summary>
 
     **Historical Reasons for AlexNet's Large Kernel Design**:
 

@@ -439,7 +439,7 @@ plt.close()
 
 This chapter introduced the principles and applications of adaptive optimizers, demonstrating how the idea of assigning different learning rates to each parameter improves optimization efficiency, and presented Muon, a new optimizer that leverages matrix geometric structure. At this point, the content on neural network optimization is complete. We have mastered the principles and applications of gradient descent, momentum, NAG, adaptive optimizers, and Muon, and understand how to select and tune optimization algorithms. The next chapter moves into neural network stability, covering weight initialization, Dropout, batch normalization, and gradient problem diagnosis to address training stability issues.
 
-## Practice Problems
+## Exercises
 
 1. Analyze why AdaGrad's learning rate decreases monotonically. Assume the gradient is constant at $g$, derive the effective learning rate $\eta_{eff} = \frac{\eta}{\sqrt{t \cdot g^2}}$ after $t$ steps. What is the impact of this property?
     <details>

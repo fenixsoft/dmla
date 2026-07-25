@@ -458,7 +458,7 @@ The Variational Autoencoder integrates probabilistic inference with deep learnin
 
 1. What is the fundamental difference between a traditional autoencoder (AE) and a variational autoencoder (VAE)? Why can't AE generate new images by sampling from the latent space, while VAE can? Explain from the perspective of latent space structure.
     <details>
-    <summary>Answer</summary>
+    <summary>Reference Answer</summary>
 
     **Fundamental Differences**:
 

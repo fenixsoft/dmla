@@ -448,7 +448,7 @@ These three types of methods are ubiquitous in machine learning: model training 
 
 1. Why is the MLE variance estimate biased? Why does dividing by $n-1$ yield an unbiased estimate?
    <details>
-   <summary>Solution</summary>
+   <summary>Reference Answer</summary>
 
    When we use the sample mean $\bar{x}$ to estimate $\mu$, the sample data is "closer" to $\bar{x}$ than to $\mu$, because $\bar{x}$ is computed from this very data. This causes $\sum(x_i - \bar{x})^2$ to be systematically smaller than $\sum(x_i - \mu)^2$.
 
@@ -460,7 +460,7 @@ These three types of methods are ubiquitous in machine learning: model training 
 
 2. Under what circumstances do MLE and MAP give the same estimate?
    <details>
-   <summary>Solution</summary>
+   <summary>Reference Answer</summary>
 
    When the prior is a uniform distribution (uninformative prior), MLE and MAP give the same estimate. In this case, $P(\theta)$ is a constant, and maximizing the posterior is equivalent to maximizing the likelihood.
 
@@ -470,7 +470,7 @@ These three types of methods are ubiquitous in machine learning: model training 
 
 3. Explain why a "95% confidence interval" does not mean "there is a 95% probability that the parameter falls within this interval."
    <details>
-   <summary>Solution</summary>
+   <summary>Reference Answer</summary>
 
    In the frequentist framework, the parameter is a fixed value, not a random variable. Therefore, it is incorrect to say "the parameter has a certain probability of falling somewhere."
 

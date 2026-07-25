@@ -172,7 +172,7 @@ Differentials transform the abstract "rate of change" into a concrete "amount of
 
 1. Must a differentiable function always be continuous? Is a continuous function always differentiable?
     <details>
-    <summary>Answer</summary>
+    <summary>Reference Answer</summary>
 
     If a function $f$ is differentiable at a point $x_0$, then $f$ is continuous at $x_0$.
 
@@ -187,7 +187,7 @@ Differentials transform the abstract "rate of change" into a concrete "amount of
 
 1. Using the definition of a limit, prove that $\lim_{x \to 2} (3x + 1) = 7$.
     <details>
-    <summary>Answer</summary>
+    <summary>Reference Answer</summary>
 
     To prove $\lim_{x \to 2} (3x + 1) = 7$, we need to show that for any $\varepsilon > 0$, there exists $\delta > 0$ such that whenever $0 < |x - 2| < \delta$, we have $|(3x + 1) - 7| < \varepsilon$.
 
@@ -202,7 +202,7 @@ Differentials transform the abstract "rate of change" into a concrete "amount of
 
 1. Using the definition of the derivative, find $f'(1)$ for $f(x) = x^3$.
     <details>
-    <summary>Answer</summary>
+    <summary>Reference Answer</summary>
 
     By the definition of the derivative: $f'(1) = \lim_{\Delta x \to 0} \frac{f(1 + \Delta x) - f(1)}{\Delta x}$
 
@@ -223,7 +223,7 @@ Differentials transform the abstract "rate of change" into a concrete "amount of
    - $g(x) = e^x \sin x$
    - $h(x) = \frac{\ln x}{x}$
     <details>
-    <summary>Answer</summary>
+    <summary>Reference Answer</summary>
 
     - Apply the power rule and sum/difference rules:
     $$f'(x) = 4x^3 - 6x + 2$$
@@ -239,7 +239,7 @@ Differentials transform the abstract "rate of change" into a concrete "amount of
    - The intervals where the function is increasing and decreasing
    - The intervals of concavity and inflection points
     <details>
-    <summary>Answer</summary>
+    <summary>Reference Answer</summary>
 
     First, find the first derivative: $f'(x) = 3x^2 - 3 = 3(x^2 - 1)$
 
@@ -258,7 +258,7 @@ Differentials transform the abstract "rate of change" into a concrete "amount of
 
 1. Use linear approximation to estimate $\sin(0.1)$ (in radians), and compare the error with the exact value.
     <details>
-    <summary>Answer</summary>
+    <summary>Reference Answer</summary>
 
     Let $f(x) = \sin x$, take $x_0 = 0$, $\Delta x = 0.1$.
 

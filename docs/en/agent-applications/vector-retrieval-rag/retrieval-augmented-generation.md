@@ -86,7 +86,7 @@ RAG enhances the generative capabilities of language models by retrieving extern
 1. Compare the performance of single-query retrieval and Multi-Query retrieval on complex questions: select 5 queries that require multi-faceted information, compare the recall of the two strategies on Top-5 retrieval results, and analyze which types of queries benefit most from Multi-Query.
 
    <details>
-   <summary>Solution</summary>
+   <summary>Reference Answer</summary>
 
    For queries that require gathering information from multiple angles (e.g., "compare the pros and cons of A and B"), Multi-Query can cover more relevant documents through sub-queries from different perspectives, and recall is typically significantly improved. However, for simple factoid queries (e.g., "the date of a certain event in a certain year"), the original query is already precise enough, and Multi-Query may introduce noise, actually reducing precision.
 
@@ -95,7 +95,7 @@ RAG enhances the generative capabilities of language models by retrieving extern
 2. Implement an iterative retrieval pattern: for a complex question like "Compare the design philosophies and performance of CNN and Vision Transformer on image classification tasks," first perform sub-question decomposition, retrieve independently for each sub-question, then merge the results to generate an answer. Compare the differences in answer completeness and faithfulness between single-pass retrieval and iterative retrieval.
 
    <details>
-   <summary>Solution</summary>
+   <summary>Reference Answer</summary>
 
    Sub-question decomposition is recommended to split into "CNN architecture design philosophy," "Vision Transformer architecture design philosophy," and "performance comparison of both on ImageNet." The answer completeness of iterative retrieval is typically significantly better than single-pass retrieval because each sub-question is supported by targeted retrieval results. However, the quality of sub-question decomposition directly affects the final outcome -- if the decomposition is too fine-grained, the retrieval results for each sub-question may lack correlation, making it difficult to form a coherent narrative in the answer.
 

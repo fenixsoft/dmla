@@ -446,7 +446,7 @@ These application scenarios demonstrate the flexible use of learning rates and g
 
 1. Prove that the opposite direction of the gradient is the direction of steepest descent. Let parameters $\mathbf{W}$ move by $\epsilon$ along unit direction $\mathbf{v}$, with loss change $\Delta L \approx \epsilon \nabla L \cdot \mathbf{v}$. Prove that $\Delta L$ is minimized when $\mathbf{v} = -\frac{\nabla L}{\|\nabla L\|}$.
     <details>
-    <summary>Answer</summary>
+    <summary>Reference Answer</summary>
     
     **Proof**:
     
@@ -485,7 +485,7 @@ These application scenarios demonstrate the flexible use of learning rates and g
 
 2. Analyze why momentum accelerates in consistent directions and decelerates in oscillating directions. Let the gradient sequence be $\mathbf{g}_i = \mathbf{g}$ (consistent) or $\mathbf{g}_i$ alternating between $\mathbf{g}$ and $-\mathbf{g}$ (oscillating), and derive the converged value of the velocity vector $\mathbf{v}_t$.
     <details>
-    <summary>Answer</summary>
+    <summary>Reference Answer</summary>
     
     **Consistent direction** ($\mathbf{g}_i = \mathbf{g}$):
     
@@ -551,7 +551,7 @@ These application scenarios demonstrate the flexible use of learning rates and g
 
 3. Explain why Nesterov Accelerated Gradient responds faster than momentum. Compare the behavioral differences between the two when approaching a minimum.
     <details>
-    <summary>Answer</summary>
+    <summary>Reference Answer</summary>
     
     **Difference between NAG and Momentum**:
     

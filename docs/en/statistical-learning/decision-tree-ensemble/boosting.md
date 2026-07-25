@@ -253,7 +253,7 @@ In practical engineering applications, even in the era of deep learning, Boostin
 
 1. Compare Bagging (using Random Forest as an example) and Boosting (using AdaBoost as an example) across the following dimensions: (a) learner training approach (parallel/sequential); (b) sample handling; (c) ensemble strategy; (d) type of error primarily reduced (bias/variance). Also explain why Boosting is more prone to overfitting.
     <details>
-    <summary>Answer Key</summary>
+    <summary>Reference Answer</summary>
 
     | Dimension | Bagging (Random Forest) | Boosting (AdaBoost) |
     |:---------:|:----------------------:|:-------------------:|
@@ -273,7 +273,7 @@ In practical engineering applications, even in the era of deep learning, Boostin
 
 1. Implement a simple Decision Stump in code, train and verify its classification performance on the following data: $X = [[1], [2], [3], [4], [5]]$, $y = [1, 1, -1, -1, -1]$. Then analyze: (a) What is the classification accuracy of this decision stump? (b) Why can't a single decision stump achieve 100% accuracy on this dataset?
     <details>
-    <summary>Answer Key</summary>
+    <summary>Reference Answer</summary>
 
     ```python runnable
     import numpy as np
@@ -349,7 +349,7 @@ In practical engineering applications, even in the era of deep learning, Boostin
     | 6 | 0.15 | -1 | -1 | Y |
 
     <details>
-    <summary>Answer Key</summary>
+    <summary>Reference Answer</summary>
 
     **Step 1: Identify misclassified samples**
 

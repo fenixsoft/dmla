@@ -364,7 +364,7 @@ This chapter started with matrices as the natural extension of vectors and explo
 
 1. Why does matrix multiplication not satisfy commutativity? How can this be understood from the perspective of linear transformations?
     <details>
-    <summary>Answer</summary>
+    <summary>Reference Answer</summary>
     Matrix multiplication represents the composition of linear transformations. $\mathbf{AB}$ means applying transformation $\mathbf{B}$ first, then transformation $\mathbf{A}$; while $\mathbf{BA}$ means applying $\mathbf{A}$ first, then $\mathbf{B}$.
 
     For example, let $\mathbf{A}$ be a rotation by 90 degrees and $\mathbf{B}$ be a stretch by a factor of 2 along the x-axis. Rotating first then stretching yields a different result than stretching first then rotating. The order of transformations matters, and this is the geometric explanation for the non-commutativity of matrix multiplication.
@@ -372,7 +372,7 @@ This chapter started with matrices as the natural extension of vectors and explo
 
 1. Compute the transpose $\mathbf{A}^T$ of matrix $\mathbf{A} = \begin{bmatrix} 1 & 2 & 3 \\ 4 & 5 & 6 \end{bmatrix}$, and verify $(\mathbf{A}^T)^T = \mathbf{A}$.
     <details>
-    <summary>Answer</summary>
+    <summary>Reference Answer</summary>
     Transpose:
     $\mathbf{A}^T = \begin{bmatrix} 1 & 4 \\ 2 & 5 \\ 3 & 6 \end{bmatrix}$
 
@@ -384,7 +384,7 @@ This chapter started with matrices as the natural extension of vectors and explo
 
 1. Compute the inverse $\mathbf{A}^{-1}$ of matrix $\mathbf{A} = \begin{bmatrix} 4 & 7 \\ 2 & 6 \end{bmatrix}$, and verify $\mathbf{A}\mathbf{A}^{-1} = \mathbf{I}$.
     <details>
-    <summary>Answer</summary>
+    <summary>Reference Answer</summary>
     For a $2 \times 2$ matrix $\begin{bmatrix} a & b \\ c & d \end{bmatrix}$, the inverse formula is $\frac{1}{ad-bc}\begin{bmatrix} d & -b \\ -c & a \end{bmatrix}$.
 
     Compute the determinant: $\det(\mathbf{A}) = 4 \times 6 - 7 \times 2 = 24 - 14 = 10$
@@ -398,7 +398,7 @@ This chapter started with matrices as the natural extension of vectors and explo
 
 1. Explain why matrix $\mathbf{A} = \begin{bmatrix} 1 & 2 \\ 2 & 4 \end{bmatrix}$ is not invertible, and discuss its geometric meaning.
     <details>
-    <summary>Answer</summary>
+    <summary>Reference Answer</summary>
     Algebraic perspective: The determinant $\det(\mathbf{A}) = 1 \times 4 - 2 \times 2 = 0$; a zero determinant means the matrix is not invertible.
 
     Geometric perspective: Observing that the second row is twice the first row, this linear transformation "flattens" the 2D plane into a 1D line. Specifically, any vector $(x, y)$ after this transformation lies on the same line $y' = 2x'$.
@@ -408,7 +408,7 @@ This chapter started with matrices as the natural extension of vectors and explo
 
 1. Compute the pseudoinverse $\mathbf{A}^+$ of matrix $\mathbf{A} = \begin{bmatrix} 1 & 2 \\ 3 & 6 \end{bmatrix}$, and explain the role of the pseudoinverse.
     <details>
-    <summary>Answer</summary>
+    <summary>Reference Answer</summary>
     Using the pseudoinverse formula $\mathbf{A}^+ = (\mathbf{A}^T \mathbf{A})^{-1} \mathbf{A}^T$:
 
     $\mathbf{A}^T \mathbf{A} = \begin{bmatrix} 1 & 3 \\ 2 & 6 \end{bmatrix}\begin{bmatrix} 1 & 2 \\ 3 & 6 \end{bmatrix} = \begin{bmatrix} 10 & 20 \\ 20 & 40 \end{bmatrix}$
@@ -421,7 +421,7 @@ This chapter started with matrices as the natural extension of vectors and explo
 
 1. Verify that matrix $\mathbf{Q} = \begin{bmatrix} \frac{1}{\sqrt{2}} & -\frac{1}{\sqrt{2}} \\ \frac{1}{\sqrt{2}} & \frac{1}{\sqrt{2}} \end{bmatrix}$ is an orthogonal matrix, and explain its geometric meaning.
     <details>
-    <summary>Answer</summary>
+    <summary>Reference Answer</summary>
     An orthogonal matrix must satisfy $\mathbf{Q}^T \mathbf{Q} = \mathbf{I}$:
 
     $\mathbf{Q}^T = \begin{bmatrix} \frac{1}{\sqrt{2}} & \frac{1}{\sqrt{2}} \\ -\frac{1}{\sqrt{2}} & \frac{1}{\sqrt{2}} \end{bmatrix}$
@@ -433,7 +433,7 @@ This chapter started with matrices as the natural extension of vectors and explo
 
 1. Given the linear transformation matrix $\mathbf{A} = \begin{bmatrix} 2 & 0 \\ 0 & 0.5 \end{bmatrix}$, describe how this transformation acts on the 2D plane, and compute the transformed position of vector $(1, 1)$.
     <details>
-    <summary>Answer</summary>
+    <summary>Reference Answer</summary>
     Transformation description: This is a diagonal matrix, representing independent scaling along the coordinate axes. The first column $(2, 0)$ indicates that the x-axis unit vector is stretched to 2 times its original length; the second column $(0, 0.5)$ indicates that the y-axis unit vector is compressed to half its original length.
 
     Transformed plane: The original unit square $[0,1] \times [0,1]$ becomes the rectangle $[0,2] \times [0,0.5]$.
@@ -446,7 +446,7 @@ This chapter started with matrices as the natural extension of vectors and explo
 
 1. Explain why weight matrices in neural networks are typically rectangular (non-square) rather than square, and provide an example.
     <details>
-    <summary>Answer</summary>
+    <summary>Reference Answer</summary>
     Weight matrices in neural networks typically connect layers of different dimensions: if the input layer has $n$ neurons and the output layer has $m$ neurons, the weight matrix is $m \times n$ (non-square).
 
     For example: an input layer of 784 dimensions (28x28 pixel image), a hidden layer of 128 dimensions, the weight matrix is $128 \times 784$. This matrix "compresses" the 784-dimensional input to 128 dimensions.
@@ -461,7 +461,7 @@ This chapter started with matrices as the natural extension of vectors and explo
 
 1. Compute the total number of elements and the number of dimensions of a 3rd-order tensor with shape $(2, 3, 4)$, and explain what kind of data it might represent in image processing.
     <details>
-    <summary>Answer</summary>
+    <summary>Reference Answer</summary>
     Total number of elements: $2 \times 3 \times 4 = 24$
 
     Number of dimensions: 3 (3rd-order tensor)

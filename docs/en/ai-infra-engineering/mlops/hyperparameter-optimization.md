@@ -452,7 +452,7 @@ Of course, automated tuning has its boundaries. Algorithms cannot replace a deep
 
 1. Why does random search generally outperform grid search in most cases? Explain using the key insight of Bergstra and Bengio.
    <details>
-   <summary>Answer Reference</summary>
+   <summary>Reference Answer</summary>
 
    The core reason is that not all hyperparameters are equally important. In real scenarios, only a few hyperparameters typically have a decisive impact on performance. Grid search samples uniformly across the grid formed by all hyperparameters, wasting a large amount of computational resources on permutations of unimportant parameters. In contrast, random search independently samples each parameter each time, allowing important parameters to receive more different trial values within the limited number of trials. For example, with 10 hyperparameters each having 5 values, grid search requires \(5^{10}\) trials but only tries 5 different values for the important parameters, while random search can try 100 different values for the important parameters with only 100 trials.
 

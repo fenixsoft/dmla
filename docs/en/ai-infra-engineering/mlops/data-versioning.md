@@ -178,7 +178,7 @@ This chapter focused on concepts and architecture, emphasizing the "why" and "wh
 1. Suppose you have a 50 GB training dataset that changes weekly, with each change involving approximately 5% of the data records (additions, deletions, or modifications). Estimate the annual storage costs of the full snapshot strategy and the incremental tracking strategy respectively (assuming no checkpoints), and discuss how you would design a checkpoint strategy in practice to balance storage cost and recovery speed.
 
    <details>
-   <summary>Answer</summary>
+   <summary>Reference Answer</summary>
    
    **Full Snapshot**: 50 GB × 52 weeks = 2.6 TB. Regardless of how much data actually changes, a complete copy must be stored each time.
 
@@ -190,7 +190,7 @@ This chapter focused on concepts and architecture, emphasizing the "why" and "wh
 2. The core assumption of content-addressable storage is that identical content produces identical hashes. If two team members independently generate the same dataset's feature files on their respective machines (content completely identical but filenames and creation times differ), how would content-addressable storage handle this? Under what circumstances would this assumption fail?
 
    <details>
-   <summary>Answer</summary>
+   <summary>Reference Answer</summary>
    
    Content-addressable storage identifies files by computing a hash (e.g., SHA-256) of the file content, independent of metadata such as filename, creation time, or path. Therefore, even if two files have different names and creation times, as long as their content is identical, they produce the same hash and only one copy is stored in object storage. The "filename → hash" mappings in the two version snapshots will point to the same object storage entry.
 

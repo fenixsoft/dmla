@@ -496,7 +496,7 @@ A remaining issue is that Dropout only addresses the overfitting problem, but de
 
 1. Suppose a neuron's output is $y = 2.5$ and the Dropout keep probability is $p = 0.6$. Calculate: (a) the expected output during training when using the training-time scaling scheme; (b) the inference output when using the inference-time scaling scheme.
     <details>
-    <summary>Answer</summary>
+    <summary>Reference Answer</summary>
 
     (a) **Training-time scaling scheme**: During training, the output is $y_{drop} = \frac{r}{p} \cdot y$, where $r \sim \text{Bernoulli}(p)$.
 
@@ -518,7 +518,7 @@ A remaining issue is that Dropout only addresses the overfitting problem, but de
 
 1. Explain the behavioral differences of Dropout during the training and inference phases, and why this difference is necessary. Compare the advantages and disadvantages of the two scaling schemes from the perspective of expectation consistency.
     <details>
-    <summary>Answer</summary>
+    <summary>Reference Answer</summary>
 
     **Behavioral differences between training and inference**:
 
@@ -547,7 +547,7 @@ A remaining issue is that Dropout only addresses the overfitting problem, but de
 
 1. Derive the condition under which the expected output of a hidden layer containing $n$ neurons equals its original output under the Inverted Dropout (training-time scaling) scheme.
     <details>
-    <summary>Answer</summary>
+    <summary>Reference Answer</summary>
 
     Suppose a hidden layer has $n$ neurons, with the original output vector $\mathbf{h} = [h_1, h_2, \ldots, h_n]$. Each neuron has an independent Dropout mask $r_i \sim \text{Bernoulli}(p)$.
 

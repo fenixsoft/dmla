@@ -244,7 +244,7 @@ The value of Naive Bayes is not limited to what problems it can directly solve; 
 
 1. Given training data: 60 spam emails and 40 normal emails. The word "free" appears 30 times in spam and 5 times in normal emails. Compute: (a) The prior probability of spam; (b) The conditional probability of "free" in spam and normal emails; (c) If an email contains "free," use Naive Bayes to determine whether it is spam.
     <details>
-    <summary>Answer</summary>
+    <summary>Reference Answer</summary>
     
     **(a) Prior probability**:
     $$P(\text{spam}) = \frac{60}{60+40} = 0.6$$
@@ -278,7 +278,7 @@ The value of Naive Bayes is not limited to what problems it can directly solve; 
     
     Predict the class of the following email: "免费开会 贷款审批". Analyze why this prediction might be inaccurate.
     <details>
-    <summary>Answer</summary>
+    <summary>Reference Answer</summary>
     
     ```python runnable
     import numpy as np

@@ -621,7 +621,7 @@ The next chapter will introduce AlexNet, showcasing CNNs' breakthrough results i
 
 1. Given an input image of size $32 \times 32 \times 3$, using a $5 \times 5$ convolution kernel with stride $s=1$ and no padding (padding=0), calculate the output feature map size.
     <details>
-    <summary>Answer</summary>
+    <summary>Reference Answer</summary>
 
     **Formula calculation**:
 
@@ -638,7 +638,7 @@ The next chapter will introduce AlexNet, showcasing CNNs' breakthrough results i
 
 1. Design a three-layer convolutional network: first layer $3 \times 3$ convolution (stride $1$), second layer $2 \times 2$ max pooling (stride $2$), third layer $3 \times 3$ convolution (stride $1$). Calculate the receptive field size at the third layer and verify the receptive field recurrence formula.
     <details>
-    <summary>Answer</summary>
+    <summary>Reference Answer</summary>
 
     **Receptive field recurrence formula**:
 
@@ -658,7 +658,7 @@ The next chapter will introduce AlexNet, showcasing CNNs' breakthrough results i
 
 1. Explain the difference in gradient propagation rules between max pooling and average pooling during backpropagation, and explain why max pooling provides local translation invariance.
     <details>
-    <summary>Answer</summary>
+    <summary>Reference Answer</summary>
 
     **Gradient propagation rule comparison**:
 
@@ -721,7 +721,7 @@ The next chapter will introduce AlexNet, showcasing CNNs' breakthrough results i
 
 1. Design a CNN network for processing $32 \times 32 \times 3$ input images, containing 3 convolutional blocks (each block: convolution + ReLU + pooling). The final feature map size must not exceed $4 \times 4$, and the total parameter count must be kept within $50,000$. Provide the network structure and calculate the output size and parameter count for each layer.
     <details>
-    <summary>Answer</summary>
+    <summary>Reference Answer</summary>
 
     **Network design**:
 

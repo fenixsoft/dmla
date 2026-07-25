@@ -754,7 +754,7 @@ The design of activation functions and loss functions directly impacts training 
 
 1. Suppose a deep network uses the Sigmoid activation function. Analyze the degree of gradient decay after $L$ layers. If ReLU is used instead, how does gradient propagation differ?
     <details>
-    <summary>Answer</summary>
+    <summary>Reference Answer</summary>
      
     The derivative of Sigmoid is $f'(z) = \sigma(z)(1-\sigma(z))$, with a maximum value of $0.25$ (when $\sigma(z)=0.5$). During backpropagation, the gradient is multiplied by $f'(z)$ at each Sigmoid layer. Assuming the activation values at each layer are exactly at the point of maximum derivative (an idealized case), the gradient retention ratio after $L$ layers is: $\text{Retention ratio} = (0.25)^L$
     
@@ -810,7 +810,7 @@ The design of activation functions and loss functions directly impacts training 
 
 2. Prove that when using a Sigmoid output layer with Binary Cross-Entropy loss, the gradient is $\frac{\partial L}{\partial z} = \hat{y} - y$. What is the significance of this simplification?
     <details>
-    <summary>Answer</summary>
+    <summary>Reference Answer</summary>
     
     **Gradient Derivation**:
     
@@ -854,7 +854,7 @@ The design of activation functions and loss functions directly impacts training 
 
 3. Analyze why MSE performs poorly on classification tasks. Using a Sigmoid output layer, derive the gradient of the MSE loss and explain its shortcomings.
     <details>
-    <summary>Answer</summary>
+    <summary>Reference Answer</summary>
     
     **Shortcomings of MSE in Classification**:
     

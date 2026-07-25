@@ -612,7 +612,7 @@ Although decision trees are intuitive and easy to understand, a single tree has 
 
 1. Both information entropy and the Gini index measure data impurity. What are their fundamental differences? Why is the Gini index preferred in engineering practice?
     <details>
-    <summary>Answer Reference</summary>
+    <summary>Reference Answer</summary>
 
     **Fundamental Differences**:
 
@@ -631,7 +631,7 @@ Although decision trees are intuitive and easy to understand, a single tree has 
 2. Extend the `DecisionTreeClassifier` from this chapter by adding an `_entropy` method to calculate entropy and an `_information_gain` method to calculate information gain. Then compare the two splitting criteria (information gain vs. Gini index) on the Iris dataset.
 
     <details>
-    <summary>Answer Reference</summary>
+    <summary>Reference Answer</summary>
 
     ```python runnable
     import numpy as np

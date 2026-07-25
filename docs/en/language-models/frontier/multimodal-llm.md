@@ -165,7 +165,7 @@ Enabling language models to see images essentially answers two questions: how to
 
 1. How many patches are obtained when ViT divides a $224 \times 224$ image into $16 \times 16$ patches? If the patch size is changed to $14 \times 14$, how many patches are there? What is the impact on the model's computational cost?
    <details>
-   <summary>Answer</summary>
+   <summary>Reference Answer</summary>
 
    $16 \times 16$ patches: $(224/16) \times (224/16) = 14 \times 14 = 196$ patches.
 
@@ -177,7 +177,7 @@ Enabling language models to see images essentially answers two questions: how to
 
 2. In CLIP's contrastive loss function, what is the role of the temperature parameter $\tau$? How does the model behave when $\tau$ is very large versus when $\tau$ is very small?
    <details>
-   <summary>Answer</summary>
+   <summary>Reference Answer</summary>
 
    The temperature parameter $\tau$ controls the "sharpness" of the similarity scores. When $\tau$ is very large, the values of $\text{sim}(v_i, t_j) / \tau$ become small, the Softmax output approaches a uniform distribution, the model's discrimination between positive and negative samples is low, and the training signal is weak, but training is more stable. When $\tau$ is very small, the similarity scores are amplified, the Softmax output approaches one-hot, the model becomes highly focused on the most similar candidates, the training signal is strong, but it is prone to overfitting and training instability. In the original CLIP paper, $\tau$ is a learnable parameter with an initial value of approximately 0.07, leaning toward the "sharp" side.
 
@@ -185,7 +185,7 @@ Enabling language models to see images essentially answers two questions: how to
 
 3. In video understanding, why is temporal position encoding necessary? What problems would the model encounter without temporal position encoding?
    <details>
-   <summary>Answer</summary>
+   <summary>Reference Answer</summary>
 
    Without temporal position encoding, the model cannot distinguish the temporal order of frames. Consider two videos: Video A shows "cat jumps onto the table," and Video B shows "cat jumps off the table." If the frame content of both videos is identical (only the order is reversed), without temporal position encoding, the model's encoding of each frame is exactly the same (since the frame encoder is shared), and the concatenated token sequences differ only in permutation. However, the Transformer's self-attention mechanism is permutation equivariant -- without special handling of positional information, the model produces the same output for "frame 1 first, frame 8 last" and "frame 8 first, frame 1 last," making it unable to distinguish between "jump onto" and "jump off."
 
