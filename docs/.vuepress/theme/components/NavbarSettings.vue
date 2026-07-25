@@ -78,6 +78,10 @@ function switchLocale(target) {
   let targetPath
   if (target === 'en') {
     // 切换到英文：在路径前加 /en/
+    // 注意：'/en' + currentPath 是字符串拼接，并非路径组合操作
+    //    '/'                → '/en' + '/'              → '/en/'              → /en/
+    //    '/about.html'      → '/en' + '/about.html'    → '/en/about.html'    → /en/about.html
+    //    '/en/about.html'   → '/en' + '/en/about.html' → '/en/en/about.html'  // 英文页再点 English 会生成双 /en/ 前缀（边界情况，仅作文档说明）
     targetPath = '/en' + currentPath
     // 避免 /en// 的双斜线（根路径时 currentPath 以 / 结尾）
     targetPath = targetPath.replace(/\/+/g, '/')
