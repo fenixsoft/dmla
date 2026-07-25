@@ -6,3 +6,4 @@
 |---------|------|---------|---------|------|
 | introduction/about-dmla.md | 校审完成 | ✓ | ✓ | 已修复链接 |
 | introduction/about-me.md | 校审完成 | ✓ | ✓ | 已修复图片路径 |
+| maths/linear/vectors.md | 校审完成 | ✓ | ✓ | 已修复链接路径（6 处 `../../../en/` → `../../`）|
