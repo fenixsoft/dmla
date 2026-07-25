@@ -38,7 +38,7 @@ Having clarified the harm of performance degradation after a model goes into pro
 
 ### Statistical Testing Methods
 
-The fluctuations of model performance metrics along the time axis are driven by two forces: random noise from sampling and real changes in data distribution. The task of statistical testing is to quantify how likely the observed fluctuations are to be caused by random noise alone. Commonly used quantitative metrics include the PSI index and the KS statistic:
+The fluctuations of model performance metrics along the time axis are driven by two forces: random noise from sampling and real changes in data distribution. The task of statistical testing is to quantify how likely the observed fluctuations are to be caused by random noise alone. Commonly used quantitative metrics include PSI and the KS statistic:
 
 - **Population Stability Index (PSI)** is the most widely used drift quantification metric in the industry. It measures the degree of difference between two distributions. Given a reference distribution $P$ (typically a baseline computed on training data) and a current distribution $Q$ (a distribution computed in real time from production data), PSI is calculated as follows:
 
