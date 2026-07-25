@@ -1,6 +1,6 @@
 # 翻译进度追踪
 
-> 最后更新: 2026-07-25（multimodal-llm.md 校审完成）
+> 最后更新: 2026-07-25（vlm-training-experiment.md 翻译完成）
 
 | 相对路径 | 状态 | 翻译代理 | 校审代理 | 备注 |
 |---------|------|---------|---------|------|
@@ -62,9 +62,11 @@
 | language-models/reasoning/inference-efficiency.md | 校审完成 | ✓ | ✓ | 术语、Mermaid 标签、链接锚点（6 处英文锚点均已验证存在）、LaTeX、代码、完整性、可读性均校验通过。发现 3 处可优化：① line 94 "离线再平衡"→"online rebalancing"（建议保持 EN "online"，因描述内容为迁移运行中请求，属在线操作）；② line 143 "verifies them" 丢失 ZH "逐个" nuance，建议补为 "verifies them one by one"；③ line 148 "relative to the efficiency difference with" 略显冗长，建议简化为 "relative to the traditional approach"；④（中英原文共有 bug）line 39 公式参数 128×128 中 n_head 应为 64 而非 128，但计算结果 10.7GB 正确 |
 | language-models/reasoning/llm-reasoning-experiment.md | 校审完成 | ✓ | ✓ | 修复术语 `inference saturation` → `reasoning decay`（6 处）与原文 `推理衰减模型` 一致；修复阶段三概述锚点 `#speculative-decoding` → 无锚点（该段涵盖量化/KV Cache/投机解码三个方向）；代码、LaTeX、表格、`::: info`、完整性、可读性均校验通过 |
 | language-models/reasoning/reasoning-reliability.md | 校审完成 | ✓ | ✓ | 内部 `.md` 链接保留原相对路径；锚点译英；图片路径 `./assets/`→`../../../language-models/reasoning/assets/`；代码译英；术语、LaTeX、完整性、可读性均校验通过；修复残留中文「思路」「偶然的错误」共 2 处未译 |
-| language-models/frontier/multimodal-llm.md | 校审完成 | ✓ | ✓ | 术语、LaTeX、Mermaid、图片路径、链接锚点、完整性、可读性均校验通过，无需修复；`vlm-training-experiment.md` 系已知断链（英文目录下缺失该文件） |
+| language-models/frontier/multimodal-llm.md | 校审完成 | ✓ | ✓ | 术语、LaTeX、Mermaid、图片路径、链接锚点、完整性、可读性均校验通过，无需修复 |
+| language-models/frontier/vlm-training-experiment.md | 翻译完成 | ✓ | | 待校审 |
 | language-models/pretraining/pretraining-data.md | 校审完成 | ✓ | ✓ | 修复残留中文 5 处：`随处可见`→`that are everywhere`（Wikipedia 段）、`大量`→`large amounts of`（毒性过滤段）、`解题`→`problem-solving`（数据污染段）、`普遍`→`universally`（数据污染段）、`倾向于`→`tending to`（合成数据段）；术语、代码、LaTeX、Mermaid、锚点链接、完整性、可读性均校验通过 |
 | language-models/pretraining/scaling-laws.md | 校审完成 | ✓ | | 修复 4 处断链链接（`supervised-finetuning.md`→`../../../language-models/pretraining/supervised-finetuning.md`、`../alignment/rlhf.md`→`../../../language-models/alignment/rlhf.md`、`../../appendixes/numpy/probability-numpy.md#monte-carlo-method`→`../../../appendixes/numpy/probability-numpy.md#蒙特卡洛方法`、`../reasoning/test-time-compute.md`→`../../../language-models/reasoning/test-time-compute.md`）；修复 over-training 术语注法使其对英语读者更自然；术语、图片路径、LaTeX、完整性、可读性均校验通过 |
 | language-models/pretraining/distributed-training.md | 校审完成 | ✓ | ✓ | 术语、Mermaid、链接路径、图片路径、LaTeX、完整性、可读性均校验通过，无需修复 |
 | language-models/pretraining/llm-sft-experiment.md | 校审完成 | ✓ | ✓ | 术语、代码（注释与字符串）、LaTeX、链接路径、完整性、可读性均校验通过；`sandbox.md` 系已知断链（英文目录下缺失该文件，详见 alexnet-experiment 报告）|
 | language-models/pretraining/supervised-finetuning.md | 校审完成 | ✓ | ✓ | Mermaid、链接路径、术语、代码、LaTeX、完整性均校验通过，无需修复。修复可读性 3 处：`training effect`→`training effectiveness`；`someone who already knows English learning a British accent`→`someone who already knows English and is learning a British accent`；`is not unfamiliar to us`→`is familiar` |
+| language-models/frontier/evaluation-safety.md | 翻译完成 | ✓ | | 待校审 |
