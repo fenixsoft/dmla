@@ -45,7 +45,7 @@ $$\vec{king} - \vec{man} + \vec{woman} \approx \vec{queen}$$
 The code example below uses manually constructed 3-dimensional vectors for demonstration purposes, aiming to intuitively show the principles of word vector arithmetic. In practice, word vectors typically have 100-300 dimensions and need to be trained on large-scale corpora using methods such as Word2Vec or GloVe.
 :::
 
-The meaning of this equation is: subtracting the "man" vector from the "king" vector and adding the "woman" vector yields a result close to the "queen" vector. This indicates that word embedding captures the semantic dimension of gender: the direction of $\vec{king} - \vec{queen}$ is similar to the direction of $\vec{man} - \vec{woman}$, both representing the semantic change from male to female. The standard method for measuring the similarity between two word vectors is [cosine similarity](../../maths/linear/vectors.md#dot-product-and-projection):
+The meaning of this equation is: subtracting the "man" vector from the "king" vector and adding the "woman" vector yields a result close to the "queen" vector. This indicates that word embedding captures the semantic dimension of gender: the direction of $\vec{king} - \vec{queen}$ is similar to the direction of $\vec{man} - \vec{woman}$, both representing the semantic change from male to female. The standard method for measuring the similarity between two word vectors is [cosine similarity](../../maths/linear/vectors.md#inner-product-and-projection):
 
 $$similarity(\mathbf{a}, \mathbf{b}) = \frac{\mathbf{a} \cdot \mathbf{b}}{\|\mathbf{a}\| \|\mathbf{b}\|} = \frac{\sum_{i=1}^{d} a_i b_i}{\sqrt{\sum_{i=1}^{d} a_i^2} \sqrt{\sum_{i=1}^{d} b_i^2}}$$
 
