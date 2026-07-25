@@ -141,10 +141,6 @@ LLaMA 是采用过度训练策略的典型代表。以 LLaMA-7B 为例，它用 
    <details>
    <summary>参考答案</summary>
    
-   由 $C/6 = 1.67 \times 10^{20}$。从最优性条件 $\alpha A N^{-\alpha} = \beta B D^{-\beta}$（由两偏导方程相除整理得出）出发，代入参数计算比例：
-
-$\frac{\alpha A}{\beta B} = \frac{0.336 \times 406.4}{0.283 \times 410.7} \approx 1.175$
-
-由 $N^\alpha / D^\beta = \alpha A / (\beta B)$ 和 $C = 6ND$，解得 $N = (\frac{\alpha A}{\beta B})^{1/(\alpha+\beta)} \cdot (\frac{C}{6})^{\beta/(\alpha+\beta)}$。代入 $\beta/(\alpha+\beta) \approx 0.457$，$1/(\alpha+\beta) \approx 1.615$，得 $N \approx 2.3 \times 10^{9}$（约 2.3B 参数），$D = C/(6N) \approx 7.3 \times 10^{10}$（约 73B tokens），$D/N \approx 32$。
+   由 $C/6 = 1.67 \times 10^{20}$。从最优性条件 $\alpha A N^{-\alpha} = \beta B D^{-\beta}$（由两偏导方程相除整理得出）出发，代入参数计算比例： $\frac{\alpha A}{\beta B} = \frac{0.336 \times 406.4}{0.283 \times 410.7} \approx 1.175$ 由 $N^\alpha / D^\beta = \alpha A / (\beta B)$ 和 $C = 6ND$，解得 $N = (\frac{\alpha A}{\beta B})^{1/(\alpha+\beta)} \cdot (\frac{C}{6})^{\beta/(\alpha+\beta)}$。代入 $\beta/(\alpha+\beta) \approx 0.457$，$1/(\alpha+\beta) \approx 1.615$，得 $N \approx 2.3 \times 10^{9}$（约 2.3B 参数），$D = C/(6N) \approx 7.3 \times 10^{10}$（约 73B tokens），$D/N \approx 32$。
    
    </details>
