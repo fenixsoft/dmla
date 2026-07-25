@@ -54,3 +54,5 @@
 | language-models/architecture-basics/architecture-evolution.md | 校审完成 | ✓ | ✓ | 锚点译英；内部 `.md` 链接保留原相对路径；图片 `./assets/`→`../../../language-models/architecture-basics/assets/`；Mermaid 标签译英；练习题内容译英。校审：术语、LaTeX、Mermaid、nn-arch 图、图片路径、内部链接锚点、完整性、可读性均校验通过，无需修复 |
 | language-models/architecture-basics/language-model-tokenization.md | 校审完成 | ✓ | ✓ | 修复字节级 BPE 段残文乱码（`["learning"]`→`["学", "习"]`，移除译者随想式旁白）；术语、锚点链接、代码、LaTeX、完整性、可读性均校验通过 |
 | language-models/architecture-basics/llm-pretrain-experiment.md | 校审完成 | ✓ | ✓ | 链接锚点译英、内部 `.md` 链接路径、代码注释与字符串、术语、LaTeX、完整性、可读性均校验通过，无需修复 |
+| language-models/pretraining/pretraining-data.md | 校审完成 | ✓ | ✓ | 修复残留中文 5 处：`随处可见`→`that are everywhere`（Wikipedia 段）、`大量`→`large amounts of`（毒性过滤段）、`解题`→`problem-solving`（数据污染段）、`普遍`→`universally`（数据污染段）、`倾向于`→`tending to`（合成数据段）；术语、代码、LaTeX、Mermaid、锚点链接、完整性、可读性均校验通过 |
+| language-models/pretraining/scaling-laws.md | 翻译完成 | | | 锚点译英（`#pca-数学原理`→`#pca-mathematical-principles`、`#拉格朗日对偶变换`→`#lagrangian-dual-transformation`、`#练习题`→`#exercises`、`#束搜索`→`#beam-search`、`#蒙特卡洛方法`→`#monte-carlo-method`）；内部 `.md` 链接保留原相对路径；图片路径 `./assets/`→`../../../language-models/pretraining/assets/`；LaTeX 保留不变 |
