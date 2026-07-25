@@ -14,3 +14,4 @@
 | maths/probability/statistical-inference.md | 校审完成 | ✓ | ✓ | 修复锚点链接 `#maximum-likelihood-estimation-mle`→`#maximum-likelihood-estimation`；两个英文用词优化 |
 | statistical-learning/linear-models/linear-regression.md | 校审完成 | ✓ | ✓ | 无需修复 |
 | statistical-learning/linear-models/logistic-regression.md | 校审完成 | ✓ | ✓ | 无需修复 |
+| statistical-learning/linear-models/regularization-glm.md | 校审完成 | ✓ | ✓ | 无需修复 |
