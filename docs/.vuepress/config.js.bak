@@ -15,6 +15,10 @@ import { searchVersionFixPlugin } from './plugins/search-version-fix/index.js'
 const __dirname = getDirname(import.meta.url)
 
 export default {
+  // 站点配置
+  lang: 'zh-CN',
+  title: '设计机器学习应用系统',
+  description: '',
 
   // Markdown 渲染配置 - 启用 GFM breaks，让换行符渲染为 <br>
   // 解决 blockquote 中多行内容被合并到同一行的问题
@@ -22,33 +26,16 @@ export default {
     breaks: true,
   },
 
+  // 禁止浏览器翻译（网站本身就是中文）
   head: [
+    ['meta', { name: 'google', content: 'notranslate' }],
     ['meta', { name: 'og:image', content: 'https://ai.icyfenix.cn/logo_min_size.png' }],
+    ['meta', { name: 'og:description', content: '面向工程师从零建立机器学习的系统性理解' }],
     ['link', { rel: 'icon', href: '/favicon.ico' }],
   ],
 
   // 部署配置 - GitHub Pages 子目录
   // base: '/dmla/',
-
-  locales: {
-    '/': {
-      lang: 'zh-CN',
-      title: '设计机器学习应用系统',
-      description: '面向工程师从零建立机器学习的系统性理解',
-      head: [
-        ['meta', { name: 'google', content: 'notranslate' }],
-        ['meta', { name: 'og:description', content: '面向工程师从零建立机器学习的系统性理解' }],
-      ],
-    },
-    '/en/': {
-      lang: 'en-US',
-      title: 'Designing Machine Learning Application Systems',
-      description: 'Building systematic understanding of machine learning from the ground up, for engineers',
-      head: [
-        ['meta', { name: 'og:description', content: 'Building systematic understanding of machine learning from the ground up, for engineers' }],
-      ],
-    },
-  },
 
   // 使用自定义主题
   theme: dmlaTheme({
