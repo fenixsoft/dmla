@@ -76,6 +76,12 @@ export const runnableCodePlugin = (options = {}) => {
           const runBtn = gpuOnly ? '' : `<button class="run-btn" data-target="${id}">▶ Run</button>`
           const gpuBtn = (useGpu || gpuOnly) ? `<button class="run-btn gpu-btn" data-target="${id}" data-gpu="true">▶ Run on GPU</button>` : ''
 
+          // 检测页面语言
+          const isEnglish = env.filePathRelative?.startsWith('en/')
+          const defaultHint = isEnglish
+            ? 'Click Run to execute code. Click the code area to edit.'
+            : '点击 Run 按钮执行代码，点击代码区域可编辑'
+
           // 返回可编辑的代码块，保留语法高亮
           return `<div class="runnable-code-block" ${dataAttrs}>
   <div class="code-area">
@@ -84,7 +90,7 @@ export const runnableCodePlugin = (options = {}) => {
     </div>
     ${codeHtml}
   </div>
-  <div class="output-area output-container" id="${id}">点击 Run 按钮执行代码，点击代码区域可编辑</div>
+  <div class="output-area output-container" id="${id}">${defaultHint}</div>
 </div>`
         }
 

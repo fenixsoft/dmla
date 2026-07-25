@@ -365,6 +365,34 @@ export default defineClientConfig({
   setup() {
     const route = useRoute()
 
+    // 更新 output-area 空状态提示文本的语言
+    function updateOutputHintLanguage() {
+      const isEnglish = route.path.startsWith('/en/')
+      const zhHint = '点击 Run 按钮执行代码，点击代码区域可编辑'
+      const enHint = 'Click Run to execute code. Click the code area to edit.'
+      const hint = isEnglish ? enHint : zhHint
+
+      // 更新 CSS ::before 规则
+      const styleEl = document.getElementById('runnable-code-styles')
+      if (styleEl) {
+        styleEl.textContent = styleEl.textContent.replace(
+          /\.runnable-code-block \.output-area:empty::before \{[^}]*\}/,
+          `.runnable-code-block .output-area:empty::before { content: '${hint}'; color: var(--code-c-line-number, #666); }`
+        )
+      }
+
+      // 更新已渲染的 output-area 默认文本
+      document.querySelectorAll('.runnable-code-block .output-area.output-container').forEach(el => {
+        // 只更新尚未执行过代码的默认文本（内部只有文本节点的情况）
+        if (el.children.length === 0 && el.textContent.trim()) {
+          const text = el.textContent.trim()
+          if (text === zhHint || text === enHint) {
+            el.textContent = hint
+          }
+        }
+      })
+    }
+
     // 启动 MutationObserver 监听 DOM 变化
     function startObserver() {
       if (observer) return // 避免重复启动
@@ -402,6 +430,7 @@ export default defineClientConfig({
     // 首次加载时启动 observer 并初始化现有代码块
     onMounted(() => {
       startObserver()
+      updateOutputHintLanguage()
       // 初始化当前页面已存在的代码块
       setTimeout(() => {
         document.querySelectorAll('.runnable-code-block').forEach(initCodeBlock)
@@ -421,6 +450,7 @@ export default defineClientConfig({
         await nextTick()
         // 额外延迟确保 markdown 渲染完成
         setTimeout(() => {
+          updateOutputHintLanguage()
           document.querySelectorAll('.runnable-code-block').forEach(initCodeBlock)
         }, 100)
       }
