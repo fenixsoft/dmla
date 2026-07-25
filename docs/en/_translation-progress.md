@@ -50,3 +50,4 @@
 | deep-learning/sequence-models/lstm-gru.md | 校审完成 | ✓ | ✓ | Mermaid 标签、术语、代码（注释及字符串）、LaTeX、完整性和可读性均校验通过，无需修复。锚点 `#gradient-propagation-and-limitations` 已验证存在于英文版 `rnn-basics.md`。`pack_padded_sequence` 中文注释笔误 `pack_packed_sequence` 已在英译中纠正 |
 | deep-learning/sequence-models/seq2seq.md | 校审完成 | ✓ | ✓ | Mermaid 标签、术语、代码、LaTeX、nn-arch 图、链接路径、完整性、可读性均校验通过，无需修复 |
 | deep-learning/sequence-models/lstm-experiment.md | 校审完成 | ✓ | ✓ | 术语、代码、LaTeX、完整性、可读性均校验通过；`sandbox.md` 系已知断链（英文目录下缺失该文件） |
+| language-models/architecture-basics/transformer-architecture.md | 校审完成 | ✓ | ✓ | 术语、代码、LaTeX、Mermaid、nn-arch 图、图片路径、内部链接锚点、完整性、可读性均校验通过，无需修复 |
