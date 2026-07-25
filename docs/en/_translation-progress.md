@@ -15,3 +15,4 @@
 | statistical-learning/linear-models/linear-regression.md | 校审完成 | ✓ | ✓ | 无需修复 |
 | statistical-learning/linear-models/logistic-regression.md | 校审完成 | ✓ | ✓ | 无需修复 |
 | statistical-learning/linear-models/regularization-glm.md | 校审完成 | ✓ | ✓ | 无需修复 |
+| statistical-learning/bayesian-methods/naive-bayes.md | 校审完成 | ✓ | ✓ | 修复图片路径引用（引用源目录 assets）；发现 `bayesian-network.md` 断链（英文目录下缺失该文件） |
