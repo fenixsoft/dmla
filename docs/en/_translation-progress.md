@@ -1,6 +1,6 @@
 # 翻译进度追踪
 
-> 最后更新: 2026-07-25
+> 最后更新: 2026-07-25（gan-experiment.md 校审）
 
 | 相对路径 | 状态 | 翻译代理 | 校审代理 | 备注 |
 |---------|------|---------|---------|------|
@@ -44,4 +44,5 @@
 | deep-learning/convolutional-neural-network/alexnet-experiment.md | 校审完成 | ✓ | ✓ | 修复锚点 `#network-architecture`→`#network-structure`（EN heading 为 `Network Structure`）；发现 `sandbox.md` 断链（英文目录下缺失该文件）；术语、代码、LaTeX、图片路径、完整性、可读性均校验通过 |
 | deep-learning/generative-models/vae.md | 校审完成 | ✓ | ✓ | Mermaid 标签、术语、代码、LaTeX、完整性均校验通过。修复可读性: `key of`→`key to`、`technical guarantee`→`what makes ... possible`。已知 `sandbox.md` 断链（英文目录下缺失该文件，详见 alexnet-experiment 报告） |
 | deep-learning/generative-models/gan.md | 校审完成 | ✓ | ✓ | 术语、LaTeX、Mermaid、nn-arch、图片路径、内部链接、完整性均校验通过。第 100 行原文"第 2、4 步是关键"→EN 为"steps 2 and 5"（步骤 4 为重新采样噪声，步骤 5 为计算生成器损失，英译可能纠正了原文笔误，已标记请用户确认）；「Montreal's famous The Three Brewers bar」定冠词冗余；无可读性问题 |
-| deep-learning/generative-models/gan-experiment.md | 翻译完成 | ✓ | | LaTeX 不变；内部 `.md` 链接保留原相对路径不变；锚点译英；代码注释和字符串译英；图片路径 `./assets/`→`../../../deep-learning/generative-models/assets/` |
+| deep-learning/generative-models/gan-experiment.md | 校审完成 | ✓ | ✓ | 修复文件末尾多余反引号；术语、代码（注释与字符串）、LaTeX、图片路径、内部链接锚点、完整性、可读性均校验通过。`sandbox.md` 系已知断链（英文目录下缺失该文件，详见 alexnet-experiment 报告）|
+| deep-learning/sequence-models/word-embedding.md | 翻译完成 | ✓ | | LaTeX 不变；内部 `.md` 链接保留原相对路径不变；锚点译英；代码注释和字符串译英；图片路径无需转换（源文件无 `./assets/` 引用） |

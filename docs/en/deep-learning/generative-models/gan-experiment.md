@@ -645,4 +645,3 @@ This experiment fully demonstrates the DCGAN training pipeline. After training i
     - `<DATA_DIR>/outputs/training_samples/epoch_10.png` ~ `epoch_100.png` - $8 \times 8$ sample grids every 10 epochs
 - **Training log**:
     - `<DATA_DIR>/models/gan/dcgan/training_log.txt` - Per-epoch loss and time records
-```
