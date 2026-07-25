@@ -1,6 +1,6 @@
 # 翻译进度追踪
 
-> 最后更新: 2026-07-25（llm-inference-experiment.md 翻译完成）
+> 最后更新: 2026-07-25（data-versioning.md 翻译完成）
 
 | 相对路径 | 状态 | 翻译代理 | 校审代理 | 备注 |
 |---------|------|---------|---------|------|
@@ -73,4 +73,4 @@
 | ai-infra-engineering/model-serving/inference-service-architecture.md | 校审完成 | ✓ | ✓ | 术语、Mermaid 标签、链接锚点（7 处英文锚点均已验证存在）、LaTeX、代码（注释与字符串译英）、完整性、可读性均校验通过。`gpu-resource-management.md` 系已知断链（中文源目录存在对应文件，英文目录尚未翻译）|
 | ai-infra-engineering/model-serving/request-scheduling.md | 校审完成 | ✓ | ✓ | 术语、Mermaid 标签、LaTeX、链接锚点（6 处英文锚点均已验证存在）、图片路径（2 图指向源目录 assets）、完整性、可读性均校验通过，无需修复 |
 | ai-infra-engineering/model-serving/gpu-resource-management.md | 校审完成 | ✓ | ✓ | 术语、LaTeX、链接锚点（3 处英文锚点均已验证存在）、图片路径、完整性、可读性均校验通过；建议优化 `Slow food running`→`Slow food runners`/`Slow food delivery`；修复 `inference-service-architecture.md` 中已知断链 |
-| ai-infra-engineering/model-serving/llm-inference-experiment.md | 翻译完成 | ✓ | | 内部 `.md` 链接保留原相对路径；锚点译英（`#并发性能与显存调优`→`#concurrent-performance-and-memory-tuning`、`#流式输出与-kv-cache-实验`→`#streaming-output-and-kv-cache-experiment`）；代码注释与字符串译英；术语、代码、LaTeX、完整性均校验通过 |
+| ai-infra-engineering/model-serving/llm-inference-experiment.md | 校审完成 | ✓ | ✓ | 锚点译英（`#并发性能与显存调优`→`#concurrent-performance-and-memory-tuning`、`#流式输出与-kv-cache-实验`→`#streaming-output-and-kv-cache-experiment`、`inference-service-architecture.md#流式输出与-server-sent-events`→`#streaming-output-and-server-sent-events`、`request-scheduling.md#前缀缓存`→`#prefix-caching`）均已验证存在于目标文件；代码注释与字符串译英；术语、代码、LaTeX、锚点链接、完整性、可读性均校验通过，无需修复；仅发现 1 处细微语义丢失：行尾"认证鉴权"→"authentication"（缺 authorization）|
