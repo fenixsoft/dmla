@@ -54,7 +54,7 @@ The vulnerability of reasoning chains focuses on errors within a single reasonin
 
 In 2023, a research team at Stanford University conducted a simple yet powerful experiment: they performed 10 independent samplings of GPT-4's performance on the MATH dataset and found that for about 15% of the problems, the model gave both correct and incorrect answers across the 10 samplings. In other words, the model's answers to these problems depended on "luck" — if a particular sampling happened to follow the correct reasoning path, it got the right answer; otherwise, it got it wrong.
 
-The root cause of this phenomenon lies in the sampling mechanism of language models. The model does not directly output a "correct answer"; instead, it computes a probability distribution at each position and then samples from it. Different random seeds produce different sampling paths, much like the same person might approach the same problem with different的思路 on different occasions. When the model is "uncertain" about a reasoning step, differences in sampling paths can lead to different final answers.
+The root cause of this phenomenon lies in the sampling mechanism of language models. The model does not directly output a "correct answer"; instead, it computes a probability distribution at each position and then samples from it. Different random seeds produce different sampling paths, much like the same person might approach the same problem with different lines of thought on different occasions. When the model is "uncertain" about a reasoning step, differences in sampling paths can lead to different final answers.
 
 To quantify this consistency, researchers proposed the **pass@k** metric: the probability of getting the correct answer at least once in $k$ samplings. Formally, assuming the problem's accuracy rate is $c$ (the probability of a single sampling being correct):
 
@@ -126,7 +126,7 @@ The previous three sections have analyzed various limitations of reasoning model
 
 ### Majority Voting and Consistency Filtering
 
-Majority Voting is the simplest and most effective method for improving reasoning reliability. Its idea is straightforward yet powerful: perform multiple independent samplings for the same question and select the answer that appears most frequently as the final answer. The intuition behind this is: there may be multiple correct reasoning paths, but they all ultimately lead to the same correct answer; while incorrect reasoning paths may vary widely, leading to scattered wrong answers. Therefore, when correct answers converge and incorrect answers are scattered, majority voting can effectively "filter out"偶然的错误。
+Majority Voting is the simplest and most effective method for improving reasoning reliability. Its idea is straightforward yet powerful: perform multiple independent samplings for the same question and select the answer that appears most frequently as the final answer. The intuition behind this is: there may be multiple correct reasoning paths, but they all ultimately lead to the same correct answer; while incorrect reasoning paths may vary widely, leading to scattered wrong answers. Therefore, when correct answers converge and incorrect answers are scattered, majority voting can effectively "filter out" occasional errors
 
 The theoretical foundation of majority voting is precisely the pass@k metric discussed earlier. Assuming a single-sampling accuracy of $c$ and sampling $k$ times, the accuracy of majority voting (denoted $\text{MV@k}$) satisfies:
 
