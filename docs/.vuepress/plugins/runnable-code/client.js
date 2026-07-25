@@ -7,6 +7,17 @@ import { useRoute } from 'vue-router'
 import RunnableCode from './RunnableCode.vue'
 import { getSandboxEndpoint, getSandboxConfig } from './sandbox-config.js'
 
+/**
+ * 根据当前语言环境返回对应的文本
+ * 中文站点显示中文，英文站点(/en/)显示英文
+ * @param {string} zh - 中文文本
+ * @param {string} en - 英文文本
+ * @returns {string}
+ */
+function t(zh, en) {
+  return window.location.pathname.startsWith('/en/') ? en : zh
+}
+
 // 导入 Prism.js 用于客户端语法高亮
 import Prism from 'prismjs'
 import 'prismjs/components/prism-python'
@@ -587,7 +598,7 @@ function initCodeBlock(block) {
         if (msg.status === 'starting') {
           progressContainer.innerHTML = `
             <div class="progress-bar">
-              <div class="progress-header">${msg.message || '正在启动容器...'}</div>
+              <div class="progress-header">${msg.message || t('正在启动容器...', 'Starting container...')}</div>
             </div>
           `
           textOutput.className = 'output-area loading'
@@ -600,7 +611,7 @@ function initCodeBlock(block) {
             </div>
           `
           textOutput.className = 'output-area'
-          if (textOutput.textContent === '执行中...' || textOutput.textContent === '正在启动容器...') {
+          if ((textOutput.textContent === '执行中...' || textOutput.textContent === 'Running...' || textOutput.textContent === '正在启动容器...' || textOutput.textContent === 'Starting container...')) {
             textOutput.innerHTML = ''
           }
         }
@@ -626,7 +637,7 @@ function initCodeBlock(block) {
         `
         // 清除文本区域的加载提示
         textOutput.className = 'output-area'
-        if (textOutput.textContent === '执行中...' || textOutput.textContent === '正在启动容器...') {
+        if ((textOutput.textContent === '执行中...' || textOutput.textContent === 'Running...' || textOutput.textContent === '正在启动容器...' || textOutput.textContent === 'Starting container...')) {
           textOutput.innerHTML = ''
         }
         break
@@ -634,7 +645,7 @@ function initCodeBlock(block) {
       case 'stream':
         // 文本流输出 - 只追加到文本区域，不影响进度条
         textOutput.className = 'output-area'
-        if (textOutput.textContent === '执行中...' || textOutput.textContent === '正在启动容器...') {
+        if ((textOutput.textContent === '执行中...' || textOutput.textContent === 'Running...' || textOutput.textContent === '正在启动容器...' || textOutput.textContent === 'Starting container...')) {
           textOutput.innerHTML = ''
         }
 
@@ -690,7 +701,7 @@ function initCodeBlock(block) {
       case 'display_data':
         // 富输出（图片、HTML 等）- 追加到文本区域
         textOutput.className = 'output-area'
-        if (textOutput.textContent === '执行中...' || textOutput.textContent === '正在启动容器...') {
+        if ((textOutput.textContent === '执行中...' || textOutput.textContent === 'Running...' || textOutput.textContent === '正在启动容器...' || textOutput.textContent === 'Starting container...')) {
           textOutput.innerHTML = ''
         }
 
@@ -722,7 +733,7 @@ function initCodeBlock(block) {
       case 'execute_result':
         // 执行结果 - 追加到文本区域
         textOutput.className = 'output-area'
-        if (textOutput.textContent === '执行中...' || textOutput.textContent === '正在启动容器...') {
+        if ((textOutput.textContent === '执行中...' || textOutput.textContent === 'Running...' || textOutput.textContent === '正在启动容器...' || textOutput.textContent === 'Starting container...')) {
           textOutput.innerHTML = ''
         }
 
@@ -754,7 +765,7 @@ function initCodeBlock(block) {
       case 'error':
         // 错误输出 - 追加到文本区域
         textOutput.className = 'output-area error'
-        if (textOutput.textContent === '执行中...' || textOutput.textContent === '正在启动容器...') {
+        if ((textOutput.textContent === '执行中...' || textOutput.textContent === 'Running...' || textOutput.textContent === '正在启动容器...' || textOutput.textContent === 'Starting container...')) {
           textOutput.innerHTML = ''
         }
 
@@ -794,7 +805,7 @@ function initCodeBlock(block) {
         if (msg.executionTime) {
           const timeDiv = document.createElement('div')
           timeDiv.className = 'execution-time'
-          timeDiv.textContent = `--- 执行时间: ${msg.executionTime.toFixed(3)}s`
+          timeDiv.textContent = t(`--- 执行时间: ${msg.executionTime.toFixed(3)}s`, `--- Execution time: ${msg.executionTime.toFixed(3)}s`)
           textOutput.appendChild(timeDiv)
         }
         break
@@ -877,14 +888,14 @@ function initCodeBlock(block) {
         progressContainer.innerHTML = ''
         const abortedMsg = document.createElement('pre')
         abortedMsg.className = 'output-stream stdout'
-        abortedMsg.textContent = textOutput.textContent ? '\n--- 已中止 ---' : '已中止'
+        abortedMsg.textContent = textOutput.textContent ? t('\n--- 已中止 ---', '\n--- Aborted ---') : t('已中止', 'Aborted')
         textOutput.appendChild(abortedMsg)
       })
 
       // 显示初始状态
       progressContainer.innerHTML = `
         <div class="progress-bar">
-          <div class="progress-header">正在启动容器...</div>
+          <div class="progress-header">${t('正在启动容器...', 'Starting container...')}</div>
         </div>
       `
       textOutput.className = 'output-area loading'
@@ -930,9 +941,9 @@ function initCodeBlock(block) {
           textOutput.className = 'output-area error'
           try {
             const errorResult = await response.json()
-            textOutput.textContent = errorResult.error || `请求失败 (HTTP ${response.status})`
+            textOutput.textContent = errorResult.error || t(`请求失败 (HTTP ${response.status})`, `Request failed (HTTP ${response.status})`)
           } catch {
-            textOutput.textContent = `请求失败 (HTTP ${response.status})`
+            textOutput.textContent = t(`请求失败 (HTTP ${response.status})`, `Request failed (HTTP ${response.status})`)
           }
           return
         }
@@ -1042,14 +1053,20 @@ function initCodeBlock(block) {
           // 连接超时 - 服务未启动
           progressContainer.innerHTML = ''
           textOutput.className = 'output-area error'
-          textOutput.innerHTML = '⚠️ 无法连接到沙箱服务（连接超时）\n\n请确保沙箱服务正在运行：\n• 源码模式：npm run server\n• CLI 模式：dmla start\n\n或在设置 <a href="javascript:document.getElementsByTagName(\'button\')[0].click()"><svg data-v-9eec72c3="" class="settings-icon" style="width:18px; height:18px; color:#f48771" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle data-v-9eec72c3="" cx="12" cy="12" r="3"></circle><path data-v-9eec72c3="" d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg></a> 中检查沙箱地址配置'
+          textOutput.innerHTML = t(
+            '⚠️ 无法连接到沙箱服务（连接超时）\n\n请确保沙箱服务正在运行：\n• 源码模式：npm run server\n• CLI 模式：dmla start\n\n或在设置 <a href="javascript:document.getElementsByTagName(\'button\')[0].click()"><svg data-v-9eec72c3="" class="settings-icon" style="width:18px; height:18px; color:#f48771" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle data-v-9eec72c3="" cx="12" cy="12" r="3"></circle><path data-v-9eec72c3="" d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg></a> 中检查沙箱地址配置',
+            '⚠️ Unable to connect to sandbox service (connection timeout)\n\nPlease ensure the sandbox service is running:\n• Source mode: npm run server\n• CLI mode: dmla start\n\nOr check sandbox address in settings <a href="javascript:document.getElementsByTagName(\'button\')[0].click()"><svg data-v-9eec72c3="" class="settings-icon" style="width:18px; height:18px; color:#f48771" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle data-v-9eec72c3="" cx="12" cy="12" r="3"></circle><path data-v-9eec72c3="" d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg></a>'
+          )
         } else {
           progressContainer.innerHTML = ''
           textOutput.className = 'output-area error'
           if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
-            textOutput.innerHTML = '⚠️ 无法连接到沙箱服务\n\n请确保沙箱服务正在运行，或在设置 <a href="javascript:document.getElementsByTagName(\'button\')[0].click()"><svg data-v-9eec72c3="" class="settings-icon" style="width:18px; height:18px; color:#f48771" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle data-v-9eec72c3="" cx="12" cy="12" r="3"></circle><path data-v-9eec72c3="" d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg></a> 中检查沙箱地址配置'
+            textOutput.innerHTML = t(
+            '⚠️ 无法连接到沙箱服务\n\n请确保沙箱服务正在运行，或在设置 <a href="javascript:document.getElementsByTagName(\'button\')[0].click()"><svg data-v-9eec72c3="" class="settings-icon" style="width:18px; height:18px; color:#f48771" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle data-v-9eec72c3="" cx="12" cy="12" r="3"></circle><path data-v-9eec72c3="" d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg></a> 中检查沙箱地址配置',
+            '⚠️ Unable to connect to sandbox service\n\nPlease ensure the sandbox service is running, or check sandbox address in settings <a href="javascript:document.getElementsByTagName(\'button\')[0].click()"><svg data-v-9eec72c3="" class="settings-icon" style="width:18px; height:18px; color:#f48771" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle data-v-9eec72c3="" cx="12" cy="12" r="3"></circle><path data-v-9eec72c3="" d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg></a>'
+          )
           } else {
-            textOutput.textContent = `❌ 错误: ${error.message}`
+            textOutput.textContent = t(`❌ 错误: ${error.message}`, `❌ Error: ${error.message}`)
           }
         }
       } finally {

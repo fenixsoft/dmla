@@ -133,7 +133,7 @@
 
         <!-- 执行时间 -->
         <div v-if="executionTime" class="execution-time">
-          --- 执行时间: {{ executionTime.toFixed(3) }}s ---
+          {{ t('--- 执行时间:', '--- Execution time:') }} {{ executionTime.toFixed(3) }}s ---
         </div>
       </template>
       <template v-else-if="!isRunning">
@@ -162,6 +162,14 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import { getSandboxEndpoint, globalRunningState, startExecution, endExecution, abortCurrentExecution } from './sandbox-config.js'
+
+/** 根据当前语言环境返回对应的文本 */
+function t(zh, en) {
+  if (typeof window !== 'undefined') {
+    return window.location.pathname.startsWith('/en/') ? en : zh
+  }
+  return zh
+}
 
 const props = defineProps({
   code: {
@@ -252,11 +260,11 @@ function handleStreamMessage(msg) {
       // 状态消息
       if (msg.status === 'starting') {
         progress.value = {
-          description: msg.message || '正在启动容器',
+          description: msg.message || t('正在启动容器', 'Starting container'),
           total_steps: 100,
           current_step: 0,
           percent: 0,
-          message: msg.message || '正在创建 Docker 容器，请稍候...',
+          message: msg.message || t('正在创建 Docker 容器，请稍候...', 'Creating Docker container, please wait...'),
           status: 'starting',
           elapsed_seconds: 0
         }
@@ -463,8 +471,8 @@ async function runCode(useGpu = false) {
     outputs.value = [{
       type: 'error',
       ename: 'ConcurrencyError',
-      evalue: '已有任务在运行，请先中止当前任务',
-      traceback: ['点击 Stop 按钮中止当前正在运行的任务']
+      evalue: t('已有任务在运行，请先中止当前任务', 'A task is already running, please abort the current task first'),
+      traceback: [t('点击 Stop 按钮中止当前正在运行的任务', 'Click the Stop button to abort the currently running task')]
     }]
     hasError.value = true
     return
@@ -475,11 +483,11 @@ async function runCode(useGpu = false) {
   hasError.value = false
   executionTime.value = null
   progress.value = {
-    description: '正在启动容器',
+    description: t('正在启动容器', 'Starting container'),
     total_steps: 100,
     current_step: 0,
     percent: 0,
-    message: '正在创建 Docker 容器，请稍候...',
+    message: t('正在创建 Docker 容器，请稍候...', 'Creating Docker container, please wait...'),
     status: 'starting',
     elapsed_seconds: 0
   }
@@ -513,14 +521,14 @@ async function runCode(useGpu = false) {
         outputs.value = [{
           type: 'error',
           ename: 'HTTPError',
-          evalue: errorResult.error || `请求失败 (HTTP ${response.status})`,
+          evalue: errorResult.error || t(`请求失败 (HTTP ${response.status})`, `Request failed (HTTP ${response.status})`),
           traceback: [errorResult.error || `HTTP ${response.status}`]
         }]
       } catch {
         outputs.value = [{
           type: 'error',
           ename: 'HTTPError',
-          evalue: `请求失败 (HTTP ${response.status})`,
+          evalue: t(`请求失败 (HTTP ${response.status})`, `Request failed (HTTP ${response.status})`),
           traceback: [`HTTP ${response.status}`]
         }]
       }
@@ -626,9 +634,9 @@ async function runCode(useGpu = false) {
     if (error.name === 'AbortError') {
       aborted.value = true
       if (outputs.value.length === 0) {
-        outputs.value = [{ type: 'stream', name: 'stdout', text: '已中止' }]
+        outputs.value = [{ type: 'stream', name: 'stdout', text: t('已中止', 'Aborted') }]
       } else {
-        outputs.value.push({ type: 'stream', name: 'stdout', text: '\n--- 已中止 ---' })
+        outputs.value.push({ type: 'stream', name: 'stdout', text: t('\n--- 已中止 ---', '\n--- Aborted ---') })
       }
       hasError.value = false
     } else {
@@ -637,10 +645,10 @@ async function runCode(useGpu = false) {
         type: 'error',
         ename: 'ConnectionError',
         evalue: error.message.includes('Failed to fetch') || error.message.includes('NetworkError')
-          ? '无法连接到沙箱服务'
+          ? t('无法连接到沙箱服务', 'Unable to connect to sandbox service')
           : error.message,
         traceback: error.message.includes('Failed to fetch') || error.message.includes('NetworkError')
-          ? ['请确保沙箱服务正在运行，或在设置中检查沙箱地址配置']
+          ? [t('请确保沙箱服务正在运行，或在设置中检查沙箱地址配置', 'Please ensure the sandbox service is running, or check sandbox address configuration in settings')]
           : [error.message]
       }]
 
@@ -667,9 +675,9 @@ async function stopExecution() {
 
     // 显示已中止（如果已有输出则保留）
     if (outputs.value.length === 0) {
-      outputs.value = [{ type: 'stream', name: 'stdout', text: '已中止' }]
+      outputs.value = [{ type: 'stream', name: 'stdout', text: t('已中止', 'Aborted') }]
     } else {
-      outputs.value.push({ type: 'stream', name: 'stdout', text: '\n--- 已中止 ---' })
+      outputs.value.push({ type: 'stream', name: 'stdout', text: t('\n--- 已中止 ---', '\n--- Aborted ---') })
     }
   } catch (error) {
     outputs.value = [{
