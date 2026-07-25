@@ -150,20 +150,20 @@ Whether it is benchmarking or red teaming, both are methods of observing the mod
 
 Observing neuron activation is only the first step. It tells us which neurons are doing something, but it cannot tell us whether those neurons are actually influencing the output. **Causal Tracing** is a more powerful analytical method that not only observes but also actively intervenes, observing the impact of the intervention on the output. In 2022, the paper "[Locating and Editing Factual Associations in GPT](https://arxiv.org/abs/2202.05262)" was the first to systematically use causal tracing methods to localize where factual knowledge is stored in GPT models.
 
-Causal tracing employs a method called **Activation Patching**: first, record the activation values of a certain layer's neurons under normal input; then, under a different input, replace the current activation values with the recorded ones and observe how the output changes. If replacing the activation values at a certain position leads to a significant change in output, it indicates that this position has a causal effect on the output. Take the task of completing "Paris is the capital of ___" as an example. Under normal input, the model predicts "France". If we change the input to "Berlin is the capital of ___", the model would predict "Germany". Next, extract the activation value at the position of "France" from the normal input, and inject it into the corresponding position of the intervention input. If the model's prediction shifts back towards "France", it indicates that the activation at that position encodes the information about "France" and that this information has a causal influence on the prediction.
+Causal tracing employs a method called **Activation Patching**: first, record the activation values of a certain layer's neurons under normal input; then, under a different input, replace the current activation values with the recorded ones and observe how the output changes. If replacing the activation values at a certain position leads to a significant change in output, it indicates that this position has a causal effect on the output. Take the task of completing "Paris is France's ___" as an example. Under normal input, the model predicts "capital". If we change the input to "Paris is Germany's ___", the model might predict "city" instead. Next, extract the activation value at the position of "France" from the normal input, and inject it into the corresponding position of the intervention input. If the model's prediction shifts back towards "capital", it indicates that the activation at that position encodes the information about "France" and that this information has a causal influence on the prediction.
 
 ```mermaid compact
 graph LR
     subgraph S1["Step 1: Normal Forward Pass"]
-        N1["Input: Paris is the capital of <b>France</b>"] --> N2["Extract Activations<br/>Record layer-wise<br/>activation vectors at 「France」 position"]
+        N1["Input: Paris is France's ___"] --> N2["Extract Activations<br/>Record layer-wise<br/>activation vectors at 「France」 position"]
         N2 --> N3["Predicted Output: <b>「capital」</b> ✓"]
     end
     subgraph S2["Step 2: Intervention Input"]
-        I1["Input: Berlin is the capital of <b>Germany</b>"] --> I2["Forward Pass"]
+        I1["Input: Paris is Germany's ___"] --> I2["Forward Pass"]
         I2 --> I3["Predicted Output: <b>「city」</b> ✗"]
     end
     subgraph S3["Step 3: Activation Patching"]
-        P1["Input: Berlin is the capital of <b>Germany</b>"] --> P2["Inject 「France」 activation<br/>from Step 1 into the<br/>corresponding position"]
+        P1["Input: Paris is Germany's ___"] --> P2["Inject 「France」 activation<br/>from Step 1 into the<br/>corresponding position"]
         P2 --> P3["Predicted Output: <b>「capital」</b> ✓<br/><i style='color:green'>Correct prediction restored</i>"]
     end
     N2 -.->|"Copy Activations"| P2
