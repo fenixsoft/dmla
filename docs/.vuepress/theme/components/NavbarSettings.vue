@@ -13,6 +13,25 @@
       </svg>
     </a>
 
+    <!-- 语言切换按钮 -->
+    <div class="locale-switcher" ref="localeSwitcher">
+      <button class="locale-btn" @click="toggleLocaleMenu" title="Switch Language / 切换语言">
+        <svg class="locale-icon" viewBox="0 0 24 24" fill="none">
+          <!-- "EN" 文字 -->
+          <text x="2" y="14" font-size="7" font-weight="700" fill="currentColor" font-family="Arial, sans-serif">EN</text>
+          <!-- 45度斜线 -->
+          <line x1="12" y1="3" x2="12" y2="21" stroke="currentColor" stroke-width="1.5" transform="rotate(45, 12, 12)"/>
+          <!-- "中" 文字 -->
+          <text x="13" y="20" font-size="9" font-weight="700" fill="currentColor" font-family="Arial, sans-serif">中</text>
+        </svg>
+      </button>
+      <!-- 下拉菜单 -->
+      <div v-if="showLocaleMenu" class="locale-dropdown">
+        <a class="locale-option" :class="{ active: !isEnglish }" @click="switchLocale('zh')">中文</a>
+        <a class="locale-option" :class="{ active: isEnglish }" @click="switchLocale('en')">English</a>
+      </div>
+    </div>
+
     <!-- 设置按钮 -->
     <button class="settings-btn" @click="showSettings = true" title="设置">
       <svg class="settings-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -28,10 +47,61 @@
 
 <script setup>
 import { ref } from 'vue'
+import { useRoute } from '@vuepress/client'
 import Settings from './Settings.vue'
+
+const route = useRoute()
 
 // 设置弹窗状态
 const showSettings = ref(false)
+
+// 语言切换状态
+const showLocaleMenu = ref(false)
+const isEnglish = ref(false)
+
+// 根据当前路由判断语言
+function updateLocaleState() {
+  isEnglish.value = route.path.startsWith('/en/')
+}
+
+// 点击语言按钮时更新状态并切换下拉菜单
+function toggleLocaleMenu() {
+  updateLocaleState()
+  showLocaleMenu.value = !showLocaleMenu.value
+}
+
+// 切换语言：根据目标语言重写当前路径
+function switchLocale(target) {
+  showLocaleMenu.value = false
+  const currentPath = route.path
+
+  let targetPath
+  if (target === 'en') {
+    // 切换到英文：在路径前加 /en/
+    targetPath = '/en' + currentPath
+    // 避免 /en// 的双斜线（根路径时 currentPath 以 / 结尾）
+    targetPath = targetPath.replace(/\/+/g, '/')
+  } else {
+    // 切换到中文：去掉 /en/ 前缀
+    targetPath = currentPath.replace(/^\/en/, '') || '/'
+  }
+
+  // 如果路径没变，不跳转
+  if (targetPath !== currentPath) {
+    window.location.href = targetPath
+  }
+}
+
+// 点击外部关闭下拉菜单
+if (typeof document !== 'undefined') {
+  document.addEventListener('click', (e) => {
+    // 如果点击的不是语言切换区域内的元素，关闭菜单
+    const target = e.target
+    if (!target.closest('.locale-switcher')) {
+      showLocaleMenu.value = false
+    }
+  })
+}
 
 // 设置保存回调
 function onSettingsSave(config) {
@@ -90,5 +160,67 @@ function onSettingsSave(config) {
   width: 18px;
   height: 18px;
   color: var(--vp-c-text);
+}
+
+.locale-switcher {
+  position: relative;
+}
+
+.locale-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  margin-left: 12px;
+  padding: 0;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.locale-btn:hover {
+  background: var(--vp-c-control-hover);
+}
+
+.locale-icon {
+  width: 18px;
+  height: 18px;
+  color: var(--vp-c-text);
+}
+
+.locale-dropdown {
+  position: absolute;
+  top: 36px;
+  right: 0;
+  min-width: 120px;
+  padding: 4px 0;
+  background: var(--vp-c-bg);
+  border: 1px solid var(--vp-c-border);
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  z-index: 100;
+}
+
+.locale-option {
+  display: block;
+  padding: 6px 16px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--vp-c-text);
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.locale-option:hover {
+  background: var(--vp-c-control-hover);
+}
+
+.locale-option.active {
+  color: var(--vp-c-accent);
+  font-weight: 600;
 }
 </style>
