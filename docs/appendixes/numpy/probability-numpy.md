@@ -97,8 +97,6 @@ NumPy 提供了以下函数实现这些操作：
 
 下面的代码演示了随机选择的三种模式（有放回、无放回、加权）以及随机打乱的效果。
 
-
-
 ```python runnable
 import numpy as np
 # 随机选择

@@ -52,7 +52,7 @@ This kind of description contains numerous fatal ambiguities. For instance, `loc
     "properties": {
       "city": {
         "type": "string",
-        "description": "City name in full Chinese, such as 'Beijing' or 'Shanghai'. Do not use English names, abbreviations, or postal codes."
+        "description": "Full city name in English, such as 'Beijing' or 'Shanghai'. Do not use abbreviations, postal codes, or non-English names."
       },
       "unit": {
         "type": "string",
