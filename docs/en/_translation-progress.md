@@ -9,4 +9,5 @@
 | maths/linear/vectors.md | 校审完成 | ✓ | ✓ | 已修复链接路径（6 处 `../../../en/` → `../../`）|
 | maths/linear/matrices.md | 校审完成 | ✓ | ✓ | 无需修复 |
 | maths/calculus/derivative.md | 校审完成 | ✓ | ✓ | 已修复图片路径、英文 `neither zero nor yet zero` 术语误译 |
-| maths/calculus/gradient.md | 校审完成 | ✓ | ✓ | 无需修复 | |
+| maths/calculus/gradient.md | 校审完成 | ✓ | ✓ | 无需修复 |
+| maths/probability/probability-basics.md | 校审完成 | ✓ | ✓ | 已修复残留中文「思维方式」未译 |
