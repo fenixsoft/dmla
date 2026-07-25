@@ -6,7 +6,7 @@ In 2022, OpenAI's paper "[Training Language Models to Follow Instructions with H
 
 ## Foundation Models and Instruct Models
 
-After pre-training, what we get is not a directly user-facing product, but a **foundation model** (also called a base model). It may possess rich knowledge and powerful language abilities, but there is a gap between its behavior and what users expect from an AI assistant. The most直观 illustration of this gap is that, given the same input, the foundation model and the instruct model produce completely different outputs. Suppose a user inputs "What is the capital of France?" The foundation model's output might look like this:
+After pre-training, what we get is not a directly user-facing product, but a **foundation model** (also called a base model). It may possess rich knowledge and powerful language abilities, but there is a gap between its behavior and what users expect from an AI assistant. The most intuitive illustration of this gap is that, given the same input, the foundation model and the instruct model produce completely different outputs. Suppose a user inputs "What is the capital of France?" The foundation model's output might look like this:
 
 > User: What is the capital of France?
 >
@@ -54,11 +54,11 @@ Obtaining high-quality instruction data is a bottleneck. Manual annotation is co
 
 ```mermaid compact
 graph LR
-    A["175人工<br/>种子指令"] --> B["LLM 生成<br/>新指令"]
-    B --> C["LLM 生成<br/>对应回答"]
-    C --> D["过滤低质量<br/>数据"]
-    D --> E["加入指令池"]
-    E -->|"迭代多轮"| B
+    A["175 Human-Written<br/>Seed Instructions"] --> B["LLM Generates<br/>New Instructions"]
+    B --> C["LLM Generates<br/>Responses"]
+    C --> D["Filter Low-Quality<br/>Data"]
+    D --> E["Add to<br/>Instruction Pool"]
+    E -->|"Iterate"| B
 ```
 *Figure: Self-Instruct workflow*
 
@@ -142,7 +142,7 @@ the issues and provide fixes.
 
 The hyperparameter choices for SFT training differ significantly from those of pre-training, primarily in learning rate and number of training epochs.
 
-- **Learning Rate**: The learning rate for SFT is typically much smaller than for pre-training. Pre-training uses learning rates on the order of $10^{-4}$, while SFT usually uses $10^{-5}$ to $10^{-6}$. This is because the goal of SFT is not to learn new knowledge, but to adjust the way existing knowledge is expressed. A learning rate that is too large can破坏 the language abilities learned during pre-training, leading to catastrophic forgetting. An analogy: someone who already knows English learning a British accent needs to fine-tune their pronunciation habits, not re-learn English from scratch. In practice, SFT typically adopts a **cosine annealing** strategy (smooth decay following a cosine curve), where the learning rate gradually decreases from the initial value to near zero. This is similar to the learning rate schedule used in pre-training, but with a much smaller overall magnitude.
+- **Learning Rate**: The learning rate for SFT is typically much smaller than for pre-training. Pre-training uses learning rates on the order of $10^{-4}$, while SFT usually uses $10^{-5}$ to $10^{-6}$. This is because the goal of SFT is not to learn new knowledge, but to adjust the way existing knowledge is expressed. A learning rate that is too large can disrupt the language abilities learned during pre-training, leading to catastrophic forgetting. An analogy: someone who already knows English learning a British accent needs to fine-tune their pronunciation habits, not re-learn English from scratch. In practice, SFT typically adopts a **cosine annealing** strategy (smooth decay following a cosine curve), where the learning rate gradually decreases from the initial value to near zero. This is similar to the learning rate schedule used in pre-training, but with a much smaller overall magnitude.
 
 - **Number of Epochs**: The number of training epochs for SFT is usually only 1-3, far fewer than the multiple passes over the massive pre-training dataset. This is to prevent overfitting. The SFT dataset is relatively small (thousands to tens of thousands of data points), and the model can easily memorize rather than generalize from a small amount of data. Empirically, 1 epoch is usually a good starting point. If the model's performance on the validation set is still improving, 2-3 epochs can be tried, but overfitting should be closely monitored.
 
@@ -188,7 +188,7 @@ The rationality of this decomposition stems from the concept of [rank](../../mat
 - LoRA requires updating: $(4096 \times 8) + (8 \times 4096) = 65,536$ parameters
 - Parameter ratio: $65,536 / 16,777,216 \approx 0.39\%$
 
-By updating only 0.39% of the parameters, LoRA can achieve results close to full-parameter fine-tuning. This惊人的 efficiency is precisely why LoRA quickly became an industry standard. LoRA also has two practical design details:
+By updating only 0.39% of the parameters, LoRA can achieve results close to full-parameter fine-tuning. This remarkable efficiency is precisely why LoRA quickly became an industry standard. LoRA also has two practical design details:
 
 - **Initialization Strategy**. $A$ is initialized with a random Gaussian distribution, and $B$ is initialized as a zero matrix. This means that at the start of training, $BA = 0$, the output of the LoRA bypass is zero, and the model's behavior is exactly the same as the original pre-trained model. This design ensures training stability -- fine-tuning starts from the capabilities already acquired by the pre-trained model, rather than from a random state.
 
@@ -241,7 +241,7 @@ Below, we analyze the memory usage of three fine-tuning methods using a 65B para
 
 ## Chapter Summary
 
-Pre-training endows the model with language ability, but not with the willingness to serve humans. A foundation model that can fluently continue text, when faced with a user's question, will still自顾自地 fabricate the continuation rather than providing a useful answer. Supervised fine-tuning addresses this leap from "being able to speak" to "being able to converse," playing a connecting role in the entire alignment training pipeline. It inherits the language capabilities of pre-training, transforms them into usable conversational behavior, and provides a stable starting point for subsequent reinforcement learning alignment. Without SFT, there would be no object for the reward model to evaluate. Built on SFT, RLHF can further refine a model that already knows how to respond, making it respond even better.
+Pre-training endows the model with language ability, but not with the willingness to serve humans. A foundation model that can fluently continue text, when faced with a user's question, will still on its own fabricate the continuation rather than providing a useful answer. Supervised fine-tuning addresses this leap from "being able to speak" to "being able to converse," playing a connecting role in the entire alignment training pipeline. It inherits the language capabilities of pre-training, transforms them into usable conversational behavior, and provides a stable starting point for subsequent reinforcement learning alignment. Without SFT, there would be no object for the reward model to evaluate. Built on SFT, RLHF can further refine a model that already knows how to respond, making it respond even better.
 
 ## Exercises
 
