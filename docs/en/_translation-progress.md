@@ -1,6 +1,6 @@
 # 翻译进度追踪
 
-> 最后更新: 2026-07-25（tool-use.md 翻译完成）
+> 最后更新: 2026-07-25（planning-reasoning.md 翻译完成）
 
 | 相对路径 | 状态 | 翻译代理 | 校审代理 | 备注 |
 |---------|------|---------|---------|------|
@@ -79,9 +79,11 @@
 | ai-infra-engineering/mlops/model-performance-monitoring.md | 校审完成 | ✓ | ✓ | 修复图片路径 `../../ai-infra-engineering/mlops/assets/`→`../../../ai-infra-engineering/mlops/assets/`（4 处路径少一层 ..，指向不存在的 en/ 子目录）；修复冗余"PSI index"→"PSI"（PSI 中的 I 已表示 Index）；术语、代码、LaTeX、Mermaid 标签、链接锚点、完整性、可读性均校验通过 |
 | ai-infra-engineering/mlops/hyperparameter-optimization.md | 校审完成 | ✓ | ✓ | 内部 `.md` 链接、锚点译英、Mermaid 标签、代码注释、术语、LaTeX、完整性、可读性均校验通过；修复图片路径 `./assets/rs-tpe.png`→`../../ai-infra-engineering/mlops/assets/rs-tpe.png`（EN 目录下无 assets 子目录，图片在源目录）|
 | ai-infra-engineering/mlops/drift-detection.md | 校审完成 | ✓ | ✓ | 修复 3 处锚点链接：`#label-delay-issue`→`#label-delay-problem`、`#statistical-test-methods`→`#statistical-testing-methods`、`#autoencoder-principles`→`#autoencoder-fundamentals`；术语、图片路径、完整性、可读性均校验通过 |
-| agent-applications/vector-retrieval-rag/rag-experiment.md | 翻译完成 | ✓ | | 内部 `.md` 链接保留原相对路径；锚点译英；代码注释与字符串译英；术语、LaTeX、完整性均校验通过 |
+| agent-applications/vector-retrieval-rag/rag-experiment.md | 校审完成 | ✓ | ✓ | 锚点 `#n-gram-language-models` 已验证存在于 `language-model-tokenization.md`；`embedding-and-indexing.md` 文件链路正常；代码注释与字符串译英；术语、LaTeX、完整性、可读性均校验通过，无需修复 |
 | agent-applications/vector-retrieval-rag/retrieval-quality.md | 翻译完成 | ✓ | | 内部 `.md` 链接保留原相对路径；锚点译英；Mermaid 标签译英；代码注释与字符串译英；术语、LaTeX、完整性均校验通过 |
 | agent-applications/vector-retrieval-rag/embedding-and-indexing.md | 校审完成 | ✓ | ✓ | 修复 typo: `un fine-tuned`→`unfine-tuned`；修复可读性: `the BPE, WordPiece, or other tokenization algorithm vocabularies`→`the vocabulary produced by BPE, WordPiece, or other tokenization algorithms`；Mermaid、锚点链接、术语、代码、LaTeX、完整性、可读性均校验通过 |
 | agent-applications/agent-systems/llm-to-agent.md | 翻译完成 | ✓ | | 内部 `.md` 链接保留原相对路径；锚点译英；Mermaid 标签译英；代码注释译英；术语、LaTeX、完整性均校验通过 |
+| agent-applications/agent-systems/memory-systems.md | 翻译完成 | ✓ | | 内部 `.md` 链接保留原相对路径；锚点译英；Mermaid 标签译英；代码注释译英；术语、LaTeX、完整性均校验通过 |
 | agent-applications/agent-systems/tool-use.md | 翻译完成 | ✓ | | 内部 `.md` 链接保留原相对路径；锚点译英；Mermaid 标签译英；代码注释与字符串译英；术语、LaTeX、完整性均校验通过 |
+| agent-applications/agent-systems/planning-reasoning.md | 翻译完成 | ✓ | | 内部 `.md` 链接保留原相对路径；锚点译英；代码注释译英；术语、LaTeX、完整性均校验通过 |
 | agent-applications/vector-retrieval-rag/retrieval-augmented-generation.md | 校审完成 | ✓ | ✓ | 修复 ISSUP token 值 `Partially Support`→`Partially Supported`；术语、链接、代码、LaTeX、完整性、可读性均校验通过 |
