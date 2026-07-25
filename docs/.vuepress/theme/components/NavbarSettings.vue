@@ -14,31 +14,11 @@
     </a>
 
     <!-- 语言切换按钮 -->
-    <div class="locale-switcher">
-      <button class="locale-btn" @click="toggleLocaleMenu" title="Switch Language / 切换语言">
-        <svg class="locale-icon" viewBox="0 0 24 24" fill="none">
-          <defs>
-            <clipPath id="locale-clip-left">
-              <rect x="2" y="2" width="10" height="20"/>
-            </clipPath>
-            <clipPath id="locale-clip-right">
-              <rect x="12" y="2" width="10" height="20"/>
-            </clipPath>
-          </defs>
-          <!-- 大型 "EN" 文字，裁剪为左半 -->
-          <text x="0" y="19" font-size="16" font-weight="700" fill="currentColor" font-family="Arial, sans-serif" clip-path="url(#locale-clip-left)">EN</text>
-          <!-- 大型 "中" 文字，裁剪为右半 -->
-          <text x="10" y="20" font-size="16" font-weight="700" fill="currentColor" font-family="Arial, sans-serif" clip-path="url(#locale-clip-right)">中</text>
-          <!-- 45度斜线分隔 -->
-          <line x1="12" y1="3" x2="12" y2="21" stroke="currentColor" stroke-width="1.5" transform="rotate(45, 12, 12)"/>
-        </svg>
-      </button>
-      <!-- 下拉菜单 -->
-      <div v-if="showLocaleMenu" class="locale-dropdown">
-        <a class="locale-option" :class="{ active: !isEnglish }" @click="switchLocale('zh')">中文</a>
-        <a class="locale-option" :class="{ active: isEnglish }" @click="switchLocale('en')">English</a>
-      </div>
-    </div>
+    <button class="locale-btn" @click="switchLocale" :title="isEnglish ? '切换到中文' : 'Switch to English'">
+      <svg class="locale-icon" viewBox="0 0 24 24" fill="none">
+        <text x="2" y="18" font-size="12" font-weight="700" fill="currentColor" font-family="Arial, sans-serif">{{ isEnglish ? '中' : 'EN' }}</text>
+      </svg>
+    </button>
 
     <!-- 设置按钮 -->
     <button class="settings-btn" @click="showSettings = true" title="设置">
@@ -54,7 +34,7 @@
 </template>
 
 <script setup>
-import { ref, onUnmounted } from 'vue'
+import { ref, computed } from 'vue'
 import { useRoute } from '@vuepress/client'
 import Settings from './Settings.vue'
 
@@ -63,63 +43,27 @@ const route = useRoute()
 // 设置弹窗状态
 const showSettings = ref(false)
 
-// 语言切换状态
-const showLocaleMenu = ref(false)
-const isEnglish = ref(false)
+// 当前是否在英文页面
+const isEnglish = computed(() => route.path.startsWith('/en/'))
 
-// 根据当前路由判断语言
-function updateLocaleState() {
-  isEnglish.value = route.path.startsWith('/en/')
-}
-
-// 点击语言按钮时更新状态并切换下拉菜单
-function toggleLocaleMenu() {
-  updateLocaleState()
-  showLocaleMenu.value = !showLocaleMenu.value
-}
-
-// 切换语言：根据目标语言重写当前路径
-function switchLocale(target) {
-  showLocaleMenu.value = false
+// 切换语言：中→英、英→中
+function switchLocale() {
   const currentPath = route.path
-
   let targetPath
-  if (target === 'en') {
-    // 切换到英文：在路径前加 /en/
-    // 注意：'/en' + currentPath 是字符串拼接，并非路径组合操作
-    //    '/'                → '/en' + '/'              → '/en/'              → /en/
-    //    '/about.html'      → '/en' + '/about.html'    → '/en/about.html'    → /en/about.html
-    //    '/en/about.html'   → '/en' + '/en/about.html' → '/en/en/about.html'  // 英文页再点 English 会生成双 /en/ 前缀（边界情况，仅作文档说明）
-    targetPath = '/en' + currentPath
-    // 避免 /en// 的双斜线（根路径时 currentPath 以 / 结尾）
-    targetPath = targetPath.replace(/\/+/g, '/')
-  } else {
-    // 切换到中文：去掉 /en/ 前缀
+
+  if (isEnglish.value) {
+    // 英文 → 中文：去掉 /en/ 前缀
     targetPath = currentPath.replace(/^\/en/, '') || '/'
+  } else {
+    // 中文 → 英文：在路径前加 /en/
+    targetPath = '/en' + currentPath
+    targetPath = targetPath.replace(/\/+/g, '/')
   }
 
-  // 如果路径没变，不跳转
   if (targetPath !== currentPath) {
     window.location.href = targetPath
   }
 }
-
-// 点击外部关闭下拉菜单
-function handleClickOutside(e) {
-  if (!e.target.closest('.locale-switcher')) {
-    showLocaleMenu.value = false
-  }
-}
-
-if (typeof document !== 'undefined') {
-  document.addEventListener('click', handleClickOutside)
-}
-
-onUnmounted(() => {
-  if (typeof document !== 'undefined') {
-    document.removeEventListener('click', handleClickOutside)
-  }
-})
 
 // 设置保存回调
 function onSettingsSave(config) {
@@ -180,10 +124,6 @@ function onSettingsSave(config) {
   color: var(--vp-c-text);
 }
 
-.locale-switcher {
-  position: relative;
-}
-
 .locale-btn {
   display: flex;
   align-items: center;
@@ -207,38 +147,5 @@ function onSettingsSave(config) {
   width: 18px;
   height: 18px;
   color: var(--vp-c-text);
-}
-
-.locale-dropdown {
-  position: absolute;
-  top: 36px;
-  right: 0;
-  min-width: 120px;
-  padding: 4px 0;
-  background: var(--vp-c-bg);
-  border: 1px solid var(--vp-c-border);
-  border-radius: 6px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  z-index: 100;
-}
-
-.locale-option {
-  display: block;
-  padding: 6px 16px;
-  font-size: 14px;
-  line-height: 1.6;
-  color: var(--vp-c-text);
-  text-decoration: none;
-  cursor: pointer;
-  transition: background-color 0.15s ease;
-}
-
-.locale-option:hover {
-  background: var(--vp-c-control-hover);
-}
-
-.locale-option.active {
-  color: var(--vp-c-accent);
-  font-weight: 600;
 }
 </style>
