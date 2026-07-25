@@ -36,5 +36,5 @@
 | deep-learning/neural-network-stability/dropout.md | 校审完成 | ✓ | ✓ | 术语、代码、LaTeX、锚点链接、完整性、可读性均校验通过，无需修复；`batch-normalization.md` 断链已由本次翻译修复 |
 | deep-learning/neural-network-optimization/gradient-descent.md | 校审完成 | ✓ | ✓ | 术语、代码、LaTeX、图片路径、完整性、可读性均校验通过，无需修复。修复锚点链接 `#learning-rate-decay`→`#learning-rate-selection-strategy`（该锚点在中文原文中亦不指向任何标题）|
 | deep-learning/neural-network-optimization/adaptive-optimizers.md | 校审完成 | ✓ | ✓ | 术语、代码、LaTeX、链接、完整性、可读性均校验通过，无需修复 |
-| deep-learning/convolutional-neural-network/cnn-basics.md | 翻译完成 | ✓ | | LaTeX/Markdown 不变；代码注释译英；图片路径 `./assets/`→`../../../deep-learning/convolutional-neural-network/assets/`；内部 `.md` 链接锚点译英（`#hidden-layer-gradient-propagation`、`#multinomial-logistic-regression`）|
+| deep-learning/convolutional-neural-network/cnn-basics.md | 校审完成 | ✓ | ✓ | 术语、代码、LaTeX、Mermaid、图片路径、完整性、可读性均校验通过，无需修复 |
 | README.md | 校审完成 | ✓ | ✓ | 修复 `PhD candidate`→`PhD` 事实错误；优化多处英译流畅性：`navigational map for structuring their knowledge framework in the era of AI`→`roadmap for organizing their knowledge in the AI era`、`higher reading threshold`→`steeper learning curve`、`runnable code examples that can be executed in the web page`→`interactive code examples that run directly in your browser` |

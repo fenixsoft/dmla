@@ -42,7 +42,7 @@ export default {
     },
     '/en/': {
       lang: 'en-US',
-      title: 'Designing Machine Learning Application Systems',
+      title: 'Designing Machine Learning Applications',
       description: 'Building systematic understanding of machine learning from the ground up, for engineers',
       head: [
         ['meta', { name: 'og:description', content: 'Building systematic understanding of machine learning from the ground up, for engineers' }],
