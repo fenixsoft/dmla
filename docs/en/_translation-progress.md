@@ -24,3 +24,4 @@
 | statistical-learning/decision-tree-ensemble/random-forest.md | 校审完成 | ✓ | ✓ | 共享模块 `random_forest_classifier.py` 需从本文重新提取获得英文注释 |
 | statistical-learning/decision-tree-ensemble/boosting.md | 校审完成 | ✓ | ✓ | 无需修复 |
 | statistical-learning/unsupervised-learning/clustering.md | 校审完成 | ✓ | ✓ | 注释译英、图片路径、链接锚点均已正确修复；修复 matplotlib features 列表缺失的 `•` 项目符号（2 处）；练习题为英译"1."→"1."和"2."（原文 ZH 两题均为"1."）；全文术语、代码、LaTeX、Mermaid、路径、完整性、可读性均校验通过 |
+| statistical-learning/unsupervised-learning/dimensionality-reduction.md | 校审完成 | ✓ | ✓ | 术语、代码、LaTeX、路径、完整性、可读性均校验通过，无需修复；深层学习链接（word-embedding、vae）系已知断链 |
