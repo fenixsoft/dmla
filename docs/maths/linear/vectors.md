@@ -199,7 +199,7 @@ print(f"v1, v2, v4 线性无关：{is_linearly_independent([v1, v2, v4])}")  # F
 
 **基**（Basis）是向量空间的一组线性无关向量，使得空间中任意向量都可以表示为这组向量的线性组合。就像我们平常在三维空间中用 $x$、$y$、$z$ 轴描述任何位置一样，基提供了一套描述向量空间中所有向量的语言。譬如有一组二维平面 $\mathbb{R}^2$ 的基向量 $\mathbf{e}_1 = (1, 0)$ ，$\mathbf{e}_2 = (0, 1)$，那么向量 $(3,2)$ 就可以表示为 $(3, 2) = 3\cdot\mathbf{e}_1 + 2\cdot\mathbf{e}_2 = 3\cdot(1,0) + 2\cdot(0,1)$。这里的 3 和 2 就是该向量在这个基下的坐标。
 
-如同正方形与平行四边形、直角坐标系与笛卡尔坐标系的关系那样，在所有基向量中有一类两两正交的特殊子集，被称为**正交基**（Orthogonal Basis）。上面举的例子 $\mathbf{e}_1 = (1, 0)$ ，$\mathbf{e}_2 = (0, 1)$ 就是一组正交基。进一步，如果正交基的每个向量都是单位向量（模长为 1），那我们就称其为**标准正交基**（Orthonormal Basis）。根据正交与摸长为 1 的定义，显然标准正交基 $\{\mathbf{e}_1, \mathbf{e}_2, \ldots, \mathbf{e}_n\}$ 满足：$\mathbf{e}_i \cdot \mathbf{e}_j = \begin{cases} 1, & i = j \\ 0, & i \neq j \end{cases}$。最常用的标准正交基是**自然基**，既：
+如同正方形与平行四边形、直角坐标系与笛卡尔坐标系的关系那样，在所有基向量中有一类两两正交的特殊子集，被称为**正交基**（Orthogonal Basis）。上面举的例子 $\mathbf{e}_1 = (1, 0)$ ，$\mathbf{e}_2 = (0, 1)$ 就是一组正交基。进一步，如果正交基的每个向量都是单位向量（模长为 1），那我们就称其为**标准正交基**（Orthonormal Basis）。根据正交与模长为 1 的定义，显然标准正交基 $\{\mathbf{e}_1, \mathbf{e}_2, \ldots, \mathbf{e}_n\}$ 满足：$\mathbf{e}_i \cdot \mathbf{e}_j = \begin{cases} 1, & i = j \\ 0, & i \neq j \end{cases}$。最常用的标准正交基是**自然基**，即：
 - $\mathbf{e}_1 = (1, 0, 0, \ldots, 0)$
 - $\mathbf{e}_2 = (0, 1, 0, \ldots, 0)$
 - ...

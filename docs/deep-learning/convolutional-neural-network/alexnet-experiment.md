@@ -43,7 +43,7 @@ else:
 
 AlexNet 参加比赛时使用的是 ImageNet 1K 数据集，包含的训练集约 120 万张图像，验证集约 5 万张图像，测试集约 10 万张图像。这个数据规模已经不小，但与 6000 万模型参数和 1000 类的分类输出来说依然十分有限，因此需要在数据预处理阶段进行随机翻转、裁剪、颜色抖动等变换，人工增加训练数据的多样性，防止模型过拟合。
 
-本次训练我们使用的是 [Tiny ImageNet 200](https://cs231n.stanford.edu/reports/2016/pdfs/401_Report.pdf) 数据集，Tiny 是指图片尺寸被缩小为 64 × 64 的 JPEG 格式，200 是指数据集包含有 200 类别。我们在数据预处理进行的唯一增强是将图片插值放大至 224 × 224 的尺寸，以便对接原版 AlexNet 的网络结构。
+本次训练我们使用的是 [Tiny ImageNet 200](https://cs231n.stanford.edu/tiny-imagenet-200.zip) 数据集，Tiny 是指图片尺寸被缩小为 64 × 64 的 JPEG 格式，200 是指数据集包含有 200 类别。我们在数据预处理进行的唯一增强是将图片插值放大至 224 × 224 的尺寸，以便对接原版 AlexNet 的网络结构。
 
 数据预处理代码借助了 PyTorch 中十分常用的 `Dataset` 和 `DataLoader` 两个组件。`Dataset` 负责把磁盘上的图像文件和标签映射成 `(图像, 标签)` 对，`DataLoader` 负责批量加载、打乱顺序、多线程读取。
 
@@ -60,7 +60,7 @@ AlexNet 在 2012 年用两块 GTX 580（各 3GB 显存）训练了完整的 Imag
 - JPEG 解码使用 NVIDIA DALI 库的 nvJPEG 算子，移动到 GPU 中完成，避免了显存和内存的来回复制，大幅度提升解码效率（Windows 环境不适用）。
 - 使用多线程 DataLoader（`num_workers=4`）的批量操作尽可能消除 I/O 瓶颈，提升处理效率（Windows 环境不适用）。
 
-在此方案下，内存消耗在 4GB 左右，形成的预处理结果为 2.3GB（LMDB 的预设存储空间为训练集 2GB + 验证集 300MB），最终数据预处理代码如下：
+在此方案下，内存消耗在 4GB 左右，形成的预处理结果为 2.3GB（LMDB 的预设存储空间为训练集 2GB + 验证集 256MB），最终数据预处理代码如下：
 
 ```python runnable gpuonly timeout=unlimited extract-class="LMDBPreprocessCache"
 import os
@@ -263,7 +263,7 @@ else:
 
 ## 第二阶段：模型定义
 
-以下这段简短的代码就实现了 [AlexNet 网络结构](alexnet.md#网络结构)，除因输出分类部分要适配 Tiny ImageNet 的 200 个类别外，其余网络定义与原版的 AlexNet 完全保持一致，代码量却大幅度精简。从内容可见，神经网络模型的常用部件，如卷积层、池化层、激活函数、Dropout 正则化等在现代机器学习框架都有标准件提供。模型的难点在于合理设计与高效训练，编程将设计转化为实现并不困难。
+以下这段简短的代码就实现了 [AlexNet 网络结构](alexnet.md#网络结构)，除因输出分类部分要适配 Tiny ImageNet 的 200 个类别，以及使用自适应池化替代固定尺寸适配外，其余网络定义与原版的 AlexNet 保持一致，代码量却大幅度精简。从内容可见，神经网络模型的常用部件，如卷积层、池化层、激活函数、Dropout 正则化等在现代机器学习框架都有标准件提供。模型的难点在于合理设计与高效训练，编程将设计转化为实现并不困难。
 
 1. `features`（特征提取层）：5 个卷积层交替叠加，逐层提取从低级（边缘、纹理）到高级（物体部件）的特征。卷积层之间的 `MaxPool2d` 负责下采样，逐步缩小空间尺寸。`AdaptiveAvgPool2d((6, 6))` 确保无论输入图像经过前面的卷积池化后尺寸如何，输出始终固定为 6×6
 2. `classifier`（分类层）：3 个全连接层。前两层使用 `Dropout(p=0.5)` 随机丢弃 50% 的神经元激活，防止过拟合，这是 AlexNet 的标志性设计。最后将 4096 维特征映射到 200 个类别的 Softmax 分类器
@@ -902,7 +902,7 @@ if best_acc is not None:
 
     因此，如果换算成同一指标（Top-1 准确率），实际差距从"81.8% vs 65%（Top-5）"缩小为"59.3% vs 45%"，约 14 个百分点的差距。
 
-2. **训练数据集规模与质量差异**：这是造成 18 个百分点差距的直接原因，两者的训练数据集对比为：
+2. **训练数据集规模与质量差异**：这是造成约 14 个百分点差距的直接原因，两者的训练数据集对比为：
 
     | 对比项 | ImageNet 1K（原版） | Tiny ImageNet 200（本实验） |
     |--------|---------------------|----------------------------|
@@ -932,7 +932,7 @@ if best_acc is not None:
 
 | 图片 | 预测内容 | 图片 | 预测内容 |
 |-----|---------|------|---------|
-| ![exp1](./assets/exp1.png) | 图像: val_7656.JPEG (✓ Top-5 正确)<br>真实标签: cougar, puma, catamount, mountain lion, painter, panther, Felis concolor<br>Top-5 预测:<br>  1. orangutan, orang, orangutang, Pongo <br>ygmaeus: 39.19%<br>  2. cougar, puma, catamount, mountain lion, painter, panther, Felis concolor: 8.53% ✓<br>  3. lion, king of beasts, Panthera leo: 8.47%<br>  4. baboon: 4.30%<br>  5. lesser panda, red panda, panda, bear cat, cat bear, Ailurus fulgens: 4.03% | ![exp2](./assets/exp2.png) | 图像: val_9447.JPEG (✗ 错误)<br>真实标签: binoculars, field glasses, opera glasses<br>Top-5 预测:<br>  1. snorkel: 22.78%<br>  2. miniskirt, mini: 7.39%<br>  3. standard poodle: 7.39%<br>  4. military uniform: 4.82%<br>  5. pole: 4.76% |
+| ![exp1](./assets/exp1.png) | 图像: val_7656.JPEG (✓ Top-5 正确)<br>真实标签: cougar, puma, catamount, mountain lion, painter, panther, Felis concolor<br>Top-5 预测:<br>  1. orangutan, orang, orangutang, Pongo pygmaeus: 39.19%<br>  2. cougar, puma, catamount, mountain lion, painter, panther, Felis concolor: 8.53% ✓<br>  3. lion, king of beasts, Panthera leo: 8.47%<br>  4. baboon: 4.30%<br>  5. lesser panda, red panda, panda, bear cat, cat bear, Ailurus fulgens: 4.03% | ![exp2](./assets/exp2.png) | 图像: val_9447.JPEG (✗ 错误)<br>真实标签: binoculars, field glasses, opera glasses<br>Top-5 预测:<br>  1. snorkel: 22.78%<br>  2. miniskirt, mini: 7.39%<br>  3. standard poodle: 7.39%<br>  4. military uniform: 4.82%<br>  5. pole: 4.76% |
 |![exp3](./assets/exp3.png)|图像: val_6564.JPEG (✓ Top-1 正确)<br>真实标签: king penguin, Aptenodytes patagonica<br>Top-5 预测:<br>  1. king penguin, Aptenodytes patagonica: 99.92% ✓<br>  2. syringe: 0.02%<br>  3. lemon: 0.01%<br>  4. mantis, mantid: 0.01%<br>  5. projectile, missile: 0.01%<br>|![exp4](./assets/exp4.png)|图像: val_4249.JPEG (✓ Top-5 正确)<br>真实标签: potpie<br>Top-5 预测:<br>  1. mashed potato: 61.36%<br>  2. cauliflower: 12.87%<br>  3. ice cream, icecream: 5.28%<br>  4. potpie: 3.55% ✓<br>  5. guacamole: 2.90%
 |![exp5](./assets/exp5.png)|图像: val_141.JPEG (✓ Top-5 正确)<br>真实标签: snail<br>Top-5 预测:<br>  1. wooden spoon: 7.24%<br>  2. meat loaf, meatloaf: 6.32%<br>  3. snail: 5.56% ✓<br>  4. rocking chair, rocker: 4.51%<br>  5. pretzel: 4.34%| | |
 

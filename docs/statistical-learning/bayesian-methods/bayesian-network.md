@@ -113,7 +113,7 @@ $$P(Q=q, E=e, H=h) = \prod_{i=1}^{n} P(X_i | \text{Parents}(X_i))$$
 4. **边缘化与归一化**。对所有隐藏变量赋值求和，得到查询变量的未归一化概率，最后除以总和进行归一化：
 $$P(Q=q | E=e) = \frac{\sum_{h} P(Q=q, E=e, H=h)}{\sum_{q'} \sum_{h} P(Q=q', E=e, H=h)}$$
 
-枚举法的优点是概念清晰、实现简单，能够给出精确的推断结果；缺点是计算复杂度随隐藏变量数量指数增长（$O(2^{|H|})$），仅适用于小型网络。对于大型网络，需要采用变量消元、信念传播等更高效的近似推断算法。以下代码用枚举法实现诊断网络的推断：
+枚举法的优点是概念清晰、实现简单，能够给出精确的推断结果；缺点是计算复杂度随隐藏变量数量指数增长（$O(2^{|H|})$），仅适用于小型网络。对于大型网络，需要采用变量消元、信念传播等更高效的推断算法。以下代码用枚举法实现诊断网络的推断：
 
 ```python runnable extract-class="SimpleBayesianNetwork"
 import numpy as np
@@ -284,7 +284,7 @@ ax.set_ylabel('概率', fontsize=12)
 ax.set_title('不同证据下的推断结果对比', fontsize=14)
 ax.set_xticks(x)
 ax.set_xticklabels(scenarios)
-ax.legend(title='肺癌状态', fontsize=11)
+ax.legend(title='是/否', fontsize=11)
 ax.set_ylim(0, 1)
 ax.grid(True, alpha=0.3, axis='y')
 

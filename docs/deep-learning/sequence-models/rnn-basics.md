@@ -19,26 +19,26 @@ name: Recurrent Connection 架构
 layout: horizontal
 
 sections:
-  - name: 时刻 t = 0
-    layers: [x0, h0, y0]
-    row_label: "h₀→h₁"
   - name: 时刻 t = 1
     layers: [x1, h1, y1]
     row_label: "h₁→h₂"
   - name: 时刻 t = 2
     layers: [x2, h2, y2]
     row_label: "h₂→h₃"
+  - name: 时刻 t = 3
+    layers: [x3, h3, y3]
+    row_label: "h₃→h₄"
 
 layers:
-  - {id: x0, name: "x₀", type: input, size: "输入信息 0"}
-  - {id: h0, name: "RNN h₀", type: rnn, size: 256, act: tanh}
-  - {id: y0, name: "y₀", type: output, size: "输出信息 0"}
   - {id: x1, name: "x₁", type: input, size: "输入信息 1"}
   - {id: h1, name: "RNN h₁", type: rnn, size: 256, act: tanh}
   - {id: y1, name: "y₁", type: output, size: "输出信息 1"}
   - {id: x2, name: "x₂", type: input, size: "输入信息 2"}
   - {id: h2, name: "RNN h₂", type: rnn, size: 256, act: tanh}
   - {id: y2, name: "y₂", type: output, size: "输出信息 2"}
+  - {id: x3, name: "x₃", type: input, size: "输入信息 3"}
+  - {id: h3, name: "RNN h₃", type: rnn, size: 256, act: tanh}
+  - {id: y3, name: "y₃", type: output, size: "输出信息 3"}
 ```
 *图：Recurrent Connection 架构*
 
@@ -93,17 +93,17 @@ $$\frac{\partial L_T}{\partial W_{hh}} = \sum_{k=1}^{T} \frac{\partial L_T}{\par
 
 $$[bptt-eq]\frac{\partial L_T}{\partial W_{hh}} = \sum_{k=1}^{T} \frac{\partial L_T}{\partial h_T} \cdot \frac{\partial h_T}{\partial h_k} \cdot \frac{\partial h_k}{\partial W_{hh}}$$
 
-整体公式可以理解为总梯度 = 影响链上的每一步贡献之和。公式中 $\frac{\partial L_T}{\partial h_T}$ 是损失对最终隐藏状态的梯度，表示调整最终状态对减少损失有多大帮助；$\frac{\partial h_T}{\partial h_k}$ 是时刻 $k$ 的隐藏状态对时刻 $T$ 的隐藏状态的梯度，表示早期状态对最终状态有多大影响，这是稍后讨论梯度消失问题的关键项；$\frac{\partial h_k}{\partial W_{hh}}$ 是隐藏状态对参数的梯度，表示调整参数对改变状态有多大帮助。
+整体公式可以理解为总梯度 = 影响链上的每一步贡献之和。公式中 $\frac{\partial L_T}{\partial h_T}$ 是损失对最终隐藏状态的梯度，表示调整最终状态对减少损失有多大帮助；$\frac{\partial h_T}{\partial h_k}$ 是时刻 $T$ 的隐藏状态对时刻 $k$ 的隐藏状态的梯度，表示早期状态对最终状态有多大影响，这是稍后讨论梯度消失问题的关键项；$\frac{\partial h_k}{\partial W_{hh}}$ 是隐藏状态对参数的梯度，表示调整参数对改变状态有多大帮助。
 
 梯度消失是标准 RNN 训练中面临的首要问题。以杰弗里·埃尔曼论文中的场景为例：网络需要学习句子中相隔较远的两个词之间的关联，如 "The **cat**, which already ate a fish, ... , **was hungry**"。反向传播时，损失信号需要从 "was hungry" 传回到 "cat"，中间跨越多个时刻。即使人类处理远程依赖的能力远优于 RNN，距离过长的依赖关系也会给阅读造成负担。语言模型中的跨从句指代、时间序列预测中的远期事件影响、对话系统中的多轮上下文引用，所有需要长期依赖的任务都会遇到同样的障碍。下面我们从数学角度分析这一现象本质原因，将 BPTT 梯度传播公式 {{bptt-eq}} 的关键项 $\frac{\partial h_T}{\partial h_k}$ 展开后，得到一个链式乘积：
 
 $$\frac{\partial h_T}{\partial h_k} = \frac{\partial h_T}{\partial h_{T-1}} \cdot \frac{\partial h_{T-1}}{\partial h_{T-2}} \cdot ... \cdot \frac{\partial h_{k+1}}{\partial h_k}$$
 
-这个式子每一步的导数计算都要用到一次激活函数的导数，如果激活函数是 [tanh](../../deep-learning/neural-network-structure/activation-loss-functions.md#激活函数)，其导数为 $\tanh'(x) = 1 - \tanh^2(x) \in [0, 1]$，最大值为 1（当输入为 0 时），当输入过大或过小时，导数都趋近于 0。这意味着每当梯度经过一个 tanh 函数，就会被缩小一次。随着连乘项的增加式子也会趋近于 0。这意味着早期时刻（$k$ 较小）对后期时刻（$T$ 较大）的梯度贡献趋近于 0，网络无法有效学习长期依赖关系。例子中梯度从 "was hungry" 传回到 "cat" 时几乎消失殆尽，网络无法更新与 "cat" 相关的参数，也就无法学习到这个长期依赖关系。这正是标准 RNN 在长序列任务上表现不佳的根本原因。
+这个式子每一步的导数计算都要用到一次激活函数的导数，如果激活函数是 [tanh](../../deep-learning/neural-network-structure/activation-loss-functions.md#激活函数)，其导数为 $\tanh'(x) = 1 - \tanh^2(x) \in (0, 1]$，最大值为 1（当输入为 0 时），当输入过大或过小时，导数都趋近于 0。这意味着每当梯度经过一个 tanh 函数，就会被缩小一次。随着连乘项的增加式子也会趋近于 0。这意味着早期时刻（$k$ 较小）对后期时刻（$T$ 较大）的梯度贡献趋近于 0，网络无法有效学习长期依赖关系。例子中梯度从 "was hungry" 传回到 "cat" 时几乎消失殆尽，网络无法更新与 "cat" 相关的参数，也就无法学习到这个长期依赖关系。这正是标准 RNN 在长序列任务上表现不佳的根本原因。
 
 梯度消失对 RNN 的实际应用造成严重限制，语言模型处理 "我出生于北京，...（50 个词）...，所以我的家乡是？" 时，需要记住 50 个词前的 "北京"；股票预测中某公司 30 天前发布财报，今天股价突变，需要关联 30 天前的信息；对话系统中用户 5 分钟前提到的实体，现在需要引用，需要跨多轮对话的记忆。标准 RNN 在这些场景下表现不好，因为梯度很难传递超过 10 个时刻的依赖关系。
 
-梯度问题催生了后续架构的改进。1997 年，德国计算机科学家塞普·霍赫赖特（Sepp Hochreiter）和尤尔根·施密德胡伯（Jürgen Schmidhuber）提出了 **LSTM**（Long Short-Term Memory），引入门控机制选择性保留长期信息。2014 年，韩国学者曹庆铉（Kyunghyun Cho）提出了 **GRU**（Gated Recurrent Unit），简化 LSTM 的门控设计，计算效率更高，这些改进架构将在下一篇文章详细介绍。当然，最根本的革命性变化是彻底推倒 RNN 架构，2015 年，注意力机制的引入提供了另一种与 RNN 完全不同的思路，直接访问任意时刻的信息，绕过梯度传递的限制，这就是下一部分大语言模型中的内容了。
+梯度问题催生了后续架构的改进。1997 年，德国计算机科学家塞普·霍赫赖特（Sepp Hochreiter）和尤尔根·施密德胡伯（Jürgen Schmidhuber）提出了 **LSTM**（Long Short-Term Memory），引入门控机制选择性保留长期信息。2014 年，韩国学者曹庆铉（Kyunghyun Cho）提出了 **GRU**（Gated Recurrent Unit），简化 LSTM 的门控设计，计算效率更高，这些改进架构将在下一篇文章详细介绍。当然，最根本的革命性变化是彻底推翻 RNN 架构，2015 年，注意力机制的引入提供了另一种与 RNN 完全不同的思路，直接访问任意时刻的信息，绕过梯度传递的限制，这就是下一部分大语言模型中的内容了。
 
 ## RNN 序列预测实践
 

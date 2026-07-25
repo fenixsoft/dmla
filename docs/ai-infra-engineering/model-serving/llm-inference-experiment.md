@@ -107,8 +107,8 @@ llm = LLM(
 # 下面基于理论值做显存构成分析（验证实际用时请参照控制台日志）：
 if torch.cuda.is_available():
     # 模型权重的理论大小：参数量 × float16 字节数
-    # 0.8B params × 2 bytes ≈ 1.6 GB
-    model_weight_gb = 0.8 * 1e9 * 2 / 1024**3
+    # 0.8B params × 2 bytes = 1.6 GB
+    model_weight_gb = 0.8 * 2
 
     print(f"\n模型: Qwen3.5-0.8B-Instruct (float16)")
     print(f"\n--- 显存构成分析 ---")

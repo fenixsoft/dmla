@@ -130,7 +130,7 @@ LLM 推理中 CUDA Stream 的典型用法是将数据传输与计算放在不同
 
    2. 剩余显存：80 - 26 - 2 = 52 GB
     单请求 KV Cache（13B 模型，40 层，40 头，每头 128 维，float16）：
-    $2_{\text{K+V}} \times 40_{\text{层}} \times 40_{\text{头}} \times 128_{\text{维/头}} \times 4096_{\text{序列}} \times 2_{\text{FP16字节}}$ = $2 \times 40 \times 5120 \times 4096 \times 2$ ≈ 3.33 GB
+    $2_{\text{K+V}} \times 40_{\text{层}} \times 40_{\text{头}} \times 128_{\text{维/头}} \times 4096_{\text{序列}} \times 2_{\text{FP16字节}}$ = $2 \times 40 \times 5120 \times 4096 \times 2$ ≈ 3.36 GB
     并发数 = 52 / 3.33 ≈ 15 个请求
 
    3. INT4 权重量化：权重 = 13B × 0.5 字节 = 6.5 GB

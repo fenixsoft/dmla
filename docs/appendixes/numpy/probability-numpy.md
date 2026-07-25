@@ -167,7 +167,7 @@ axes[1].grid(alpha=0.3, axis='y')
 axes[2].hist(exponential, bins=50, density=True, color='steelblue', edgecolor='black', alpha=0.7)
 axes[2].set_xlabel('值')
 axes[2].set_ylabel('概率密度')
-axes[2].set_title('指数分布 Exp(2)')
+axes[2].set_title('指数分布 (scale=2)')
 axes[2].grid(alpha=0.3)
 plt.tight_layout()
 plt.show()
@@ -483,14 +483,14 @@ print(f"观测数据：{n_flips} 次抛掷, {n_heads} 次正面")
 print(f"MLE 估计（最大似然估计）： p̂ = {n_heads/n_flips:.3f}")
 print()
 
-# 使用拒绝采样从后验分布采样
+# 使用Beta-Gamma 关系从后验分布采样
 # 先验： Beta(2, 2)
 # 后验： Beta(2 + n_heads, 2 + n_flips - n_heads)
 
 alpha_post = 2 + n_heads
 beta_post = 2 + n_flips - n_heads
 
-# 使用逆 CDF 方法采样 Beta 分布（简化版）
+# 使用Beta-Gamma 关系采样 Beta 分布
 def sample_beta(alpha, beta, n_samples=10000):
     """使用 Beta-Gamma 关系采样 Beta 分布"""
     x = np.random.gamma(alpha, 1, n_samples)

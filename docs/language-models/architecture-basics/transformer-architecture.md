@@ -127,7 +127,7 @@ $$Q = XW^Q, \quad K = XW^K, \quad V = XW^V$$
 
 ### 缩放点积注意力
 
-得到 $Q$、$K$、$V$ 以后，下一步是计算注意力权重和输出。Transformer 使用权重计算方式称为**缩放点积注意力**（Scaled Dot-Product Attention），计算公式为：
+得到 $Q$、$K$、$V$ 以后，下一步是计算注意力权重和输出。Transformer 使用的权重计算方式称为**缩放点积注意力**（Scaled Dot-Product Attention），计算公式为：
 
 $$[att_eq]Attention(Q, K, V) = Softmax\left(\frac{QK^T}{\sqrt{d_k}}\right)V$$
 
@@ -326,7 +326,7 @@ Sinusoidal 位置编码的设计颇有巧妙之处，从以下三点可见一斑
 
     可以推导出：
 
-    $$PE_{pos+k, 2i} = PE_{pos, 2i} \cdot \cos\left(\frac{k}{10000^{2i/d}}\right) + PE_{pos, 2i+1} \cdot \sin\left(\frac{k}{10000^{2i/d}}\right)$$
+    $$PE_{pos+k, 2i} = PE_{pos, 2i} \cdot \cos\left(\frac{k}{10000^{2i/d_{model}}}\right) + PE_{pos, 2i+1} \cdot \sin\left(\frac{k}{10000^{2i/d_{model}}}\right)$$
 
     这意味着模型能够学习到相对位置的概念，如"位置 $i$ 和位置 $j$ 相差多少"比"位置 $i$ 是多少"更重要。在自然语言中，"猫"和"坐"的关系主要取决于它们相隔多远，而非它们分别在什么绝对位置。
 

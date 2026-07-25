@@ -125,7 +125,7 @@ $$[eq:backprop-error-sign] \delta^k = \frac{\partial l}{\partial \mathbf{z}^k} =
 
 $$\frac{\partial l}{\partial \mathbf{a}^k} = \frac{\partial l}{\partial \mathbf{z}^{k+1}} \cdot \frac{\partial \mathbf{z}^{k+1}}{\partial \mathbf{a}^k} = (\mathbf{W}^{k+1})^T \delta^{k+1}$$
 
-其中 $\frac{\partial l}{\partial \mathbf{z}^{k+1}}$ 就是上一层的误差信号 $\delta^{k+1}$，一直迭代推到输出层（见 {{eq:backprop-output-eq}}）就是 $\mathbf{a}^K - \mathbf{y}$。$\frac{\partial \mathbf{z}^{k+1}}{\partial \mathbf{a}^k}$ 是下一层预激活值对本层激活值的导数，由于 $\mathbf{z}^{k+1} = \mathbf{W}^{k+1} \mathbf{a}^k + \mathbf{b}^{k+1}$，所以它相对于 $\mathbf{a}^k$ 的偏导数就等于权重矩阵 $\mathbf{W}^{k+1}$。前文提到过，机器学习常用约定是使用分母布局，梯度为列向量，此时需要转置以保证维度匹配为了满足矩阵乘法[内维匹配](../../maths/linear/matrices.md#矩阵的运算)要求，将权重矩阵的转置 $(\mathbf{W}^{k+1})^T$ 后与上一层的误差信号相乘。从信号传播的角度看，这个操作类似于信号缩放，前向传播用 $\mathbf{W}^{k+1}$ 将信号放大，反向传播用转置 $(\mathbf{W}^{k+1})^T$ 将梯度缩回。将这个式子代入隐藏层的误差信号（见 {{eq:backprop-error-sign}}）得到：
+其中 $\frac{\partial l}{\partial \mathbf{z}^{k+1}}$ 就是上一层的误差信号 $\delta^{k+1}$，一直迭代推到输出层（见 {{eq:backprop-output-eq}}）就是 $\mathbf{a}^K - \mathbf{y}$。$\frac{\partial \mathbf{z}^{k+1}}{\partial \mathbf{a}^k}$ 是下一层预激活值对本层激活值的导数，由于 $\mathbf{z}^{k+1} = \mathbf{W}^{k+1} \mathbf{a}^k + \mathbf{b}^{k+1}$，所以它相对于 $\mathbf{a}^k$ 的偏导数就等于权重矩阵 $\mathbf{W}^{k+1}$。前文提到过，机器学习常用约定是使用分母布局，梯度为列向量，此时需要转置以保证维度匹配。为了满足矩阵乘法[内维匹配](../../maths/linear/matrices.md#矩阵的运算)要求，将权重矩阵的转置 $(\mathbf{W}^{k+1})^T$ 后与上一层的误差信号相乘。从信号传播的角度看，这个操作类似于信号缩放，前向传播用 $\mathbf{W}^{k+1}$ 将信号放大，反向传播用转置 $(\mathbf{W}^{k+1})^T$ 将梯度缩回。将这个式子代入隐藏层的误差信号（见 {{eq:backprop-error-sign}}）得到：
 
 $$[eq:backprop-hidden] \delta^k = (\mathbf{W}^{k+1})^T \delta^{k+1} \cdot \sigma'(\mathbf{z}^k)$$
 
@@ -186,7 +186,7 @@ $$\bar{\delta}^k = \frac{1}{m} \sum_{i=1}^{m} \delta^k_i \in \mathbb{R}^{n_k}$$
 
 ## 反向传播算法实践
 
-下面通过代码实现完整的反向传播过程，验证梯度计算的正确性，并可视化误差信号在网络中的传递过程。从实验输出的四张可视化图标中可以分别看到训练过程中的损失和梯度变化趋势。如果训练一切顺利，训练应该呈现出损失单调下降、梯度逐层衰减的趋势，这说明模型损失逐渐收敛趋向于稳定。然而现实中，模型训练稳定性是一大工程难题，我们将在后面专门讨论。
+下面通过代码实现完整的反向传播过程，验证梯度计算的正确性，并可视化误差信号在网络中的传递过程。从实验输出的四张可视化图表中可以分别看到训练过程中的损失和梯度变化趋势。如果训练一切顺利，训练应该呈现出损失单调下降、梯度逐层衰减的趋势，这说明模型损失逐渐收敛趋向于稳定。然而现实中，模型训练稳定性是一大工程难题，我们将在后面专门讨论。
 
 ```python runnable
 import numpy as np

@@ -13,7 +13,7 @@
 
 在开始实验之前，请确保已完成以下准备工作：
 
-1. 已下载  [Qwen3.5-0.8B-Instruct](https://modelscope.cn/models/Qwen/Qwen3.5-0.8B) 语言模型。
+1. 已下载  [Qwen3.5-0.8B-Instruct](https://modelscope.cn/models/Qwen/Qwen3.5-0.8B-Instruct) 语言模型。
 
 ```bash
 # 选择 "下载模型" -> 选择 "Qwen3.5-0.8B-Instruct"
@@ -58,7 +58,7 @@ if os.path.isdir(MODEL_PATH):
     else:
         print("Qwen3.5-0.8B-Instruct: 模型文件不完整，请通过 dmla model 重新下载")
 else:
-    print("Qwen3.5-0.8B-Instruct: 未找到，请运行 dmla model 选择 Qwen3.5-0.8B 下载")
+    print("Qwen3.5-0.8B-Instruct: 未找到，请运行 dmla model 选择 Qwen3.5-0.8B-Instruct 下载")
 ```
 
 ## 第一阶段：构建基础 Agent

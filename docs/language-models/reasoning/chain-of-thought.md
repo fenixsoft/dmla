@@ -62,7 +62,7 @@
 
 $$\mathcal{L}_{PRM} = -\sum_{i=1}^{n} \left[ y_i \log \sigma(r_\phi(s_i)) + (1 - y_i) \log (1 - \sigma(r_\phi(s_i))) \right]$$
 
-公式中 $y_i \log \sigma(r_\phi(s_i))$ 部分是正确步骤的损失，Sigmoid 函数将原始评分映射到 $[0, 1]$ 区间，得到步骤正确的概率，PRM 给出的正确概率越高，损失就越小。同理，$(1 - y_i) \log (1 - \sigma(r_\phi(s_i)))$ 是错误步骤的损失，PRM 给出的正确概率越低，损失就越小。由此可见，PRM 本质上就是[逻辑回归](../../statistical-learning/linear-models/logistic-regression.md)的多步版本。
+公式中 $y_i \log \sigma(r_\phi(s_i))$ 部分是正确步骤的损失，Sigmoid 函数将原始评分映射到 $[0, 1]$ 区间，得到步骤正确的概率，PRM 给出的正确概率越高，损失就越小。同理，$(1 - y_i) \log (1 - \sigma(r_\phi(s_i)))$ 是错误步骤的损失，PRM 给出的正确概率越低，损失就越小。由此可见，PRM 本质上就是[二分类交叉熵损失](../../statistical-learning/linear-models/logistic-regression.md)的多步版本。
 
 ![PRM 步骤评分与 ORM 对比](assets/prm-scoring.png)
 
@@ -81,9 +81,9 @@ $$\mathcal{L}_{PRM} = -\sum_{i=1}^{n} \left[ y_i \log \sigma(r_\phi(s_i)) + (1 -
 
 DeepSeek-R1 Zero 展示了纯 RL 的潜力，但由于一些实际问题（主要是训练初期不稳定），DeepSeek-R1 最终采用了更稳健的少量 SFT + 大规模 RL 方案。SFT 在这套方案中只承担了初始化的职责，引导模型进入推理模式，避免训练过程初期的不稳定现象，让模型尽快从重复输出或格式混乱的状态中摆脱出来。R1 的训练流程分为四个阶段：
 - 阶段一：用约 8000 条高质量推理数据进行冷启动 SFT，让模型初步学会推理格式。
-- 阶段二：用 GRPO 进行大规模 RL 训练，让模型自主探索推理策略。
-- 阶段三：从 RL 模型生成的高质量解答中进行拒绝采样（Rejection Sampling），即让模型对同一问题生成多个解答，只保留通过验证的正确解答，筛选出最佳推理样本。
-- 阶段四：用这些采样数据再次进行最终 SFT，巩固推理能力。
+- 阶段二：用 GRPO 进行面向推理的大规模 RL 训练，让模型自主探索推理策略。
+- 阶段三：从 RL 模型中使用拒绝采样（Rejection Sampling）生成高质量数据并进行 SFT 训练，提升模型在推理和非推理任务上的综合表现。
+- 阶段四：在 SFT 基础上进行全场景 RL 训练，同时优化推理准确性、有用性和无害性，获得最终模型。
 
 左图显示，DeepSeek-R1 的训练过程中，RL 阶段贡献了最大的能力提升（从 45 跃升到 75），远超冷启动 SFT 的效果。右图则对比了三种模型的性能，R1-Zero（纯 RL）已经大幅超越了基础模型，而 R1（SFT+RL）在各项指标上又进一步领先，尤其是在数学推理上从 71% 提升到 79%。这说明少量 SFT 数据虽然不是推理能力的来源，但确实能引导模型更有效地释放潜力。
 

@@ -63,7 +63,7 @@ $$D_{opt} \propto C^{0.50}$$
 相比起卡普兰的经验法则，Chinchilla 的结论"模型和数据同步增长"的理论基础要坚实许多，它不是凭直觉得出，而是从损失函数的数学形式推导的。Chinchilla 论文假设损失函数可以分解为三项之和：
 $$L(N, D) = L_{irr} + \frac{A}{N^\alpha} + \frac{B}{D^\beta}$$
 
-- $L_{irr}$ 是不可约损失（Irreducible Loss），代表数据本身的熵，无论模型多大、数据多多都无法消除这部分损失，就好比再厉害的学生也无法完全预测一篇从未见过的文章。
+- $L_{irr}$ 是不可约损失（Irreducible Loss），代表数据本身的熵，无论模型多大、数据再多都无法消除这部分损失，就好比再厉害的学生也无法完全预测一篇从未见过的文章。
 - $A/N^\alpha$ 是模型容量不足导致的损失，参数越多这部分越小，表示模型有更大的容量来拟合语言规律。
 - $B/D^\beta$ 是数据不足导致的损失，训练数据越多这部分越小，表示模型见过了更丰富的语言现象。
 
@@ -73,7 +73,7 @@ $$L(N, D) = L_{irr} + \frac{A}{N^\alpha} + \frac{B}{D^\beta}$$
 
 $$N_{opt} \propto C^{\frac{\beta}{\alpha+\beta}}, \quad D_{opt} \propto C^{\frac{\alpha}{\alpha+\beta}}$$
 
-$\alpha$ 和 $\beta$ 具有对称关系，它们应该相等，这与 Chinchilla 的实验估计出 $\alpha \approx \beta$，两个指数就各占一半的结果相吻合，也是最终结论 $N_{opt} \propto C^{0.5}, D_{opt} \propto C^{0.5}$ 的理论依据。
+从 Chinchilla 的实验估计出 $\alpha \approx \beta$，两个指数就各占一半，这也是最终结论 $N_{opt} \propto C^{0.5}, D_{opt} \propto C^{0.5}$ 的理论依据。
 
 ## 过度训练现象
 

@@ -229,7 +229,7 @@ $$A_i = \frac{s_i - mean(\{s_1, \ldots, s_G\})}{std(\{s_1, \ldots, s_G\})}$$
 
 $$[pg_loss]\mathcal{L} = -\mathbb{E}_{x, y \sim \pi_\theta} \left[ A \cdot \log \pi_\theta(y|x) \right]$$
 
-其中 $A$ 是优势函数。在 PPO 中，$A$ 由价值函数估计，并且使用重要性采样比 $\frac{\pi_\theta(y|x)}{\pi_{old}(y|x)}$ 来修正分布偏移。这里 GRPO 做了两处替换：一是用相对优势 $A_i$ 替代价值函数估计的优势。$A_i = (s_i - \hat{\mu}) / \hat{\sigma}$ 是从同一组采样中直接计算的，不需要训练价值函数。二是用参考模型的对数概率比替代重要性采样比。GRPO 将 $\log \pi_\theta(y|x)$ 替换为 $\log \frac{\pi_\theta(y|x)}{\pi_{\text{ref}}(y|x)}$。这个替换的含义是策略更新的方向不再由提高/降低某个回答的绝对概率决定，而是由相比参考模型，提高/降低某个回答的相对概率决定。从数学上看，$\log \frac{\pi_\theta}{\pi_{\text{ref}}} = \log \pi_\theta - \log \pi_{\text{ref}}$，相当于在原始策略梯度上减去了一个与策略参数无关的常数项 $\log \pi_{\text{ref}}$，它不改变梯度方向，但为策略漂移提供了一个锚点。当 $\pi_{\text{ref}}$ 是训练初始时的策略模型时，这个对数概率比度量的是策略相对于起点的偏移程度。将这两处替换代入策略梯度损失公式 {{pg_loss}}，并对组内 $G$ 个回答取平均，再加入与 PPO 形式一致的裁剪机制，就得到 GRPO 的策略梯度损失：
+其中 $A$ 是优势函数。在 PPO 中，$A$ 由价值函数估计，并且使用重要性采样比 $\frac{\pi_\theta(y|x)}{\pi_{old}(y|x)}$ 来修正分布偏移。这里 GRPO 做了两处替换：一是用相对优势 $A_i$ 替代价值函数估计的优势。$A_i = (s_i - \hat{\mu}) / \hat{\sigma}$ 是从同一组采样中直接计算的，不需要训练价值函数。二是保留重要性采样比 $\frac{\pi_\theta(y|x)}{\pi_{\text{old}}(y|x)}$ 来修正分布偏移，这与 PPO 的做法一致。参考模型 $\pi_{\text{ref}}$ 仅在后续的 KL 惩罚项中出现，不参与策略梯度项的替换。从数学上看，$\log \frac{\pi_\theta}{\pi_{\text{ref}}} = \log \pi_\theta - \log \pi_{\text{ref}}$，相当于在原始策略梯度上减去了一个与策略参数无关的常数项 $\log \pi_{\text{ref}}$，它不改变梯度方向，但为策略漂移提供了一个锚点。当 $\pi_{\text{ref}}$ 是训练初始时的策略模型时，这个对数概率比度量的是策略相对于起点的偏移程度。将这两处替换代入策略梯度损失公式 {{pg_loss}}，并对组内 $G$ 个回答取平均，再加入与 PPO 形式一致的裁剪机制，就得到 GRPO 的策略梯度损失：
 
 $$[grpo_loss]\mathcal{L}_{GRPO} = -\mathbb{E} \left[ \frac{1}{G} \sum_{i=1}^{G} \min\left(A_i \cdot \frac{\pi_\theta(y_i|x)}{\pi_{\text{old}}(y_i|x)}, clip\left(\frac{\pi_\theta(y_i|x)}{\pi_{\text{old}}(y_i|x)}, 1-\epsilon, 1+\epsilon\right) \cdot A_i\right) \right] + \beta \cdot \mathbb{D}_{\text{KL}}[\pi_\theta \| \pi_{\text{ref}}]$$
 
@@ -314,7 +314,7 @@ GRPO 的首要优势是自进化能力，模型可以自主提升推理能力，
 
    **数据格式差异**：DPO 需要成对偏好对比数据 $(x, y_w, y_l)$，即同一指令下好回答和坏回答的配对；KTO 只需单点标签数据 $(x, y, \text{label})$，即一条指令 - 回答对加"好/坏"标签。KTO 的数据更易获取（如用户点赞/点踩），但丢失了 DPO 中"好回答比坏回答好多少"的相对信息。
 
-   **损失函数本质区别**：DPO 的损失函数 $-\log \sigma(r_\theta(y_w) - r_\theta(y_l))$ 关注好/坏回答的隐式奖励**差值**，是一个二分类交叉熵损失；KTO 的损失函数 $\lambda_+ \cdot (-\log \sigma(r_\theta)) + \lambda_- \cdot (-\log \sigma(-r_\theta))$ 分别对好/坏回答独立计算损失，好/坏权重可以不对称（$\lambda_- > \lambda_+$），体现了前景理论的损失厌恶。
+   **损失函数本质区别**：DPO 的损失函数 $-\log \sigma(r_\theta(y_w) - r_\theta(y_l))$ 关注好/坏回答的隐式奖励**差值**，是一个二分类交叉熵损失；KTO 的损失函数 $\lambda_+ \cdot (1 - \sigma(r_\theta - z)) + \lambda_- \cdot (1 - \sigma(z - r_\theta))$ 分别对好/坏回答独立计算损失，好/坏权重可以不对称（$\lambda_- > \lambda_+$），体现了前景理论的损失厌恶。
 
    **适用场景**：DPO 适用于有专门标注团队、可以组织成对比较的场景；KTO 适用于已有大规模用户反馈数据（如点赞/点踩）、数据收集成本敏感的场景。
 

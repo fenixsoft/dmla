@@ -148,7 +148,7 @@ class PretrainDataset(Dataset):
 
 ::: info 预训练语料规模
 
-预训练数据集的 `pretrain_t2t_mini.jsonl` 包含约 200 万条文本样本，总数据量约 1.2 GB。这是 MiniMind 项目提供的精简版语料，适合在单卡 GPU 上快速复现预训练流程。完整版语料 `pretrain_t2t.jsonl` 约 10 GB，训练效果更好但耗时更长。本实验使用精简版语料。
+预训练数据集的 `pretrain_t2t_mini.jsonl` 包含约 127 万条文本样本，总数据量约 1.2 GB。这是 MiniMind 项目提供的精简版语料，适合在单卡 GPU 上快速复现预训练流程。完整版语料 `pretrain_t2t.jsonl` 约 10 GB，训练效果更好但耗时更长。本实验使用精简版语料。
 
 :::
 
@@ -161,10 +161,10 @@ class PretrainDataset(Dataset):
 | 组件 | 选择 |
 |------|------|
 | 归一化层 | [RMSNorm](architecture-evolution.md#rmsnorm) 替代 [LayerNorm](transformer-architecture.md#层归一化) |
-| 位置编码 | [YaRN 位置编码](./architecture-evolution.md#yarn-位置编码) 替代 [RoPE 位置编码](./transformer-architecture.md#rope-旋转位置编码) |
+| 位置编码 | [RoPE 旋转位置编码](./transformer-architecture.md#rope-旋转位置编码)（使用 [YaRN 扩展](./architecture-evolution.md#yarn-位置编码)） |
 | 注意力 KV 缓存策略 | [GQA 分组查询注意力](./architecture-evolution.md#gqa-分组查询注意力) 代替 [MHA 多头注意力](./architecture-evolution.md#mha-多头注意力) |
 | 注意力 效率策略 | 优先使用[Flash Attention](./architecture-evolution.md#flash-attention)（取决于硬件支持） |
-| 激活函数 | [SwiGLU 激活函数](./architecture-evolution.md#swiglu) 代替 [RelU 激活函数](../../deep-learning/neural-network-structure/activation-loss-functions.md#relu-及其变体) |
+| 激活函数 | [SwiGLU 激活函数](./architecture-evolution.md#swiglu) 代替 [ReLU 激活函数](../../deep-learning/neural-network-structure/activation-loss-functions.md#relu-及其变体) |
 | 分词器 | [BPE 分词器](language-model-tokenization.md#bpe) |
 | 优化器 | [AdamW 自适应优化器](../../deep-learning/neural-network-optimization/adaptive-optimizers.md#adamw) |
 
@@ -488,15 +488,15 @@ print(f"词嵌入与输出头共享: {config.tie_word_embeddings}")
 本次预训练的核心工程决策如下：
 
 - **混合精度训练**：使用 BF16 精度进行前向和反向计算，减少显存占用并加速计算，同时保持足够的数值精度避免训练不稳定。BF16 相比 FP16 的优势在于指数位与 FP32 相同，不会出现上溢和下溢问题，因此不需要 GradScaler。
-- **余弦学习率调度**：学习率从初始值出发，按余弦曲线平滑衰减到接近零。相比固定学习率或阶梯衰减，余弦调度在训练初期保持较高学习率加速收敛，后期缓慢降低学习率精细调整参数，是预训练中最常用的调度策略。
+- **余弦学习率调度**：学习率从初始值出发，按余弦曲线平滑衰减到初始值的 10%（即 $5 \times 10^{-5}$）。相比固定学习率或阶梯衰减，余弦调度在训练初期保持较高学习率加速收敛，后期缓慢降低学习率精细调整参数，是预训练中最常用的调度策略。
 - **梯度裁剪**：将梯度的全局范数裁剪到 1.0 以内，防止梯度爆炸导致训练崩溃。预训练的 loss 曲线在初期波动较大，梯度裁剪是保证训练稳定性的重要安全阀。
 - **周期性保存**：每 1000 步保存一次模型权重，训练结束后保存最终权重。保存的权重文件可以在推理阶段直接加载，也可以作为 SFT 阶段的初始化权重。
 
 ::: info 训练预估
 
-训练语料约 200 万条样本，序列长度 512，批大小 32，2 个 epoch，笔者使用单卡 RTX 5080 约需 2.5 小时。
+训练语料约 127 万条样本，序列长度 512，批大小 32，2 个 epoch，笔者使用单卡 RTX 5080 约需 2.5 小时。
 
-- 本次训练的峰值显存占用约 7.2 GB（硬件支持 Flash Attention）或 11.8 GB（硬件不支持 Flash Attention）。8 GB 显存的 GPU 有较大 OOM 的风险，12 GB 以上支持 Flash Attention 的 GPU 可稳定训练。
+- 本次训练的峰值显存占用约 7.4 GB（硬件支持 Flash Attention）或 12.0 GB（硬件不支持 Flash Attention）。8 GB 显存的 GPU 有较大 OOM 的风险，12 GB 以上支持 Flash Attention 的 GPU 可稳定训练。
 
 - NVIDIA 从 Ampere 架构（Compute Capability ≥ 8.0）开始原生支持 Flash Attention，也就是 RTX 30 系列 / A100 及之后。
 
@@ -522,7 +522,7 @@ print(f"词嵌入与输出头共享: {config.tie_word_embeddings}")
 
     | 激活项 | 计算 | Flash Attention | 普通 Attention |
     |--------|------|:---:|:---:|
-    | LayerNorm 输出 × 2 | $B \times S \times D \times 2$ | 24.0 MB | 24.0 MB |
+    | LayerNorm 输出 × 2 | $B \times S \times D \times 2 \times 2$ | 48.0 MB | 48.0 MB |
     | Q、K、V 投影结果 | $B \times S \times (n_q + 2 n_{kv}) \times d_h \times 2$ | 48.0 MB | 48.0 MB |
     | Attention 输出 | $B \times S \times D \times 2$ | 24.0 MB | 24.0 MB |
     | 注意力分数矩阵 | $B \times n_q \times S \times S \times \mathbf{4}$ | — | 256 MB |
@@ -531,8 +531,8 @@ print(f"词嵌入与输出头共享: {config.tie_word_embeddings}")
     | SwiGLU up | $B \times S \times I \times 2$ | 76.0 MB | 76.0 MB |
     | SiLU(gate) | $B \times S \times I \times 2$ | 76.0 MB | 76.0 MB |
     | SiLU(gate) × up | $B \times S \times I \times 2$ | 76.0 MB | 76.0 MB |
-    | **每层合计** | | **400 MB** | **912 MB** |
-    | **8 层合计** | | **3.12 GB** | **7.12 GB** |
+    | **每层合计** | | **424 MB** | **936 MB** |
+    | **8 层合计** | | **3.31 GB** | **7.31 GB** |
 
     其中 $B=32，S=512，D=768，I=2432，n_q=8，n_{kv}=4，d_h=96$。注意力分数矩阵和 Softmax 输出以 FP32 存储，因为 Softmax 的数值精度对梯度计算至关重要。Flash Attention 通过算子融合避免了将这两个矩阵写入显存，这是它节省显存的核心原因。
 
@@ -556,11 +556,11 @@ print(f"词嵌入与输出头共享: {config.tie_word_embeddings}")
     | 项目 | Flash Attention | 普通 Attention |
     |------|:---:|:---:|
     | 静态占用 | 0.95 GB | 0.95 GB |
-    | 前向传播激活值 | 3.12 GB | 7.12 GB |
+    | 前向传播激活值 | 3.31 GB | 7.31 GB |
     | Logits + Loss | 1.17 GB | 1.17 GB |
     | CUDA 运行时 | ≈1.0 GB | ≈1.0 GB |
-    | 碎片化开销 (~15%) | ≈0.94 GB | ≈1.53 GB |
-    | **估算峰值** | **7.2 GB** | **11.8 GB** |
+    | 碎片化开销 (~15%) | ≈0.96 GB | ≈1.56 GB |
+    | **估算峰值** | **7.4 GB** | **12.0 GB** |
 
     上述估算是理论最小值，实际运行中还会因 PyTorch 缓存分配器的预留策略（按块分配显存并保留空闲块供复用）、cuDNN 工作空间、CUDA runtime 等因素额外消耗 0.5-1 GB。因此 Flash Attention 下 `batch_size=32` 实际需要 8 GB 以上的显存才有可能运行，使用 RTX 4060（8 GB 约 7.6 GB 可用）等显存的 GPU 时，有较大概率 OOM，建议将 `batch_size` 降至 16 并将 `accumulation_steps` 相应调整为 16。
 

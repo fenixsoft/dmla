@@ -53,7 +53,7 @@ $$M_{\text{KV}} = 2 \times n_{\text{layer}} \times d_{\text{head}} \times n_{\te
 
 早期操作系统也为每个程序分配连续的内存空间，导致严重的内存碎片。解决方案是虚拟内存分页：将物理内存划分为固定大小的页（Page），程序的地址空间也被划分为相同大小的页，通过页表将虚拟页映射到物理页。这样程序就不必占据连续的物理内存，只要页表能正确映射就行。空闲的页可以被任何程序使用，完美解决了内存碎片问题。
 
-2023 年，加州大学伯克利分校的权旭锡（Woosuk Kwon）在论文《[Efficient Memory Management for Large Language Model Serving with PagedAttention](https://arxiv.org/abs/2309.06180)》中提出了 PagedAttention 机制，借鉴操作系统虚拟内存的分页思想管理 KV Cache。KV Cache 不再是连续的大块显存，而是被划分为固定大小的 Block（类似内存的页），每个 Block 存储 16 个 token 的 Key 和 Value 向量。请求的 KV Cache 不需要占据连续的 Block，而是通过一张 Block 表（类似页表）将逻辑上连续的 KV Cache 映射到物理上分散的 Block 上。注意力计算时，通过 Block 表找到每个 token 对应的物理地址，就能正常计算。这项工作发表在操作系统领域顶级会议 SOSP 2023 上，并催生了 vLLM 这一广泛使用的推理框架。PagedAttention 的由以下三个组件构成：
+2023 年，加州大学伯克利分校的权旭锡（Woosuk Kwon）在论文《[Efficient Memory Management for Large Language Model Serving with PagedAttention](https://arxiv.org/abs/2309.06180)》中提出了 PagedAttention 机制，借鉴操作系统虚拟内存的分页思想管理 KV Cache。KV Cache 不再是连续的大块显存，而是被划分为固定大小的 Block（类似内存的页），每个 Block 存储 16 个 token 的 Key 和 Value 向量。请求的 KV Cache 不需要占据连续的 Block，而是通过一张 Block 表（类似页表）将逻辑上连续的 KV Cache 映射到物理上分散的 Block 上。注意力计算时，通过 Block 表找到每个 token 对应的物理地址，就能正常计算。这项工作发表在操作系统领域顶级会议 SOSP 2023 上，并催生了 vLLM 这一广泛使用的推理框架。PagedAttention 由以下三个组件构成：
 
 - **Block 表**（Block Table）记录每个请求的 KV Cache 各 Block 的物理位置。请求的逻辑 Block 0 可能映射到物理 Block 7，逻辑 Block 1 映射到物理 Block 23，完全不必连续。注意力计算时，GPU 内核根据 Block 表找到需要读取的物理地址，再从这些地址读取 Key 和 Value 向量。
 
@@ -85,7 +85,7 @@ graph LR
 
 2024 年，加州大学圣迭戈分校的论文《[DistServe: Disaggregating Prefill and Decoding for Goodput-Optimized Large Language Model Serving](https://arxiv.org/abs/2401.09670)》验证了这种分离的优势。在相同硬件总量下，分离架构相比传统的混合部署，吞吐量提升了 1.4-2.4 倍，同时满足更严格的延迟约束。分离之后，Prefill 实例不再被 Decode 请求拖慢，TTFT 更稳定。Decode 实例不再被 Prefill 请求干扰，TPS 更均匀。
 
-不过，PD 分离架构又带来了新的工程挑战：KV Cache 该如何从 Prefill 实例快速传到 Decode 实例？前面我们以 LLaMA-2 70B 为例计算过，单个请求的 KV Cache 约需 10.7 GB 显存。在传统的 PCIe 4.0 总线连接下（带宽约 31.5 GB/s），传输 10 GB 需要约 200 ms，如果用 NVLink（带宽 300 GB/s），传输只需约 33 ms，延迟大为改善。因此，PD 分离架构通常要求 Prefill 和 Decode 实例之间有高速互连，即 NVLink、HCCS、InfiniBand 这些绕过 PCIe 的传输技术支持。
+不过，PD 分离架构又带来了新的工程挑战：KV Cache 该如何从 Prefill 实例快速传到 Decode 实例？前面我们以 LLaMA-2 70B 为例计算过，单个请求的 KV Cache 约需 10.7 GB 显存。在传统的 PCIe 4.0 总线连接下（带宽约 31.5 GB/s），传输 10 GB 需要约 317 ms，如果用 NVLink（带宽 300 GB/s），传输只需约 33 ms，延迟大为改善。因此，PD 分离架构通常要求 Prefill 和 Decode 实例之间有高速互连，即 NVLink、HCCS、InfiniBand 这些绕过 PCIe 的传输技术支持。
 
 此外，调度策略也是一个关键问题，它决定了新请求应该分配给哪一个 Decode 实例。最直观的调度策略是轮询（Round-Robin），各个实例轮流分配，足够简单却不够精细。更合理的策略考虑两个因素，一是 Decode 实例当前的负载情况（已经承载了多少请求，显存还剩多少空间），二是请求的预期生成长度（短请求分配给轻载实例以避免被拖慢，长请求分配给重载实例）。这种负载感知调度可以更好地平衡各 Decode 实例的工作量，减少请求之间的互相干扰。
 
@@ -111,7 +111,7 @@ graph LR
 
 Draft Model 一次快速生成 K 个候选 token（称为推测长度，通常为 4-8），这个过程也是自回归的，但因为 Draft Model 的规模远小于 Target Model，所以生成速度很快。然后 Target Model 对这 K 个 token 做一次前向传播，这次传播同时对所有 K 个 token 计算注意力，等价于一次性获得了每个位置上 Target Model 的概率分布。通过比较 Draft Model 和 Target Model 在每个位置上的概率分布，可以逐个判断候选 token 是否被 Target Model 所认可，如果 Draft Model 选的 token 在 Target Model 的概率分布中也取得较高的概率，就接受这个 token，否则就拒绝，并从 Target Model 的概率分布中采样一个替代。
 
-假设推测长度 K=5，接受率 $\alpha=0.8$（即平均 80% 的候选 token 被接受）。那么平均每次投机能接受的 token 数为 $\frac{1-\alpha^{K+1}}{1-\alpha} \approx 3.69$，加上 Target Model 每次修正生成的 1 个 token，一次投机平均产出 5 个 token。而传统自回归方式需要 5 次前向传播才能生成 5 个 token。由于 Draft Model 的前向传播远快于 Target Model，且 Target Model 只做了一次前向传播而非 5 次，总体速度显著提升。
+假设推测长度 K=5，接受率 $\alpha=0.8$（即平均 80% 的候选 token 被接受）。那么平均每次投机能接受的 token 数为 $\frac{1-\alpha^{K+1}}{1-\alpha} \approx 3.69$，加上 Target Model 每次修正生成的 1 个 token，一次投机平均产出约 3.69 个 token。而传统自回归方式需要 5 次前向传播才能生成 5 个 token。由于 Draft Model 的前向传播远快于 Target Model，且 Target Model 只做了一次前向传播而非 5 次，总体速度显著提升。
 
 投机解码虽然名字中带有"投机"的字眼，但它是有严谨理论保证输出分布与原始自回归采样完全一致的，不是近似加速，而是精确加速，同一个模型、同一个采样策略，投机解码和逐个生成最终产生的 token 序列的概率分布完全相同。这个保证是通过**修正采样**（Modified Rejection Sampling）来实现的。对于位置 $t$ 的候选 token $x_t$（由 Draft Model 以概率 $q(x_t)$ 采样得到），Target Model 在该位置的概率为 $p(x_t)$。接受规则如下：
 
