@@ -16,7 +16,7 @@
     <!-- 语言切换按钮 -->
     <button class="locale-btn" @click="switchLocale" :title="isEnglish ? '切换到中文' : 'Switch to English'">
       <svg class="locale-icon" viewBox="0 0 24 24" fill="none">
-        <text x="2" y="18" font-size="12" font-weight="700" fill="currentColor" font-family="Arial, sans-serif">{{ isEnglish ? '中' : 'EN' }}</text>
+        <text x="12" y="17" :font-size="isEnglish ? 18 : 16" font-weight="700" fill="currentColor" font-family="Arial, sans-serif" text-anchor="middle">{{ isEnglish ? '中' : 'EN' }}</text>
       </svg>
     </button>
 
@@ -144,8 +144,8 @@ function onSettingsSave(config) {
 }
 
 .locale-icon {
-  width: 18px;
-  height: 18px;
+  width: 22px;
+  height: 22px;
   color: var(--vp-c-text);
 }
 </style>
