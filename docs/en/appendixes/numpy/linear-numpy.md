@@ -447,7 +447,7 @@ The broadcasting mechanism follows a strict set of rules to determine whether tw
 2. **Compatibility check**: If two arrays have the same size in a dimension, or one of them has size 1, they are compatible in that dimension
 3. **Expansion execution**: When all dimensions are compatible, dimensions of size 1 are "stretched" (copied) to match the other array
 
-![Detailed Illustration of the Three Broadcasting Rules](./assets/broadcasting_rules.png)
+![Detailed Illustration of the Three Broadcasting Rules](../../../appendixes/numpy/assets/broadcasting_rules.png)
 
 *Figure: Illustration of the three broadcasting rules*
 

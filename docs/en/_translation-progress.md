@@ -1,6 +1,6 @@
 # 翻译进度追踪
 
-> 最后更新: 2026-07-25（sandbox.md 校审完成）
+> 最后更新: 2026-07-25（agent-experiment.md 校审完成）
 
 | 相对路径 | 状态 | 翻译代理 | 校审代理 | 备注 |
 |---------|------|---------|---------|------|
@@ -90,4 +90,7 @@
 | agent-applications/agent-systems/orchestration-fault-tolerance.md | 翻译完成 | ✓ | | Mermaid 标签译英；术语、完整性均校验通过 |
 | agent-applications/vector-retrieval-rag/retrieval-augmented-generation.md | 校审完成 | ✓ | ✓ | 修复 ISSUP token 值 `Partially Support`→`Partially Supported`；术语、链接、代码、LaTeX、完整性、可读性均校验通过 |
 | agent-applications/agent-systems/agent-collaboration-communication.md | 翻译完成 | ✓ | | 内部 `.md` 链接保留原相对路径；锚点译英；Mermaid 标签译英；术语、LaTeX、完整性均校验通过 |
-| agent-applications/agent-systems/agent-experiment.md | 翻译完成 | ✓ | | 锚点译英；代码注释与字符串译英；术语、LaTeX、完整性均校验通过 |
+| agent-applications/agent-systems/agent-experiment.md | 校审完成 | ✓ | ✓ | 代码注释与字符串（含 print、error msg、description、docstring、prompt 模板）全部译英；`_is_format_error` 中文关键词（"参数""格式""缺少""类型"）替换为英文等价关键词；Planner 中文目标关键词（"代码""实现""对比""比较"）已移除；术语、锚点、LaTeX、完整性、可读性均校验通过，无需修复 |
+| appendixes/numpy/linear-numpy.md | 翻译完成 | ✓ | | 锚点译英；代码注释与字符串译英；图片路径 `./assets/`→`../../../appendixes/numpy/assets/`；术语、代码、LaTeX、完整性均校验通过 |
+| appendixes/numpy/calculus-numpy.md | 翻译完成 | ✓ | | 锚点译英；代码注释与字符串译英；术语、代码、LaTeX、Mermaid、完整性均校验通过 |
+| appendixes/numpy/probability-numpy.md | 翻译完成 | ✓ | | 锚点译英；代码注释与字符串译英；术语、代码、LaTeX、完整性均校验通过 |
