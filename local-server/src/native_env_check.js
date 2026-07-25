@@ -32,6 +32,7 @@ const SOFT_DEPS = [
   'ipywidgets',
   'accelerate',
   'bitsandbytes',
+  'jsonschema',
   'vllm'
 ]
 

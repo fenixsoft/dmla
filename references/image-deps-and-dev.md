@@ -34,7 +34,7 @@
 ```
 numpy, pandas, matplotlib, scipy, scikit-learn, pillow,
 opencv-python-headless, jupyter_client, ipykernel, lmdb, requests,
-transformers, tokenizers, datasets, ipywidgets, accelerate, bitsandbytes
+transformers, tokenizers, datasets, ipywidgets, accelerate, bitsandbytes, jsonschema
 ```
 
 ## 镜像开发约束（Volume Mount 机制）
