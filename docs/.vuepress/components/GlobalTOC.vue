@@ -2,7 +2,14 @@
   <div class="global-toc">
     <!-- 统计信息 -->
     <div v-if="level === 0" class="stats-info">
-      <p>共计 <strong>{{ tocArticleCount }}</strong> 篇文章，合计 <strong :title="totalWordsHint">{{ totalWords.toLocaleString() }}</strong> 字，最后更新日期 <strong>{{ lastUpdateDate }}</strong>。</p>
+      <p>
+        <template v-if="isEnglish">
+          Total of <strong>{{ tocArticleCount }}</strong> articles, totaling <strong :title="totalWordsHint">{{ totalWords.toLocaleString() }}</strong> characters. Last updated <strong>{{ lastUpdateDate }}</strong>.
+        </template>
+        <template v-else>
+          共计 <strong>{{ tocArticleCount }}</strong> 篇文章，合计 <strong :title="totalWordsHint">{{ totalWords.toLocaleString() }}</strong> 字，最后更新日期 <strong>{{ lastUpdateDate }}</strong>。
+        </template>
+      </p>
     </div>
     <ol>
       <li v-for="(page, index) in information" :key="index">
@@ -26,6 +33,7 @@
 
 <script>
 import { computed, defineComponent, inject } from 'vue'
+import { useRoute } from '@vuepress/client'
 import { useThemeLocaleData } from '@vuepress/theme-default/lib/client/composables/useThemeData.js'
 
 export default defineComponent({
@@ -47,6 +55,10 @@ export default defineComponent({
     // 从主题配置中动态获取 sidebar 配置
     const themeLocale = useThemeLocaleData()
     const sidebarConfig = computed(() => themeLocale.value.sidebar || [])
+
+    // 检测当前语言
+    const route = useRoute()
+    const isEnglish = computed(() => route.path.startsWith('/en/'))
 
     // 获取页面信息
     const information = computed(() => {
@@ -144,6 +156,9 @@ export default defineComponent({
     // 合计字数的悬浮提示
     const totalWordsHint = computed(() => {
       if (props.level !== 0) return ''
+      if (isEnglish.value) {
+        return `Text: ${totalTextWords.value.toLocaleString()} chars\nCode: ${totalCodeWords.value.toLocaleString()} chars`
+      }
       return `文字：${totalTextWords.value.toLocaleString()} 字\n代码：${totalCodeWords.value.toLocaleString()} 字`
     })
 
@@ -189,7 +204,7 @@ export default defineComponent({
       if (typeof item === 'string') {
         return item
       }
-      return item.text || item.title || '未知标题'
+      return item.text || item.title || (isEnglish.value ? 'Unknown title' : '未知标题')
     }
 
     function getWordData(item) {
@@ -241,6 +256,12 @@ export default defineComponent({
       const textWordCount = data.textWordCount || 0
       const codeWordCount = data.codeWordCount || 0
       if (wordCount <= 0) return { display: '', hint: '' }
+      if (isEnglish.value) {
+        return {
+          display: `${wordCount.toLocaleString()} chars`,
+          hint: `Text: ${textWordCount.toLocaleString()} chars\nCode: ${codeWordCount.toLocaleString()} chars`
+        }
+      }
       return {
         display: `${wordCount.toLocaleString()} 字`,
         hint: `文字：${textWordCount.toLocaleString()} 字\n代码：${codeWordCount.toLocaleString()} 字`
@@ -314,6 +335,7 @@ export default defineComponent({
     }
 
     return {
+      isEnglish,
       information,
       // 统计信息（仅在顶层显示）
       tocArticleCount,

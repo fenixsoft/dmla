@@ -31,6 +31,8 @@
 | deep-learning/neural-network-structure/forward-propagation.md | 校审完成 | ✓ | ✓ | 修复 Mermaid 残留中文标签（"输入 x"→"Input x" 等 4 图共 8 处）；术语、路径、代码、LaTeX、完整性、可读性均校验通过 |
 | deep-learning/neural-network-structure/backpropagation.md | 校审完成 | ✓ | ✓ | 术语、路径、代码、LaTeX、Mermaid、完整性、可读性均校验通过，无需修复 |
 | deep-learning/neural-network-structure/activation-loss-functions.md | 校审完成 | ✓ | ✓ | 术语、代码、LaTeX、图片路径、完整性、可读性均校验通过，无需修复；`weight-initialization.md`、`word-embedding.md` 系已知断链 |
+| deep-learning/neural-network-stability/weight-initialization.md | 校审完成 | ✓ | ✓ | 修复 ReLU 锚点 `#relu-function`→`#relu-and-its-variants`；术语、代码、LaTeX、锚点链接、完整性、可读性均校验通过；发现原文已有断链 2 处（详见报告）|
+| deep-learning/neural-network-stability/dropout.md | 翻译完成 | ✓ | | LaTeX/Markdown 不变；代码注释译英；内部 `.md` 链接锚点译英；无图片引用需修复 |
 | deep-learning/neural-network-optimization/gradient-descent.md | 校审完成 | ✓ | ✓ | 术语、代码、LaTeX、图片路径、完整性、可读性均校验通过，无需修复。修复锚点链接 `#learning-rate-decay`→`#learning-rate-selection-strategy`（该锚点在中文原文中亦不指向任何标题）|
 | deep-learning/neural-network-optimization/adaptive-optimizers.md | 校审完成 | ✓ | ✓ | 术语、代码、LaTeX、链接、完整性、可读性均校验通过，无需修复 |
 | README.md | 校审完成 | ✓ | ✓ | 修复 `PhD candidate`→`PhD` 事实错误；优化多处英译流畅性：`navigational map for structuring their knowledge framework in the era of AI`→`roadmap for organizing their knowledge in the AI era`、`higher reading threshold`→`steeper learning curve`、`runnable code examples that can be executed in the web page`→`interactive code examples that run directly in your browser` |

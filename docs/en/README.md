@@ -51,7 +51,7 @@ footer: CC-BY-NC-SA-4.0 Licensed | Copyright &copy; 2026
 
 ## About This Document
 
-This document explores how to apply machine learning to production systems, offering software developers a roadmap for organizing their knowledge in the AI era. In spirit, it is similar to my other work, [Phoenix Architecture](https://icyfenix.cn/). However, this document has a steeper learning curve than Phoenix Architecture. It is recommended to read [About Designing Machine Learning Application Systems](./introduction/about-dmla.md) first to understand the document's purpose and target audience.
+This document explores how to apply machine learning to production systems, offering software developers a roadmap for organizing their knowledge in the AI era. In spirit, it is similar to my other work, [Phoenix Architecture](https://icyfenix.cn/). However, this document has a steeper learning curve than Phoenix Architecture. It is recommended to read [About Designing Machine Learning Applications](./introduction/about-dmla.md) first to understand the document's purpose and target audience.
 
 I wrote this document with the following goals in mind:
 

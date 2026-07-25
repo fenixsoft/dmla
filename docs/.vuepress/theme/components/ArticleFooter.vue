@@ -10,7 +10,7 @@
             <line x1="16" y1="17" x2="8" y2="17"></line>
             <polyline points="10 9 9 9 8 9"></polyline>
           </svg>
-          <span class="meta-text">文章字数：{{ formattedWordCount }}</span>
+          <span class="meta-text">{{ isEnglish ? 'Words: ' : '文章字数：' }}{{ formattedWordCount }}</span>
         </div>
         <div v-if="lastUpdated" class="meta-item update-time">
           <svg class="meta-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -19,7 +19,7 @@
             <line x1="8" y1="2" x2="8" y2="6"></line>
             <line x1="3" y1="10" x2="21" y2="10"></line>
           </svg>
-          <span class="meta-text">更新于 {{ lastUpdated }}</span>
+          <span class="meta-text">{{ isEnglish ? 'Updated ' : '更新于 ' }}{{ lastUpdated }}</span>
         </div>
       </div>
     </div>
@@ -45,10 +45,12 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { usePageData } from '@vuepress/client'
+import { usePageData, useRoute } from '@vuepress/client'
 import { ClientOnly } from 'vuepress/client'
 
 const page = usePageData()
+const route = useRoute()
+const isEnglish = computed(() => route.path.startsWith('/en/'))
 
 // 字数统计 - VuePress v2 中 wordCount 直接在 page 根级别
 const wordCount = computed(() => page.value.wordCount || 0)
@@ -58,6 +60,9 @@ const formattedWordCount = computed(() => wordCount.value.toLocaleString())
 const wordCountHint = computed(() => {
   const text = textWordCount.value.toLocaleString()
   const code = codeWordCount.value.toLocaleString()
+  if (isEnglish.value) {
+    return `Text: ${text} chars\nCode: ${code} chars`
+  }
   return `文字：${text} 字\n代码：${code} 字`
 })
 
