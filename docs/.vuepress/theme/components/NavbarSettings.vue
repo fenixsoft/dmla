@@ -14,7 +14,7 @@
     </a>
 
     <!-- 语言切换按钮 -->
-    <div class="locale-switcher" ref="localeSwitcher">
+    <div class="locale-switcher">
       <button class="locale-btn" @click="toggleLocaleMenu" title="Switch Language / 切换语言">
         <svg class="locale-icon" viewBox="0 0 24 24" fill="none">
           <!-- "EN" 文字 -->
@@ -46,7 +46,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onUnmounted } from 'vue'
 import { useRoute } from '@vuepress/client'
 import Settings from './Settings.vue'
 
@@ -93,15 +93,21 @@ function switchLocale(target) {
 }
 
 // 点击外部关闭下拉菜单
-if (typeof document !== 'undefined') {
-  document.addEventListener('click', (e) => {
-    // 如果点击的不是语言切换区域内的元素，关闭菜单
-    const target = e.target
-    if (!target.closest('.locale-switcher')) {
-      showLocaleMenu.value = false
-    }
-  })
+function handleClickOutside(e) {
+  if (!e.target.closest('.locale-switcher')) {
+    showLocaleMenu.value = false
+  }
 }
+
+if (typeof document !== 'undefined') {
+  document.addEventListener('click', handleClickOutside)
+}
+
+onUnmounted(() => {
+  if (typeof document !== 'undefined') {
+    document.removeEventListener('click', handleClickOutside)
+  }
+})
 
 // 设置保存回调
 function onSettingsSave(config) {
