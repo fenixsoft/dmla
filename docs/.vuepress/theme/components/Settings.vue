@@ -4,7 +4,7 @@
       <div v-if="visible" class="settings-overlay" @click.self="close">
         <div class="settings-modal">
           <div class="settings-header">
-            <h3>设置</h3>
+            <h3>{{ labels.title }}</h3>
             <button class="close-btn" @click="close">&times;</button>
           </div>
 
@@ -15,14 +15,14 @@
               :class="{ active: activeTab === 'sandbox' }"
               @click="activeTab = 'sandbox'"
             >
-              沙箱服务
+              {{ labels.sandboxTab }}
             </button>
             <button
               class="tab-btn"
               :class="{ active: activeTab === 'highlight' }"
               @click="activeTab = 'highlight'"
             >
-              代码高亮
+              {{ labels.highlightTab }}
             </button>
           </div>
 
@@ -30,7 +30,7 @@
             <!-- 沙箱服务配置 Tab -->
             <div v-show="activeTab === 'sandbox'" class="tab-content">
               <div class="form-group">
-                <label>服务模式</label>
+                <label>{{ labels.serviceMode }}</label>
                 <div class="mode-selector">
                   <label class="mode-option" :class="{ active: sandboxMode === 'fc' }">
                     <input
@@ -39,8 +39,8 @@
                       value="fc"
                       @change="onModeChange"
                     />
-                    <span class="mode-label">Serverless 函数</span>
-                    <span class="mode-hint">无需部署，可运行 Python 片段</span>
+                    <span class="mode-label">{{ labels.fcLabel }}</span>
+                    <span class="mode-hint">{{ labels.fcHint }}</span>
                   </label>
                   <label class="mode-option" :class="{ active: sandboxMode === 'custom' }">
                     <input
@@ -49,14 +49,14 @@
                       value="custom"
                       @change="onModeChange"
                     />
-                    <span class="mode-label">自定义沙箱</span>
-                    <span class="mode-hint">自行部署 DMLA 沙箱环境</span>
+                    <span class="mode-label">{{ labels.customLabel }}</span>
+                    <span class="mode-hint">{{ labels.customHint }}</span>
                   </label>
                 </div>
               </div>
 
               <div v-if="sandboxMode === 'fc'" class="form-group">
-                <label for="sandbox-endpoint">函数服务地址</label>
+                <label for="sandbox-endpoint">{{ labels.fcUrlLabel }}</label>
                 <input
                   id="sandbox-endpoint"
                   :value="FC_DEFAULT_URL"
@@ -64,11 +64,11 @@
                   readonly
                   class="readonly-input"
                 />
-                <p class="help-text">因费用原因未开放 GPU 支持，训练模型（工程实训章节）请自行部署 DMLA 沙箱</p>
+                <p class="help-text">{{ labels.fcHelpText }}</p>
               </div>
 
               <div v-if="sandboxMode === 'custom'" class="form-group">
-                <label for="sandbox-endpoint">服务地址</label>
+                <label for="sandbox-endpoint">{{ labels.customUrlLabel }}</label>
                 <input
                   id="sandbox-endpoint"
                   v-model="endpoint"
@@ -76,11 +76,11 @@
                   placeholder="http://localhost:3001"
                   @input="resetStatus"
                 />
-                <p class="help-text">用户自行部署代码沙箱，可参见<a href="/appendixes/sandbox.html" target="_blank">环境构建说明</a></p>
+                <p class="help-text">{{ labels.customHelpTextBefore }}<a href="/appendixes/sandbox.html" target="_blank">{{ labels.customHelpTextLink }}</a></p>
               </div>
 
               <div class="connection-status">
-                <span class="status-label">连接状态:</span>
+                <span class="status-label">{{ labels.connectionStatus }}</span>
                 <span class="status-value" :class="statusClass">
                   <span class="status-dot"></span>
                   {{ statusText }}
@@ -91,7 +91,7 @@
             <!-- 代码高亮风格配置 Tab -->
             <div v-show="activeTab === 'highlight'" class="tab-content">
               <div class="form-group">
-                <label for="highlight-theme">选择风格</label>
+                <label for="highlight-theme">{{ labels.selectTheme }}</label>
                 <select id="highlight-theme" v-model="selectedTheme">
                   <option
                     v-for="theme in highlightThemes"
@@ -101,12 +101,12 @@
                     {{ theme.name }}
                   </option>
                 </select>
-                <p class="help-text">设置全站代码块的显示风格</p>
+                <p class="help-text">{{ labels.themeHelpText }}</p>
               </div>
 
               <!-- 实际页面预览 - 使用 iframe -->
               <div class="preview-section">
-                <label class="preview-label">效果预览</label>
+                <label class="preview-label">{{ labels.previewLabel }}</label>
                 <div class="preview-frame-container">
                   <iframe
                     ref="previewFrame"
@@ -123,10 +123,10 @@
 
           <div class="settings-footer">
             <button v-if="activeTab === 'sandbox'" class="btn btn-secondary" @click="testConnection">
-              {{ testing ? '检测中...' : '测试连接' }}
+              {{ testing ? labels.testing : labels.testConnection }}
             </button>
             <button class="btn btn-primary" @click="save">
-              保存设置
+              {{ labels.saveSettings }}
             </button>
           </div>
         </div>
@@ -137,10 +137,66 @@
 
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
 import { ClientOnly } from 'vuepress/client'
 import { HIGHLIGHT_THEMES, DEFAULT_THEME } from '../config/highlightThemes.js'
 import { getSiteConfig, saveSiteConfig } from '../utils/configMigration.js'
 import { FC_DEFAULT_URL } from '../../plugins/runnable-code/sandbox-config.js'
+
+const route = useRoute()
+const isEnglish = computed(() => route.path.startsWith('/en/'))
+
+const labels = computed(() => isEnglish.value ? {
+  title: 'Settings',
+  sandboxTab: 'Sandbox',
+  highlightTab: 'Code Highlight',
+  serviceMode: 'Service Mode',
+  fcLabel: 'Serverless Function',
+  fcHint: 'No deployment needed, run Python snippets',
+  customLabel: 'Custom Sandbox',
+  customHint: 'Deploy DMLA sandbox environment yourself',
+  fcUrlLabel: 'Function Service URL',
+  fcHelpText: 'GPU support is not available due to cost. For model training (lab chapters), please deploy the DMLA sandbox yourself.',
+  customUrlLabel: 'Service URL',
+  customHelpTextBefore: 'Users deploy their own code sandbox, see ',
+  customHelpTextLink: 'Build Instructions',
+  connectionStatus: 'Connection Status:',
+  selectTheme: 'Select Theme',
+  themeHelpText: 'Set the display theme for all code blocks on the site',
+  previewLabel: 'Preview',
+  testing: 'Testing...',
+  testConnection: 'Test Connection',
+  saveSettings: 'Save Settings',
+  statusConnected: 'Connected',
+  statusDisconnected: 'Disconnected',
+  statusTesting: 'Testing',
+  statusUnknown: 'Not tested',
+} : {
+  title: '设置',
+  sandboxTab: '沙箱服务',
+  highlightTab: '代码高亮',
+  serviceMode: '服务模式',
+  fcLabel: 'Serverless 函数',
+  fcHint: '无需部署，可运行 Python 片段',
+  customLabel: '自定义沙箱',
+  customHint: '自行部署 DMLA 沙箱环境',
+  fcUrlLabel: '函数服务地址',
+  fcHelpText: '因费用原因未开放 GPU 支持，训练模型（工程实训章节）请自行部署 DMLA 沙箱',
+  customUrlLabel: '服务地址',
+  customHelpTextBefore: '用户自行部署代码沙箱，可参见',
+  customHelpTextLink: '环境构建说明',
+  connectionStatus: '连接状态:',
+  selectTheme: '选择风格',
+  themeHelpText: '设置全站代码块的显示风格',
+  previewLabel: '效果预览',
+  testing: '检测中...',
+  testConnection: '测试连接',
+  saveSettings: '保存设置',
+  statusConnected: '已连接',
+  statusDisconnected: '未连接',
+  statusTesting: '检测中',
+  statusUnknown: '未检测',
+})
 
 const props = defineProps({
   visible: {
@@ -218,10 +274,10 @@ const statusClass = computed(() => ({
 
 const statusText = computed(() => {
   switch (connectionStatus.value) {
-    case 'connected': return '已连接'
-    case 'disconnected': return '未连接'
-    case 'testing': return '检测中'
-    default: return '未检测'
+    case 'connected': return labels.value.statusConnected
+    case 'disconnected': return labels.value.statusDisconnected
+    case 'testing': return labels.value.statusTesting
+    default: return labels.value.statusUnknown
   }
 })
 

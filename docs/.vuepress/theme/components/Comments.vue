@@ -11,6 +11,7 @@ import { ref, onMounted, watch, onBeforeUnmount, computed } from 'vue'
 import { useRoute } from 'vue-router'
 
 const route = useRoute()
+const isEnglish = computed(() => route.path.startsWith('/en/'))
 const giscusContainer = ref(null)
 let giscusScript = null
 let intersectionObserver = null
@@ -36,7 +37,7 @@ const giscusConfig = {
   emitMetadata: '0',
   inputPosition: 'top', // 输入框在顶部
   theme: 'https://ai.icyfenix.cn/giscus-theme.css', // 自定义主题
-  lang: 'zh-CN',
+  get lang() { return isEnglish.value ? 'en' : 'zh-CN' },
   loading: 'lazy'
 }
 
