@@ -47,7 +47,8 @@ function preprocessMarkdownSeparate(content) {
   textContent = textContent.replace(/\$([^\$\n]+?)\$/g, '$1')     // 行内公式：保留内容
   textContent = textContent.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')  // 链接：保留显示文字
   textContent = textContent.replace(/!\[[^\]]*\]\([^)]+\)/g, '')     // 图片：完全移除
-  textContent = textContent.replace(/<[a-zA-Z\/][^>]*>/g, '')        // HTML标签：只匹配真正的标签
+  // 仅移除 HTML 标签（标签名限定为字母/数字/连字符，禁止 } 、 \ 等非标签字符进入匹配）
+  textContent = textContent.replace(/<\/?[a-zA-Z][a-zA-Z0-9\-]*(?:\s+[a-zA-Z][a-zA-Z0-9\-]*(?:=(?:"[^"]*"|'[^']*'|\S+))?)*\s*\/?>/g, '')
   textContent = textContent.replace(/^---[\s\S]*?---/m, '')          // Frontmatter：完全移除
   textContent = textContent.replace(/^#{1,6}\s+/gm, '')               // 标题标记
   textContent = textContent.replace(/\*\*?([^*]+)\*\*?/g, '$1')       // 粗体/斜体

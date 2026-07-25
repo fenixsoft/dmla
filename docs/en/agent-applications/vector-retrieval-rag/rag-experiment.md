@@ -963,4 +963,4 @@ def chat(user_message, history=None):
 
 This lab built a complete knowledge base Q&A system using approximately 90 Markdown documents from the DMLA tutorial itself as the knowledge base, with Qwen3.5-0.8B-Instruct as the generation model, covering the full pipeline from document processing to real LLM conversation. After the RAG service starts, you can engage in conversational inference with the model. A sample execution result is shown below:
 
-![](./assets/result.gif)
+![](../../../agent-applications/vector-retrieval-rag/assets/result.gif)

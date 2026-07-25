@@ -70,7 +70,7 @@ Similar to software semantic versioning, model version numbers typically follow 
 
 Version creation can be triggered in several ways. The most straightforward is manual promotion — a researcher sees a Run with passing metrics in the experiment tracking system and actively promotes it to a registered version. A more engineering-oriented approach is metric-based auto-triggering: the training script automatically compares against preset metric thresholds on the validation set at the end of training; if the new model outperforms the registered champion version, a new version is created automatically. There are also periodic retraining scenarios — for example, training a model from the latest data every Monday at midnight and registering it automatically, ensuring the model continuously learns from new data. New versions inherit the metadata template (feature list, inference interface definition) from the previous version by default, and users only need to override the changed parts, reducing repetitive configuration work. Arranging experiment Runs and model versions along a unified timeline provides a clear view of the mapping from experiment to registry. In the diagram below, the upper part shows the lifecycle of experiment Runs and the target versions for promotion, while the lower part shows the state transition stages of model versions. The two timelines are aligned, making it easy to see the timing of each promotion.
 
-![Experiment and version timeline](../../ai-infra-engineering/mlops/assets/timeline.png)
+![Experiment and version timeline](../../../ai-infra-engineering/mlops/assets/timeline.png)
 
 *Figure: Experiment and model version timeline*
 

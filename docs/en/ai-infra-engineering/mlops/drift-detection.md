@@ -56,7 +56,7 @@ Multivariate drift detection attempts to compensate for the blind spots of univa
 
 The following figure shows an example of distribution comparison after PCA dimensionality reduction. Blue scatter points represent the projection of reference data onto the first two principal components, orange points represent current data, and the ellipses indicate the 95% confidence regions of each distribution. The positional offset and shape change of the ellipses intuitively reflect multivariate drift.
 
-![PCA drift scatter plot](../../ai-infra-engineering/mlops/assets/pca-drift-scatter.png)
+![PCA drift scatter plot](../../../ai-infra-engineering/mlops/assets/pca-drift-scatter.png)
 
 *Figure: Distribution comparison after PCA dimensionality reduction*
 
@@ -76,7 +76,7 @@ The univariate and multivariate methods described above assume that data is coll
 
 The following figure shows an example of time-series drift detection, illustrating model error rate over time. The green dashed line represents the reference level, and the orange region indicates the interval where drift occurs. Below, the corresponding CUSUM positive and negative cumulative statistics are shown, with the red dashed line representing the preset threshold. When CUSUM exceeds the threshold, a drift alarm is triggered.
 
-![Time-series drift detection](../../ai-infra-engineering/mlops/assets/time-series-drift.png)
+![Time-series drift detection](../../../ai-infra-engineering/mlops/assets/time-series-drift.png)
 
 *Figure: Time-series drift detection illustration*
 
