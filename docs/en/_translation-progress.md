@@ -48,3 +48,5 @@
 | deep-learning/sequence-models/rnn-basics.md | 校审完成 | ✓ | ✓ | 术语、代码、LaTeX、nn-arch 图、链接路径、完整性、可读性均校验通过，无需修复 |
 | deep-learning/sequence-models/word-embedding.md | 校审完成 | ✓ | ✓ | 修复断链锚点 `#dot-product-and-projection`→`#inner-product-and-projection`（英文版 vectors.md 标题为 `Inner Product and Projection`）；术语、代码、LaTeX、路径、完整性、可读性均校验通过 |
 | deep-learning/sequence-models/lstm-gru.md | 校审完成 | ✓ | ✓ | Mermaid 标签、术语、代码（注释及字符串）、LaTeX、完整性和可读性均校验通过，无需修复。锚点 `#gradient-propagation-and-limitations` 已验证存在于英文版 `rnn-basics.md`。`pack_padded_sequence` 中文注释笔误 `pack_packed_sequence` 已在英译中纠正 |
+| deep-learning/sequence-models/seq2seq.md | 校审完成 | ✓ | ✓ | Mermaid 标签、术语、代码、LaTeX、nn-arch 图、链接路径、完整性、可读性均校验通过，无需修复 |
+| deep-learning/sequence-models/lstm-experiment.md | 翻译完成 | | | LaTeX 不变；内部 `.md` 链接保留原相对路径不变；代码注释与字符串译英；锚点译英（`#数据管理`→`#data-management`、`#计划采样`→`#scheduled-sampling`）；无图片引用 |
