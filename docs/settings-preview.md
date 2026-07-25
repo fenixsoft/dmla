@@ -1,12 +1,10 @@
 ---
 layout: Preview
-title: 代码预览
 ---
 
 ```python
-# 这是一个示例代码片段
+# This is a python program
 def hello_world(name: str) -> str:
-    """返回问候语"""
     message = f"Hello, {name}!"
     print(message)
     return message
