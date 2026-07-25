@@ -30,4 +30,4 @@
 | deep-learning/neural-network-structure/mlp.md | 校审完成 | ✓ | ✓ | 修复残留中文「脉络」未译；术语、路径、代码、LaTeX、完整性、可读性均校验通过 |
 | deep-learning/neural-network-structure/forward-propagation.md | 校审完成 | ✓ | ✓ | 修复 Mermaid 残留中文标签（"输入 x"→"Input x" 等 4 图共 8 处）；术语、路径、代码、LaTeX、完整性、可读性均校验通过 |
 | deep-learning/neural-network-structure/backpropagation.md | 校审完成 | ✓ | ✓ | 术语、路径、代码、LaTeX、Mermaid、完整性、可读性均校验通过，无需修复 |
-| README.md | 翻译完成 | ✓ | | 首页翻译，YAML 保持原样，action 链接加 /en/ 前缀 |
+| README.md | 校审完成 | ✓ | ✓ | 修复 `PhD candidate`→`PhD` 事实错误；优化多处英译流畅性：`navigational map for structuring their knowledge framework in the era of AI`→`roadmap for organizing their knowledge in the AI era`、`higher reading threshold`→`steeper learning curve`、`runnable code examples that can be executed in the web page`→`interactive code examples that run directly in your browser` |
