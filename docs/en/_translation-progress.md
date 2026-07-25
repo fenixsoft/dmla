@@ -51,3 +51,4 @@
 | deep-learning/sequence-models/seq2seq.md | 校审完成 | ✓ | ✓ | Mermaid 标签、术语、代码、LaTeX、nn-arch 图、链接路径、完整性、可读性均校验通过，无需修复 |
 | deep-learning/sequence-models/lstm-experiment.md | 校审完成 | ✓ | ✓ | 术语、代码、LaTeX、完整性、可读性均校验通过；`sandbox.md` 系已知断链（英文目录下缺失该文件） |
 | language-models/architecture-basics/transformer-architecture.md | 校审完成 | ✓ | ✓ | 术语、代码、LaTeX、Mermaid、nn-arch 图、图片路径、内部链接锚点、完整性、可读性均校验通过，无需修复 |
+| language-models/architecture-basics/architecture-evolution.md | 校审完成 | ✓ | ✓ | 锚点译英；内部 `.md` 链接保留原相对路径；图片 `./assets/`→`../../../language-models/architecture-basics/assets/`；Mermaid 标签译英；练习题内容译英。校审：术语、LaTeX、Mermaid、nn-arch 图、图片路径、内部链接锚点、完整性、可读性均校验通过，无需修复 |
