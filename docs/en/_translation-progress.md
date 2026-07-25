@@ -1,6 +1,6 @@
 # 翻译进度追踪
 
-> 最后更新: 2026-07-25（llm-sft-experiment.md 校审更新）
+> 最后更新: 2026-07-25（rlhf.md 校审更新）
 
 | 相对路径 | 状态 | 翻译代理 | 校审代理 | 备注 |
 |---------|------|---------|---------|------|
@@ -54,6 +54,7 @@
 | language-models/architecture-basics/architecture-evolution.md | 校审完成 | ✓ | ✓ | 锚点译英；内部 `.md` 链接保留原相对路径；图片 `./assets/`→`../../../language-models/architecture-basics/assets/`；Mermaid 标签译英；练习题内容译英。校审：术语、LaTeX、Mermaid、nn-arch 图、图片路径、内部链接锚点、完整性、可读性均校验通过，无需修复 |
 | language-models/architecture-basics/language-model-tokenization.md | 校审完成 | ✓ | ✓ | 修复字节级 BPE 段残文乱码（`["learning"]`→`["学", "习"]`，移除译者随想式旁白）；术语、锚点链接、代码、LaTeX、完整性、可读性均校验通过 |
 | language-models/architecture-basics/llm-pretrain-experiment.md | 校审完成 | ✓ | ✓ | 链接锚点译英、内部 `.md` 链接路径、代码注释与字符串、术语、LaTeX、完整性、可读性均校验通过，无需修复 |
+| language-models/alignment/rlhf.md | 校审完成 | ✓ | ✓ | 术语、代码、LaTeX、Mermaid、完整性、可读性均校验通过，无需修复。发现 2 处断链：`probability-numpy.md`（EN appendixes 目录尚为空）、`alignment-new-paradigms.md`（EN 目录下缺失该文件）系已知未翻译文件 |
 | language-models/pretraining/pretraining-data.md | 校审完成 | ✓ | ✓ | 修复残留中文 5 处：`随处可见`→`that are everywhere`（Wikipedia 段）、`大量`→`large amounts of`（毒性过滤段）、`解题`→`problem-solving`（数据污染段）、`普遍`→`universally`（数据污染段）、`倾向于`→`tending to`（合成数据段）；术语、代码、LaTeX、Mermaid、锚点链接、完整性、可读性均校验通过 |
 | language-models/pretraining/scaling-laws.md | 校审完成 | ✓ | | 修复 4 处断链链接（`supervised-finetuning.md`→`../../../language-models/pretraining/supervised-finetuning.md`、`../alignment/rlhf.md`→`../../../language-models/alignment/rlhf.md`、`../../appendixes/numpy/probability-numpy.md#monte-carlo-method`→`../../../appendixes/numpy/probability-numpy.md#蒙特卡洛方法`、`../reasoning/test-time-compute.md`→`../../../language-models/reasoning/test-time-compute.md`）；修复 over-training 术语注法使其对英语读者更自然；术语、图片路径、LaTeX、完整性、可读性均校验通过 |
 | language-models/pretraining/distributed-training.md | 校审完成 | ✓ | ✓ | 术语、Mermaid、链接路径、图片路径、LaTeX、完整性、可读性均校验通过，无需修复 |
