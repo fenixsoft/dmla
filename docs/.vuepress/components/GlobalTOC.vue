@@ -52,14 +52,15 @@ export default defineComponent({
     const information = computed(() => {
       if (!props.pages) return []
 
-      const sidebar = props.pages === '/' ? sidebarConfig.value : props.pages
+      // 当 pages 是字符串时（如 '/' 或 '/en/'），使用当前 locale 的 sidebar 配置
+      const sidebar = Array.isArray(props.pages) ? props.pages : sidebarConfig.value
       return processSidebar(sidebar)
     })
 
     // 统计信息（仅在顶层计算）
     // 列入目录的文章数（有链接且字数超过100的页面）
     const tocArticleCount = computed(() => {
-      if (props.level !== 0 || props.pages !== '/') return 0
+      if (props.level !== 0 || Array.isArray(props.pages)) return 0
 
       const sidebar = sidebarConfig.value
       if (!sidebar || sidebar.length === 0) return 0
