@@ -29,3 +29,5 @@
 | deep-learning/neural-network-structure/perceptron.md | 校审完成 | ✓ | ✓ | 修复练习题编号（`1.`→`2.`）；术语、路径、代码、LaTeX、完整性、可读性均校验通过 |
 | deep-learning/neural-network-structure/mlp.md | 校审完成 | ✓ | ✓ | 修复残留中文「脉络」未译；术语、路径、代码、LaTeX、完整性、可读性均校验通过 |
 | deep-learning/neural-network-structure/forward-propagation.md | 校审完成 | ✓ | ✓ | 修复 Mermaid 残留中文标签（"输入 x"→"Input x" 等 4 图共 8 处）；术语、路径、代码、LaTeX、完整性、可读性均校验通过 |
+| deep-learning/neural-network-structure/backpropagation.md | 校审完成 | ✓ | ✓ | 术语、路径、代码、LaTeX、Mermaid、完整性、可读性均校验通过，无需修复 |
+| README.md | 翻译完成 | ✓ | | 首页翻译，YAML 保持原样，action 链接加 /en/ 前缀 |
