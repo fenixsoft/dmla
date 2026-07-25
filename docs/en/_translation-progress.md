@@ -20,3 +20,4 @@
 | statistical-learning/bayesian-methods/em-algorithm.md | 校审完成 | ✓ | ✓ | 发现 `vae.md` 断链（英文目录下缺失该文件）|
 | statistical-learning/support-vector-machines/kernel-methods.md | 校审完成 | ✓ | ✓ | 修复 typo: `of-dimensional`→`of dimensional`；修复可读性: `encountered as`→`used as`；deep-learning 词袋模型链接目标文件尚未翻译（断链） |
 | statistical-learning/support-vector-machines/svm-max-margin.md | 校审完成 | ✓ | ✓ | 修复 CN 练习题编号（全部为1→1/2/3/4）、图片路径 `./assets/`→`assets/` 统一、长句断句 |
+| statistical-learning/decision-tree-ensemble/decision-tree.md | 校审完成 | ✓ | ✓ | 无需修复 |
