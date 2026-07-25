@@ -27,3 +27,4 @@
 | statistical-learning/unsupervised-learning/dimensionality-reduction.md | 校审完成 | ✓ | ✓ | 术语、代码、LaTeX、路径、完整性、可读性均校验通过，无需修复；深层学习链接（word-embedding、vae）系已知断链 |
 | deep-learning/neural-network-structure/idea-origin.md | 校审完成 | ✓ | ✓ | 修复残留中文「低谷」未译；术语、路径、完整性、可读性均校验通过 |
 | deep-learning/neural-network-structure/perceptron.md | 校审完成 | ✓ | ✓ | 修复练习题编号（`1.`→`2.`）；术语、路径、代码、LaTeX、完整性、可读性均校验通过 |
+| deep-learning/neural-network-structure/mlp.md | 校审完成 | ✓ | ✓ | 修复残留中文「脉络」未译；术语、路径、代码、LaTeX、完整性、可读性均校验通过 |
