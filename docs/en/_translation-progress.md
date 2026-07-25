@@ -11,3 +11,4 @@
 | maths/calculus/derivative.md | 校审完成 | ✓ | ✓ | 已修复图片路径、英文 `neither zero nor yet zero` 术语误译 |
 | maths/calculus/gradient.md | 校审完成 | ✓ | ✓ | 无需修复 |
 | maths/probability/probability-basics.md | 校审完成 | ✓ | ✓ | 已修复残留中文「思维方式」未译 |
+| maths/probability/statistical-inference.md | 校审完成 | ✓ | ✓ | 修复锚点链接 `#maximum-likelihood-estimation-mle`→`#maximum-likelihood-estimation`；两个英文用词优化 |
