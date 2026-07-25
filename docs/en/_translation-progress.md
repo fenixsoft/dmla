@@ -37,4 +37,6 @@
 | deep-learning/neural-network-optimization/gradient-descent.md | 校审完成 | ✓ | ✓ | 术语、代码、LaTeX、图片路径、完整性、可读性均校验通过，无需修复。修复锚点链接 `#learning-rate-decay`→`#learning-rate-selection-strategy`（该锚点在中文原文中亦不指向任何标题）|
 | deep-learning/neural-network-optimization/adaptive-optimizers.md | 校审完成 | ✓ | ✓ | 术语、代码、LaTeX、链接、完整性、可读性均校验通过，无需修复 |
 | deep-learning/convolutional-neural-network/cnn-basics.md | 校审完成 | ✓ | ✓ | 术语、代码、LaTeX、Mermaid、图片路径、完整性、可读性均校验通过，无需修复 |
+| deep-learning/convolutional-neural-network/alexnet.md | 校审完成 | ✓ | ✓ | 修复内部链接路径错误 2 处（`../../../deep-learning/...`→`../neural-network-structure/...`、`../../neural-network-stability/...`→`../neural-network-stability/...`）；术语、代码、LaTeX、nn-arch 图、Mermaid、完整性、可读性均校验通过 |
+| deep-learning/convolutional-neural-network/vgg-inception.md | 翻译完成 | ✓ | | LaTeX/Markdown 不变；nn-arch 图表中文标签译英；锚点 `#cnn-架构设计原则`→`#cnn-architecture-design-principles`；内部 `.md` 链接保留原相对路径不变；`\text{}` 中文译英 |
 | README.md | 校审完成 | ✓ | ✓ | 修复 `PhD candidate`→`PhD` 事实错误；优化多处英译流畅性：`navigational map for structuring their knowledge framework in the era of AI`→`roadmap for organizing their knowledge in the AI era`、`higher reading threshold`→`steeper learning curve`、`runnable code examples that can be executed in the web page`→`interactive code examples that run directly in your browser` |
