@@ -1,6 +1,6 @@
 # 翻译进度追踪
 
-> 最后更新: 2026-07-25（vlm-training-experiment.md 校审完成）
+> 最后更新: 2026-07-25（request-scheduling.md 翻译完成）
 
 | 相对路径 | 状态 | 翻译代理 | 校审代理 | 备注 |
 |---------|------|---------|---------|------|
@@ -70,3 +70,4 @@
 | language-models/pretraining/llm-sft-experiment.md | 校审完成 | ✓ | ✓ | 术语、代码（注释与字符串）、LaTeX、链接路径、完整性、可读性均校验通过；`sandbox.md` 系已知断链（英文目录下缺失该文件，详见 alexnet-experiment 报告）|
 | language-models/pretraining/supervised-finetuning.md | 校审完成 | ✓ | ✓ | Mermaid、链接路径、术语、代码、LaTeX、完整性均校验通过，无需修复。修复可读性 3 处：`training effect`→`training effectiveness`；`someone who already knows English learning a British accent`→`someone who already knows English and is learning a British accent`；`is not unfamiliar to us`→`is familiar` |
 | language-models/frontier/evaluation-safety.md | 校审完成 | ✓ | ✓ | 修复 Causal Tracing Mermaid 输入字符串遗漏 `___` 填空占位符导致的示例自洽性 bug（正文与 Mermaid 示例不一致）；术语、LaTeX、图片路径、链接锚点、完整性、可读性均校验通过 |
+| ai-infra-engineering/model-serving/inference-service-architecture.md | 校审完成 | ✓ | ✓ | 术语、Mermaid 标签、链接锚点（7 处英文锚点均已验证存在）、LaTeX、代码（注释与字符串译英）、完整性、可读性均校验通过。`gpu-resource-management.md` 与 `request-scheduling.md` 系已知断链（中文源目录存在对应文件，英文目录尚未翻译）|
