@@ -17,12 +17,20 @@
     <div class="locale-switcher">
       <button class="locale-btn" @click="toggleLocaleMenu" title="Switch Language / 切换语言">
         <svg class="locale-icon" viewBox="0 0 24 24" fill="none">
-          <!-- "EN" 文字 -->
-          <text x="2" y="14" font-size="7" font-weight="700" fill="currentColor" font-family="Arial, sans-serif">EN</text>
-          <!-- 45度斜线 -->
+          <defs>
+            <clipPath id="locale-clip-left">
+              <rect x="2" y="2" width="10" height="20"/>
+            </clipPath>
+            <clipPath id="locale-clip-right">
+              <rect x="12" y="2" width="10" height="20"/>
+            </clipPath>
+          </defs>
+          <!-- 大型 "EN" 文字，裁剪为左半 -->
+          <text x="0" y="19" font-size="16" font-weight="700" fill="currentColor" font-family="Arial, sans-serif" clip-path="url(#locale-clip-left)">EN</text>
+          <!-- 大型 "中" 文字，裁剪为右半 -->
+          <text x="10" y="20" font-size="16" font-weight="700" fill="currentColor" font-family="Arial, sans-serif" clip-path="url(#locale-clip-right)">中</text>
+          <!-- 45度斜线分隔 -->
           <line x1="12" y1="3" x2="12" y2="21" stroke="currentColor" stroke-width="1.5" transform="rotate(45, 12, 12)"/>
-          <!-- "中" 文字 -->
-          <text x="13" y="20" font-size="9" font-weight="700" fill="currentColor" font-family="Arial, sans-serif">中</text>
         </svg>
       </button>
       <!-- 下拉菜单 -->

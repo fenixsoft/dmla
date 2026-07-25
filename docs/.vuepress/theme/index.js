@@ -9,6 +9,7 @@ export const dmlaTheme = (options = {}) => {
     // 覆盖默认的 useRelatedLinks，实现跨组导航
     alias: {
       '@theme/useRelatedLinks': path.resolve(__dirname, './composables/useRelatedLinks.js'),
+      '@theme/useNavbarSelectLanguage': path.resolve(__dirname, './composables/useNavbarSelectLanguage.js'),
     },
   }
 }
