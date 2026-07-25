@@ -6,7 +6,7 @@ Three years later, in 2018, the Databricks team launched the MLflow project, whi
 
 The question experiment tracking addresses is "how was the model trained?" Adjusting a hyperparameter, changing a feature combination, trying a new preprocessing scheme — all require experimental validation. After hundreds of experiments over several weeks, without systematic recording, you cannot even answer what parameters were used for that AUC 0.92 model from last week. The question model registry addresses is "is the model well-trained and ready for deployment?" Experiments are merely the means; the model is the deliverable. A model's complete lifecycle from the lab bench to the production environment goes through multiple stages: validation, approval, deployment, monitoring, and retirement. Without a model registry, model files are just `.pth` files scattered across directories — no one knows which version is running in production, and there is no way to trace back when problems arise.
 
-Experiment tracking records the run information for each training session, making the process traceable, comparable, and reproducible. Model registry manages validated model versions, controlling lifecycle transitions from development to production. This chapter follows this chain, first discussing how to track experiments, then how to manage models, and finally the engineering衔接 between the two.
+Experiment tracking records the run information for each training session, making the process traceable, comparable, and reproducible. Model registry manages validated model versions, controlling lifecycle transitions from development to production. This chapter follows this chain, first discussing how to track experiments, then how to manage models, and finally the engineering integration between the two.
 
 ## From Experiment to Production
 
@@ -31,7 +31,7 @@ graph LR
     subgraph Model Serving
         C[Inference Service<br/>Loads model<br/>Provides online inference]
     end
-    A -->|Promote<br/>Promote優秀 experiments| B
+    A -->|Promote<br/>Promote outstanding experiments| B
     B -->|Deploy<br/>Deploy model| C
 ```
 *Figure: Unidirectional pipeline of the model lifecycle*
