@@ -48,7 +48,7 @@ The fluctuations of model performance metrics along the time axis are driven by 
 
     Common empirical thresholds for PSI are: PSI < 0.1 indicates the distribution is essentially stable, 0.1 ≤ PSI < 0.25 indicates moderate drift, and PSI ≥ 0.25 indicates significant drift. It is important to note that these thresholds are empirical — different business scenarios and feature types should calibrate their own thresholds based on historical data. The figure below shows a visualization example of the PSI calculation process. The left chart compares the proportions of the reference and current distributions across bins, and the right chart shows the contribution of each bin to the final PSI value. The red dashed line marks the threshold of 0.1 (slight drift).
 
-    ![PSI Calculation Process](../../ai-infra-engineering/mlops/assets/psi-calculation.png)
+    ![PSI Calculation Process](../../../ai-infra-engineering/mlops/assets/psi-calculation.png)
 
     *Figure: PSI calculation process*
 
@@ -58,7 +58,7 @@ The fluctuations of model performance metrics along the time axis are driven by 
 
     The larger the KS statistic, the less likely the two distributions come from the same population. Compared to PSI, the KS test can be used directly within a hypothesis testing framework, answering questions such as whether the current distribution is significantly different from the baseline distribution at a significance level of $\alpha = 0.01$. This allows alert decisions to be based on statistical confidence rather than merely on fixed thresholds. The KS test is suitable for continuous features, does not require the data to follow any particular distribution, and is sensitive to shape changes, location shifts, and scale changes in the distribution. The figure below shows a comparison of two empirical distribution functions in a KS test. The blue curve is the CDF of the reference distribution, the orange curve is the CDF of the current distribution, and the black dashed line marks the position of their greatest difference — the KS statistic.
 
-    ![KS Test Visualization](../../ai-infra-engineering/mlops/assets/ks-test-visualization.png)
+    ![KS Test Visualization](../../../ai-infra-engineering/mlops/assets/ks-test-visualization.png)
 
     *Figure: KS test visualization*
 
@@ -70,7 +70,7 @@ Gradual degradation detection is used to monitor the model's long-term stealthy 
 
 Trend detection performs linear regression analysis on the time series of performance metrics, testing whether the regression slope is significantly negative. Specifically, take the daily metric values from the last $N$ days, fit a linear trend line $y = \beta_0 + \beta_1 t$, and if $\beta_1$ is less than zero and the p-value of the test is below the significance level, a statistically significant degradation trend is considered to exist. This method transforms the question of "how much has it dropped" into "whether the downward trend is credible." The figure below shows the AUC trend of a model over 90 days: the solid blue line represents the daily AUC values, the orange dashed line is the 7-day moving average, and the red horizontal line is the dynamic alert threshold (3 standard deviations from the historical mean). Although day-to-day fluctuations are large, the moving average clearly reveals a persistent downward trend starting from day 45.
 
-![Performance Degradation Trend](../../ai-infra-engineering/mlops/assets/performance-degradation.png)
+![Performance Degradation Trend](../../../ai-infra-engineering/mlops/assets/performance-degradation.png)
 
 *Figure: 90-day AUC trend of a model*
 
@@ -84,7 +84,7 @@ Shard degradation detection splits performance metrics by dimension and monitors
 
 The approach to solving this problem is to turn the degradation judgment for small samples into a statistical testing problem rather than a simple threshold judgment. Instead of merely comparing whether the shard's AUC is below a threshold, test whether the shard's AUC over the last N days is significantly lower than its own historical mean, using the shard's own historical volatility as a variance reference. For shards with very small sample sizes (e.g., fewer than 50 requests per day), they can be aggregated upward into larger groups (e.g., from city-level to province-level aggregation) to strike a balance between detection capability and granularity. The figure below shows a heatmap of AUC changes across different user groups and dates, with the horizontal axis representing dates, the vertical axis representing user groups, and color intensity reflecting AUC values. The heatmap provides an intuitive way to locate the timing and scope of degradation. If a particular shard shows a noticeable lightening in color recently, it indicates performance degradation in that shard.
 
-![Shard Performance Comparison](../../ai-infra-engineering/mlops/assets/shard-performance-heatmap.png)
+![Shard Performance Comparison](../../../ai-infra-engineering/mlops/assets/shard-performance-heatmap.png)
 
 *Figure: AUC change heatmap across user groups and dates*
 
