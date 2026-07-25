@@ -1,6 +1,6 @@
 # 翻译进度追踪
 
-> 最后更新: 2026-07-25（supervised-finetuning.md 校审更新）
+> 最后更新: 2026-07-25（llm-sft-experiment.md 校审更新）
 
 | 相对路径 | 状态 | 翻译代理 | 校审代理 | 备注 |
 |---------|------|---------|---------|------|
@@ -57,4 +57,5 @@
 | language-models/pretraining/pretraining-data.md | 校审完成 | ✓ | ✓ | 修复残留中文 5 处：`随处可见`→`that are everywhere`（Wikipedia 段）、`大量`→`large amounts of`（毒性过滤段）、`解题`→`problem-solving`（数据污染段）、`普遍`→`universally`（数据污染段）、`倾向于`→`tending to`（合成数据段）；术语、代码、LaTeX、Mermaid、锚点链接、完整性、可读性均校验通过 |
 | language-models/pretraining/scaling-laws.md | 校审完成 | ✓ | | 修复 4 处断链链接（`supervised-finetuning.md`→`../../../language-models/pretraining/supervised-finetuning.md`、`../alignment/rlhf.md`→`../../../language-models/alignment/rlhf.md`、`../../appendixes/numpy/probability-numpy.md#monte-carlo-method`→`../../../appendixes/numpy/probability-numpy.md#蒙特卡洛方法`、`../reasoning/test-time-compute.md`→`../../../language-models/reasoning/test-time-compute.md`）；修复 over-training 术语注法使其对英语读者更自然；术语、图片路径、LaTeX、完整性、可读性均校验通过 |
 | language-models/pretraining/distributed-training.md | 校审完成 | ✓ | ✓ | 术语、Mermaid、链接路径、图片路径、LaTeX、完整性、可读性均校验通过，无需修复 |
+| language-models/pretraining/llm-sft-experiment.md | 校审完成 | ✓ | ✓ | 术语、代码（注释与字符串）、LaTeX、链接路径、完整性、可读性均校验通过；`sandbox.md` 系已知断链（英文目录下缺失该文件，详见 alexnet-experiment 报告）|
 | language-models/pretraining/supervised-finetuning.md | 校审完成 | ✓ | ✓ | Mermaid、链接路径、术语、代码、LaTeX、完整性均校验通过，无需修复。修复可读性 3 处：`training effect`→`training effectiveness`；`someone who already knows English learning a British accent`→`someone who already knows English and is learning a British accent`；`is not unfamiliar to us`→`is familiar` |
