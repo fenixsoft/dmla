@@ -1,6 +1,6 @@
 # 翻译进度追踪
 
-> 最后更新: 2026-07-25（chain-of-thought.md 校审完成）
+> 最后更新: 2026-07-25（test-time-compute.md 校审完成）
 
 | 相对路径 | 状态 | 翻译代理 | 校审代理 | 备注 |
 |---------|------|---------|---------|------|
@@ -57,7 +57,9 @@
 | language-models/alignment/rlhf.md | 校审完成 | ✓ | ✓ | 术语、代码、LaTeX、Mermaid、完整性、可读性均校验通过，无需修复。发现 1 处断链：`probability-numpy.md`（EN appendixes 目录尚为空）系已知未翻译文件；`alignment-new-paradigms.md` 的断链已随该文件翻译完成而修复 |
 | language-models/alignment/alignment-new-paradigms.md | 校审完成 | ✓ | ✓ | 术语、Mermaid、链接路径、LaTeX、完整性、可读性均校验通过，无需修复 |
 | language-models/alignment/llm-dpo-experiment.md | 校审完成 | ✓ | ✓ | 锚点译英（`#数据管理`→`#data-management`）；内部 `.md` 链接保留原相对路径；LaTeX 不变；代码注释译英；`::: info` `::: details` 标题译英；JSON 示例内容译英；表格内容译英；术语、代码、LaTeX、内部链接、完整性、可读性均校验通过，无需修复；`sandbox.md` 系已知断链（EN 目录下缺失该文件）|
+| language-models/reasoning/test-time-compute.md | 校审完成 | ✓ | ✓ | Mermaid 标签、术语、图片路径、链接锚点、LaTeX、完整性、可读性均校验通过。发现 `probability-numpy.md` 断链（EN `appendixes/numpy/` 目录为空，系已知未翻译文件）|
 | language-models/reasoning/chain-of-thought.md | 校审完成 | ✓ | ✓ | 术语、图片路径、链接锚点、LaTeX、完整性、可读性均校验通过，无需修复 |
+| language-models/reasoning/inference-efficiency.md | 翻译完成 | ✓ | | 内部 `.md` 链接保留原相对路径；锚点译英；Mermaid 标签译英；LaTeX 不变；术语、代码、完整性均校验通过 |
 | language-models/pretraining/pretraining-data.md | 校审完成 | ✓ | ✓ | 修复残留中文 5 处：`随处可见`→`that are everywhere`（Wikipedia 段）、`大量`→`large amounts of`（毒性过滤段）、`解题`→`problem-solving`（数据污染段）、`普遍`→`universally`（数据污染段）、`倾向于`→`tending to`（合成数据段）；术语、代码、LaTeX、Mermaid、锚点链接、完整性、可读性均校验通过 |
 | language-models/pretraining/scaling-laws.md | 校审完成 | ✓ | | 修复 4 处断链链接（`supervised-finetuning.md`→`../../../language-models/pretraining/supervised-finetuning.md`、`../alignment/rlhf.md`→`../../../language-models/alignment/rlhf.md`、`../../appendixes/numpy/probability-numpy.md#monte-carlo-method`→`../../../appendixes/numpy/probability-numpy.md#蒙特卡洛方法`、`../reasoning/test-time-compute.md`→`../../../language-models/reasoning/test-time-compute.md`）；修复 over-training 术语注法使其对英语读者更自然；术语、图片路径、LaTeX、完整性、可读性均校验通过 |
 | language-models/pretraining/distributed-training.md | 校审完成 | ✓ | ✓ | 术语、Mermaid、链接路径、图片路径、LaTeX、完整性、可读性均校验通过，无需修复 |
