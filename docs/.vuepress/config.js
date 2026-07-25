@@ -67,301 +67,597 @@ export default {
       },
     },
 
-    // 导航栏
-    navbar: [
-      { text: '首页', link: '/' },
-      { text: '讨论区', link: '/boards' },
-    ],
+    locales: {
+      '/': {
+        navbar: [
+          { text: '首页', link: '/' },
+          { text: '讨论区', link: '/boards' },
+        ],
 
-    // 侧边栏 - 统一显示所有菜单，默认全部展开
-    sidebar: [
-      {
-        text: '目录',
-        collapsible: false,
-        link: 'contents'
-      },
-      {
-        text: '前言',
-        collapsible: false,
-        children: [
-          { text: '关于作者', link: '/introduction/about-me' },
-          { text: '关于本文档', link: '/introduction/about-dmla' },
-        ]
-      },
-      {
-        text: '机器学习数学基础',
-        collapsible: false,
-        children: [
+        sidebar: [
           {
-            text: '线性代数',
+            text: '目录',
+            collapsible: false,
+            link: 'contents'
+          },
+          {
+            text: '前言',
             collapsible: false,
             children: [
-              { text: '向量基础', link: '/maths/linear/vectors' },
-              { text: '矩阵基础', link: '/maths/linear/matrices' },
+              { text: '关于作者', link: '/introduction/about-me' },
+              { text: '关于本文档', link: '/introduction/about-dmla' },
             ]
           },
           {
-            text: '微积分',
+            text: '机器学习数学基础',
             collapsible: false,
             children: [
-              { text: '极限、导数与微分', link: '/maths/calculus/derivative' },
-              { text: '多元函数与复合函数求导', link: '/maths/calculus/gradient' },
-            ]
-          },
-          {
-            text: '统计与概率',
-            collapsible: false,
-            children: [
-              { text: '概率基础', link: '/maths/probability/probability-basics' },
-              { text: '统计推断', link: '/maths/probability/statistical-inference' },
-            ]
-          }
-        ]
-      }, 
-      {
-        text: '经典统计学习方法',
-        collapsible: false,
-        children: [
-          {
-            text: '线性模型',
-            collapsible: false,
-            children: [
-              { text: '线性回归', link: '/statistical-learning/linear-models/linear-regression' },
-              { text: '逻辑回归', link: '/statistical-learning/linear-models/logistic-regression' },
-              { text: '正则化与广义线性模型', link: '/statistical-learning/linear-models/regularization-glm' },
-            ]
-          },
-          {
-            text: '贝叶斯方法',
-            collapsible: false,
-            children: [
-              { text: '朴素贝叶斯', link: '/statistical-learning/bayesian-methods/naive-bayes' },
-              { text: '贝叶斯网络', link: '/statistical-learning/bayesian-methods/bayesian-network' },
-              { text: 'EM 算法', link: '/statistical-learning/bayesian-methods/em-algorithm' },
-            ]
-          },
-          {
-            text: '支持向量机',
-            collapsible: false,
-            children: [
-              { text: '支持向量机', link: '/statistical-learning/support-vector-machines/svm-max-margin' },
-              { text: '核技巧', link: '/statistical-learning/support-vector-machines/kernel-methods' },
-            ]
-          },
-          {
-            text: '决策树与集成',
-            collapsible: false,
-            children: [
-              { text: '决策树', link: '/statistical-learning/decision-tree-ensemble/decision-tree' },
-              { text: '随机森林', link: '/statistical-learning/decision-tree-ensemble/random-forest' },
-              { text: '提升方法', link: '/statistical-learning/decision-tree-ensemble/boosting' },
-            ]
-          },
-          {
-            text: '无监督学习',
-            collapsible: false,
-            children: [
-              { text: '聚类', link: '/statistical-learning/unsupervised-learning/clustering' },
-              { text: '降维', link: '/statistical-learning/unsupervised-learning/dimensionality-reduction' },
-            ]
-          },
-        ]
-      },
-      {
-        text: '神经网络与深度学习',
-        collapsible: false,
-        children: [
-          {
-            text: '神经网络结构',
-            collapsible: false,
-            children: [
-              { text: '神经网络基础原理', link: '/deep-learning/neural-network-structure/idea-origin' },
-              { text: '线性感知机', link: '/deep-learning/neural-network-structure/perceptron' },
-              { text: '多层感知机', link: '/deep-learning/neural-network-structure/mlp' },
-              { text: '前向传播', link: '/deep-learning/neural-network-structure/forward-propagation' },
-              { text: '反向传播', link: '/deep-learning/neural-network-structure/backpropagation' },
-              { text: '激活函数与损失函数', link: '/deep-learning/neural-network-structure/activation-loss-functions' },
-            ]
-          },
-          {
-            text: '优化神经网络',
-            collapsible: false,
-            children: [
-              { text: '梯度下降', link: '/deep-learning/neural-network-optimization/gradient-descent' },
-              { text: '自适应优化器', link: '/deep-learning/neural-network-optimization/adaptive-optimizers' },
-            ]
-          },
-          {
-            text: '深层网络稳定性',
-            collapsible: false,
-            children: [
-              { text: '权重初始化', link: '/deep-learning/neural-network-stability/weight-initialization' },
-              { text: 'Dropout 正则化', link: '/deep-learning/neural-network-stability/dropout' },
-              { text: '批归一化', link: '/deep-learning/neural-network-stability/batch-normalization' },
-            ]
-          },
-          {
-            text: '卷积神经网络',
-            collapsible: false,
-            children: [
-              { text: 'CNN 基础原理', link: '/deep-learning/convolutional-neural-network/cnn-basics' },
-              { text: 'AlexNet 与 CNN 复兴', link: '/deep-learning/convolutional-neural-network/alexnet' },
-              { text: 'VGG 与 GoogLeNet', link: '/deep-learning/convolutional-neural-network/vgg-inception' },
-              { text: 'ResNet 残差网络', link: '/deep-learning/convolutional-neural-network/resnet' },
-              { text: '工程实训：AlexNet 图像分类实验', link: '/deep-learning/convolutional-neural-network/alexnet-experiment' },
-            ]
-          },
-          {
-            text: '生成式模型',
-            collapsible: false,
-            children: [
-              { text: '变分自编码器', link: '/deep-learning/generative-models/vae' },
-              { text: '生成式对抗网络', link: '/deep-learning/generative-models/gan' },
-              { text: '工程实训：DCGAN 图像生成实验', link: '/deep-learning/generative-models/gan-experiment' },
-            ]
-          },
-          {
-            text: '序列模型',
-            collapsible: false,
-            children: [
-              { text: '词嵌入与表示学习', link: '/deep-learning/sequence-models/word-embedding' },
-              { text: 'RNN 基础原理', link: '/deep-learning/sequence-models/rnn-basics' },
-              { text: 'LSTM 与 GRU 门控机制', link: '/deep-learning/sequence-models/lstm-gru' },
-              { text: 'Seq2Seq 序列映射', link: '/deep-learning/sequence-models/seq2seq' },
-              { text: '工程实训：LSTM 古诗词生成实验', link: '/deep-learning/sequence-models/lstm-experiment' },
-            ]
-          },
-        ]
-      },
-      {
-        text: '语言模型的奇点',
-        collapsible: false,
-        children: [
-          {
-            text: 'Transformer 架构',
-            collapsible: false,
-            children: [
-              { text: 'Transformer 基础原理', link: '/language-models/architecture-basics/transformer-architecture' },
-              { text: 'Transformer 演进与变体', link: '/language-models/architecture-basics/architecture-evolution' },
-              { text: '语言模型与分词', link: '/language-models/architecture-basics/language-model-tokenization' },
-              { text: '工程实训：Transformer 模型训练实验', link: '/language-models/architecture-basics/llm-pretrain-experiment' },
-            ]
-          },
-          {
-            text: '预训练与微调',
-            collapsible: false,
-            children: [
-              { text: '预训练数据工程', link: '/language-models/pretraining/pretraining-data' },
-              { text: '缩放定律', link: '/language-models/pretraining/scaling-laws' },
-              { text: '分布式训练基础设施', link: '/language-models/pretraining/distributed-training' },
-              { text: '监督微调', link: 'language-models/pretraining/supervised-finetuning' },
-              { text: '工程实训：SFT 模型对话实验', link: '/language-models/pretraining/llm-sft-experiment' },
-            ]
-          },
-          {
-            text: '对齐训练',
-            collapsible: false,
-            children: [
-              { text: '人类反馈强化学习', link: '/language-models/alignment/rlhf' },
-              { text: '对齐方法的演进', link: '/language-models/alignment/alignment-new-paradigms' },
-              { text: '工程实训：DPO 对齐训练实验', link: '/language-models/alignment/llm-dpo-experiment' },
-            ]
-            
-          },
-          {
-            text: '推理能力',
-            collapsible: false,
-            children: [
-              { text: '思维链与推理模型', link: '/language-models/reasoning/chain-of-thought' },
-              { text: '推理缩放定律', link: '/language-models/reasoning/test-time-compute' },
-              { text: '推理效率优化', link: '/language-models/reasoning/inference-efficiency' },
-              { text: '工程实训：LLM 推理效率优化实验', link: '/language-models/reasoning/llm-reasoning-experiment' },
-            ]
-          },
-          {
-            text: '模态融合与安全',
-            collapsible: false,
-            children: [
-              { text: '多模态大模型', link: '/language-models/frontier/multimodal-llm' },
-              { text: '模型评估与安全', link: '/language-models/frontier/evaluation-safety' },
-              { text: '工程实训：视觉语言模型训练实验', link: '/language-models/frontier/vlm-training-experiment' },
-            ]
-          },
-        ]
-      },
-      {
-        text: 'AI 基础设施与工程化',
-        collapsible: false,
-          children: [
-            {
-              text: '模型服务化',
-              collapsible: false,
-              children: [
-                { text: '推理服务架构', link: '/ai-infra-engineering/model-serving/inference-service-architecture' },
-                { text: '请求调度与批处理', link: '/ai-infra-engineering/model-serving/request-scheduling' },
-                { text: 'GPU 资源管理', link: '/ai-infra-engineering/model-serving/gpu-resource-management' },
-                { text: '工程实训：部署 LLM 推理服务', link: '/ai-infra-engineering/model-serving/llm-inference-experiment' },
-              ]
-            },
-            {
-              text: '工程化实践',
-              collapsible: false,
-              children: [
-                { text: '数据版本管理', link: '/ai-infra-engineering/mlops/data-versioning' },
-                { text: '实验追踪与模型管理', link: '/ai-infra-engineering/mlops/model-lifecycle' },
-                { text: '自动化调参', link: '/ai-infra-engineering/mlops/hyperparameter-optimization' },
-                { text: '模型性能监控', link: '/ai-infra-engineering/mlops/model-performance-monitoring' },
-                { text: '漂移检测', link: '/ai-infra-engineering/mlops/drift-detection' },
-              ]
-            },
-          ]
-      },
-      {
-        text: 'Agentic 应用系统',
-        collapsible: false,
-          children: [
-            {
-              text: '向量检索与增强生成',
-              collapsible: false,
-              children: [
-                { text: '嵌入与向量检索', link: '/agent-applications/vector-retrieval-rag/embedding-and-indexing' },
-                { text: '检索质量评估与优化', link: '/agent-applications/vector-retrieval-rag/retrieval-quality' },
-                { text: '检索增强生成', link: '/agent-applications/vector-retrieval-rag/retrieval-augmented-generation' },
-                { text: '工程实训：构建知识库问答系统', link: '/agent-applications/vector-retrieval-rag/rag-experiment' },
-              ]
-            },
-            {
-              text: '构建 Agent 应用',
-              collapsible: false,
-              children: [
-                { text: '从 LLM 到 Agent', link: '/agent-applications/agent-systems/llm-to-agent' },
-                { text: '工具调用', link: '/agent-applications/agent-systems/tool-use' },
-                { text: '规划与推理', link: '/agent-applications/agent-systems/planning-reasoning' },
-                { text: '记忆系统', link: '/agent-applications/agent-systems/memory-systems' },
-                { text: '协作与通讯', link: '/agent-applications/agent-systems/agent-collaboration-communication' },
-                { text: '编排与容错', link: '/agent-applications/agent-systems/orchestration-fault-tolerance' },
-                { text: '工程实训：技术调研 Agent 协作系统', link: '/agent-applications/agent-systems/agent-experiment' },
-              ]
-            },
-          ]
-      },
-      {
-        text: '附录',
-        collapsible: true,
-        children: [
-              { text: '构建沙箱环境', link: '/appendixes/sandbox' },
               {
-                text: 'Numpy 数学实践',
+                text: '线性代数',
                 collapsible: false,
                 children: [
-                  { text: '数据处理实践', link: '/appendixes/numpy/linear-numpy' },
-                  { text: '微积分计算实践', link: '/appendixes/numpy/calculus-numpy' },
-                  { text: '概率统计实践', link: '/appendixes/numpy/probability-numpy' },
+                  { text: '向量基础', link: '/maths/linear/vectors' },
+                  { text: '矩阵基础', link: '/maths/linear/matrices' },
+                ]
+              },
+              {
+                text: '微积分',
+                collapsible: false,
+                children: [
+                  { text: '极限、导数与微分', link: '/maths/calculus/derivative' },
+                  { text: '多元函数与复合函数求导', link: '/maths/calculus/gradient' },
+                ]
+              },
+              {
+                text: '统计与概率',
+                collapsible: false,
+                children: [
+                  { text: '概率基础', link: '/maths/probability/probability-basics' },
+                  { text: '统计推断', link: '/maths/probability/statistical-inference' },
                 ]
               }
+            ]
+          }, 
+          {
+            text: '经典统计学习方法',
+            collapsible: false,
+            children: [
+              {
+                text: '线性模型',
+                collapsible: false,
+                children: [
+                  { text: '线性回归', link: '/statistical-learning/linear-models/linear-regression' },
+                  { text: '逻辑回归', link: '/statistical-learning/linear-models/logistic-regression' },
+                  { text: '正则化与广义线性模型', link: '/statistical-learning/linear-models/regularization-glm' },
+                ]
+              },
+              {
+                text: '贝叶斯方法',
+                collapsible: false,
+                children: [
+                  { text: '朴素贝叶斯', link: '/statistical-learning/bayesian-methods/naive-bayes' },
+                  { text: '贝叶斯网络', link: '/statistical-learning/bayesian-methods/bayesian-network' },
+                  { text: 'EM 算法', link: '/statistical-learning/bayesian-methods/em-algorithm' },
+                ]
+              },
+              {
+                text: '支持向量机',
+                collapsible: false,
+                children: [
+                  { text: '支持向量机', link: '/statistical-learning/support-vector-machines/svm-max-margin' },
+                  { text: '核技巧', link: '/statistical-learning/support-vector-machines/kernel-methods' },
+                ]
+              },
+              {
+                text: '决策树与集成',
+                collapsible: false,
+                children: [
+                  { text: '决策树', link: '/statistical-learning/decision-tree-ensemble/decision-tree' },
+                  { text: '随机森林', link: '/statistical-learning/decision-tree-ensemble/random-forest' },
+                  { text: '提升方法', link: '/statistical-learning/decision-tree-ensemble/boosting' },
+                ]
+              },
+              {
+                text: '无监督学习',
+                collapsible: false,
+                children: [
+                  { text: '聚类', link: '/statistical-learning/unsupervised-learning/clustering' },
+                  { text: '降维', link: '/statistical-learning/unsupervised-learning/dimensionality-reduction' },
+                ]
+              },
+            ]
+          },
+          {
+            text: '神经网络与深度学习',
+            collapsible: false,
+            children: [
+              {
+                text: '神经网络结构',
+                collapsible: false,
+                children: [
+                  { text: '神经网络基础原理', link: '/deep-learning/neural-network-structure/idea-origin' },
+                  { text: '线性感知机', link: '/deep-learning/neural-network-structure/perceptron' },
+                  { text: '多层感知机', link: '/deep-learning/neural-network-structure/mlp' },
+                  { text: '前向传播', link: '/deep-learning/neural-network-structure/forward-propagation' },
+                  { text: '反向传播', link: '/deep-learning/neural-network-structure/backpropagation' },
+                  { text: '激活函数与损失函数', link: '/deep-learning/neural-network-structure/activation-loss-functions' },
+                ]
+              },
+              {
+                text: '优化神经网络',
+                collapsible: false,
+                children: [
+                  { text: '梯度下降', link: '/deep-learning/neural-network-optimization/gradient-descent' },
+                  { text: '自适应优化器', link: '/deep-learning/neural-network-optimization/adaptive-optimizers' },
+                ]
+              },
+              {
+                text: '深层网络稳定性',
+                collapsible: false,
+                children: [
+                  { text: '权重初始化', link: '/deep-learning/neural-network-stability/weight-initialization' },
+                  { text: 'Dropout 正则化', link: '/deep-learning/neural-network-stability/dropout' },
+                  { text: '批归一化', link: '/deep-learning/neural-network-stability/batch-normalization' },
+                ]
+              },
+              {
+                text: '卷积神经网络',
+                collapsible: false,
+                children: [
+                  { text: 'CNN 基础原理', link: '/deep-learning/convolutional-neural-network/cnn-basics' },
+                  { text: 'AlexNet 与 CNN 复兴', link: '/deep-learning/convolutional-neural-network/alexnet' },
+                  { text: 'VGG 与 GoogLeNet', link: '/deep-learning/convolutional-neural-network/vgg-inception' },
+                  { text: 'ResNet 残差网络', link: '/deep-learning/convolutional-neural-network/resnet' },
+                  { text: '工程实训：AlexNet 图像分类实验', link: '/deep-learning/convolutional-neural-network/alexnet-experiment' },
+                ]
+              },
+              {
+                text: '生成式模型',
+                collapsible: false,
+                children: [
+                  { text: '变分自编码器', link: '/deep-learning/generative-models/vae' },
+                  { text: '生成式对抗网络', link: '/deep-learning/generative-models/gan' },
+                  { text: '工程实训：DCGAN 图像生成实验', link: '/deep-learning/generative-models/gan-experiment' },
+                ]
+              },
+              {
+                text: '序列模型',
+                collapsible: false,
+                children: [
+                  { text: '词嵌入与表示学习', link: '/deep-learning/sequence-models/word-embedding' },
+                  { text: 'RNN 基础原理', link: '/deep-learning/sequence-models/rnn-basics' },
+                  { text: 'LSTM 与 GRU 门控机制', link: '/deep-learning/sequence-models/lstm-gru' },
+                  { text: 'Seq2Seq 序列映射', link: '/deep-learning/sequence-models/seq2seq' },
+                  { text: '工程实训：LSTM 古诗词生成实验', link: '/deep-learning/sequence-models/lstm-experiment' },
+                ]
+              },
+            ]
+          },
+          {
+            text: '语言模型的奇点',
+            collapsible: false,
+            children: [
+              {
+                text: 'Transformer 架构',
+                collapsible: false,
+                children: [
+                  { text: 'Transformer 基础原理', link: '/language-models/architecture-basics/transformer-architecture' },
+                  { text: 'Transformer 演进与变体', link: '/language-models/architecture-basics/architecture-evolution' },
+                  { text: '语言模型与分词', link: '/language-models/architecture-basics/language-model-tokenization' },
+                  { text: '工程实训：Transformer 模型训练实验', link: '/language-models/architecture-basics/llm-pretrain-experiment' },
+                ]
+              },
+              {
+                text: '预训练与微调',
+                collapsible: false,
+                children: [
+                  { text: '预训练数据工程', link: '/language-models/pretraining/pretraining-data' },
+                  { text: '缩放定律', link: '/language-models/pretraining/scaling-laws' },
+                  { text: '分布式训练基础设施', link: '/language-models/pretraining/distributed-training' },
+                  { text: '监督微调', link: 'language-models/pretraining/supervised-finetuning' },
+                  { text: '工程实训：SFT 模型对话实验', link: '/language-models/pretraining/llm-sft-experiment' },
+                ]
+              },
+              {
+                text: '对齐训练',
+                collapsible: false,
+                children: [
+                  { text: '人类反馈强化学习', link: '/language-models/alignment/rlhf' },
+                  { text: '对齐方法的演进', link: '/language-models/alignment/alignment-new-paradigms' },
+                  { text: '工程实训：DPO 对齐训练实验', link: '/language-models/alignment/llm-dpo-experiment' },
+                ]
+            
+              },
+              {
+                text: '推理能力',
+                collapsible: false,
+                children: [
+                  { text: '思维链与推理模型', link: '/language-models/reasoning/chain-of-thought' },
+                  { text: '推理缩放定律', link: '/language-models/reasoning/test-time-compute' },
+                  { text: '推理效率优化', link: '/language-models/reasoning/inference-efficiency' },
+                  { text: '工程实训：LLM 推理效率优化实验', link: '/language-models/reasoning/llm-reasoning-experiment' },
+                ]
+              },
+              {
+                text: '模态融合与安全',
+                collapsible: false,
+                children: [
+                  { text: '多模态大模型', link: '/language-models/frontier/multimodal-llm' },
+                  { text: '模型评估与安全', link: '/language-models/frontier/evaluation-safety' },
+                  { text: '工程实训：视觉语言模型训练实验', link: '/language-models/frontier/vlm-training-experiment' },
+                ]
+              },
+            ]
+          },
+          {
+            text: 'AI 基础设施与工程化',
+            collapsible: false,
+              children: [
+                {
+                  text: '模型服务化',
+                  collapsible: false,
+                  children: [
+                    { text: '推理服务架构', link: '/ai-infra-engineering/model-serving/inference-service-architecture' },
+                    { text: '请求调度与批处理', link: '/ai-infra-engineering/model-serving/request-scheduling' },
+                    { text: 'GPU 资源管理', link: '/ai-infra-engineering/model-serving/gpu-resource-management' },
+                    { text: '工程实训：部署 LLM 推理服务', link: '/ai-infra-engineering/model-serving/llm-inference-experiment' },
+                  ]
+                },
+                {
+                  text: '工程化实践',
+                  collapsible: false,
+                  children: [
+                    { text: '数据版本管理', link: '/ai-infra-engineering/mlops/data-versioning' },
+                    { text: '实验追踪与模型管理', link: '/ai-infra-engineering/mlops/model-lifecycle' },
+                    { text: '自动化调参', link: '/ai-infra-engineering/mlops/hyperparameter-optimization' },
+                    { text: '模型性能监控', link: '/ai-infra-engineering/mlops/model-performance-monitoring' },
+                    { text: '漂移检测', link: '/ai-infra-engineering/mlops/drift-detection' },
+                  ]
+                },
+              ]
+          },
+          {
+            text: 'Agentic 应用系统',
+            collapsible: false,
+              children: [
+                {
+                  text: '向量检索与增强生成',
+                  collapsible: false,
+                  children: [
+                    { text: '嵌入与向量检索', link: '/agent-applications/vector-retrieval-rag/embedding-and-indexing' },
+                    { text: '检索质量评估与优化', link: '/agent-applications/vector-retrieval-rag/retrieval-quality' },
+                    { text: '检索增强生成', link: '/agent-applications/vector-retrieval-rag/retrieval-augmented-generation' },
+                    { text: '工程实训：构建知识库问答系统', link: '/agent-applications/vector-retrieval-rag/rag-experiment' },
+                  ]
+                },
+                {
+                  text: '构建 Agent 应用',
+                  collapsible: false,
+                  children: [
+                    { text: '从 LLM 到 Agent', link: '/agent-applications/agent-systems/llm-to-agent' },
+                    { text: '工具调用', link: '/agent-applications/agent-systems/tool-use' },
+                    { text: '规划与推理', link: '/agent-applications/agent-systems/planning-reasoning' },
+                    { text: '记忆系统', link: '/agent-applications/agent-systems/memory-systems' },
+                    { text: '协作与通讯', link: '/agent-applications/agent-systems/agent-collaboration-communication' },
+                    { text: '编排与容错', link: '/agent-applications/agent-systems/orchestration-fault-tolerance' },
+                    { text: '工程实训：技术调研 Agent 协作系统', link: '/agent-applications/agent-systems/agent-experiment' },
+                  ]
+                },
+              ]
+          },
+          {
+            text: '附录',
+            collapsible: true,
+            children: [
+                  { text: '构建沙箱环境', link: '/appendixes/sandbox' },
+                  {
+                    text: 'Numpy 数学实践',
+                    collapsible: false,
+                    children: [
+                      { text: '数据处理实践', link: '/appendixes/numpy/linear-numpy' },
+                      { text: '微积分计算实践', link: '/appendixes/numpy/calculus-numpy' },
+                      { text: '概率统计实践', link: '/appendixes/numpy/probability-numpy' },
+                    ]
+                  }
+            ]
+          },
         ]
       },
-    ]
+      '/en/': {
+        navbar: [
+          { text: 'Home', link: '/en/' },
+          { text: 'Discussion', link: '/boards' },
+        ],
+
+        sidebar: [
+          {
+            text: 'Contents',
+            collapsible: false,
+            link: 'contents'
+          },
+          {
+            text: 'Preface',
+            collapsible: false,
+            children: [
+              { text: 'About the Author', link: '/en/introduction/about-me' },
+              { text: 'About This Document', link: '/en/introduction/about-dmla' },
+            ]
+          },
+          {
+            text: 'Mathematical Foundations',
+            collapsible: false,
+            children: [
+              {
+                text: 'Linear Algebra',
+                collapsible: false,
+                children: [
+                  { text: 'Vector Basics', link: '/en/maths/linear/vectors' },
+                  { text: 'Matrix Basics', link: '/en/maths/linear/matrices' },
+                ]
+              },
+              {
+                text: 'Calculus',
+                collapsible: false,
+                children: [
+                  { text: 'Limits, Derivatives, and Differentials', link: '/en/maths/calculus/derivative' },
+                  { text: 'Multivariable Functions and Chain Rule', link: '/en/maths/calculus/gradient' },
+                ]
+              },
+              {
+                text: 'Statistics and Probability',
+                collapsible: false,
+                children: [
+                  { text: 'Probability Basics', link: '/en/maths/probability/probability-basics' },
+                  { text: 'Statistical Inference', link: '/en/maths/probability/statistical-inference' },
+                ]
+              }
+            ]
+          },
+          {
+            text: 'Classical Statistical Learning',
+            collapsible: false,
+            children: [
+              {
+                text: 'Linear Models',
+                collapsible: false,
+                children: [
+                  { text: 'Linear Regression', link: '/en/statistical-learning/linear-models/linear-regression' },
+                  { text: 'Logistic Regression', link: '/en/statistical-learning/linear-models/logistic-regression' },
+                  { text: 'Regularization and Generalized Linear Models', link: '/en/statistical-learning/linear-models/regularization-glm' },
+                ]
+              },
+              {
+                text: 'Bayesian Methods',
+                collapsible: false,
+                children: [
+                  { text: 'Naive Bayes', link: '/en/statistical-learning/bayesian-methods/naive-bayes' },
+                  { text: 'Bayesian Networks', link: '/en/statistical-learning/bayesian-methods/bayesian-network' },
+                  { text: 'EM Algorithm', link: '/en/statistical-learning/bayesian-methods/em-algorithm' },
+                ]
+              },
+              {
+                text: 'Support Vector Machines',
+                collapsible: false,
+                children: [
+                  { text: 'Support Vector Machines', link: '/en/statistical-learning/support-vector-machines/svm-max-margin' },
+                  { text: 'Kernel Methods', link: '/en/statistical-learning/support-vector-machines/kernel-methods' },
+                ]
+              },
+              {
+                text: 'Decision Trees and Ensembles',
+                collapsible: false,
+                children: [
+                  { text: 'Decision Trees', link: '/en/statistical-learning/decision-tree-ensemble/decision-tree' },
+                  { text: 'Random Forest', link: '/en/statistical-learning/decision-tree-ensemble/random-forest' },
+                  { text: 'Boosting', link: '/en/statistical-learning/decision-tree-ensemble/boosting' },
+                ]
+              },
+              {
+                text: 'Unsupervised Learning',
+                collapsible: false,
+                children: [
+                  { text: 'Clustering', link: '/en/statistical-learning/unsupervised-learning/clustering' },
+                  { text: 'Dimensionality Reduction', link: '/en/statistical-learning/unsupervised-learning/dimensionality-reduction' },
+                ]
+              },
+            ]
+          },
+          {
+            text: 'Neural Networks and Deep Learning',
+            collapsible: false,
+            children: [
+              {
+                text: 'Neural Network Architectures',
+                collapsible: false,
+                children: [
+                  { text: 'Fundamentals of Neural Networks', link: '/en/deep-learning/neural-network-structure/idea-origin' },
+                  { text: 'The Linear Perceptron', link: '/en/deep-learning/neural-network-structure/perceptron' },
+                  { text: 'Multilayer Perceptron', link: '/en/deep-learning/neural-network-structure/mlp' },
+                  { text: 'Forward Propagation', link: '/en/deep-learning/neural-network-structure/forward-propagation' },
+                  { text: 'Backpropagation', link: '/en/deep-learning/neural-network-structure/backpropagation' },
+                  { text: 'Activation and Loss Functions', link: '/en/deep-learning/neural-network-structure/activation-loss-functions' },
+                ]
+              },
+              {
+                text: 'Optimization',
+                collapsible: false,
+                children: [
+                  { text: 'Gradient Descent', link: '/en/deep-learning/neural-network-optimization/gradient-descent' },
+                  { text: 'Adaptive Optimizers', link: '/en/deep-learning/neural-network-optimization/adaptive-optimizers' },
+                ]
+              },
+              {
+                text: 'Deep Network Stability',
+                collapsible: false,
+                children: [
+                  { text: 'Weight Initialization', link: '/en/deep-learning/neural-network-stability/weight-initialization' },
+                  { text: 'Dropout Regularization', link: '/en/deep-learning/neural-network-stability/dropout' },
+                  { text: 'Batch Normalization', link: '/en/deep-learning/neural-network-stability/batch-normalization' },
+                ]
+              },
+              {
+                text: 'Convolutional Neural Networks',
+                collapsible: false,
+                children: [
+                  { text: 'CNN Fundamentals', link: '/en/deep-learning/convolutional-neural-network/cnn-basics' },
+                  { text: 'AlexNet and the CNN Renaissance', link: '/en/deep-learning/convolutional-neural-network/alexnet' },
+                  { text: 'VGG and GoogLeNet', link: '/en/deep-learning/convolutional-neural-network/vgg-inception' },
+                  { text: 'ResNet', link: '/en/deep-learning/convolutional-neural-network/resnet' },
+                  { text: 'Lab: AlexNet Image Classification', link: '/en/deep-learning/convolutional-neural-network/alexnet-experiment' },
+                ]
+              },
+              {
+                text: 'Generative Models',
+                collapsible: false,
+                children: [
+                  { text: 'Variational Autoencoders', link: '/en/deep-learning/generative-models/vae' },
+                  { text: 'Generative Adversarial Networks', link: '/en/deep-learning/generative-models/gan' },
+                  { text: 'Lab: DCGAN Image Generation', link: '/en/deep-learning/generative-models/gan-experiment' },
+                ]
+              },
+              {
+                text: 'Sequence Models',
+                collapsible: false,
+                children: [
+                  { text: 'Word Embeddings and Representation Learning', link: '/en/deep-learning/sequence-models/word-embedding' },
+                  { text: 'RNN Fundamentals', link: '/en/deep-learning/sequence-models/rnn-basics' },
+                  { text: 'LSTM and GRU Gating Mechanisms', link: '/en/deep-learning/sequence-models/lstm-gru' },
+                  { text: 'Seq2Seq Sequence Mapping', link: '/en/deep-learning/sequence-models/seq2seq' },
+                  { text: 'Lab: LSTM Poetry Generation', link: '/en/deep-learning/sequence-models/lstm-experiment' },
+                ]
+              },
+            ]
+          },
+          {
+            text: 'The Language Model Singularity',
+            collapsible: false,
+            children: [
+              {
+                text: 'Transformer Architecture',
+                collapsible: false,
+                children: [
+                  { text: 'Transformer Fundamentals', link: '/en/language-models/architecture-basics/transformer-architecture' },
+                  { text: 'Transformer Evolution and Variants', link: '/en/language-models/architecture-basics/architecture-evolution' },
+                  { text: 'Language Models and Tokenization', link: '/en/language-models/architecture-basics/language-model-tokenization' },
+                  { text: 'Lab: Transformer Model Training', link: '/en/language-models/architecture-basics/llm-pretrain-experiment' },
+                ]
+              },
+              {
+                text: 'Pretraining and Fine-Tuning',
+                collapsible: false,
+                children: [
+                  { text: 'Pretraining Data Engineering', link: '/en/language-models/pretraining/pretraining-data' },
+                  { text: 'Scaling Laws', link: '/en/language-models/pretraining/scaling-laws' },
+                  { text: 'Distributed Training Infrastructure', link: '/en/language-models/pretraining/distributed-training' },
+                  { text: 'Supervised Fine-Tuning', link: '/en/language-models/pretraining/supervised-finetuning' },
+                  { text: 'Lab: SFT Model Conversation', link: '/en/language-models/pretraining/llm-sft-experiment' },
+                ]
+              },
+              {
+                text: 'Alignment Training',
+                collapsible: false,
+                children: [
+                  { text: 'RLHF', link: '/en/language-models/alignment/rlhf' },
+                  { text: 'Evolution of Alignment Methods', link: '/en/language-models/alignment/alignment-new-paradigms' },
+                  { text: 'Lab: DPO Alignment Training', link: '/en/language-models/alignment/llm-dpo-experiment' },
+                ]
+              },
+              {
+                text: 'Reasoning Capabilities',
+                collapsible: false,
+                children: [
+                  { text: 'Chain-of-Thought and Reasoning Models', link: '/en/language-models/reasoning/chain-of-thought' },
+                  { text: 'Inference Scaling Laws', link: '/en/language-models/reasoning/test-time-compute' },
+                  { text: 'Inference Efficiency Optimization', link: '/en/language-models/reasoning/inference-efficiency' },
+                  { text: 'Lab: LLM Inference Optimization', link: '/en/language-models/reasoning/llm-reasoning-experiment' },
+                ]
+              },
+              {
+                text: 'Multimodal Fusion and Safety',
+                collapsible: false,
+                children: [
+                  { text: 'Multimodal Large Models', link: '/en/language-models/frontier/multimodal-llm' },
+                  { text: 'Model Evaluation and Safety', link: '/en/language-models/frontier/evaluation-safety' },
+                  { text: 'Lab: VLM Training', link: '/en/language-models/frontier/vlm-training-experiment' },
+                ]
+              },
+            ]
+          },
+          {
+            text: 'AI Infrastructure and Engineering',
+            collapsible: false,
+            children: [
+              {
+                text: 'Model Serving',
+                collapsible: false,
+                children: [
+                  { text: 'Inference Service Architecture', link: '/en/ai-infra-engineering/model-serving/inference-service-architecture' },
+                  { text: 'Request Scheduling and Batching', link: '/en/ai-infra-engineering/model-serving/request-scheduling' },
+                  { text: 'GPU Resource Management', link: '/en/ai-infra-engineering/model-serving/gpu-resource-management' },
+                  { text: 'Lab: Deploying LLM Inference Service', link: '/en/ai-infra-engineering/model-serving/llm-inference-experiment' },
+                ]
+              },
+              {
+                text: 'MLOps Practices',
+                collapsible: false,
+                children: [
+                  { text: 'Data Versioning', link: '/en/ai-infra-engineering/mlops/data-versioning' },
+                  { text: 'Experiment Tracking and Model Management', link: '/en/ai-infra-engineering/mlops/model-lifecycle' },
+                  { text: 'Hyperparameter Optimization', link: '/en/ai-infra-engineering/mlops/hyperparameter-optimization' },
+                  { text: 'Model Performance Monitoring', link: '/en/ai-infra-engineering/mlops/model-performance-monitoring' },
+                  { text: 'Drift Detection', link: '/en/ai-infra-engineering/mlops/drift-detection' },
+                ]
+              },
+            ]
+          },
+          {
+            text: 'Agentic Application Systems',
+            collapsible: false,
+            children: [
+              {
+                text: 'Vector Retrieval and RAG',
+                collapsible: false,
+                children: [
+                  { text: 'Embeddings and Vector Retrieval', link: '/en/agent-applications/vector-retrieval-rag/embedding-and-indexing' },
+                  { text: 'Retrieval Quality Evaluation and Optimization', link: '/en/agent-applications/vector-retrieval-rag/retrieval-quality' },
+                  { text: 'Retrieval-Augmented Generation', link: '/en/agent-applications/vector-retrieval-rag/retrieval-augmented-generation' },
+                  { text: 'Lab: Building a Knowledge Base Q&A System', link: '/en/agent-applications/vector-retrieval-rag/rag-experiment' },
+                ]
+              },
+              {
+                text: 'Building Agent Applications',
+                collapsible: false,
+                children: [
+                  { text: 'From LLM to Agent', link: '/en/agent-applications/agent-systems/llm-to-agent' },
+                  { text: 'Tool Use', link: '/en/agent-applications/agent-systems/tool-use' },
+                  { text: 'Planning and Reasoning', link: '/en/agent-applications/agent-systems/planning-reasoning' },
+                  { text: 'Memory Systems', link: '/en/agent-applications/agent-systems/memory-systems' },
+                  { text: 'Collaboration and Communication', link: '/en/agent-applications/agent-systems/agent-collaboration-communication' },
+                  { text: 'Orchestration and Fault Tolerance', link: '/en/agent-applications/agent-systems/orchestration-fault-tolerance' },
+                  { text: 'Lab: Research Agent Collaboration System', link: '/en/agent-applications/agent-systems/agent-experiment' },
+                ]
+              },
+            ]
+          },
+          {
+            text: 'Appendix',
+            collapsible: true,
+            children: [
+              { text: 'Building the Sandbox Environment', link: '/en/appendixes/sandbox' },
+              {
+                text: 'NumPy Practice',
+                collapsible: false,
+                children: [
+                  { text: 'Data Processing Practice', link: '/en/appendixes/numpy/linear-numpy' },
+                  { text: 'Calculus Practice', link: '/en/appendixes/numpy/calculus-numpy' },
+                  { text: 'Probability and Statistics Practice', link: '/en/appendixes/numpy/probability-numpy' },
+                ]
+              }
+            ]
+          },
+        ]
+      },
+    }
   }),
 
   // 插件配置
