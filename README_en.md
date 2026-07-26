@@ -1,6 +1,6 @@
 <p align="center">
 	<br/>
-  <a href="https://ai.icyfenix.cn" target="_blank">
+  <a href="https://ai.icyfenix.cn/en" target="_blank">
     <img src="https://github.com/fenixsoft/dmla/blob/main/docs/.vuepress/public/logo.png?raw=true" alt="logo">
   </a>
   <div align="center">
@@ -23,7 +23,7 @@
 
 ## Introduction
 
-This is a book on "how to apply machine learning to production systems," designed to serve as a navigational map for software developers to organize their knowledge framework in the age of artificial intelligence. In terms of purpose, it is similar to my other work, [The Fenix Project](https://icyfenix.cn/). However, this book has a higher barrier to entry. Before diving in, it is recommended to read the article [On Designing Machine Learning Application](https://ai.icyfenix.cn/introduction/about-dmla.html) to understand the book's scope and intended audience.
+This is a book on "how to apply machine learning to production systems," designed to serve as a navigational map for software developers to organize their knowledge framework in the age of artificial intelligence. In terms of purpose, it is similar to my other work, [The Fenix Project](https://icyfenix.cn/). However, this book has a higher barrier to entry. Before diving in, it is recommended to read the article [On Designing Machine Learning Application](https://ai.icyfenix.cn/en/introduction/about-dmla.html) to understand the book's scope and intended audience.
 
 I wrote this book with the following goals in mind:
 
@@ -33,14 +33,14 @@ I wrote this book with the following goals in mind:
 ## Screenshot
 <p align="center">
   <div align="center">
-    <img src="https://github.com/fenixsoft/dmla/blob/main/docs/.vuepress/public/homepage.png?raw=true" >
-    <a href="https://ai.icyfenix.cn" target="_blank">Designing Machine Learning Application Systems</a>
+    <img src="https://github.com/fenixsoft/dmla/blob/main/docs/.vuepress/public/homepage_en.png?raw=true" >
+    <a href="https://ai.icyfenix.cn/en" target="_blank">Designing Machine Learning Application Systems</a>
   </div>
 </p>
 
 ## Quick Start
 
-- **Read Online**: The online reading address is [https://ai.icyfenix.cn](https://ai.icyfenix.cn/en).
+- **Read Online**: The online reading address is [https://ai.icyfenix.cn/en](https://ai.icyfenix.cn/en).
   The site is hosted on GitHub Pages; continuous integration powered by GitHub Actions compiles the Markdown documents from the Git repository and syncs them to the website in real time, pushing them to a CDN for accelerated access within China. Discussion services are provided by GitHub Discussions and [Giscus](https://github.com/giscus/giscus).
 
 - **Code Sandbox**: This book contains a large number of code exercises that can be run directly in the browser, used to demonstrate machine learning algorithms and to perform model training. For Part I (Mathematical Foundations) and Part II (Classical Statistical Learning Algorithms), a pure CPU environment is sufficient. For deep learning and beyond, some model training experiments require GPU support (currently based on PyTorch with CUDA 12.8). For more details, see [Setting Up the Sandbox Environment](https://ai.icyfenix.cn/en/appendixes/sandbox.html).

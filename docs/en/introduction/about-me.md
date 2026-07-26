@@ -23,7 +23,7 @@ externalLinkIcon: false
 
 - Computer Book Author
   Author of nine published computer books and three open-source technical documents, all well received by both readers and the industry. Among them, "[The Fenix Project](https://icyfenix.cn)" was starred over 10,000 times on [GitHub](https://github.com/), six books have received ratings of 9.0 or higher on [Douban](https://www.douban.com/), and the "Understanding the Java Virtual Machine" series has been reprinted over 45 times, with sales exceeding 400,000 copies.
-  - 2026 *[Designing Machine Learning Applications](https://ai.icyfenix.cn)* (open-source document, in progress)
+  - 2026 *[Designing Machine Learning Applications](https://ai.icyfenix.cn/en)* (open-source document, in progress)
   - 2025 *[The Boundary of Intelligence: From Turing Machines to Artificial Intelligence (Second Edition)](https://book.douban.com/subject/37357392/)* (Douban 9.1)
   - 2021 *[The Fenix Project: Building Reliable Large-Scale Distributed Systems](https://icyfenix.cn/introduction/about-book.html)* (Douban 9.4)
   - 2020 *[Exploring Software Architecture: The Fenix Project](https://icyfenix.cn/)* (open-source document)
