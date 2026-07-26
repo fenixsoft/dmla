@@ -1,4 +1,4 @@
-import { readFileSync } from 'fs';
+import { existsSync, readFileSync } from 'fs';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
@@ -18,14 +18,16 @@ function findMatchingBracket(str, startPos, open, close) {
   let depth = 0;
   let inSingle = false;
   let inDouble = false;
+  let inBacktick = false;
   for (let i = startPos; i < str.length; i++) {
     const ch = str[i];
     const prev = i > 0 ? str[i - 1] : '';
 
-    if (ch === "'" && !inDouble && prev !== '\\') inSingle = !inSingle;
-    if (ch === '"' && !inSingle && prev !== '\\') inDouble = !inDouble;
+    if (ch === "'" && !inDouble && !inBacktick && prev !== '\\') inSingle = !inSingle;
+    if (ch === '"' && !inSingle && !inBacktick && prev !== '\\') inDouble = !inDouble;
+    if (ch === '`' && !inSingle && !inDouble && prev !== '\\') inBacktick = !inBacktick;
 
-    if (!inSingle && !inDouble) {
+    if (!inSingle && !inDouble && !inBacktick) {
       if (ch === open) depth++;
       else if (ch === close) {
         depth--;
@@ -227,6 +229,44 @@ export function parseArticleList() {
       childrenContent, chapterIndex, text, 1
     );
     articles.push(...chapterArticles);
+  }
+
+  // --- 第三步：结果校验 ---
+  // 验证解析结果在合理范围内，避免 config.js 结构变化后静默失败
+
+  if (articles.length === 0) {
+    throw new Error(
+      '文章清单为空：未从 sidebar 中提取到任何文章。' +
+      '请检查 config.js 中中文 sidebar 结构是否发生了变化。'
+    );
+  }
+
+  const chapterCount = new Set(articles.map(a => a.chapterIndex)).size;
+  if (chapterCount < 5) {
+    throw new Error(
+      `章节数量异常（${chapterCount} < 5）：解析到的章节过少，` +
+      '请检查 config.js 中顶层 children 结构是否正确。'
+    );
+  }
+  if (chapterCount > 10) {
+    throw new Error(
+      `章节数量异常（${chapterCount} > 10）：解析到的章节过多，` +
+      '可能误将子节识别为顶层章节，请检查 config.js 中 sidebar 层级结构。'
+    );
+  }
+
+  // 验证每篇文章对应的 .md 文件确实存在
+  let missingFiles = 0;
+  for (const a of articles) {
+    if (!existsSync(a.filePath)) {
+      missingFiles++;
+    }
+  }
+  if (missingFiles > 0) {
+    console.warn(
+      `警告：${missingFiles}/${articles.length} 篇文章的 .md 文件不存在。` +
+      '可能是文件尚未创建，或链接指向了不存在的路径。'
+    );
   }
 
   return articles;
