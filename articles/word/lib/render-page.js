@@ -2,9 +2,13 @@
 // 使用 Playwright + 系统 Chrome 渲染 VuePress 页面，提取最终 DOM
 import { chromium } from 'playwright';
 import { existsSync } from 'fs';
+import { resolve } from 'path';
 
 const BASE_URL = 'http://localhost:8080';
 const BROWSER_PATH = '/usr/bin/google-chrome';
+// KaTeX 路径：VuePress 的 math 插件通过 ES module 加载，未暴露全局
+// 需手动注入脚本以便在浏览器中使用 katex.renderToString()
+const KATEX_PATH = resolve(import.meta.dirname, '../../../node_modules/katex/dist/katex.min.js');
 
 /**
  * 渲染一个 VuePress 页面并提取内容 HTML
@@ -33,55 +37,96 @@ export async function renderPage(articlePath, browser) {
     });
     const title = h1Text || pageTitle;
 
-    // 提取 KaTeX 公式的原始 LaTeX 并替换 HTML
-    // KaTeX 的 annotation 元素包含原始 LaTeX 源码
-    await page.evaluate(() => {
-      // 1) 块级公式 (katex-display): 替换为 $$...$$ 供 Pandoc 转为 OMML
+    // 注入 KaTeX 全局函数（VuePress 通过 ES module 加载，未暴露全局）
+    if (existsSync(KATEX_PATH)) {
+      await page.addScriptTag({ path: KATEX_PATH });
+    }
+
+    // 将 KaTeX 公式转换为 MathML，Pandoc HTML reader 会转为 OMML
+    // - 块级公式：<math display="block"> → m:oMathPara
+    // - 行内公式：<math> → m:oMath
+    const formulaStats = await page.evaluate(() => {
+      if (typeof katex === 'undefined') return { error: 'KaTeX not loaded' };
+
+      let displayDone = 0, inlineDone = 0, errors = 0;
+
+      // Step 1: 块级 display 公式 → <math display="block">
       document.querySelectorAll('.katex-display').forEach(el => {
         const annotation = el.querySelector('annotation[encoding="application/x-tex"]');
-        if (annotation && annotation.textContent.trim()) {
-          const tex = annotation.textContent.trim();
-          const container = document.createElement('p');
-          container.textContent = `$$${tex}$$`;
-          el.replaceWith(container);
-        }
+        if (!annotation || !annotation.textContent.trim()) return;
+        const tex = annotation.textContent.trim();
+        try {
+          const mathml = katex.renderToString(tex, {
+            output: 'mathml', throwOnError: false, displayMode: true,
+          });
+          const tmp = document.createElement('div');
+          tmp.innerHTML = mathml;
+          const mathEl = tmp.querySelector('math');
+          if (mathEl) {
+            const p = document.createElement('p');
+            p.appendChild(mathEl);
+            el.replaceWith(p);
+            displayDone++;
+          }
+        } catch (e) { errors++; }
       });
 
-      // 2) 行内公式: 替换为 $...$
-      // 注意：katex-display 内部的 .katex 已经被上面处理了
+      // Step 2: 行内公式 → <math>（不带 display 属性）
       document.querySelectorAll('.katex').forEach(el => {
-        // 跳过已被替换的（父级是 katex-display 的情况）
-        if (el.closest('.katex-display')) return;
+        if (el.closest('.katex-display')) return; // 已在 step 1 处理
         const annotation = el.querySelector('annotation[encoding="application/x-tex"]');
-        if (annotation && annotation.textContent.trim()) {
-          const tex = annotation.textContent.trim();
-          // 检查是否已经是 $...$ 包裹的
-          if (!tex.startsWith('$')) {
-            const span = document.createElement('span');
-            span.textContent = `$${tex}$`;
-            el.replaceWith(span);
+        if (!annotation || !annotation.textContent.trim()) return;
+        const tex = annotation.textContent.trim();
+        try {
+          const mathml = katex.renderToString(tex, {
+            output: 'mathml', throwOnError: false, displayMode: false,
+          });
+          const tmp = document.createElement('div');
+          tmp.innerHTML = mathml;
+          const mathEl = tmp.querySelector('math');
+          if (mathEl) {
+            el.replaceWith(mathEl);
+            inlineDone++;
           }
-        }
+        } catch (e) { errors++; }
       });
+
+      return {
+        displayDone, inlineDone, errors,
+        katexLeft: document.querySelectorAll('.katex').length,
+        mathCount: document.querySelectorAll('math').length,
+      };
     });
+    console.log(`  公式转换: display=${formulaStats.displayDone} inline=${formulaStats.inlineDone} errors=${formulaStats.errors} katex_left=${formulaStats.katexLeft} math=${formulaStats.mathCount}`);
 
     // 提取内容区域 HTML
     const contentHtml = await page.evaluate(() => {
       const content = document.querySelector('[vp-content]');
       if (!content) return '';
 
-      // 克隆内容以避免修改原始 DOM
       const clone = content.cloneNode(true);
 
       // 移除不需要的元素
-      clone.querySelectorAll('.runnable-code-toolbar, .runnable-code-btn, '
+      clone.querySelectorAll(
+        '.runnable-code-toolbar, .runnable-code-btn, '
         + '.code-demo, .giscus, .page-nav, .page-meta, '
-        + 'script, style, .vuepress-plugin-search-pro').forEach(el => el.remove());
+        + 'script, style, .vuepress-plugin-search-pro'
+      ).forEach(el => el.remove());
 
       return clone.innerHTML;
     });
 
-    return { content: contentHtml, title };
+    // 将相对图片路径转为绝对路径（Pandoc 需要文件系统路径）
+    const docsDir = resolve(import.meta.dirname, '../../../docs');
+    const fixedHtml = contentHtml.replace(
+      /<img\s+[^>]*src="(\/[^"]+)"/g,
+      (match, srcPath) => {
+        const absPath = resolve(docsDir, srcPath.slice(1));
+        return match.replace(srcPath, absPath);
+      }
+    );
+
+    return { content: fixedHtml, title };
 
   } finally {
     await page.close();
