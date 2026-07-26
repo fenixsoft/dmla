@@ -12,9 +12,10 @@ const _mermaidPngs = new Map();
  * 预处理 Markdown，将 VuePress 特有语法转为 Pandoc 兼容形式
  * @param {string} markdown - 原始 Markdown 内容
  * @param {{slug: string, filePath: string, title: string}} meta - 文章元信息
+ * @param {Record<string, string>} [titleMap] - slug → 文章标题映射，用于脚注显示标题而非 slug
  * @returns {{processed: string, mermaidPngs: Map<string, string>}}
  */
-export function preprocess(markdown, meta) {
+export function preprocess(markdown, meta, titleMap) {
   if (!existsSync(TMP_DIR)) mkdirSync(TMP_DIR, { recursive: true });
   _mermaidPngs.clear();
 
@@ -24,7 +25,7 @@ export function preprocess(markdown, meta) {
   result = convertVuePressContainers(result);
   result = convertRunnableBlocks(result);
   result = convertMermaidBlocks(result, meta);
-  result = convertArticleLinks(result, meta);
+  result = convertArticleLinks(result, titleMap);
   result = convertEquationRefs(result);
   result = removeTocMarkers(result);
 
@@ -87,9 +88,9 @@ function convertMermaidBlocks(markdown, meta) {
       const mmdPath = resolve(TMP_DIR, `${meta.slug}-mermaid-${counter}.mmd`);
       writeFileSync(mmdPath, diagram.trim(), 'utf-8');
 
-      // 调用 mmdc 渲染
+      // 调用 mmdc 渲染（-y 跳过交互提示）
       execSync(
-        `npx mmdc -i "${mmdPath}" -o "${pngPath}" -b transparent -p "${PUPPETEER_CONFIG}"`,
+        `npx -y mmdc -i "${mmdPath}" -o "${pngPath}" -b transparent -p "${PUPPETEER_CONFIG}"`,
         { stdio: 'pipe', timeout: 30000 }
       );
 
@@ -110,10 +111,10 @@ function convertMermaidBlocks(markdown, meta) {
  * [文字](path/to/article.md) → 文字[^n]
  * 文末附加 [^n]: 参见「文章标题」
  * @param {string} markdown
- * @param {{slug: string}} meta
+ * @param {Record<string, string>} [titleMap] - slug → 文章标题映射
  * @returns {string}
  */
-function convertArticleLinks(markdown, meta) {
+function convertArticleLinks(markdown, titleMap) {
   let footnoteIndex = 0;
   const footnotes = [];
 
@@ -122,7 +123,8 @@ function convertArticleLinks(markdown, meta) {
     (match, text, target) => {
       footnoteIndex++;
       const targetSlug = target.split('/').pop().replace('.md', '');
-      footnotes.push(`[^${footnoteIndex}]: 参见「${targetSlug}」`);
+      const title = titleMap?.[targetSlug] || targetSlug;
+      footnotes.push(`[^${footnoteIndex}]: 参见「${title}」`);
       return `${text}[^${footnoteIndex}]`;
     }
   );
