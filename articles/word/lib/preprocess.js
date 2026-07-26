@@ -25,7 +25,15 @@ export function preprocess(markdown, meta, titleMap) {
   result = convertVuePressContainers(result);
   result = convertRunnableBlocks(result);
   result = convertMermaidBlocks(result, meta);
-  result = convertArticleLinks(result, titleMap);
+
+  // 验证图片文件存在性（需在 Mermaid 转换之后执行）
+  result = validateImages(result, meta);
+
+  // 文章间链接转换需保护代码块，防止正则误匹配反引号内的内容
+  const codeBlockGuard = protectCodeBlocks(result);
+  codeBlockGuard.text = convertArticleLinks(codeBlockGuard.text, titleMap);
+  result = restoreCodeBlocks(codeBlockGuard.text, codeBlockGuard.blocks);
+
   result = convertEquationRefs(result);
   result = removeTocMarkers(result);
 
@@ -105,6 +113,77 @@ function convertMermaidBlocks(markdown, meta) {
   return result;
 }
 
+// ─── 图片文件验证 ────────────────────────────────────────
+
+/**
+ * 验证所有 Markdown 图片引用对应的文件是否存在
+ * 缺失的图片替换为占位文字，避免 Word 中出现断裂的图片链接
+ * @param {string} markdown
+ * @param {{slug: string, filePath: string}} meta
+ * @returns {string}
+ */
+function validateImages(markdown, meta) {
+  const articleDir = resolve(meta.filePath, '..');
+  return markdown.replace(
+    /!\[([^\]]*)\]\(([^)]+)\)/g,
+    (match, alt, path) => {
+      // 去除可能的 title 属性（如 image.png "title"）
+      const cleanPath = path.split(/\s+/)[0];
+
+      // 跳过外部 URL 和 data URI
+      if (cleanPath.startsWith('http://') || cleanPath.startsWith('https://') || cleanPath.startsWith('data:')) {
+        return match;
+      }
+      // 跳过 Mermaid 渲染的临时图片（已在 convertMermaidBlocks 中生成）
+      if (cleanPath.startsWith('./tmp/') || cleanPath.startsWith('tmp/')) {
+        return match;
+      }
+
+      const fullPath = resolve(articleDir, cleanPath);
+      if (!existsSync(fullPath)) {
+        console.warn(`  [警告] 图片缺失: ${cleanPath}（${meta.slug}）`);
+        return `[图片缺失: ${cleanPath}]`;
+      }
+      return match;
+    }
+  );
+}
+
+// ─── 代码块保护（防止 convertArticleLinks 误匹配） ────────
+
+/**
+ * 将代码块和行内代码替换为占位符，防止后续正则处理时误匹配
+ * @param {string} text
+ * @returns {{text: string, blocks: string[]}}
+ */
+function protectCodeBlocks(text) {
+  const blocks = [];
+  let index = 0;
+  // 保护 fenced code blocks
+  text = text.replace(/```[\s\S]*?```/g, (match) => {
+    const placeholder = `\x00CODEBLOCK${index}\x00`;
+    blocks[index++] = match;
+    return placeholder;
+  });
+  // 保护 inline code (backticks)
+  text = text.replace(/`[^`]+`/g, (match) => {
+    const placeholder = `\x00CODEBLOCK${index}\x00`;
+    blocks[index++] = match;
+    return placeholder;
+  });
+  return { text, blocks };
+}
+
+/**
+ * 将占位符恢复为原始代码块内容
+ * @param {string} text
+ * @param {string[]} blocks
+ * @returns {string}
+ */
+function restoreCodeBlocks(text, blocks) {
+  return text.replace(/\x00CODEBLOCK(\d+)\x00/g, (_, index) => blocks[parseInt(index)]);
+}
+
 // ─── 文章间链接转脚注 ──────────────────────────────────────
 
 /**
@@ -119,7 +198,7 @@ function convertArticleLinks(markdown, titleMap) {
   const footnotes = [];
 
   const result = markdown.replace(
-    /\[([^\]]+)\]\(([^)]+\.md)\)/g,
+    /\[([^\]]+)\]\(([^)"'\s]+\.md)(?:\s+"[^"]*")?\)/g,
     (match, text, target) => {
       footnoteIndex++;
       const targetSlug = target.split('/').pop().replace('.md', '');
