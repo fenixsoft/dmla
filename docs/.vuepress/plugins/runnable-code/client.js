@@ -607,7 +607,7 @@ function initCodeBlock(block) {
           // 运行中状态，更新进度条并清除加载提示
           progressContainer.innerHTML = `
             <div class="progress-bar">
-              <div class="progress-header">${msg.message || '代码执行中...'}</div>
+              <div class="progress-header">${msg.message || t('代码执行中...', 'Running code...')}</div>
             </div>
           `
           textOutput.className = 'output-area'
@@ -625,7 +625,7 @@ function initCodeBlock(block) {
 
         progressContainer.innerHTML = `
           <div class="progress-bar">
-            <div class="progress-header">${msg.description || '执行中...'}</div>
+            <div class="progress-header">${msg.description || t('执行中...', 'Running...')}</div>
             <div class="progress-track">
               <div class="progress-fill" style="width: ${percent}%"></div>
             </div>
@@ -662,7 +662,7 @@ function initCodeBlock(block) {
 
               progressContainer.innerHTML = `
                 <div class="progress-bar">
-                  <div class="progress-header">${progressData.description || '执行中...'}</div>
+                  <div class="progress-header">${progressData.description || t('执行中...', 'Running...')}</div>
                   <div class="progress-track">
                     <div class="progress-fill" style="width: ${pgPercent}%"></div>
                   </div>
@@ -792,13 +792,13 @@ function initCodeBlock(block) {
         if (msg.success) {
           progressContainer.innerHTML = `
             <div class="progress-bar">
-              <div class="progress-header">✅ 代码执行完毕</div>
+              <div class="progress-header">${t('✅ 代码执行完毕', '✅ Code execution completed')}</div>
             </div>
           `
         } else {
           progressContainer.innerHTML = `
             <div class="progress-bar">
-              <div class="progress-header">❌ 执行失败</div>
+              <div class="progress-header">${t('❌ 执行失败', '❌ Execution failed')}</div>
             </div>
           `
         }
@@ -821,7 +821,10 @@ function initCodeBlock(block) {
 
       // FC 模式不支持 GPU，提前拦截，不创建 Stop 按钮
       if (useGpu && getSandboxConfig().mode === 'fc') {
-        outputArea.innerHTML = '<div class="output-area error">GPU 仅在自行部署的 DMLA 沙箱中可用，请参见<a href="/appendixes/sandbox.html">环境构建说明</a>。</div>'
+        outputArea.innerHTML = t(
+          '<div class="output-area error">GPU 仅在自行部署的 DMLA 沙箱中可用，请参见<a href="/appendixes/sandbox.html">环境构建说明</a>。</div>',
+          '<div class="output-area error">GPU is only available in a self-deployed DMLA sandbox. See <a href="/appendixes/sandbox.html">Build Instructions</a>.</div>'
+        )
         return
       }
 

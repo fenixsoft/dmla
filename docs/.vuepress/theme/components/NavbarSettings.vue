@@ -16,7 +16,16 @@
     <!-- 语言切换按钮 -->
     <button class="locale-btn" @click="switchLocale" :title="isEnglish ? '切换到中文' : 'Switch to English'">
       <svg class="locale-icon" viewBox="0 0 24 24" fill="none">
-        <text x="12" y="17" :font-size="isEnglish ? 18 : 16" font-weight="700" fill="currentColor" font-family="Arial, sans-serif" text-anchor="middle">{{ isEnglish ? '中' : 'EN' }}</text>
+        <!-- 圆形边框 -->
+        <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="1.5"/>
+        <template v-if="isEnglish">
+          <!-- 中字：竖笔 + 口（描边，可见空隙） -->
+          <line x1="12" y1="6" x2="12" y2="18" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          <rect x="6" y="8.5" width="12" height="6" rx="1" fill="none" stroke="currentColor" stroke-width="1.5"/>
+        </template>
+        <template v-else>
+          <text x="12" y="16" font-size="10" font-weight="700" fill="currentColor" font-family="Arial, sans-serif" text-anchor="middle">EN</text>
+        </template>
       </svg>
     </button>
 
@@ -147,5 +156,35 @@ function onSettingsSave(config) {
   width: 22px;
   height: 22px;
   color: var(--vp-c-text);
+}
+
+/* 移动端：缩小按钮间距和尺寸 */
+@media (max-width: 719px) {
+  .github-link,
+  .settings-btn,
+  .locale-btn {
+    margin-left: 6px;
+  }
+}
+
+@media (max-width: 419px) {
+  .github-link,
+  .settings-btn,
+  .locale-btn {
+    width: 24px;
+    height: 24px;
+    margin-left: 4px;
+  }
+
+  .github-icon,
+  .settings-icon {
+    width: 16px;
+    height: 16px;
+  }
+
+  .locale-icon {
+    width: 18px;
+    height: 18px;
+  }
 }
 </style>

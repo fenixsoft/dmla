@@ -366,7 +366,7 @@ export default {
       '/en/': {
         navbar: [
           { text: 'Home', link: '/en/' },
-          { text: 'Discussion', link: '/boards' },
+          { text: 'Discus', link: '/boards' },
         ],
 
         sidebar: [

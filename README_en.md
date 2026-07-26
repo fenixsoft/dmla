@@ -40,10 +40,10 @@ I wrote this book with the following goals in mind:
 
 ## Quick Start
 
-- **Read Online**: The online reading address is [https://ai.icyfenix.cn](https://ai.icyfenix.cn).
+- **Read Online**: The online reading address is [https://ai.icyfenix.cn](https://ai.icyfenix.cn/en).
   The site is hosted on GitHub Pages; continuous integration powered by GitHub Actions compiles the Markdown documents from the Git repository and syncs them to the website in real time, pushing them to a CDN for accelerated access within China. Discussion services are provided by GitHub Discussions and [Giscus](https://github.com/giscus/giscus).
 
-- **Code Sandbox**: This book contains a large number of code exercises that can be run directly in the browser, used to demonstrate machine learning algorithms and to perform model training. For Part I (Mathematical Foundations) and Part II (Classical Statistical Learning Algorithms), a pure CPU environment is sufficient. For deep learning and beyond, some model training experiments require GPU support (currently based on PyTorch with CUDA 12.8). For more details, see [Setting Up the Sandbox Environment](https://ai.icyfenix.cn/appendixes/sandbox.html).
+- **Code Sandbox**: This book contains a large number of code exercises that can be run directly in the browser, used to demonstrate machine learning algorithms and to perform model training. For Part I (Mathematical Foundations) and Part II (Classical Statistical Learning Algorithms), a pure CPU environment is sufficient. For deep learning and beyond, some model training experiments require GPU support (currently based on PyTorch with CUDA 12.8). For more details, see [Setting Up the Sandbox Environment](https://ai.icyfenix.cn/en/appendixes/sandbox.html).
   ```shell
   npx @icyfenix-dmla/install@latest
   ```
