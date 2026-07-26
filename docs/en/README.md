@@ -60,7 +60,7 @@ I wrote this document with the following goals in mind:
 
 ## Quick Start
 
-- **Read Online**: The online reading address for this document is [https://ai.icyfenix.cn](https://ai.icyfenix.cn). The website is hosted on GitHub Pages for storage, uses GitHub Actions for continuous integration to compile and sync Markdown documents from the Git repository to the site in real time, pushes to CDN for accelerated access in China, and uses GitHub Discussions with [Giscus](https://github.com/giscus/giscus) for discussion services.
+- **Read Online**: The online reading address for this document is [https://ai.icyfenix.cn/en](https://ai.icyfenix.cn/en). The website is hosted on GitHub Pages for storage, uses GitHub Actions for continuous integration to compile and sync Markdown documents from the Git repository to the site in real time, pushes to CDN for accelerated access in China, and uses GitHub Discussions with [Giscus](https://github.com/giscus/giscus) for discussion services.
 
 - **Code Sandbox**: This document contains numerous interactive code examples that run directly in your browser for demonstrating machine learning algorithms and model training. For Part 1 (Mathematical Foundations) and Part 2 (Classic Statistical Learning Algorithms), a pure CPU environment is sufficient. For deep learning and beyond, some model training experiments require GPU support (currently based on PyTorch with CUDA 13.0). For more details, see [Building the Sandbox Environment](./appendixes/sandbox.md).
 
