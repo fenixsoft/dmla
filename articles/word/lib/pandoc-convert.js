@@ -1,9 +1,18 @@
-import { execSync } from 'child_process';
+import { execFileSync } from 'child_process';
 import { existsSync } from 'fs';
 import { resolve } from 'path';
 
 const FILTER_DIR = resolve(import.meta.dirname, '../filters');
 const REF_DOCX = resolve(import.meta.dirname, '../reference.docx');
+
+/** 检测 pandoc 是否可用 */
+function checkPandoc() {
+  try {
+    execFileSync('pandoc', ['--version'], { stdio: 'ignore' });
+  } catch {
+    throw new Error('pandoc 命令不可用，请确认已安装 Pandoc >= 3.1');
+  }
+}
 
 /**
  * 调用 Pandoc 将 Markdown 转为 DOCX
@@ -11,6 +20,8 @@ const REF_DOCX = resolve(import.meta.dirname, '../reference.docx');
  * @param {string} docxPath - 目标 DOCX 文件路径
  */
 export function convertToDocx(mdPath, docxPath) {
+  checkPandoc();
+
   if (!existsSync(mdPath)) {
     throw new Error(`Markdown 文件不存在: ${mdPath}`);
   }
@@ -20,7 +31,6 @@ export function convertToDocx(mdPath, docxPath) {
   }
 
   const args = [
-    'pandoc',
     mdPath,
     '-o', docxPath,
     '--from=markdown+footnotes+pipe_tables+fenced_divs+bracketed_spans',
@@ -31,7 +41,7 @@ export function convertToDocx(mdPath, docxPath) {
     '--quiet',
   ];
 
-  execSync(args.join(' '), { stdio: 'pipe', timeout: 60000 });
+  execFileSync('pandoc', args, { stdio: 'pipe', timeout: 60000 });
 
   if (!existsSync(docxPath)) {
     throw new Error(`Pandoc 转换失败，未生成输出文件: ${docxPath}`);
