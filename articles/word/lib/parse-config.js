@@ -198,6 +198,7 @@ export function parseArticleList() {
           fileIndex: fileIndex++,
           slug,
           chapterPath,
+          link: normalizedLink,
         });
       }
     }

@@ -1,30 +1,31 @@
 #!/usr/bin/env node
 // articles/word/convert.js
 // 批量将中文 Markdown 文章转为 Word 文档
+// 管线：VuePress 开发服务器 → Playwright 渲染 → Pandoc HTML→DOCX
 
 import { parseArticleList } from './lib/parse-config.js';
-import { preprocess } from './lib/preprocess.js';
-import { convertToDocx } from './lib/pandoc-convert.js';
-import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'fs';
+import { renderPage, launchBrowser } from './lib/render-page.js';
+import { convertHtmlToDocx } from './lib/html-to-docx.js';
+import { existsSync, mkdirSync } from 'fs';
 import { resolve } from 'path';
 
 const OUTPUT_DIR = resolve(import.meta.dirname, 'output');
-const TMP_DIR = resolve(import.meta.dirname, 'tmp');
 
-function main() {
-  // 确保输出和临时目录存在
+async function main() {
+  // 确保输出目录存在
   if (!existsSync(OUTPUT_DIR)) mkdirSync(OUTPUT_DIR, { recursive: true });
-  if (!existsSync(TMP_DIR)) mkdirSync(TMP_DIR, { recursive: true });
 
   // 1. 解析文章清单
   console.log('解析文章清单...');
   const articles = parseArticleList();
   console.log(`共 ${articles.length} 篇文章\n`);
 
-  // 构建 slug → 标题映射，用于脚注显示文章标题
-  const titleMap = Object.fromEntries(articles.map(a => [a.slug, a.title]));
+  // 2. 启动浏览器
+  console.log('启动浏览器...');
+  const browser = await launchBrowser();
+  console.log('浏览器已就绪\n');
 
-  // 2. 逐篇处理
+  // 3. 逐篇处理
   let success = 0;
   let skipped = 0;
   const errors = [];
@@ -32,45 +33,40 @@ function main() {
   for (const article of articles) {
     const outputFileName = `${article.chapterIndex}.${article.fileIndex}-${article.slug}.docx`;
     const outputPath = resolve(OUTPUT_DIR, outputFileName);
+    const pageUrl = `${article.link}.html`;
 
     console.log(`[${article.chapterIndex}.${article.fileIndex}] ${article.title}`);
 
     try {
-      // 读取原始 Markdown
-      if (!existsSync(article.filePath)) {
-        console.log(`  ⚠ 跳过：文件不存在 ${article.filePath}`);
+      // Playwright 渲染 + 提取内容
+      console.log('  渲染...');
+      const { content, title } = await renderPage(pageUrl, browser);
+
+      if (!content) {
+        console.log('  ⚠ 跳过：页面无内容');
         skipped++;
         continue;
       }
 
-      let markdown = readFileSync(article.filePath, 'utf-8');
-
-      // 预处理
-      console.log('  预处理...');
-      const processed = preprocess(markdown, {
-        slug: article.slug,
-        filePath: article.filePath,
-        title: article.title,
-      }, titleMap);
-      markdown = processed.processed;
-
-      // 写入临时 Markdown 文件
-      const tmpMdPath = resolve(TMP_DIR, `${article.slug}.md`);
-      writeFileSync(tmpMdPath, markdown, 'utf-8');
-
-      // Pandoc 转换
-      console.log('  转换中...');
-      convertToDocx(tmpMdPath, outputPath);
+      // HTML → DOCX
+      console.log('  转换...');
+      convertHtmlToDocx(content, title || article.title, outputPath);
 
       console.log(`  ✓ ${outputFileName}`);
       success++;
     } catch (err) {
       console.error(`  ✗ 错误: ${err.message}`);
-      errors.push({ article: `${article.chapterIndex}.${article.fileIndex} ${article.title}`, error: err.message });
+      errors.push({
+        article: `${article.chapterIndex}.${article.fileIndex} ${article.title}`,
+        error: err.message
+      });
     }
   }
 
-  // 3. 输出汇总
+  // 4. 关闭浏览器
+  await browser.close();
+
+  // 5. 输出汇总
   console.log('\n' + '='.repeat(50));
   console.log(`完成：成功 ${success}，跳过 ${skipped}，失败 ${errors.length}`);
   if (errors.length > 0) {
@@ -81,4 +77,7 @@ function main() {
   }
 }
 
-main();
+main().catch(err => {
+  console.error('致命错误:', err.message);
+  process.exit(1);
+});
