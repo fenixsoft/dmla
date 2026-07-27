@@ -27,7 +27,7 @@ const props = defineProps({
   },
   dataIcon: {
     type: String,
-    default: 'octicon-star'
+    default: ''
   },
   dataShowCount: {
     type: Boolean,

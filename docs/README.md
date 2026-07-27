@@ -4,29 +4,34 @@ heroImage: /logo.png
 # tagline: 
 prev: false
 next: false
-badges:
-  - src: https://img.shields.io/github/stars/fenixsoft/dmla
-    alt: GitHub Repo stars
-    href: https://github.com/fenixsoft/dmla
-  - src: https://img.shields.io/github/followers/fenixsoft
-    alt: GitHub followers
-    href: https://github.com/fenixsoft
-  - src: https://img.shields.io/github/forks/fenixsoft/dmla
-    alt: GitHub forks
-    href: https://github.com/fenixsoft/dmla/forks
+badges: []
+githubInfos: true
 informations:
-  - src: https://visitor-badge.laobi.icu/badge?page_id=fenixsoft/dmla
+  - type: url
+    src: https://visitor-badge.laobi.icu/badge?page_id=fenixsoft/dmla
     alt: visitors
-  - src: https://img.shields.io/github/last-commit/fenixsoft/dmla
-    alt: GitHub last commit
-  - src: https://img.shields.io/github/actions/workflow/status/fenixsoft/dmla/deploy.yml
-    alt: GitHub Actions Workflow Status
-  - src: https://img.shields.io/npm/v/%40icyfenix-dmla%2Fcli?color=aquamarine
-    alt: NPM Version
-  - src: https://img.shields.io/badge/license-creative%20commons%20by%204.0-red
-    alt: License
-  - src: https://img.shields.io/badge/author-icyfenix-chocolate
-    alt: Author
+  - type: github-api
+    label: last commit
+    endpoint: https://api.github.com/repos/fenixsoft/dmla
+    field: pushed_at
+    format: date
+    color: 36a40c
+  - type: github-badge
+    src: https://github.com/fenixsoft/dmla/actions/workflows/deploy.yml/badge.svg
+    alt: CI
+    label: ci
+  - type: npm-api
+    label: npm
+    package: "@icyfenix-dmla/cli"
+    color: 1588bb
+  - type: static
+    label: license
+    value: CC BY-NC-SA 4.0
+    color: d73a49
+  - type: static
+    label: author
+    value: icyfenix
+    color: d2691e
 actions:
   - text: 开始阅读
     link: /introduction/about-dmla.html

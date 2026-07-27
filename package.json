@@ -30,6 +30,7 @@
   "author": "icyfenix",
   "license": "CC-BY-4.0",
   "devDependencies": {
+    "@mermaid-js/mermaid-cli": "^11.16.0",
     "@vuepress/bundler-vite": "2.0.0-rc.19",
     "@vuepress/plugin-git": "2.0.0-rc.66",
     "@vuepress/plugin-prismjs": "2.0.0-rc.66",
@@ -48,6 +49,7 @@
     "@icyfenix-dmla/nn-arch": "^1.7.7",
     "katex": "^0.16.42",
     "mermaid": "^11.13.0",
+    "puppeteer-core": "^25.3.0",
     "vue": "^3.5.13"
   },
   "engines": {

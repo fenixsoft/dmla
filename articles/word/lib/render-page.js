@@ -1,127 +1,206 @@
 // articles/word/lib/render-page.js
-// 使用 Playwright + 系统 Chrome 渲染 VuePress 页面，提取最终 DOM
 import { chromium } from 'playwright';
-import { existsSync } from 'fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync, unlinkSync } from 'fs';
 import { resolve } from 'path';
+import { execFileSync } from 'child_process';
 
 const BASE_URL = 'http://localhost:8080';
 const BROWSER_PATH = '/usr/bin/google-chrome';
-// KaTeX 路径：VuePress 的 math 插件通过 ES module 加载，未暴露全局
-// 需手动注入脚本以便在浏览器中使用 katex.renderToString()
 const KATEX_PATH = resolve(import.meta.dirname, '../../../node_modules/katex/dist/katex.min.js');
+const TMP_DIR = resolve(import.meta.dirname, '../tmp');
+const DOCS_DIR = resolve(import.meta.dirname, '../../../docs');
+const PUPPETEER_CONFIG = resolve(import.meta.dirname, '../puppeteer-config.json');
 
-/**
- * 渲染一个 VuePress 页面并提取内容 HTML
- * @param {string} articlePath - 文章路径，如 /maths/linear/vectors.html
- * @param {object} browser - 复用的 Playwright browser 实例
- * @returns {Promise<{content: string, title: string}>}
- */
 export async function renderPage(articlePath, browser) {
   const page = await browser.newPage();
 
   try {
+    const slug = articlePath.split('/').pop().replace('.html', '');
+    if (!existsSync(TMP_DIR)) mkdirSync(TMP_DIR, { recursive: true });
+
+    // ---- 0) mmdc 渲染 mermaid（在浏览器加载前完成） ----
+    const mermaidImgs = renderMermaidBlocks(articlePath, slug);
+
+    // ---- 1) 浏览器加载 ----
+    await page.setViewportSize({ width: 2560, height: 3000 });
     const url = `${BASE_URL}${articlePath}`;
-    await page.goto(url, {
-      waitUntil: 'networkidle',
-      timeout: 15000
-    });
+    await page.goto(url, { waitUntil: 'networkidle', timeout: 15000 });
+    await page.waitForTimeout(3000);
 
-    // 等待动态图表渲染（Mermaid、nn-arch 等）
-    await page.waitForTimeout(2000);
+    const pageHeight = await page.evaluate(() => Math.max(
+      document.body.scrollHeight,
+      document.documentElement.scrollHeight,
+      document.querySelector('[vp-content]')?.scrollHeight || 0
+    ) + 200);
+    if (pageHeight > 3000) {
+      await page.setViewportSize({ width: 2560, height: pageHeight });
+      await page.waitForTimeout(500);
+    }
 
-    // 获取文章标题
     const pageTitle = await page.title();
-    const h1Text = await page.evaluate(() => {
-      const h1 = document.querySelector('h1');
-      return h1 ? h1.textContent.trim() : '';
-    });
-    const title = h1Text || pageTitle;
+    const title = pageTitle.split('|')[0].trim();
 
-    // 注入 KaTeX 全局函数（VuePress 通过 ES module 加载，未暴露全局）
+    // ---- 2) 替换页面中的 mermaid div 为 mmdc 生成的 PNG ----
+    if (mermaidImgs.length > 0) {
+      console.log(`  mmdc→PNG: ${mermaidImgs.length} 个图表`);
+      await page.evaluate((imgs) => {
+        const mermaidDivs = document.querySelectorAll('[vp-content] .mermaid');
+        imgs.forEach((img, i) => {
+          if (i < mermaidDivs.length) {
+            const el = document.createElement('img');
+            el.src = img.path;
+            el.setAttribute('width', String(img.width));
+            el.setAttribute('height', String(img.height));
+            mermaidDivs[i].replaceWith(el);
+          }
+        });
+      }, mermaidImgs);
+    }
+
+    // ---- 3) 注入 KaTeX + 公式转换 ----
     if (existsSync(KATEX_PATH)) {
       await page.addScriptTag({ path: KATEX_PATH });
     }
-
-    // 将 KaTeX 公式转换为 MathML，Pandoc HTML reader 会转为 OMML
-    // - 块级公式：<math display="block"> → m:oMathPara
-    // - 行内公式：<math> → m:oMath
     const formulaStats = await page.evaluate(() => {
       if (typeof katex === 'undefined') return { error: 'KaTeX not loaded' };
-
       let displayDone = 0, inlineDone = 0, errors = 0;
-
-      // Step 1: 块级 display 公式 → <math display="block">
       document.querySelectorAll('.katex-display').forEach(el => {
-        const annotation = el.querySelector('annotation[encoding="application/x-tex"]');
-        if (!annotation || !annotation.textContent.trim()) return;
-        const tex = annotation.textContent.trim();
+        const ann = el.querySelector('annotation[encoding="application/x-tex"]');
+        if (!ann || !ann.textContent.trim()) return;
         try {
-          const mathml = katex.renderToString(tex, {
-            output: 'mathml', throwOnError: false, displayMode: true,
-          });
-          const tmp = document.createElement('div');
-          tmp.innerHTML = mathml;
-          const mathEl = tmp.querySelector('math');
-          if (mathEl) {
-            const p = document.createElement('p');
-            p.appendChild(mathEl);
-            el.replaceWith(p);
-            displayDone++;
-          }
+          const mml = katex.renderToString(ann.textContent.trim(), { output: 'mathml', throwOnError: false, displayMode: true });
+          const tmp = document.createElement('div'); tmp.innerHTML = mml;
+          const math = tmp.querySelector('math');
+          if (math) { const p = document.createElement('p'); p.appendChild(math); el.replaceWith(p); displayDone++; }
         } catch (e) { errors++; }
       });
-
-      // Step 2: 行内公式 → <math>（不带 display 属性）
       document.querySelectorAll('.katex').forEach(el => {
-        if (el.closest('.katex-display')) return; // 已在 step 1 处理
-        const annotation = el.querySelector('annotation[encoding="application/x-tex"]');
-        if (!annotation || !annotation.textContent.trim()) return;
-        const tex = annotation.textContent.trim();
+        if (el.closest('.katex-display')) return;
+        const ann = el.querySelector('annotation[encoding="application/x-tex"]');
+        if (!ann || !ann.textContent.trim()) return;
         try {
-          const mathml = katex.renderToString(tex, {
-            output: 'mathml', throwOnError: false, displayMode: false,
-          });
-          const tmp = document.createElement('div');
-          tmp.innerHTML = mathml;
-          const mathEl = tmp.querySelector('math');
-          if (mathEl) {
-            el.replaceWith(mathEl);
-            inlineDone++;
-          }
+          const mml = katex.renderToString(ann.textContent.trim(), { output: 'mathml', throwOnError: false, displayMode: false });
+          const tmp = document.createElement('div'); tmp.innerHTML = mml;
+          const math = tmp.querySelector('math');
+          if (math) { el.replaceWith(math); inlineDone++; }
         } catch (e) { errors++; }
       });
-
-      return {
-        displayDone, inlineDone, errors,
-        katexLeft: document.querySelectorAll('.katex').length,
-        mathCount: document.querySelectorAll('math').length,
-      };
+      return { displayDone, inlineDone, errors };
     });
-    console.log(`  公式转换: display=${formulaStats.displayDone} inline=${formulaStats.inlineDone} errors=${formulaStats.errors} katex_left=${formulaStats.katexLeft} math=${formulaStats.mathCount}`);
+    console.log(`  公式: display=${formulaStats.displayDone} inline=${formulaStats.inlineDone} err=${formulaStats.errors}`);
 
-    // 提取内容区域 HTML
+    // ---- 4) nn-arch SVG → PNG 截图 ----
+    let nnArchCount = 0;
+    const svgDataList = await page.evaluate(() => {
+      const list = [];
+      document.querySelectorAll('[vp-content] svg').forEach((svg, i) => {
+        const rect = svg.getBoundingClientRect();
+        const inMermaid = svg.closest('.mermaid');
+        const inFooter = svg.closest('.article-footer, .page-meta, .page-nav');
+        if (inMermaid || inFooter || rect.width < 40) return;
+        if (svg.parentElement?.closest('svg')) return;
+        const origStyle = svg.getAttribute('style') || '';
+        svg.setAttribute('style', origStyle.replace(/transform:\s*scale\([^)]+\);?/gi, ''));
+        svg.setAttribute('data-orig-style', origStyle);
+        const id = `__svg_to_img_${i}`;
+        svg.setAttribute('data-svg-id', id);
+        list.push({ index: i, id, width: svg.scrollWidth || Math.round(rect.width), height: svg.scrollHeight || Math.round(rect.height) });
+      });
+      return list;
+    });
+
+    for (const item of svgDataList) {
+      try {
+        const loc = page.locator(`svg[data-svg-id="${item.id}"]`);
+        if (await loc.count() === 0) continue;
+        await loc.scrollIntoViewIfNeeded();
+        await page.waitForTimeout(300);
+        const pngPath = resolve(TMP_DIR, `${slug}-nnarch-${item.index}.png`);
+        await loc.screenshot({ path: pngPath, type: 'png' });
+        nnArchCount++;
+        await loc.evaluate((el, params) => {
+          const orig = el.getAttribute('data-orig-style');
+          if (orig) el.setAttribute('style', orig);
+          const img = document.createElement('img');
+          img.src = params.src;
+          img.setAttribute('width', String(params.w));
+          img.setAttribute('height', String(params.h));
+          el.replaceWith(img);
+        }, { src: pngPath, w: item.width, h: item.height });
+      } catch (e) {
+        console.warn(`    nn-arch截图失败 #${item.index}:`, e.message);
+      }
+    }
+    if (nnArchCount > 0) console.log(`  nn-arch→PNG: ${nnArchCount} 个图表`);
+
+    // ---- 5) 提取内容 ----
     const contentHtml = await page.evaluate(() => {
       const content = document.querySelector('[vp-content]');
       if (!content) return '';
-
       const clone = content.cloneNode(true);
-
-      // 移除不需要的元素
       clone.querySelectorAll(
-        '.runnable-code-toolbar, .runnable-code-btn, '
+        '.article-footer, .floating-toolbar, .run-btn, '
         + '.code-demo, .giscus, .page-nav, .page-meta, '
-        + 'script, style, .vuepress-plugin-search-pro'
+        + '.code-demo-hint, script, style, .vuepress-plugin-search-pro'
       ).forEach(el => el.remove());
-
+      clone.querySelectorAll('p').forEach(p => {
+        if (/点击\s*Run|点击运行|点击代码/.test(p.textContent)) p.remove();
+      });
+      clone.querySelectorAll('div').forEach(div => {
+        const t = div.textContent.trim();
+        if ((t.includes('点击 Run') || t.includes('点击运行')) && t.length < 100) div.remove();
+      });
+      const h1 = clone.querySelector('h1');
+      if (h1) h1.remove();
+      clone.querySelectorAll('pre').forEach(pre => {
+        if (!pre.closest('.__code_block__')) {
+          const wrapper = document.createElement('div');
+          wrapper.className = '__code_block__';
+          pre.parentNode.insertBefore(wrapper, pre);
+          wrapper.appendChild(pre);
+        }
+        // 移除 Python 代码块的 import 行
+        const code = pre.querySelector('code');
+        if (code) {
+          const text = code.textContent || '';
+          if (text.includes('import ') || text.includes('from ')) {
+            const filtered = text.split('\n').filter(line => {
+              const t = line.trim();
+              return !t.startsWith('import ') && !t.startsWith('from ');
+            });
+            code.textContent = filtered.join('\n');
+          }
+        }
+      });
+      clone.querySelectorAll('.hint-container-title').forEach(el => {
+        const strong = document.createElement('strong');
+        strong.innerHTML = el.innerHTML;
+        el.innerHTML = '';
+        el.appendChild(strong);
+      });
+      clone.querySelectorAll('p').forEach(p => {
+        if (p.textContent.trim().startsWith('图：')) p.setAttribute('data-figure', 'true');
+      });
+      clone.querySelectorAll('h1, h2, h3').forEach(h => {
+        if (/练[习题]|习题|Exercise/i.test(h.textContent)) {
+          let next = h.nextElementSibling;
+          while (next && !/^H[1-6]$/.test(next.tagName)) {
+            const toRemove = next;
+            next = next.nextElementSibling;
+            toRemove.remove();
+          }
+          h.remove();
+        }
+      });
       return clone.innerHTML;
     });
 
-    // 将相对图片路径转为绝对路径（Pandoc 需要文件系统路径）
-    const docsDir = resolve(import.meta.dirname, '../../../docs');
-    const fixedHtml = contentHtml.replace(
+    // ---- 6) 图片路径转绝对路径 ----
+    const fixedHtml = (contentHtml || '').replace(
       /<img\s+[^>]*src="(\/[^"]+)"/g,
       (match, srcPath) => {
-        const absPath = resolve(docsDir, srcPath.slice(1));
+        if (srcPath.startsWith('/root/')) return match;
+        const absPath = resolve(DOCS_DIR, srcPath.slice(1));
         return match.replace(srcPath, absPath);
       }
     );
@@ -133,18 +212,70 @@ export async function renderPage(articlePath, browser) {
   }
 }
 
-/**
- * 启动共享的浏览器实例（整个批量转换共用一个浏览器）
- * @returns {Promise<import('playwright').Browser>}
- */
+// ---- mmdc 渲染 mermaid 为 PNG ----
+function renderMermaidBlocks(articlePath, slug) {
+  const mdPath = articlePathToMd(articlePath);
+  if (!mdPath || !existsSync(mdPath)) return [];
+
+  const mdContent = readFileSync(mdPath, 'utf-8');
+  const blocks = extractMermaidBlocks(mdContent);
+  if (blocks.length === 0) return [];
+
+  const results = [];
+  blocks.forEach((code, i) => {
+    const mmdPath = resolve(TMP_DIR, `${slug}-mermaid-${i}.mmd`);
+    const pngPath = resolve(TMP_DIR, `${slug}-mermaid-${i}.png`);
+    writeFileSync(mmdPath, code, 'utf-8');
+    try {
+      execFileSync('npx', [
+        'mmdc', '-i', mmdPath, '-o', pngPath,
+        '-b', 'white', '-s', '2',
+        '-p', PUPPETEER_CONFIG,
+      ], { stdio: 'pipe', timeout: 30000, env: { ...process.env, PUPPETEER_EXECUTABLE_PATH: BROWSER_PATH } });
+      // Get PNG dimensions
+      if (existsSync(pngPath)) {
+        const buf = readFileSync(pngPath);
+        const w = buf.readUInt32BE(16);
+        const h = buf.readUInt32BE(20);
+        results.push({ path: pngPath, width: w, height: h });
+      }
+    } catch (e) {
+      console.warn(`    mmdc渲染失败 #${i}:`, e.message);
+    }
+    try { unlinkSync(mmdPath); } catch {}
+  });
+  return results;
+}
+
+function articlePathToMd(articlePath) {
+  // /maths/linear/vectors.html → docs/maths/linear/vectors.md
+  const noExt = articlePath.replace('.html', '');
+  return resolve(DOCS_DIR, noExt.slice(1) + '.md');
+}
+
+function extractMermaidBlocks(mdContent) {
+  const blocks = [];
+  const lines = mdContent.split('\n');
+  let inBlock = false;
+  let blockLines = [];
+  for (const line of lines) {
+    if (line.startsWith('```mermaid')) {
+      inBlock = true;
+      blockLines = [];
+    } else if (inBlock && line.trim() === '```') {
+      blocks.push(blockLines.join('\n'));
+      inBlock = false;
+    } else if (inBlock) {
+      blockLines.push(line);
+    }
+  }
+  return blocks;
+}
+
 export async function launchBrowser() {
   return chromium.launch({
     headless: true,
     executablePath: BROWSER_PATH,
-    args: [
-      '--no-sandbox',
-      '--disable-setuid-sandbox',
-      '--disable-dev-shm-usage',
-    ],
+    args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
   });
 }

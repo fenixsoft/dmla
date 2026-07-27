@@ -25,28 +25,21 @@
     </div>
 
     <div class="github-star">
-      <a
-        class="star-button"
+      <GithubButton
         href="https://github.com/fenixsoft/dmla"
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        <svg class="star-icon" width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
-        </svg>
-        <span class="star-text">Star</span>
-      </a>
-      <ClientOnly>
-        <span class="star-count">{{ starCount }}</span>
-      </ClientOnly>
+        data-icon="octicon-star"
+        data-show-count="true"
+        :data-text="isEnglish ? 'Star' : 'Star'"
+        aria-label="Star fenixsoft/dmla on GitHub"
+      />
     </div>
   </footer>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { computed } from 'vue'
 import { usePageData, useRoute } from '@vuepress/client'
-import { ClientOnly } from 'vuepress/client'
+import GithubButton from '../../components/GithubButton.vue'
 
 const page = usePageData()
 const route = useRoute()
@@ -79,21 +72,6 @@ const lastUpdated = computed(() => {
   return `${year}-${month}-${day}`
 })
 
-// GitHub Star 数（客户端实时获取）
-const starCount = ref('--')
-
-onMounted(async () => {
-  try {
-    const response = await fetch('https://api.github.com/repos/fenixsoft/dmla')
-    if (response.ok) {
-      const data = await response.json()
-      starCount.value = data.stargazers_count.toLocaleString()
-    }
-  } catch (e) {
-    // API 获取失败时保持 '--'
-    console.warn('获取 GitHub Star 数失败', e)
-  }
-})
 </script>
 
 <style scoped>
@@ -152,50 +130,12 @@ onMounted(async () => {
   font-weight: 400;
 }
 
-/* 右侧 GitHub Star */
+/* 右侧 GitHub Star 按钮 */
 .github-star {
   display: flex;
   align-items: center;
-  gap: 12px;
+  flex-shrink: 0;
   padding-right: 6px;
-  flex-shrink: 0;
-}
-
-.star-button {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 16px;
-  background: #24292E;
-  border-radius: 8px;
-  color: #FFFFFF !important;
-  text-decoration: none;
-  transition: background 0.2s;
-}
-
-.star-button:hover {
-  background: #32383F;
-}
-
-.star-icon {
-  flex-shrink: 0;
-}
-
-.star-text {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  font-size: 13px;
-  color: #ffffff;
-  font-weight: 500;
-}
-
-.star-count {
-  padding: 6px 12px;
-  border: 1px solid #E4E4E7;
-  border-radius: 6px;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  font-size: 13px;
-  font-weight: 500;
-  color: #18181B;
 }
 
 /* 响应式适配 */
@@ -206,15 +146,5 @@ onMounted(async () => {
   }
 
   .github-star { align-items: flex-end; }
-}
-
-@media (max-width: 419px) {
-  .star-button {
-    padding: 6px 12px;
-  }
-
-  .star-text {
-    font-size: 12px;
-  }
 }
 </style>

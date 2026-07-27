@@ -1,6 +1,7 @@
 <script setup>
-import { computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { usePageFrontmatter, useSiteLocaleData, withBase, AutoLink } from 'vuepress/client'
+import GithubInfos from './GithubInfos.vue'
 
 const frontmatter = usePageFrontmatter()
 const siteLocale = useSiteLocaleData()
@@ -46,16 +47,58 @@ const badges = computed(() => {
 const informations = computed(() => {
   const rawInfo = frontmatter.value.informations
   if (!rawInfo) return []
+  if (Array.isArray(rawInfo)) return rawInfo
+  return []
+})
 
-  // 支持数组格式：[{ src, alt }]
-  if (Array.isArray(rawInfo)) {
-    return rawInfo.map(info => ({
-      src: info.src,
-      alt: info.alt || ''
-    }))
+// API 驱动徽章的值缓存
+const apiValues = ref({})
+
+onMounted(async () => {
+  for (const [idx, info] of informations.value.entries()) {
+    if (info.type === 'github-api') {
+      try {
+        const res = await fetch(info.endpoint)
+        if (res.ok) {
+          const data = await res.json()
+          let value = data[info.field]
+          if (info.format === 'date' && value) {
+            value = new Date(value).toISOString().slice(0, 10)
+          }
+          apiValues.value[idx] = value || '--'
+        }
+      } catch { apiValues.value[idx] = '--' }
+    } else if (info.type === 'npm-api') {
+      try {
+        const res = await fetch(`https://registry.npmjs.org/${encodeURIComponent(info.package)}/latest`)
+        if (res.ok) {
+          const data = await res.json()
+          apiValues.value[idx] = 'v' + data.version
+        }
+      } catch { apiValues.value[idx] = '--' }
+    }
+  }
+})
+
+// 解析 githubInfos 数据
+const githubInfos = computed(() => {
+  const raw = frontmatter.value.githubInfos
+  if (!raw) return null
+
+  // 支持布尔值 githubInfos: true，使用默认仓库
+  if (raw === true) {
+    return { repo: 'fenixsoft/dmla', owner: 'fenixsoft' }
   }
 
-  return []
+  // 支持对象格式 githubInfos: { repo: '...', owner: '...' }
+  if (typeof raw === 'object') {
+    return {
+      repo: raw.repo || 'fenixsoft/dmla',
+      owner: raw.owner || 'fenixsoft'
+    }
+  }
+
+  return null
 })
 </script>
 
@@ -87,14 +130,32 @@ const informations = computed(() => {
       </a>
     </div>
 
-    <!-- Informations -->
-    <div v-if="informations.length" class="home-hero-informations">
-      <img
-        v-for="info in informations"
-        :key="info.src"
-        :src="info.src"
-        :alt="info.alt"
+    <!-- GitHub 按钮（替代 shields.io 徽章） -->
+    <div v-if="githubInfos" class="home-hero-github">
+      <GithubInfos
+        :repo="githubInfos.repo"
+        :owner="githubInfos.owner"
       />
+    </div>
+
+    <!-- Informations 徽章（多类型：static / github-badge / github-api / npm-api / url） -->
+    <div v-if="informations.length" class="home-hero-informations">
+      <template v-for="(info, idx) in informations" :key="idx">
+        <!-- 静态徽章 -->
+        <span v-if="info.type === 'static'" class="info-badge">
+          <span class="badge-label">{{ info.label }}</span>
+          <span class="badge-value" :style="{ backgroundColor: '#' + (info.color || '555') }">{{ info.value }}</span>
+        </span>
+        <!-- GitHub 原生图片徽章（CI 等） -->
+        <img v-else-if="info.type === 'github-badge'" :src="info.src" :alt="info.alt" />
+        <!-- API 驱动徽章（GitHub API / npm API） -->
+        <span v-else-if="info.type === 'github-api' || info.type === 'npm-api'" class="info-badge">
+          <span class="badge-label">{{ info.label }}</span>
+          <span class="badge-value" :style="{ backgroundColor: '#' + (info.color || '555') }">{{ apiValues[idx] || '--' }}</span>
+        </span>
+        <!-- 向后兼容：纯 URL 图片徽章 -->
+        <img v-else :src="info.src" :alt="info.alt" />
+      </template>
     </div>
 
     <!-- 操作按钮 -->
@@ -159,6 +220,14 @@ const informations = computed(() => {
   display: none !important;
 }
 
+.home-hero-github {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: center;
+  margin: 0.5rem auto;
+}
+
 .home-hero-informations .medium-zoom-image {
   cursor: default;
 }
@@ -177,9 +246,37 @@ const informations = computed(() => {
 }
 
 .home-hero-informations img {
-  /* height: 20px; */
   vertical-align: middle;
   margin: 0px;
+  cursor: default;
+}
+
+/* 本地徽章（模拟 shields.io 风格） */
+.info-badge {
+  display: inline-flex;
+  align-items: center;
+  height: 20px;
+  font-size: 11px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+  line-height: 20px;
+  vertical-align: middle;
+  cursor: default;
+  user-select: none;
+}
+
+.badge-label {
+  padding: 0 6px;
+  background: #32383f;
+  color: #fff;
+  border-radius: 3px 0 0 3px;
+  white-space: nowrap;
+}
+
+.badge-value {
+  padding: 0 6px;
+  color: #fff;
+  border-radius: 0 3px 3px 0;
+  white-space: nowrap;
 }
 
 .home-hero-actions {
