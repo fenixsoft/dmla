@@ -1,6 +1,6 @@
 <p align="center">
 	<br/>
-  <a href="https://ai.icyfenix.cn" target="_blank">
+  <a href="https://ai.icyfenix.cn/en" target="_blank">
     <img src="https://github.com/fenixsoft/dmla/blob/main/docs/.vuepress/public/logo.png?raw=true" alt="logo">
   </a>
   <div align="center">
@@ -17,62 +17,62 @@
     <img src="https://img.shields.io/badge/author-icyfenix-chocolate" alt="Author">
   </div>
   <div align="center">
-	  中文版本 | <a href="README_en.md">English</a>
+	  <a href="README_cn.md">中文版本</a> | English
   </div>
 </p>
 
-## 文档简介
+## Introduction
 
-这是一本讨论"如何将机器学习应用于生产系统"的文档，旨在为软件开发者在人工智能时代提供梳理知识框架的导航地图。从目的角度看，它与我的另一部文档《[凤凰架构](https://icyfenix.cn/)》是一样的。不过，这部文档的阅读门槛相对凤凰架构更高，建议开始前先阅读文章《[关于设计机器学习应用系统](https://ai.icyfenix.cn/introduction/about-dmla.html)》，了解文档的主旨与读者画像。
+This is a book on "how to apply machine learning to production systems," designed to serve as a navigational map for software developers to organize their knowledge framework in the age of artificial intelligence. In terms of purpose, it is similar to my other work, [The Fenix Project](https://icyfenix.cn/). However, this book has a higher barrier to entry. Before diving in, it is recommended to read the article [On Designing Machine Learning Application](https://ai.icyfenix.cn/en/introduction/about-dmla.html) to understand the book's scope and intended audience.
 
-笔者出于以下目的，撰写这部文档：
+I wrote this book with the following goals in mind:
 
-- 笔者是一名软件工程师，也是机器学习方向的 PhD。身处软件业正由"硬编码的逻辑"转向"数据驱动的智能"的时点，笔者希望借文档为引，系统性地整理机器学习相关知识，查缺补漏，将它们都融入自己的知识框架。
-- 笔者认为技术人员成长有一捷径，不仅要去看、去读、去想、去用，更要去说、去写。将自己认为掌握了的知识叙述出来，能够说得清晰有条理，讲得理直气壮；能够让他人听得明白，释去心中疑惑；能够把自己的观点交予别人的审视，乃至质疑，在此过程中，会挖掘出很多潜藏在"已知"背后的"未知"。未有知而不行者，知而不行，只是未知。
+- I am a software engineer and a PhD candidate in machine learning. At a time when the software industry is shifting from "hardcoded logic" to "data-driven intelligence," I hope to use this book as a guide to systematically organize my machine learning knowledge, fill in the gaps, and integrate everything into my own knowledge framework.
+- I believe there is a shortcut to growth for technical professionals: it is not only about seeing, reading, thinking, and applying — it is equally about speaking and writing. Articulating what you believe you have mastered, explaining it clearly and coherently, presenting it with confidence, helping others understand it and dispelling their doubts, and subjecting your views to scrutiny and even challenge — in this process, you will uncover much of the "unknown" hidden behind what you thought was "known." There is no knowing without doing; to know and not to do is simply not yet to know.
 
-## 网站截图
+## Screenshot
 <p align="center">
   <div align="center">
-    <img src="https://github.com/fenixsoft/dmla/blob/main/docs/.vuepress/public/homepage.png?raw=true" >
-    《<a href="https://ai.icyfenix.cn" target="_blank">设计机器学习应用系统</a>》
+    <img src="https://github.com/fenixsoft/dmla/blob/main/docs/.vuepress/public/homepage_en.png?raw=true" >
+    <a href="https://ai.icyfenix.cn/en" target="_blank">Designing Machine Learning Application Systems</a>
   </div>
 </p>
 
-## 快速开始
+## Quick Start
 
-- **在线阅读**：本文档在线阅读地址为 [https://ai.icyfenix.cn](https://ai.icyfenix.cn) 。
-网站由 GitHub Pages 提供网站存储空间；由 GitHub Actions 提供的持续集成服务实时把 Git 仓库的 Markdown 文档编译同步至网站，并推送至 CDN 提供国内的访问加速；由 GitHub Discussions 与 [Giscus](https://github.com/giscus/giscus) 提供讨论服务。
+- **Read Online**: The online reading address is [https://ai.icyfenix.cn/en](https://ai.icyfenix.cn/en).
+  The site is hosted on GitHub Pages; continuous integration powered by GitHub Actions compiles the Markdown documents from the Git repository and syncs them to the website in real time, pushing them to a CDN for accelerated access within China. Discussion services are provided by GitHub Discussions and [Giscus](https://github.com/giscus/giscus).
 
-- **代码沙箱**：本文档内包含大量可在网页中运行的代码实践，用于演示机器学习算法以及进行模型训练。对于第一部分数学基础和第二部分经典统计学习算法，只需纯 CPU 环境即可运行；对于深度学习及之后的内容，部分模型训练实验需要 GPU 支持（目前基于 PyTorch with CUDA 12.8）。更多详情请参见[构建沙箱环境](https://ai.icyfenix.cn/appendixes/sandbox.html)。
+- **Code Sandbox**: This book contains a large number of code exercises that can be run directly in the browser, used to demonstrate machine learning algorithms and to perform model training. For Part I (Mathematical Foundations) and Part II (Classical Statistical Learning Algorithms), a pure CPU environment is sufficient. For deep learning and beyond, some model training experiments require GPU support (currently based on PyTorch with CUDA 12.8). For more details, see [Setting Up the Sandbox Environment](https://ai.icyfenix.cn/en/appendixes/sandbox.html).
   ```shell
   npx @icyfenix-dmla/install@latest
   ```
 
-- **离线运行**：
-  - 部署离线站点：文档基于 [VuePress](https://vuepress.vuejs.org/zh/) 构建，如你希望在企业内部搭建文档站点，请使用如下命令：
+- **Offline Use**:
+  - Deploy an offline site: The documentation is built with [VuePress](https://vuepress.vuejs.org/). To set up a documentation site within your organization, use the following commands:
 
   ``` shell
-  # 克隆获取源码
+  # Clone the source code
   git clone https://github.com/fenixsoft/dmla.git && cd dmla
 
-  # 安装工程依赖
+  # Install project dependencies
   npm install
 
-  # 运行网站，文档地址默认为 http://localhost:8080，沙箱地址默认为 http://localhost:3001
+  # Start the website; the docs are served at http://localhost:8080 by default,
+  # and the sandbox at http://localhost:3001
   npm run local
   ```
-  
-  - 本地运行时，如需使用运行文档中的代码，仍然需要有 Docker 镜像的支持，镜像可使用前面沙箱一键安装直接拉取，也可以使用如下命令在本机构建：
+
+  - When running locally, executing the code in the documentation still requires Docker image support. You can pull images directly using the one-click sandbox installer mentioned above, or build them locally with:
   ``` shell
   npm run build:sandbox:all
   ```
 
-- **二次演绎、传播和发行**：本文档中所有的内容，如引用其他资料，均在文档中明确列出资料来源，一切权利归属原作者。除此以外的所有内容，包括但不限于文字、图片、表格，等等，均属笔者原创，这些原创内容，笔者声明以[知识共享署名-非商业性使用-相同方式共享 4.0 国际许可协议（CC BY-NC-SA 4.0）](http://creativecommons.org/licenses/by-nc-sa/4.0/) 发行，只要遵循许可协议条款中署名、非商业性使用、相同方式共享的条件，你可以在任何地方、以任何形式、向任何人使用、修改、演绎、传播本文档中任何部分的内容。详细可见本文档的"协议"一节。
+- **Redistribution, Adaptation, and Publication**: For all content in this book that references other sources, the original sources are explicitly credited within the text, and all rights belong to the original authors. All other content, including but not limited to text, images, and tables, is original work by the author. The author releases these original works under the [Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License (CC BY-NC-SA 4.0)](http://creativecommons.org/licenses/by-nc-sa/4.0/). As long as you comply with the license terms — attribution, non-commercial use, and share-alike — you are free to use, modify, adapt, and redistribute any part of this book anywhere, in any form, to anyone. See the "License" section below for details.
 
+## License
 
-## 协议
-
-- 本作品采用[知识共享署名-非商业性使用-相同方式共享 4.0 国际许可协议（CC BY-NC-SA 4.0）](http://creativecommons.org/licenses/by-nc-sa/4.0/)许可。遵循许可的前提下，你可以自由地共享，包括在任何媒介上以任何形式复制、发行本作品，亦可以自由地演绎、修改、转换或以本作品为基础进行二次创作。但要求你：
-  - **署名**：应在使用本文档的全部或部分内容的时候，注明原作者及来源信息。
-  - **非商业性使用**：不得用于商业出版或其他任何带有商业性质的行为。如需商业性使用，请联系作者。
-  - **相同方式共享的条件**：在本文档基础上演绎、修改的作品，应当继续以知识共享署名-非商业性使用-相同方式共享 4.0 国际许可协议（CC BY-NC-SA 4.0）许可。
+- This work is licensed under the [Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License (CC BY-NC-SA 4.0)](http://creativecommons.org/licenses/by-nc-sa/4.0/). Under this license, you are free to share — copy and redistribute the material in any medium or format — as well as to adapt — remix, transform, and build upon the material. However, you must:
+  - **Attribution**: When using all or part of this book, you must credit the original author and provide source information.
+  - **Non-Commercial**: You may not use the material for commercial publication or any other commercial purposes. For commercial use, please contact the author.
+  - **Share-Alike**: If you remix, transform, or build upon this work, you must distribute your contributions under the same Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License (CC BY-NC-SA 4.0).

@@ -34,7 +34,7 @@ const route = useRoute()
 const pageTags = computed(() => frontmatter.value?.tags || [])
 
 // 不需要 ArticleFooter 的页面路径（首页、目录页、讨论区）
-const excludedFooterPaths = ['/', '/contents.html', '/contents/', '/boards.html', '/boards/']
+const excludedFooterPaths = ['/', '/contents.html', '/contents/', '/boards.html', '/boards/', '/en/', '/en/contents.html']
 const shouldShowFooter = computed(() => !excludedFooterPaths.includes(route.path))
 </script>
 

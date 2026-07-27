@@ -18,7 +18,7 @@ let intersectionObserver = null
 let isLoaded = false
 
 // 不需要评论的页面路径
-const excludedPaths = ['/', '/contents.html', '/contents/']
+const excludedPaths = ['/', '/contents.html', '/contents/', '/en/', '/en/contents.html']
 
 // 是否应该显示评论
 const shouldShowComments = computed(() => {
