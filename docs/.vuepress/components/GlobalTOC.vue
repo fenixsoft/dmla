@@ -14,13 +14,14 @@
     <ol>
       <li v-for="(page, index) in information" :key="index">
         <span v-if="page.links != null">
+          <span v-if="page.numberPrefix" class="number-prefix" :class="'level' + level">{{ page.numberPrefix }}</span>
           <a :href="page.links">
             <span :class="'level' + level">{{ page.title }}</span>
           </a>
           <span class="words" :title="page.wordHint">{{ page.words }}</span>
         </span>
         <span v-else :class="'level' + level">
-          {{ page.title }}
+          <span v-if="page.numberPrefix" class="number-prefix">{{ page.numberPrefix }}</span>{{ page.title }}
           <span class="words" :title="page.wordHint">{{ page.words }}</span>
         </span>
         <GlobalTOC v-if="page.children && page.children.length > 0"
@@ -35,6 +36,33 @@
 import { computed, defineComponent, inject } from 'vue'
 import { useRoute } from '@vuepress/client'
 import { useThemeLocaleData } from '@vuepress/theme-default/lib/client/composables/useThemeData.js'
+
+// 编号辅助常量
+const CN_NUM = ['一', '二', '三', '四', '五', '六', '七', '八', '九', '十',
+                '十一', '十二', '十三', '十四', '十五']
+const ROMAN = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X',
+               'XI', 'XII', 'XIII', 'XIV', 'XV']
+
+function toChineseNumeral(n) {
+  return CN_NUM[n - 1] || String(n)
+}
+
+function toRoman(n) {
+  return ROMAN[n - 1] || String(n)
+}
+
+const SPECIAL_GROUPS_ZH = ['前言', '附录', '目录']
+const SPECIAL_GROUPS_EN = ['Preface', 'Appendix', 'Contents']
+
+function isSpecialGroup(title, isEnglish) {
+  const groups = isEnglish ? SPECIAL_GROUPS_EN : SPECIAL_GROUPS_ZH
+  return groups.includes(title)
+}
+
+// 判断侧边栏项是否包含 Chapter 级子组（用于识别 Part）
+function hasChapterChildren(item) {
+  return item.children && item.children.some(c => c.children && c.children.length > 0)
+}
 
 export default defineComponent({
   name: 'GlobalTOC',
@@ -64,9 +92,11 @@ export default defineComponent({
     const information = computed(() => {
       if (!props.pages) return []
 
-      // 当 pages 是字符串时（如 '/' 或 '/en/'），使用当前 locale 的 sidebar 配置
-      const sidebar = Array.isArray(props.pages) ? props.pages : sidebarConfig.value
-      return processSidebar(sidebar)
+      // 当 pages 是数组时（递归渲染），直接使用已处理的数据，避免重复处理导致编号丢失
+      if (Array.isArray(props.pages)) return props.pages
+
+      // 当 pages 是字符串时（如 '/' 或 '/en/'），从 sidebar 配置生成数据
+      return processSidebar(sidebarConfig.value, 0, false, false, { part: 0, chapter: 0, section: 0 })
     })
 
     // 统计信息（仅在顶层计算）
@@ -170,8 +200,12 @@ export default defineComponent({
       return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
     })
 
-    // 处理侧边栏配置
-    function processSidebar(items) {
+    // 处理侧边栏配置，添加章节编号
+    // depth: 递归深度（0=Part级, 1=Chapter级, 2=Section级）
+    // inPart: 当前是否在 Part 内部
+    // inChapter: 当前是否在 Chapter 内部
+    // counters: 全局计数器 { part, chapter, section }，引用传递保证跨递归不重置
+    function processSidebar(items, depth = 0, inPart = false, inChapter = false, counters = { part: 0, chapter: 0, section: 0 }) {
       if (!Array.isArray(items)) return []
 
       return items
@@ -184,8 +218,44 @@ export default defineComponent({
         })
         .map(item => {
         const wordData = getWordData(item)
+        let title = getTitle(item)
+        let numberPrefix = ''
+        let childDepth = depth + 1
+        let childInPart = false
+        let childInChapter = false
+
+        // 按层级添加编号前缀
+        if (depth === 0) {
+          // 顶级：识别 Part
+          if (!isSpecialGroup(title, isEnglish.value) && hasChapterChildren(item)) {
+            counters.part++
+            title = isEnglish.value
+              ? `Part ${toRoman(counters.part)}: ${title}`
+              : `第${toChineseNumeral(counters.part)}部分 ${title}`
+            childInPart = true
+          }
+        } else if (depth === 1 && inPart) {
+          // Part 内部：识别 Chapter — 编号前缀与标题分离，便于着色
+          if (item.children && item.children.length > 0) {
+            counters.chapter++
+            numberPrefix = isEnglish.value
+              ? `Chapter ${counters.chapter}:`
+              : `第 ${counters.chapter} 章`
+            childInChapter = true
+          }
+        } else if (depth === 2 && inChapter) {
+          // Chapter 内部：识别 Section — 编号前缀与标题分离，避免编号进入超链接
+          if (item.link) {
+            counters.section++
+            numberPrefix = isEnglish.value
+              ? `Section ${counters.section}:`
+              : `第 ${counters.section} 节`
+          }
+        }
+
         const result = {
-          title: getTitle(item),
+          title,
+          numberPrefix,
           words: wordData.display,
           wordHint: wordData.hint,
           links: getLinks(item),
@@ -193,7 +263,7 @@ export default defineComponent({
         }
 
         if (item.children && Array.isArray(item.children)) {
-          result.children = processSidebar(item.children)
+          result.children = processSidebar(item.children, childDepth, childInPart, childInChapter, counters)
         }
 
         return result
@@ -387,6 +457,11 @@ ol ol {
 
 li > span {
   display: block;
+}
+
+.number-prefix {
+  color: #777;
+  margin-right: 10px;
 }
 
 .words {

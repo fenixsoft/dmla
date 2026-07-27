@@ -28,7 +28,7 @@ This is a book on "how to apply machine learning to production systems," designe
 I wrote this book with the following goals in mind:
 
 - I am a software engineer and a PhD candidate in machine learning. At a time when the software industry is shifting from "hardcoded logic" to "data-driven intelligence," I hope to use this book as a guide to systematically organize my machine learning knowledge, fill in the gaps, and integrate everything into my own knowledge framework.
-- I believe there is a shortcut to growth for technical professionals: it is not only about seeing, reading, thinking, and applying — it is equally about speaking and writing. Articulating what you believe you have mastered, explaining it clearly and coherently, presenting it with confidence, helping others understand it and dispelling their doubts, and subjecting your views to scrutiny and even challenge — in this process, you will uncover much of the "unknown" hidden behind what you thought was "known." There is no knowing without doing; to know and not to do is simply not yet to know.
+- I believe there is a shortcut to technical growth: not only reading, studying, thinking, and applying, but also articulating and writing. Expressing what you believe you have mastered -- stating it clearly and coherently, explaining it with confidence, making others understand and resolving their doubts, and subjecting your views to the scrutiny and even challenge of others. In this process, you uncover much of the "unknown" lurking behind the "known." There is no true knowledge without action; knowledge without action is not yet true knowledge.
 
 ## Screenshot
 <p align="center">
@@ -68,11 +68,11 @@ I wrote this book with the following goals in mind:
   npm run build:sandbox:all
   ```
 
-- **Redistribution, Adaptation, and Publication**: For all content in this book that references other sources, the original sources are explicitly credited within the text, and all rights belong to the original authors. All other content, including but not limited to text, images, and tables, is original work by the author. The author releases these original works under the [Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License (CC BY-NC-SA 4.0)](http://creativecommons.org/licenses/by-nc-sa/4.0/). As long as you comply with the license terms — attribution, non-commercial use, and share-alike — you are free to use, modify, adapt, and redistribute any part of this book anywhere, in any form, to anyone. See the "License" section below for details.
+- **Secondary Creation, Distribution, and Publishing**: All content in this document cites sources where applicable, with rights belonging to the original authors. All other content, including but not limited to text, images, tables, etc., is original work by the author. This original content is released under the [Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License (CC BY-NC-SA 4.0)](http://creativecommons.org/licenses/by-nc-sa/4.0/). As long as you follow the license terms of attribution, non-commercial use, and share-alike, you may use, modify, adapt, and distribute any part of this document anywhere, in any form, to anyone. See the "License" section of this document for details.
 
 ## License
 
-- This work is licensed under the [Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License (CC BY-NC-SA 4.0)](http://creativecommons.org/licenses/by-nc-sa/4.0/). Under this license, you are free to share — copy and redistribute the material in any medium or format — as well as to adapt — remix, transform, and build upon the material. However, you must:
+- This work is licensed under the [Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License (CC BY-NC-SA 4.0)](http://creativecommons.org/licenses/by-nc-sa/4.0/). Under this license, you are free to share the material (copy and redistribute it in any medium or format) and to adapt it (remix, transform, and build upon it). However, you must:
   - **Attribution**: When using all or part of this book, you must credit the original author and provide source information.
   - **Non-Commercial**: You may not use the material for commercial publication or any other commercial purposes. For commercial use, please contact the author.
   - **Share-Alike**: If you remix, transform, or build upon this work, you must distribute your contributions under the same Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License (CC BY-NC-SA 4.0).
