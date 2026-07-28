@@ -697,7 +697,7 @@ print(f"Posterior mean: {final_mean:.3f}")
 print(f"Observed proportion of heads: {flips.sum() / len(flips):.3f}")
 ```
 
-## Chapter Summary
+## Summary
 
 The essence of probability theory is to establish a mathematical language for describing and handling uncertainty. In the world of deterministic mathematics, variables have fixed values, functions have definite outputs, and equations have unique solutions. This is precisely the programming world that developers are familiar with, where the outcome of each line of code is predictable. But the real world is far more complex than this, and uncertainty is everywhere. Probability theory emerged precisely to answer a fundamental question: when we cannot know exactly "what it is," how can we rigorously describe "what it might be" and make rational decisions based on that description?
 

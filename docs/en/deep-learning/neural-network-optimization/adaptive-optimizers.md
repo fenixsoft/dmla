@@ -435,7 +435,7 @@ plt.show()
 plt.close()
 ```
 
-## Chapter Summary
+## Summary
 
 This chapter introduced the principles and applications of adaptive optimizers, demonstrating how the idea of assigning different learning rates to each parameter improves optimization efficiency, and presented Muon, a new optimizer that leverages matrix geometric structure. At this point, the content on neural network optimization is complete. We have mastered the principles and applications of gradient descent, momentum, NAG, adaptive optimizers, and Muon, and understand how to select and tune optimization algorithms. The next chapter moves into neural network stability, covering weight initialization, Dropout, batch normalization, and gradient problem diagnosis to address training stability issues.
 

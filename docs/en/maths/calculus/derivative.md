@@ -162,7 +162,7 @@ Continuing the generalization, for some functions we can compute third-order, fo
 - $f(x) = e^x$, then $f^{(n)}(x) = e^x$ (every order of derivative is itself)
 - $f(x) = \sin x$, then $f'(x) = \cos x$, $f''(x) = -\sin x$, $f'''(x) = -\cos x$, $f^{(4)}(x) = \sin x$ (cycles every four orders)
 
-## Chapter Summary
+## Summary
 
 Derivatives reveal a simple yet profound idea: any continuously changing quantity can be characterized by its trend of change at a given point. Starting from the instantaneous velocity problem that Newton pondered, derivatives push the average rate of change to its limit, yielding a precise expression for the instantaneous rate of change. This leap from a static ratio to a dynamic limit is not only a mathematical advancement but also a shift in way of thinking -- we can now use a single number to describe the tendency of a function to change at a particular point. Geometrically, the derivative is the slope of the tangent line, providing us with a way to understand curves (nonlinear) through straight lines (linear).
 

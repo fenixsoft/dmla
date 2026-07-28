@@ -672,7 +672,7 @@ During 2018-2020, the BERT path held a dominant position across various NLP task
 
 Of course, the encoder-only path has not disappeared. In tasks requiring deep understanding (such as information extraction, text classification), BERT and its variants remain highly competitive. Similarly, the encoder-decoder path has not completely exited the stage. In typical sequence-to-sequence tasks such as translation and summarization — especially in scenarios where input and output lengths differ significantly and deep understanding of the input is required before generation — T5 still has certain advantages. However, in the field of large language models, the decoder-only path has become the dominant paradigm, leading the direction of technological development.
 
-## Chapter Summary
+## Summary
 
 The birth of Transformer was a pivotal turning point in the history of deep learning. Before it, sequence modeling was constrained by the serial computation of recurrent neural networks, and model capabilities were limited by distance decay in information propagation. After it, the attention mechanism replaced recurrent structures, allowing every position in a sequence to directly communicate with every other, opening the door to parallel computation. This change not only solved engineering efficiency problems but also touched the essence of language understanding: semantics is not a relay baton passed step by step along a timeline, but an intricate network of associations between words.
 

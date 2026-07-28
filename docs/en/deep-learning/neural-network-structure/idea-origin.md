@@ -113,7 +113,7 @@ From the M-P model to Hebb's rule, the embryonic period of neural network concep
 
 Looking back at this history, the development of neural networks has not been a smooth path but rather an upward spiral. Each breakthrough exposed new limitations, and each trough gave birth to new opportunities. Although the "perceptron crisis" of 1969 temporarily dampened research enthusiasm, it also pointed the way forward: break through single-layer networks and explore learning methods for multi-layer networks. This direction was finally realized in the 1980s with the advent of the backpropagation algorithm.
 
-## Chapter Summary
+## Summary
 
 This chapter traces the origin of neural network concepts, starting from the structure of biological neurons and introducing the McCulloch-Pitts model, Hebbian learning rule, and the birth of the early perceptron. This history reveals the path of exploration from nature to artificial systems: observing brain structure, abstracting it into mathematical models, and ultimately implementing it as computational systems. The core contribution of the M-P model lies in abstracting neurons as binary logic units and proving that neural networks possess the capability to perform logical operations. Hebb's rule introduced the idea of correlation learning, demonstrating that weights can be automatically adjusted based on neural activity -- an insight that remains fundamental to deep learning today. The perceptron integrated these ideas, constructing the first learnable neural network system and establishing learning theory.
 

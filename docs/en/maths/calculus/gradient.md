@@ -104,7 +104,7 @@ $$\sum_{i=1}^{n} f(x_i) \Delta x = \sum_{i=1}^{n} \frac{2i}{n} \cdot \frac{1}{n}
 - Method 2 (Newton-Leibniz formula): The antiderivative of $f(x) = 2x$ is $G(x) = x^2$ (verification: $(x^2)' = 2x$). Therefore:
 $$\int_0^1 2x \, dx = G(1) - G(0) = 1^2 - 0^2 = 1$$
 
-## Chapter Summary
+## Summary
 
 When mathematics moves from studying "how one variable affects a result" to "how multiple variables working together determine an outcome," partial derivatives provide a natural entry point: fix all other variables and observe the effect of only one variable. This dimension-reduction strategy decomposes complex multivariate problems into familiar univariate problems, embodying the scientific wisdom of simplifying complexity. Partial derivatives characterize the rate of change along coordinate axes, while the gradient assembles these scattered pieces of information into a single vector, revealing a "panoramic view" of how the function changes in all directions. The gradient points in the direction of steepest increase of the function -- this geometric property, seemingly simple, is the soul of the gradient descent algorithm in machine learning. Multivariate functions introduce another dimension of nested multivariate relationships, and the chain rule provides us with a tool for disentangling this complexity. The total rate of change equals the sum of contributions from each path -- this is a divide-and-conquer approach that machine learning has fully adopted. Neural networks are quintessential examples of deeply composite functions, and the backpropagation algorithm is essentially a systematic application of the chain rule.
 

@@ -687,7 +687,7 @@ Additionally, mastering vectorization techniques is key to writing efficient Num
     print(f"Batch matrix multiplication shape: {batch_C.shape}")
     ```
 
-## Chapter Summary
+## Summary
 
 The value of NumPy lies not only in its rich set of numerical computation functions but also in the efficient array-oriented computing paradigm it establishes. By replacing loops with vectorized operations, both code conciseness and execution efficiency are achieved; by using the broadcasting mechanism to handle data of different shapes, complex mathematical expressions can be presented in intuitive algebraic form. These designs allow operations that would otherwise require deeply nested loops and cumbersome indexing to be expressed in concise code close to mathematical language. For machine learning, NumPy serves as a bridge between theoretical derivation and practical implementation. Whether it is data preprocessing, feature engineering, or matrix operations in model training, all are built upon the foundational operations introduced in this chapter. Mastering the NumPy way of thinking means being able to express mathematical problems in a computationally optimal manner, an essential core competency for data science practitioners.
 

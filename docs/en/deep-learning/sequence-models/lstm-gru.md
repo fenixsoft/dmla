@@ -259,7 +259,7 @@ Although LSTM and GRU theoretically alleviate RNN's vanishing gradient problem t
 
     The tuning strategy follows a progressive principle, prioritized by impact. First adjust `hidden_size` (most impactful), which determines the model's memory capacity and representational power — too small loses information, too large increases computational cost and overfitting risk. Next adjust `num_layers` (increase layers for complex tasks) — 1-2 layers suffice for most tasks, while complex tasks may try 3 layers. Finally adjust `dropout` (prevent overfitting) — use higher values (0.2-0.3) for small datasets and lower values (0-0.1) for large datasets. This progressive strategy avoids the confusion of adjusting multiple parameters simultaneously, changing only one variable at a time and clearly tracking the effect of each change.
 
-## Chapter Summary
+## Summary
 
 This article introduced two gated recurrent neural networks — LSTM and GRU — both of which alleviate RNN's vanishing gradient problem to some extent, endowing networks with selective memory capability. Their mechanisms for addressing the gradient problem have distinct characteristics. LSTM uses linear transmission through the cell state, where gradients experience no significant decay, making it suitable for ultra-long-term dependencies. GRU uses the update gate to control information retention — when the update gate output is close to 0, gradient transmission is nearly linear, mitigating vanishing gradients and making it suitable for medium-length dependencies. Both achieve selective memory through gating mechanisms, enabling the network to learn when to retain and when to forget, rather than indiscriminately passing all information like an RNN.
 

@@ -96,7 +96,7 @@ We have discussed aggregating multiple GPUs to handle a single model (such as pi
 
 There is also a class of multi-model sharing solutions that do not use MIG. These solutions deploy multiple models on the same GPU through the inference framework, controlling the execution order of each model via a scheduler. Unlike MIG's hardware isolation, these solutions rely on software scheduling for resource sharing—offering higher flexibility but weaker isolation. Taking dynamic batching under multi-model scenarios as an example: the framework batches requests for different models separately, but they still share the same GPU's execution time. The scheduler dynamically allocates GPU time slices based on the load of each model, with heavily loaded models receiving more execution opportunities. This approach is more flexible than MIG, allowing dynamic adjustment of resource allocation ratios, but it lacks hardware isolation—a long-running computation in one model can affect the latency of other models.
 
-## Chapter Summary
+## Summary
 
 This chapter started from the physical essence of GPU hardware, discussing three fundamental questions in inference service resource management: what goes into memory, how is compute used, and is bandwidth sufficient. These three questions are not independent of each other. Bandwidth determines whether compute can be kept fed. Memory capacity determines how many requests can be served simultaneously. Compute becomes the primary constraint in the Prefill phase. GPU hardware is the physical foundation and design prerequisite for software algorithms and engineering optimization measures. All such measures exist to bridge the gap between the computational characteristics of workloads and the physical reality of the hardware.
 

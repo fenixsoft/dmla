@@ -196,7 +196,7 @@ ResNet's impact extends far beyond the ImageNet classification competition itsel
 
 Among these, the most far-reaching influence is the residual connection in the Transformer architecture. The Transformer, the protagonist of the upcoming large language model section, adopts residual connections as a core design. Every multi-head attention layer and every feed-forward network layer adds its input to its output via a residual connection. This design allows Transformers to stack dozens of layers (e.g., BERT-Base has 12 layers, BERT-Large has 24 layers, GPT-3 has 96 layers) without encountering optimization difficulties. The success of the Transformer demonstrates that the value of residual learning extends far beyond image recognition, proving applicable to all kinds of neural network architectures.
 
-## Chapter Summary
+## Summary
 
 This chapter introduced ResNet, one of the most important network architectures in deep learning history. Through residual connections, it elegantly solves the difficulty of learning identity mappings, shifting the learning objective from learning the complete mapping $H(x)$ to learning the residual $H(x) = F(x) + x$. An even more important contribution of residual connections is the improvement of gradient flow. Residual connections provide a direct shortcut for gradients — during backpropagation, gradients can travel directly from deep layers to shallow layers without attenuation through the multiplicative chain of intermediate layer derivatives. This makes it possible to train networks with over 1000 layers without encountering vanishing gradients or the degradation problem.
 

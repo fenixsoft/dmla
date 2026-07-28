@@ -196,7 +196,7 @@ In the decade-plus since the AlexNet era, both GPU hardware and deep learning fr
 
 The growth in memory capacity and bandwidth is particularly striking — from 192 GB/s to over 2 TB/s, a more than 10x bandwidth improvement means GPU cores no longer have to wait for data to slowly load from memory. This is a key foundation for modern models being able to train with tens of billions of parameters. On the software side, frameworks like PyTorch wrap convolution, pooling, optimizer operations, and more into a few API calls, freeing developers from needing to understand hardware details like GPU shared memory and texture memory. Today, an AlexNet implementation using PyTorch can be fully defined in just a few dozen lines of code, and training can be completed in tens of minutes on a single GPU. This efficiency improvement has not only changed researchers' workflows but has also profoundly influenced network architecture design — when training is no longer a bottleneck, researchers can more boldly experiment with deeper and wider network structures.
 
-## Chapter Summary
+## Summary
 
 This chapter introduced AlexNet, a landmark model in deep learning. AlexNet's success triggered a paradigm shift in computer vision:
 

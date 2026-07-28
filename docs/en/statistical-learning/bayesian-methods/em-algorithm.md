@@ -276,7 +276,7 @@ print(f"\nEstimated mixing coefficients: {gmm.weights_}")
 print(f"\nSample counts per component: {[np.sum(labels == k) for k in range(3)]}")
 ```
 
-## Chapter Summary
+## Summary
 
 The EM algorithm demonstrates an elegant process of probabilistic modeling. When faced with unobservable variables, it gradually approaches the truth through alternating iterations of the E-step and M-step, maintaining respect for uncertainty at every step. This philosophy of characterizing the unknown with probability distributions rather than deterministic values is an important concept in modern machine learning. From Bayesian methods to variational inference to deep generative models, the influence of the EM idea can be seen everywhere. For instance, the [Variational Autoencoder](../../deep-learning/generative-models/vae.md) (VAE) in the field of video generation is a typical example. VAE introduces variational inference into neural network architectures: the encoder network parameterizes the posterior distribution of the latent variables (similar to the E-step), and the decoder network parameterizes the generative distribution of the observed variables (similar to the M-step). Understanding the EM algorithm makes it easy to understand why VAE requires a "reconstruction loss" and "KL divergence."
 

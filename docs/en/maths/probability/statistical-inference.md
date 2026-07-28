@@ -432,7 +432,7 @@ else:
     print("      There is not enough evidence to conclude the coin is not fair")
 ```
 
-## Chapter Summary
+## Summary
 
 This chapter introduced the main methods of statistical inference, which form a complete chain from data to conclusions:
 

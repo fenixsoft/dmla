@@ -189,7 +189,7 @@ plt.show()
 plt.close()
 ```
 
-## Chapter Summary
+## Summary
 
 This chapter starts from the application scenarios of linear regression and establishes a complete knowledge chain: **Assumption → Criterion → Solution**. The linear assumption $y = X\beta + \epsilon$ simplifies the world, compressing complex relationships into a straight line (or hyperplane). The ordinary least squares criterion $\arg\min_{\beta} \|y - X\beta\|^2$ establishes the standard for "optimality" of this line, i.e., minimizing the length of the residual vector. The projection theorem reveals the geometric essence of the OLS criterion: the residual is orthogonal to the column space, from which the closed-form solution $\hat{\beta} = (X^TX)^{-1}X^Ty$ is derived.
 

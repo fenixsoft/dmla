@@ -356,7 +356,7 @@ print(f"4th-order tensor shape: {tensor_4d.shape}")  # (10, 28, 28, 3)
 
 In deep learning, virtually all data is represented using tensors: input images are 3rd-order or 4th-order tensors, neural network weights are matrices (2nd-order tensors), and batched data adds a batch dimension to form higher-order tensors. Understanding the extension of tensor orders helps maintain clear awareness of data dimensions in more complex model architectures such as convolutional neural networks and Transformers.
 
-## Chapter Summary
+## Summary
 
 This chapter started with matrices as the natural extension of vectors and explored matrix algebra, geometric meaning, and the conceptual extension to tensors. Matrix operations are the tools for manipulation, the inverse matrix is the tool for restoration, special matrices are the tools for simplification, linear transformations are the geometric essence, and tensors are the generalization to higher dimensions. Mastering both the algebraic operations and geometric intuition of matrices will lay a solid foundation for subsequently learning about eigendecomposition, singular value decomposition, and neural network optimization algorithms.
 

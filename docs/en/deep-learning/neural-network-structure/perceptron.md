@@ -203,7 +203,7 @@ plt.show()
 plt.close()
 ```
 
-## Chapter Summary
+## Summary
 
 This chapter provides a detailed introduction to Rosenblatt's perceptron model, including its structure, geometric interpretation, learning algorithm, and convergence theorem. In 1958, Rosenblatt implemented the first learnable neural network on the Mark I perceptron at the Cornell Aeronautical Laboratory. Its core contribution is the error-driven learning mechanism: when a classification error occurs, the model automatically adjusts its weights until the correct decision boundary is found. The decision boundary of a perceptron is a linear hyperplane, which limits its expressive power to linearly separable classification problems and implies inevitable failure on non-linearly separable data. In 1969, the book *[Perceptrons](https://mitpress.mit.edu/9780262631112/perceptrons/)* rigorously proved the limitations of single-layer perceptrons, a conclusion that plunged neural network research into nearly a decade of winter. But the predicament also pointed the way forward: add hidden layers, build multi-layer networks, and let the model first extract combined features before making decisions. The key issue is how to train multi-layer networks, which will be discussed in the next chapter on [Multilayer Perceptrons](mlp.md) and resolved in the subsequent chapter on the backpropagation algorithm.
 

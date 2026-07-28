@@ -155,7 +155,7 @@ graph LR
 ```
 *Figure: High-Resolution Image Processing*
 
-## Chapter Summary
+## Summary
 
 The significance of multimodal models lies in granting AI the ability to perceive the world through channels beyond text, enabling it to process the vast amounts of information that exist in visual form in the real world -- from medical image diagnosis to autonomous driving scene understanding, where the input is inherently visual rather than textual.
 

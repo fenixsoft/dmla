@@ -239,7 +239,7 @@ Below, we analyze the memory usage of three fine-tuning methods using a 65B para
     | Activations (Gradient Checkpointing) | Empirical estimate | ~18 GB |
     | **Total** | | **~52 GB** |
 
-## Chapter Summary
+## Summary
 
 Pre-training endows the model with language ability, but not with the willingness to serve humans. A foundation model that can fluently continue text, when faced with a user's question, will still on its own fabricate the continuation rather than providing a useful answer. Supervised fine-tuning addresses this leap from "being able to speak" to "being able to converse," playing a connecting role in the entire alignment training pipeline. It inherits the language capabilities of pre-training, transforms them into usable conversational behavior, and provides a stable starting point for subsequent reinforcement learning alignment. Without SFT, there would be no object for the reward model to evaluate. Built on SFT, RLHF can further refine a model that already knows how to respond, making it respond even better.
 

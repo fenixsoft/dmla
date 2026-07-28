@@ -355,7 +355,7 @@ SVD is the foundation of image compression. Although an image matrix contains a 
 
 From the results of the code above, we can intuitively see the effect of SVD compression: with only 5 singular values retained, the image is just a blurry outline, but the general shape is already recognizable; with 20 retained, details are significantly restored; with 50 retained, the image is almost indistinguishable from the original, yet the storage size is only about 78% of the original data. Notably, when k equals the matrix rank (128), the storage size actually exceeds 100%. This is because the full SVD decomposition requires storing all three matrices $U$, $S$, and $V^T$, which together contain more elements than the original matrix. The advantage of SVD compression is precisely evident when k is far smaller than the rank: a small number of singular values can approximate the original image quality. This is the power of low-rank approximation.
 
-## Chapter Summary
+## Summary
 
 The value of dimensionality reduction lies in its role as a bridge connecting high-dimensional data with human cognition. In data science practice, we often face a fundamental contradiction: the dimensionality of real-world data continues to expand, yet human understanding, computational resources, and visualization capabilities remain limited. The curse of dimensionality is not just an abstract mathematical concept; it tangibly affects the performance of every machine learning model.
 

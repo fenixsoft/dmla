@@ -104,7 +104,7 @@ Which strategy to choose depends on the ratio between the preempted request's KV
 
 The iteration-level scheduling of [continuous batching](#continuous-batching) provides numerous execution points for preemption and eviction strategies. After each Decode step, the scheduler can check whether preemption or eviction is needed without interrupting an executing Decode step. This design of switching only between steps prevents preemption and eviction operations from interfering with ongoing computations.
 
-## Chapter Summary
+## Summary
 
 Inference services do not face the optimization of individual requests in isolation, but rather the system engineering problem of how a massive number of concurrent requests share limited GPU resources. Batching leverages the parallel nature of matrix operations to complete multiple requests in a single GPU computation, trading a small amount of latency for several-fold or even dozens-fold improvement in throughput — this is the starting point for high-concurrency inference services. However, the tail padding problem of static batching exposes the heterogeneity among requests (different generation lengths, different input lengths, different priorities), and this heterogeneity means that a one-size-fits-all simple scheduling approach inevitably wastes resources. Continuous batching allows requests to enter and leave the batch freely at each iteration, fundamentally eliminating idle waiting. Prefix caching transforms redundant computation into direct hits by reusing the KV Cache of shared prefixes. Together, these technologies form a comprehensive resource management framework, enabling inference services to find a balance among latency, throughput, and fairness that matches the business scenario.
 

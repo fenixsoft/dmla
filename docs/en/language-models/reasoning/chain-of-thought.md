@@ -160,7 +160,7 @@ Multi-path exploration refers to the model trying multiple methods to solve a pr
 
 The value of multi-path exploration lies in cross-validation: when different methods produce the same result, the credibility of the answer is greatly increased. Of course, exploring multiple paths means more time and computational cost. For high-value problems (such as mathematical proofs, critical decisions), this investment is worthwhile. For simple problems, the model typically automatically chooses a single path for fast solving.
 
-## Chapter Summary
+## Summary
 
 Reasoning is not a single leap to the answer but a journey that requires pausing, looking back, and even retracing steps. The significance of chain of thought lies in transforming the model from intuitively guessing answers to methodically deriving them step by step. The process reward model further tells the model whether each step is correct, ensuring that learning signals no longer focus only on the destination while ignoring the journey. Reasoning ability is an inherent potential of language models that grows naturally at sufficient scale — chain of thought merely awakens it, and reinforcement learning simply unleashes this potential. This is precisely the significance of reasoning models: they not only perform better at answering questions but also, for the first time, enable machines to exhibit a way of thinking that resembles human reasoning.
 

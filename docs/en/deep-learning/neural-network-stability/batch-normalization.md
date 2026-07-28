@@ -651,7 +651,7 @@ It is worth noting that these schemes are not mutually exclusive. In some comple
 | IN | Style Transfer, Generative Models | None | Single sample + single channel |
 
 
-## Chapter Summary
+## Summary
 
 Batch Normalization is a landmark technology in the history of deep learning development. By standardizing Mini-Batch data at each layer, it solves the covariate shift problem that plagued deep network training for years, profoundly changing the practice of deep learning. The proposers of Batch Normalization, Sergey Ioffe and Christian Szegedy, wrote in their paper: "We hope that Batch Normalization will become a standard component of deep network training." A decade later, this vision has become a reality — from ResNet to Transformer, from computer vision to natural language processing, BN and its variants are everywhere. Mastering this technique is an important foundation for deep learning practitioners.
 

@@ -245,7 +245,7 @@ Functional degradation is another approach, reducing resource consumption by cur
 
 The trigger conditions for degradation need to be precisely defined to avoid frequent switching that causes service quality fluctuations. Common trigger conditions include GPU utilization exceeding a threshold continuously (e.g., 90% for 5 consecutive minutes), request queuing time exceeding a threshold (e.g., 10 seconds), and OOM frequency exceeding a threshold (e.g., more than 3 times per minute). Trigger conditions should be persistent rather than instantaneous, because transient fluctuations (such as a large Prefill request temporarily raising GPU utilization) should not trigger degradation.
 
-## Chapter Summary
+## Summary
 
 The architectural design of LLM inference services cannot simply copy the experience of traditional web services. The fundamental difference lies in the fact that traditional web services have predictable latency, controllable resource consumption, and flexible scaling, while LLM inference services have latency determined by unpredictable output lengths, concurrency limited by GPU memory capacity, and scaling constrained by GPU supply and startup speed. These differences act as a main thread running through every aspect of inference service architecture.
 

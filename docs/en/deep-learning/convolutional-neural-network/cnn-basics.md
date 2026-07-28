@@ -607,7 +607,7 @@ ratio = conv_params / fc_params
 print(f"\nParameter comparison: conv layer uses only {ratio:.4%} of the fc layer's parameters")
 ```
 
-## Chapter Summary
+## Summary
 
 The fundamental reason convolutional neural networks have become the dominant architecture in computer vision is that they embed prior knowledge directly into the model design: patterns in images exhibit locality (objects typically appear within limited regions) and translation invariance (the same object appearing at any position in the image belongs to the same category). The parameter sharing and local connectivity of convolutional layers are an explicit modeling of this inductive bias.
 

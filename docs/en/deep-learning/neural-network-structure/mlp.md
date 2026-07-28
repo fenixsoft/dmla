@@ -301,7 +301,7 @@ plt.show()
 plt.close()
 ```
 
-## Chapter Summary
+## Summary
 
 This chapter traces the historical development of the multi-layer perceptron, covering its background, structural design, theoretical foundation, and practical verification. The multi-layer perceptron is a critical milestone in the history of neural network development. It demonstrates that adding a hidden layer of neurons can break through linear limitations, validates the powerful expressive capability of nonlinear transformations, and lays the foundation for subsequent deeper network architectures. The next chapter will delve into the computational details of the MLP, providing an in-depth introduction to how signals flow layer by layer in forward propagation, how matrix operations are efficiently implemented, and how computation graphs organize complex nested functions. Understanding these details is a necessary prerequisite for mastering the backpropagation algorithm.
 

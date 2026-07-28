@@ -189,7 +189,7 @@ Seq2Seq's advantage is that input and output lengths can differ, but implementat
 
 The effect of length penalty is to make scoring fairer between long and short sequences. Suppose a 5-word sequence has a combined probability of 0.5, while a 10-word sequence has a combined probability of 0.3. Under the original scoring, the short sequence wins, but with length penalty applied, the long sequence might reverse the outcome because it contains more meaningful content — its probability product is only naturally lower due to length.
 
-## Chapter Summary
+## Summary
 
 From RNN to LSTM, GRU, and then to Seq2Seq, the core objective of this technological evolution has remained consistent: how to enable neural networks to effectively process dependencies in sequential data. RNN pioneered the introduction of recurrent connections, giving networks the ability to remember historical information, but the vanishing gradient problem prevented it from learning long-term dependencies beyond 10-20 time steps. LSTM extended effective memory length to over a hundred time steps through gating mechanisms and linear cell state propagation. GRU achieved comparable performance on medium-length sequences with a more streamlined structure. Seq2Seq went further, using the encoder-decoder architecture to break the constraint that input and output lengths must be equal, making sequence-to-sequence mapping possible.
 

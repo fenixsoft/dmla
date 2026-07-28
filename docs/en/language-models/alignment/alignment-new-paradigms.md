@@ -276,7 +276,7 @@ GRPO's primary advantage is its self-evolution capability: the model can autonom
 
 However, GRPO also has clear limitations. It is not a universal alignment method. Compared to PPO, DPO, KTO, and other methods, GRPO's applicability is restricted: its reward signal depends on tasks having clear correct answers, and for open-ended dialogue, creative writing, and other tasks without objective standards, GRPO cannot provide effective reward signals. Another drawback of GRPO is the significant sampling overhead. GRPO requires generating multiple candidate responses for each instruction (typically $G = 4 \sim 16$), making inference costs $G$ times that of ordinary training.
 
-## Chapter Summary
+## Summary
 
 This article starts from the limitations of RLHF and systematically introduces three alignment methods: DPO, KTO, and GRPO. The development trend of alignment methods can be summarized as simpler, more autonomous, and more efficient. From RLHF's three-model architecture (policy model, reward model, reference model) to DPO's two models, and then to GRPO's single-model self-evolution, the barrier to alignment training continues to decrease. However, each method has its limitations. DPO still relies on paired data, KTO's theoretical guarantees are weaker, and GRPO is only applicable to tasks with objective standards. How to maintain simplicity while covering a wider range of task types is the main direction for the next phase of alignment method research.
 

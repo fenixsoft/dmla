@@ -326,7 +326,7 @@ Both have their pros and cons; the key lies in finding the right balance for the
 
 The ideas of depth-first and width-first have both continued to develop. On one hand, the strategy of stacking depth and parameter counts led major companies into a computational arms race, a phenomenon that peaked after the Transformer architecture emerged in 2017. On the other hand, modern network design has indeed increasingly emphasized efficiency optimization. Subsequent networks like MobileNet used depthwise separable convolutions to further reduce computation, and EfficientNet systematically balanced depth, width, and resolution through compound scaling. These innovations all continue the core idea of GoogLeNet: using smarter architectural design to replace brute-force resource stacking.
 
-## Chapter Summary
+## Summary
 
 This chapter introduced two landmark works from the 2014 ImageNet challenge, which broke through the design bottlenecks of AlexNet from different directions, ushering in the golden age of modern CNN architecture design. VGG and GoogLeNet pushed network depth to around 20 layers, but further deepening encountered new obstacles. When the number of layers exceeds a certain threshold, deeper networks actually perform worse — not because of overfitting, but because optimization becomes increasingly difficult. This problem was solved in 2015 by ResNet, where residual connections allow gradients to skip intermediate layers and propagate directly, making hundred-layer or even thousand-layer networks a reality. The next chapter will detail ResNet's design ideas and its profound impact on the field of deep learning.
 

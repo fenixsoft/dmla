@@ -393,7 +393,7 @@ print(f"Intercept: {model.intercept_:.4f}")
 ```
 
 
-## Chapter Summary
+## Summary
 
 Logistic regression uses regression thinking to solve classification problems. Its core design is "linear decision + Sigmoid translation." It remains categorized as a linear model, inheriting the advantages of linear models — strong interpretability, robustness with small samples — but also has limitations such as a linear decision boundary, missing feature interactions, and sensitivity to imbalanced data. In the next chapter, we will discuss how to address the "overlearning" problem of linear models — regularization and generalized linear models — exploring how to improve expressive power and robustness while maintaining model simplicity.
 

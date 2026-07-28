@@ -118,7 +118,7 @@ Some operations are inherently non-atomic to roll back. An already-sent email ca
 
 Designing compensating transactions requires following several principles. For every operation with external side effects (sending a notification, creating a ticket, modifying data in an external system), its compensating action should be considered at the time of writing the code. The compensating operation itself must also be idempotent, because the request to send the compensation may also be retried due to network issues. If two consecutive "please disregard the previous email" correction notices reach the same recipient, the non-idempotent compensation itself becomes an operation that needs further compensation, creating infinite recursion.
 
-## Chapter Summary
+## Summary
 
 Orchestration and fault tolerance are two sides of the same engineering problem. Orchestration plans how the normal path flows; fault tolerance decides how to respond when anomalies occur. In multi-agent systems, the non-determinism of LLMs, combined with the inherent uncertainty of distributed systems, amplifies the complexity of troubleshooting exponentially. From pipelines, fan-out, to recursion, the choice of orchestration pattern depends on the intrinsic structure of the task. Timeout and retry, degradation and fallback, checkpoint and recovery, and the circuit breaker pattern form a progressively layered defense.
 

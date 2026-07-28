@@ -373,7 +373,7 @@ The figure above shows the practical application of the kernel trick in financia
 
 The distribution of support vectors (green hollow circles) reveals the model's focus. They are mainly located near the decision boundary, representing those "borderline" customers with ambiguous financial characteristics. In a complex feature space, a few key samples suffice to define a clear decision boundary, helping banks identify high-risk applications in lending decisions.
 
-## Chapter Summary
+## Summary
 
 Under the kernel trick, all the elegant mathematical properties of SVM — the maximum margin principle, convex optimization properties, and guaranteed global optimum — are fully preserved. Simply by replacing the inner product operation, a linear method gains the ability to handle arbitrary nonlinear patterns. Kernel SVM demonstrates that the "appearance" of a machine learning method can remain unchanged; only the internal "metric" needs to be swapped to acquire new capabilities. This is true both for the kernel SVM introduced in this chapter and for the [GLM framework](../linear-models/regularization-glm.md#generalized-linear-models) we encountered in linear models.
 

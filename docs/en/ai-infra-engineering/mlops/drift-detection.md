@@ -100,7 +100,7 @@ Univariate detection is suitable as the foundational layer of drift monitoring, 
 
 In a practical MLOps system, the three categories are typically deployed in layers. Time-series detection acts as a real-time sentinel, monitoring the input feature stream at the data pipeline entry point. Univariate detection periodically (e.g., daily or weekly) produces drift reports for each feature. Multivariate detection performs deep analysis when performance monitoring alarms trigger, or when the first two categories cannot explain changes in business metrics.
 
-## Chapter Summary
+## Summary
 
 The real value of drift detection is not that it can tell you the distribution has changed, but that it transforms the age-old question of "when will the model fail" into measurable engineering metrics. This problem has existed since the birth of machine learning, but in the past could only be vaguely sensed. Without drift detection, the state of a deployed model is essentially a black box. Operations teams can only realize something is wrong when business metrics decline or user complaints pour in. Post-hoc debugging often takes days or even weeks. Drift detection turns this process from reactive firefighting into proactive early warning.
 

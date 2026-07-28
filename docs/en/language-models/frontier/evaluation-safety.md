@@ -179,7 +179,7 @@ graph LR
 
 By systematically performing activation patching at different layers and positions, researchers can map the complete path of information flow through the network. This is particularly valuable for safety evaluation: if we can locate where harmful knowledge is stored within the model, it becomes possible to surgically remove that knowledge without retraining the entire model.
 
-## Chapter Summary
+## Summary
 
 The ultimate goal of research into evaluation, safety alignment, and interpretability is to transform large models from powerful tools into infrastructure we can confidently rely on. A model that can write elegant code and solve complex math problems demonstrates capability. But only when its capabilities can be accurately measured, its behavior safely constrained, and its decisions understood by humans, can it truly be embedded in domains such as healthcare, law, and education -- areas that concern human well-being. In this sense, evaluation, safety, and interpretability are not appendices to large model research, but rather the critical factors that determine how far this technology can go.
 

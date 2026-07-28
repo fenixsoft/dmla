@@ -244,7 +244,7 @@ The shape of the unit ball reveals the essence of the $L_p$ norm: the larger the
 
 In machine learning, norms permeate the entire process of model design, training, and optimization. Take their role in [Regularization](../../statistical-learning/linear-models/regularization-glm.md#regularization-principles) as an example: one important type of risk in model training is overfitting. Suppose we train a student test-taking model using a large number of college entrance exam questions. We hope the model can understand the problem-solving strategies and methods, so that it can score well on the next actual exam. We do not want the model to simply memorize the answers to all past exam questions -- getting perfect scores on historical questions but being clueless about new ones. This phenomenon of merely memorizing training data while lacking generalization ability is called overfitting. Regularization is essentially a technique to prevent the model from "rote memorizing" training data, encouraging it to learn "general patterns" rather than "memorizing answers." In machine learning, regularization adds a penalty for model complexity to the loss function, forcing the model to learn simpler, more generalizable patterns. Since we have not yet covered model training, we cannot further elaborate on this topic here -- it will be discussed in later chapters on regularization in model training.
 
-## Chapter Summary
+## Summary
 
 This chapter started with vectors -- the most fundamental object of study in linear algebra -- and systematically built the mathematical foundation needed to understand machine learning algorithms.
 

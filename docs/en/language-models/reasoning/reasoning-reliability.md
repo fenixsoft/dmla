@@ -174,7 +174,7 @@ This **Neuro-symbolic Reasoning** architecture has demonstrated its potential in
 
 The main challenge currently facing neuro-symbolic reasoning is **interface design**: the neural network outputs continuous probability distributions, while symbolic systems require discrete formal inputs. The "translation" process between the two may lose information or introduce errors. For instance, translating the model's natural language reasoning steps into Lean's formal statements is itself a difficult task — translation errors would cause the symbolic system to verify "the wrong translation" rather than "the original reasoning." Designing efficient and reliable neuro-symbolic interfaces is a core research problem for the practical application of hybrid reasoning architectures.
 
-## Chapter Summary
+## Summary
 
 This chapter has analyzed the capability boundaries of reasoning models from three dimensions. The vulnerability of reasoning chains reveals the inherent challenges of error accumulation and reasoning hallucination under the autoregressive generation paradigm. Reasoning consistency issues demonstrate the non-reproducibility and overconfidence tendency of model reasoning. The fundamental difference between statistical fitting and symbolic reasoning explains the deep-seated causes of these phenomena from a theoretical perspective.
 

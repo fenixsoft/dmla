@@ -442,7 +442,7 @@ Transfer learning can also be incorporated into the perspective of hyperparamete
 
 The large-scale application of meta-learning and transfer learning in HPO relies on public tuning benchmark datasets. Projects such as [OpenML](https://www.openml.org/) and [HPO-Bench](https://www.automl.org/hpo-overview/hpo-benchmarks/hpobench/) have recorded extensive tuning trial results across various models and datasets, providing training data for meta-learning algorithms. The accumulation of these benchmark datasets is shifting automated tuning from independent search per task toward a form of swarm intelligence with shared experience.
 
-## Chapter Summary
+## Summary
 
 The significance of automated hyperparameter optimization goes far beyond finding a better set of parameters. Its most direct effect is reducing the dependence on experienced tuning engineers. Cultivating an experienced deep learning engineer takes years, yet the number of models needed by enterprises far exceeds the supply of such experts. When Bayesian optimization or Hyperband takes over the search process, junior engineers and even non-technical personnel can obtain tuning results approaching expert level. This is essentially transforming scarce personal experience into transmissible algorithmic capability.
 

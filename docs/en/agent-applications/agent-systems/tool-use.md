@@ -141,7 +141,7 @@ Tool learning and tool creation represent two directions in the evolution of too
 
 **Tool Creation** is a higher-order capability compared to tool use. It requires the model not only to correctly select and use existing tools but also to recognize when a task requires a tool that does not yet exist and to design that tool. For example, when faced with a complex data processing task, an Agent might find that no existing tool can complete the required data transformation in one step, so it writes a data processing script and then uses that script to complete the subsequent steps. The implementation of tool creation depends on the combination of the model's programming ability, deep understanding of task requirements, and a secure code execution environment.
 
-## Chapter Summary
+## Summary
 
 Tool calling transforms language models from text generators that can only talk into actors that can interact with the external world. Its essence is structured output -- under appropriate prompt guidance, the model generates instructions that can be parsed by machines, and the execution engine then carries out the actual operations. Whether it is the wording of tool descriptions or the choice of protocol format, whether it is the masking mechanism of constrained decoding or the orchestration strategy for multi-tool coordination, every step is about finding the engineering sweet spot between precision and flexibility.
 

@@ -308,3 +308,11 @@ border-radius: 12px;
 div[class*=language-].line-numbers-mode .line-numbers {
   padding-top: calc(var(--code-padding-y) + 1px);
 }
+
+@media (max-width: 419px) {                                                                                                                           
+  .search-pro-button {                                                                                                                                
+    border: 0px solid var(--vp-c-border);
+    background: transparent;
+    padding-right: 1px;                                                                                                                                
+  }                                                                                                                                                   
+}

@@ -118,7 +118,7 @@ Test-time scaling means that if the model does not answer well on the first try,
 
 Test-time scaling and pre-training scaling are not replacements for each other but are complementary. Pre-training scaling invests compute during the training phase to build the model's general capabilities -- a one-time fixed cost. Inference scaling invests additional compute on each inference to obtain better answers for specific problems -- a variable marginal cost. The model spends more time thinking during inference, explores more reasoning paths, and thereby obtains better answers. This adds another dimension for performance improvement on top of pre-training scaling. Later, in the section on reasoning, we will dedicate a full chapter to the details of [test-time scaling](../../../language-models/reasoning/test-time-compute.md).
 
-## Chapter Summary
+## Summary
 
 The journey of discovering scaling laws is essentially a process of correcting misconceptions. In 2020, Kaplan discovered power-law relationships, transforming model training from empirical judgment to quantitative prediction. However, his conclusion that parameters matter more than data was later proven wrong. In 2022, Chinchilla corrected this error, showing that parameters and data should grow proportionally, and provided direct evidence through the Chinchilla versus Gopher experiment. Subsequently, LLaMA pushed Chinchilla's conclusions into practice, demonstrating through the over-training strategy that "theoretical optimum" and "practical optimum" are not the same thing.
 

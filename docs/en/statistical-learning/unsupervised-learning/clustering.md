@@ -912,7 +912,7 @@ Clustering has broad applications across many fields. The following table summar
 | **Anomaly Detection** | Outlier identification | Find points that don't belong to any cluster | Any method + distance threshold |
 | **Recommendation Systems** | User segmentation | Discover groups with similar interests | K-means or spectral clustering |
 
-## Chapter Summary
+## Summary
 
 Clustering is the introductory chapter of unsupervised learning, addressing how to discover the intrinsic structure of data without labels. In this chapter, we started from intuitive analogies and established both the mathematical foundations and practical applications of K-means and hierarchical clustering.
 

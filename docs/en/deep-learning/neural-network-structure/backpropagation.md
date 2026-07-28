@@ -470,7 +470,7 @@ plt.show()
 plt.close()
 ```
 
-## Chapter Summary
+## Summary
 
 This chapter has provided a detailed introduction to the principles and implementation of the backpropagation algorithm, including the mathematical foundation of the chain rule, the backpropagation process through the lens of computation graphs, the detailed derivation of gradient computation, and computational complexity analysis. Backpropagation is the core algorithm of neural network training; it solves the credit assignment problem for multi-layer networks by transmitting the error signal from the output layer backward to each layer, computing the gradients for parameter updates. Understanding backpropagation lays a solid foundation for subsequent study of activation functions, loss functions, optimization algorithms, and more. The next chapter will introduce activation functions, exploring the characteristics of different activation functions and their impact on gradient propagation.
 

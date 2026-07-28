@@ -108,12 +108,24 @@ wp = 'http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing'
 with zipfile.ZipFile(path, 'r') as z:
     files = {name: z.read(name) for name in z.namelist()}
 
-# === Phase 1: Fix styles.xml (remove Theme attrs) ===
+# === Phase 1: Fix styles.xml (Theme attrs, footnote spacing) ===
 if 'word/styles.xml' in files:
     tree = etree.fromstring(files['word/styles.xml'])
     for rFonts in tree.iter(f'{{{ns}}}rFonts'):
         for k in list(rFonts.attrib.keys()):
             if 'Theme' in k: del rFonts.attrib[k]
+    # Footnote text: set 4pt spacing after (was 10pt)
+    for style in tree.iter(f'{{{ns}}}style'):
+        name_el = style.find(f'{{{ns}}}name')
+        if name_el is not None and name_el.get(f'{{{ns}}}val') == 'footnote text':
+            pPr = style.find(f'{{{ns}}}pPr')
+            if pPr is None:
+                pPr = etree.SubElement(style, f'{{{ns}}}pPr')
+            spacing = pPr.find(f'{{{ns}}}spacing')
+            if spacing is None:
+                spacing = etree.SubElement(pPr, f'{{{ns}}}spacing')
+            spacing.set(f'{{{ns}}}after', '80')  # 4pt = 80 twips
+            break
     files['word/styles.xml'] = etree.tostring(tree, xml_declaration=True, encoding='UTF-8', standalone=True)
 
 # === Phase 2: Fix document.xml ===
@@ -179,11 +191,38 @@ if 'word/document.xml' in files:
         texts = [t.text or '' for t in p.iter(f'{{{ns}}}t')]
         full_text = ''.join(texts).strip()
         has_img = p.find(f'.//{{{wp}}}inline') is not None or p.find(f'.//{{{wp}}}anchor') is not None
-        if full_text.startswith('\\u56fe\\uff1a') or has_img:
+        if full_text.startswith('\\u56fe\\uff1a') or full_text.startswith('\\u56fe ') or has_img:
             jc = pPr.find(f'{{{ns}}}jc')
             if jc is None:
                 jc = etree.SubElement(pPr, f'{{{ns}}}jc')
                 jc.set(f'{{{ns}}}val', 'center')
+
+    # === First-line indent for normal paragraphs ===
+    # 仅正文段落缩进，排除标题/代码/容器/列表/表格
+    skip_styles = {'Title', 'Subtitle', 'SourceCode', 'Source Code', '注意',
+                   'Figure', 'Image Caption', 'Table Caption', 'Caption'}
+    heading_ids = {'2','3','5','6','7','8','9','10','11'}  # Heading 1-9 style IDs
+    title_id = '15'  # Title style
+    for p in tree.iter(f'{{{ns}}}p'):
+        pPr = p.find(f'{{{ns}}}pPr')
+        if pPr is None: continue
+        pStyle = pPr.find(f'{{{ns}}}pStyle')
+        if pStyle is not None:
+            val = pStyle.get(f'{{{ns}}}val')
+            if val in skip_styles or val in heading_ids or val == title_id: continue
+            if val and 'heading' in val.lower(): continue
+        # Skip centered paragraphs (figure captions, images)
+        jc = pPr.find(f'{{{ns}}}jc')
+        if jc is not None and jc.get(f'{{{ns}}}val') == 'center': continue
+        # Skip list items (have numPr element)
+        if pPr.find(f'{{{ns}}}numPr') is not None: continue
+        # Skip paragraphs inside tables
+        parent = p.getparent()
+        if parent is not None and parent.tag == f'{{{ns}}}tc': continue
+        ind = pPr.find(f'{{{ns}}}ind')
+        if ind is None:
+            ind = etree.SubElement(pPr, f'{{{ns}}}ind')
+        ind.set(f'{{{ns}}}firstLine', '480')
 
     # === Table processing: center tables + bold headers ===
     for tbl in tree.iter(f'{{{ns}}}tbl'):
@@ -197,7 +236,14 @@ if 'word/document.xml' in files:
             jc = etree.SubElement(tblPr, f'{{{ns}}}jc')
         jc.set(f'{{{ns}}}val', 'center')
 
-        # Bold the first row (header row)
+        # Table width 100%
+        tblW = tblPr.find(f'{{{ns}}}tblW')
+        if tblW is None:
+            tblW = etree.SubElement(tblPr, f'{{{ns}}}tblW')
+        tblW.set(f'{{{ns}}}w', '5000')
+        tblW.set(f'{{{ns}}}type', 'pct')
+
+        # Bold + center the header row
         first_row = tbl.find(f'{{{ns}}}tr')
         if first_row is not None:
             for rPr in first_row.iter(f'{{{ns}}}rPr'):
@@ -205,6 +251,27 @@ if 'word/document.xml' in files:
                 if b is None:
                     b = etree.SubElement(rPr, f'{{{ns}}}b')
                 b.set(f'{{{ns}}}val', 'true')
+            # Center each cell vertically + horizontally
+            for tc in first_row.iter(f'{{{ns}}}tc'):
+                # Vertical centering
+                tcPr = tc.find(f'{{{ns}}}tcPr')
+                if tcPr is None:
+                    tcPr = etree.Element(f'{{{ns}}}tcPr')
+                    tc.insert(0, tcPr)
+                vAlign = tcPr.find(f'{{{ns}}}vAlign')
+                if vAlign is None:
+                    vAlign = etree.SubElement(tcPr, f'{{{ns}}}vAlign')
+                vAlign.set(f'{{{ns}}}val', 'center')
+                # Horizontal centering for each paragraph in cell
+                for p in tc.iter(f'{{{ns}}}p'):
+                    pPr = p.find(f'{{{ns}}}pPr')
+                    if pPr is None:
+                        pPr = etree.Element(f'{{{ns}}}pPr')
+                        p.insert(0, pPr)
+                    jc = pPr.find(f'{{{ns}}}jc')
+                    if jc is None:
+                        jc = etree.SubElement(pPr, f'{{{ns}}}jc')
+                    jc.set(f'{{{ns}}}val', 'center')
 
     # === Code block styling ===
     for p in tree.iter(f'{{{ns}}}p'):
@@ -251,6 +318,24 @@ if 'word/document.xml' in files:
             if t.text and '%' in t.text:
                 t.text = unquote(t.text)
         files['word/footnotes.xml'] = etree.tostring(fn_tree, xml_declaration=True, encoding='UTF-8', standalone=True)
+
+    # === Image width 100% (content width ≈ 160mm ≈ 5760000 EMU) ===
+    if 'word/document.xml' in files:
+        tree = etree.fromstring(files['word/document.xml'])
+        wp_ns = 'http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing'
+        a_ns = 'http://schemas.openxmlformats.org/drawingml/2006/main'
+        content_width = 5760000  # EMU ≈ 160mm
+
+        for extent in tree.iter(f'{{{wp_ns}}}extent'):
+            cx = int(extent.get('cx', 0))
+            cy = int(extent.get('cy', 0))
+            if cx > 0 and cy > 0:
+                # Scale proportionally
+                ratio = content_width / cx
+                extent.set('cx', str(content_width))
+                extent.set('cy', str(int(cy * ratio)))
+
+        files['word/document.xml'] = etree.tostring(tree, xml_declaration=True, encoding='UTF-8', standalone=True)
 
 # === Write back ===
 tmp = path + '.tmp'

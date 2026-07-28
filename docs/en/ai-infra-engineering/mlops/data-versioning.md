@@ -161,7 +161,7 @@ The end goal of this automation chain is to guarantee that the same code plus th
 
 Going a step further, data version changes can serve as triggers for CI/CD pipelines. When a new data tag is applied on the staging branch (meaning the data team has completed a round of changes and verified them), the CI/CD system can automatically trigger downstream tasks: retraining the validation model, running evaluation scripts, comparing performance metrics between old and new versions, and automatically blocking the release if metric regression exceeds a threshold. In this way, data versioning is no longer just a storage and recording tool — it becomes an active execution component of the machine learning system's quality assurance framework.
 
-## Chapter Summary
+## Summary
 
 The fundamental goal of data versioning is to make data in machine learning systems as traceable, comparable, and reproducible as code. This chapter started from the essential differences between data and code and decomposed the three levels of challenges in data versioning.
 

@@ -486,7 +486,7 @@ The effectiveness of Dropout highly depends on correct usage. Using it in the wr
     2. **Extended training time**: Dropout reduces the effective network complexity, so training convergence may require more epochs.
     3. **Learning rate adjustment**: Dropout adds noise, so a slightly higher learning rate may be needed.
 
-## Chapter Summary
+## Summary
 
 Dropout is one of the simplest yet most effective regularization techniques in deep learning. Its idea is straightforward: randomly shut down a portion of neurons during training, forcing the network to learn to survive independently. Behind this seemingly crude operation are three synergistic mechanisms: breaking neuron co-adaptation (each neuron no longer relies on specific companions), reducing effective network complexity (only part of the neurons are activated in each forward pass), and injecting noise for robustness (perturbing internal representations during training). Ensemble learning theory further reveals that Dropout is equivalent to training a vast number of sub-networks with shared weights, implicitly averaging predictions across all sub-networks during inference, achieving an ensemble effect of multiple models at the cost of a single model.
 

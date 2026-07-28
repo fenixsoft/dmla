@@ -287,7 +287,7 @@ After selecting a tokenization algorithm, the next step is to determine the voca
 
 Vocabulary design must also consider the language itself. For mixed-language scenarios, multilingual models need to balance coverage across different languages. English, for example, is an alphabetic script where words are naturally separated by spaces, and subwords are typically roots and affixes, allowing a moderate vocabulary size to provide adequate coverage. Chinese, on the other hand, is a logographic script where words are not separated by spaces and individual characters themselves carry meaning. There is a well-known internet meme about the phrase "Nanjing Mayor Jiang Bridge" (`南京市长江大桥`), which can be segmented as "Nanjing City / Yangtze River / Bridge" or "Nanjing Mayor / Jiang / Bridge." This ambiguity means that Chinese LLMs often require larger vocabularies.
 
-## Chapter Summary
+## Summary
 
 The core task of a language model is to estimate the probability distribution of text sequences. From N-Gram models to neural networks, the modeling paradigm has undergone a shift from counting statistics to continuous representations, but the thread of "predicting the next word based on preceding context" has remained constant throughout. N-Gram models are limited by the Markov assumption, unable to handle unseen word combinations or capture long-range dependencies. Neural language models, through distributed word vector representations, naturally solve the sparsity problem and have gradually developed into two main branches: autoregressive models represented by the GPT series and masked language models represented by BERT.
 

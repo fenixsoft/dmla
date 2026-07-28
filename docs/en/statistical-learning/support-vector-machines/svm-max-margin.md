@@ -454,7 +454,7 @@ plt.show()
 
 The running results demonstrate several key characteristics of SVM. First, the test accuracy approaches or exceeds 90%, indicating good generalization ability without overfitting. Second, the number of support vectors is relatively low compared to the training samples, confirming SVM's sparsity: a few key samples determine the decision boundary. Finally, the model operates efficiently in the 64-dimensional feature space, showcasing the advantage of the dual problem formulation.
 
-## Chapter Summary
+## Summary
 
 SVM presents a new paradigm that differs from other machine learning methods: rather than starting from heuristic rules, it begins from theoretical derivation, transforming the classification problem into an optimization problem with mathematical guarantees. This "theory-driven" design philosophy runs throughout SVM's entire architecture: the idea of margin maximization originates from statistical learning theory's analysis of generalization error, the convex optimization solution methods come from accumulated research in operations research, and the introduction of the dual problem draws from the classical technique of Lagrange multipliers.
 

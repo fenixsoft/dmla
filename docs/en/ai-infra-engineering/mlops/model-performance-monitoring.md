@@ -401,7 +401,7 @@ graph TD
 
 The figure above shows a reference architecture for a model performance monitoring system: inference logs flow from the server into a buffer layer, and a real-time metric aggregator computes proxy and actual metrics from logs and the feature store. Hot storage supports the alert engine and dashboard service, while cold storage is used for historical analysis. The label backfill pipeline runs independently, correlating delayed labels back to historical inference records.
 
-## Chapter Summary
+## Summary
 
 Once a model is deployed, it must be paired with engineered monitoring measures to detect whether it is operating normally. The alerting strategy, root cause analysis, and response workflow after detecting model degradation form a closed loop from problem discovery to problem resolution. The architectural design of the monitoring system, in turn, grounds all the aforementioned methodologies into a working engineering system.
 

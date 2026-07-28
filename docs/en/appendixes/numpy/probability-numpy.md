@@ -525,7 +525,7 @@ plt.show()
 plt.close()
 ```
 
-## Chapter Summary
+## Summary
 
 This chapter provided hands-on programming practice for probability and statistical computation, starting from the most basic distribution sampling (uniform and normal distributions) and progressively delving into random seed control, random selection and shuffling operations, visualization of multiple probability distributions, descriptive statistics computation, covariance and correlation coefficient analysis, Monte Carlo simulation methods, and Bayesian posterior sampling techniques. These methods constitute the computational foundation of data analysis and machine learning. Uniform and normal distribution sampling are the starting points of random simulation; random seeds ensure experiment reproducibility; descriptive statistics provide a first-glance understanding of data characteristics; covariance and correlation coefficients quantify the strength of relationships between variables; Monte Carlo methods offer a general framework for approximate solutions to complex problems; and Bayesian posterior sampling achieves a complete description of uncertainty in parameter estimation.
 

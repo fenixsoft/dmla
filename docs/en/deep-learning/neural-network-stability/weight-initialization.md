@@ -476,7 +476,7 @@ However, there are some special cases where non-zero bias initialization is need
 
 - **LSTM forget gate bias**: LSTM (Long Short-Term Memory, covered in a later chapter) has a forget gate that controls how much of the previous time step's information is retained. When the forget gate output is close to 0, most historical information is forgotten; when the output is close to 1, most information is retained. If the forget gate bias is initialized to zero, the initial forget gate output may be close to 0.5 (the midpoint of Sigmoid), causing partial forgetting of historical information. Initializing the forget gate bias to 1 or larger makes the initial forget gate output close to 1, retaining more historical information and helping the network learn long-term dependencies in the early stages of training.
 
-## Chapter Summary
+## Summary
 
 This chapter started from "why initialization is crucial," systematically analyzed the impact of weight initialization on deep network training, and introduced two classic methods: Xavier initialization and He initialization. The challenge of initialization lies in finding a balance point. Zero initialization cannot break symmetry, forcing all neurons to learn the same function and degrading the network to a single neuron. Random initialization breaks symmetry, but improper variance selection leads to two extremes: variance too small causes signal decay layer by layer and slow training; variance too large causes activation saturation and gradient vanishing. Good initialization must find a balance between "breaking symmetry" and "maintaining signal strength."
 

@@ -231,7 +231,7 @@ plt.tight_layout()
 plt.show()
 ```
 
-## Chapter Summary
+## Summary
 
 This article introduced the basic principles of Recurrent Neural Networks (RNNs). RNNs use recurrent connections to transmit information along the temporal dimension, achieving sequence modeling capability. The hidden state $h_t$ is a compressed representation of historical information that is continuously updated over time. The BPTT algorithm unrolls backpropagation along the temporal dimension, enabling RNN training, but the vanishing gradient problem makes it difficult for information from early time steps to propagate to later time steps, limiting the applicability of standard RNNs. This spurred subsequent architectural improvements such as LSTM and GRU, which will be the subject of the next article.
 

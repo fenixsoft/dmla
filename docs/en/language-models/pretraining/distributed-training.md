@@ -398,7 +398,7 @@ gantt
 ```
 *Figure: DualPipe*
 
-## Chapter Summary
+## Summary
 
 Scaling laws promise that as long as we invest more compute power, model performance will continue to improve. Distributed training infrastructure is the engineering foundation for delivering on that promise. As models have grown from billions to hundreds of billions and trillions of parameters, the memory and compute power of a single GPU have long since been insufficient. Data parallelism, pipeline parallelism, tensor parallelism, and ZeRO optimization dismantle the memory bottleneck from different dimensions. 3D parallelism combines them into a scalable training solution, while mixed precision training and gradient accumulation strike a practical balance between precision and efficiency. Communication optimization further ensures that when thousands of GPUs work together, communication overhead does not eat away the benefits of increased compute power. It is precisely this infrastructure that transforms the scaling laws from a power-law curve on paper into a practical engineering reality.
 

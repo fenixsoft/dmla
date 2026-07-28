@@ -431,7 +431,7 @@ The decay and warmup strategies described above are fixed schedules (decaying or
 
 These strategies require more engineering implementation but can adapt to the training process more intelligently. The next chapter introduces adaptive optimizers (AdaGrad, RMSprop, Adam, etc.), which go a step further by automating learning rate adjustment. These methods automatically adjust the learning rate for each parameter based on its historical gradient information, eliminating the need to manually set decay strategies.
 
-## Chapter Summary
+## Summary
 
 Gradient descent and its variants are fundamental tools for deep learning training, used ubiquitously in practical applications. Examples include:
 

@@ -458,7 +458,7 @@ else:
     print(f"\nLasso(lambda=2) retained {lasso_nonzero} features, {lasso_nonzero-5} noise features remain. Consider increasing lambda.")
 ```
 
-## Chapter Summary
+## Summary
 
 Overfitting is a major challenge in machine learning practice. A model that performs perfectly on the training set but fails in real-world scenarios is essentially learning noise rather than patterns. Regularization technology constrains the parameter space to control model complexity, much like installing a braking system in a race car, preventing the model from spiraling out of control in pursuit of perfect training performance. L1 regularization leverages the geometric properties of norms to produce sparse solutions, driving the coefficients of irrelevant features to exactly zero and achieving automatic feature selection. L2 regularization stably handles collinearity problems, ensuring the model always has a solution. The choice of which regularization to use depends on the specific needs.
 

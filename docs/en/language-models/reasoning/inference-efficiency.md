@@ -177,7 +177,7 @@ Pruning a model is not easy. LLMs have enormous numbers of parameters (tens of b
 
 It is important to note that the speedup from pruning is not as straightforward as the parameter reduction ratio might suggest. 50% sparsity does not mean 50% speedup, because the efficiency of sparse matrix multiplication on a GPU depends on whether the sparsity pattern is regular. Unstructured sparsity (zeroing out random positions) is difficult to achieve actual speedup on GPUs because zero elements are scattered throughout the matrix, and the GPU still needs to traverse the entire matrix. Structured sparsity (zeroing out entire rows or blocks) more readily achieves actual speedup but typically incurs greater accuracy loss. This gap is one of the main reasons pruning is less widely adopted in practice than knowledge distillation.
 
-## Chapter Summary
+## Summary
 
 The essence of inference efficiency optimization is finding a practically achievable balance between "answering well" and "answering fast." The difficulty of this balance stems from the structural contradiction inherent in Transformer autoregressive inference: Prefill is a compute-intensive burst task, while Decode is a memory-intensive sustained task. Running them on the same GPU easily leads to resource contention. This is not a problem that can be solved by tuning a single parameter -- it is a resource mismatch at the architectural level.
 

@@ -382,7 +382,7 @@ if torch.cuda.is_available():
 print("=" * 60)
 ```
 
-## Chapter Summary
+## Summary
 
 This chapter detailed the computational mechanism of forward propagation in neural networks, from the three-step process of a single neuron (input → weighted sum → activation transformation) to layer-by-layer transmission in multi-layer networks, from vector form to matrix form for batch processing, from mathematical formulas to the graphical representation of computational graphs. Forward propagation is the fundamental computational mechanism of neural networks, answering the question of how signals flow within the network — this is the inference process of neural networks. However, the problem of how network parameters (weights and biases) are determined remains unsolved, and this involves the training process of neural networks. The next chapter will introduce the backpropagation algorithm, revealing how neural networks learn to automatically adjust parameters, converting prediction errors into directions for parameter updates.
 

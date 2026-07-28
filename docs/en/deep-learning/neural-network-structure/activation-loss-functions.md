@@ -740,7 +740,7 @@ The theoretical analysis above yielded the characteristics of various loss funct
     plt.close()
     ```
 
-## Chapter Summary
+## Summary
 
 This chapter provided a detailed introduction to two core components of neural networks: activation functions and loss functions.
 

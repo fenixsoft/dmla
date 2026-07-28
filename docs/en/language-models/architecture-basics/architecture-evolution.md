@@ -451,7 +451,7 @@ A deeper reason lies in the nature of language modeling. Feature combinations in
 
 By around 2023, a new generation of large language models represented by LLaMA began using SwiGLU (Swish-Gated Linear Unit) to replace GELU. SwiGLU does not simply replace GELU with Swish; rather, it introduces a gating mechanism into the FFN. The input is projected into two vectors: one passes through a Swish activation as the gating signal, while the other remains linear as the value signal. The two are multiplied element-wise and then projected back to the original dimension. This gated design allows the network to selectively suppress irrelevant features. Experiments show that with the same parameter count, SwiGLU reduces perplexity by about 0.5-1%. To be precise, SwiGLU's success is not entirely due to Swish itself (GeGLU, which uses GELU gating, achieves similar results), but rather to the additional expressive flexibility provided by the gating mechanism.
 
-## Chapter Summary
+## Summary
 
 After nearly a decade of evolution, modern LLM architectures have formed a relatively stable set of standard components. These improvements to the Transformer are not isolated — the components work together to form the efficient, stable, and scalable architectural foundation of modern LLMs. The following table summarizes the component choices of modern LLMs compared to the original Transformer and the reasons for each improvement.
 

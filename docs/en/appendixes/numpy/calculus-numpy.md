@@ -289,7 +289,7 @@ print(f"  df/dx error: {abs(x.grad.item() - analytical_grad_x):.2e}")
 print(f"  df/dy error: {abs(y.grad.item() - analytical_grad_y):.2e}")
 ```
 
-## Chapter Summary
+## Summary
 
 This chapter translated calculus theories into executable code, building a bridge from mathematical concepts to program implementations.
 

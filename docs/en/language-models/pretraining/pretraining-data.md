@@ -281,7 +281,7 @@ Synthetic data also suffers from **bias amplification**: model-generated content
 
 Therefore, the prevailing view is that synthetic data can serve as a supplement to human data, but cannot completely replace it. The most pragmatic strategy is human-machine collaboration: let the model generate a draft, then have humans review and correct it. Alternatively, use synthetic data for data augmentation — expanding diversity on top of human data — rather than starting from scratch with purely synthetic training.
 
-## Chapter Summary
+## Summary
 
 Pretraining data engineering is a精密 pipeline that transforms "raw materials" into "training fuel": collecting text from multiple sources — CommonCrawl, books, code, academic papers, and Wikipedia — then passing it through quality filtering and decontamination, and finally mixing it according to a strategic proportioning plan. Through this chapter, we have learned where data comes from, how it is cleaned, and how it is mixed. But when faced with trillions of tokens of data, how much computational resource is actually needed to train a powerful model? Is there a predictable relationship between model size, data size, and computational cost? The next chapter will explore scaling laws and the mathematical answers to these questions.
 
