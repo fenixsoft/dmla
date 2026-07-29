@@ -51,8 +51,88 @@ const informations = computed(() => {
   return []
 })
 
+// XML 转义：防止 SVG 中的特殊字符导致渲染异常
+function escapeXml(s) {
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;')
+}
+
+// Canvas 测量文本宽度（懒初始化，SSR 环境回退到估算值）
+let _measureCtx = null
+function measureTextWidth(text) {
+  if (typeof document === 'undefined') {
+    // SSR 环境回退：每字符约 6.5px
+    return String(text).length * 6.5
+  }
+  if (!_measureCtx) {
+    const canvas = document.createElement('canvas')
+    _measureCtx = canvas.getContext('2d')
+    _measureCtx.font = '11px DejaVu Sans, Verdana, Geneva, sans-serif'
+  }
+  return _measureCtx.measureText(String(text)).width
+}
+
+// 生成 shields.io 风格的 SVG badge 数据 URI
+// 图片渲染不受宿主页面 CSS 影响，确保所有设备上字体大小和间距完全一致
+function makeBadgeSvg(label, value, color) {
+  const escapedLabel = escapeXml(String(label))
+  const escapedValue = escapeXml(String(value))
+  const fontFamily = 'DejaVu Sans,Verdana,Geneva,sans-serif'
+  const fontSize = 11
+  const paddingX = 6
+  const height = 20
+
+  const labelTextW = measureTextWidth(label)
+  const valueTextW = measureTextWidth(value)
+  const labelW = Math.ceil(labelTextW + paddingX * 2)
+  const valueW = Math.ceil(valueTextW + paddingX * 2)
+  const totalW = labelW + valueW
+
+  const labelCx = labelW / 2
+  const valueCx = labelW + valueW / 2
+
+  // 生成与 shields.io 结构一致的 SVG：左右分区、渐变阴影、文字投影
+  const svg = [
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${totalW}" height="${height}">`,
+    `<linearGradient id="s" x2="0" y2="100%"><stop offset="0" stop-color="#bbb" stop-opacity=".1"/><stop offset="1" stop-opacity=".1"/></linearGradient>`,
+    `<clipPath id="r"><rect width="${totalW}" height="${height}" rx="3" fill="#fff"/></clipPath>`,
+    `<g clip-path="url(#r)">`,
+    `<rect width="${labelW}" height="${height}" fill="#555"/>`,
+    `<rect x="${labelW}" width="${valueW}" height="${height}" fill="#${color}"/>`,
+    `<rect width="${totalW}" height="${height}" fill="url(#s)"/>`,
+    `</g>`,
+    `<g fill="#fff" text-anchor="middle" font-family="${fontFamily}" font-size="${fontSize}">`,
+    `<text x="${labelCx}" y="15" fill="#010101" opacity=".3">${escapedLabel}</text>`,
+    `<text x="${labelCx}" y="14">${escapedLabel}</text>`,
+    `<text x="${valueCx}" y="15" fill="#010101" opacity=".3">${escapedValue}</text>`,
+    `<text x="${valueCx}" y="14">${escapedValue}</text>`,
+    `</g>`,
+    `</svg>`
+  ].join('')
+
+  return 'data:image/svg+xml,' + encodeURIComponent(svg)
+}
+
 // API 驱动徽章的值缓存
 const apiValues = ref({})
+
+// 计算每个 information badge 对应的 SVG 图片 URI
+// static/github-api/npm-api 类型生成 SVG，url/github-badge 类型保持外部图片不用处理
+const informationBadgeSvgs = computed(() => {
+  return informations.value.map((info, idx) => {
+    if (info.type === 'static') {
+      return makeBadgeSvg(info.label, info.value, info.color || '555')
+    }
+    if (info.type === 'github-api' || info.type === 'npm-api') {
+      return makeBadgeSvg(info.label, apiValues.value[idx] || '--', info.color || '555')
+    }
+    return null
+  })
+})
 
 onMounted(async () => {
   for (const [idx, info] of informations.value.entries()) {
@@ -141,18 +221,12 @@ const githubInfos = computed(() => {
     <!-- Informations 徽章（多类型：static / github-badge / github-api / npm-api / url） -->
     <div v-if="informations.length" class="home-hero-informations">
       <template v-for="(info, idx) in informations" :key="idx">
-        <!-- 静态徽章 -->
-        <span v-if="info.type === 'static'" class="info-badge">
-          <span class="badge-label">{{ info.label }}</span>
-          <span class="badge-value" :style="{ backgroundColor: '#' + (info.color || '555') }">{{ info.value }}</span>
-        </span>
+        <!-- 静态徽章：渲染为 SVG 图片，确保跨设备字体大小一致 -->
+        <img v-if="info.type === 'static'" :src="informationBadgeSvgs[idx]" :alt="info.label + ': ' + info.value" />
         <!-- GitHub 原生图片徽章（CI 等） -->
         <img v-else-if="info.type === 'github-badge'" :src="info.src" :alt="info.alt" />
-        <!-- API 驱动徽章（GitHub API / npm API） -->
-        <span v-else-if="info.type === 'github-api' || info.type === 'npm-api'" class="info-badge">
-          <span class="badge-label">{{ info.label }}</span>
-          <span class="badge-value" :style="{ backgroundColor: '#' + (info.color || '555') }">{{ apiValues[idx] || '--' }}</span>
-        </span>
+        <!-- API 驱动徽章（GitHub API / npm API）：渲染为 SVG 图片 -->
+        <img v-else-if="info.type === 'github-api' || info.type === 'npm-api'" :src="informationBadgeSvgs[idx]" :alt="info.label" />
         <!-- 向后兼容：纯 URL 图片徽章 -->
         <img v-else :src="info.src" :alt="info.alt" />
       </template>
@@ -249,34 +323,6 @@ const githubInfos = computed(() => {
   vertical-align: middle;
   margin: 0px;
   cursor: default;
-}
-
-/* 本地徽章（模拟 shields.io 风格） */
-.info-badge {
-  display: inline-flex;
-  align-items: center;
-  height: 20px;
-  font-size: 11px;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
-  line-height: 20px;
-  vertical-align: middle;
-  cursor: default;
-  user-select: none;
-}
-
-.badge-label {
-  padding: 0 6px;
-  background: #32383f;
-  color: #fff;
-  border-radius: 3px 0 0 3px;
-  white-space: nowrap;
-}
-
-.badge-value {
-  padding: 0 6px;
-  color: #fff;
-  border-radius: 0 3px 3px 0;
-  white-space: nowrap;
 }
 
 .home-hero-actions {

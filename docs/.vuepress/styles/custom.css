@@ -309,10 +309,26 @@ div[class*=language-].line-numbers-mode .line-numbers {
   padding-top: calc(var(--code-padding-y) + 1px);
 }
 
-@media (max-width: 419px) {                                                                                                                           
-  .search-pro-button {                                                                                                                                
+@media (max-width: 419px) {
+  .search-pro-button {
     border: 0px solid var(--vp-c-border);
     background: transparent;
-    padding-right: 1px;                                                                                                                                
-  }                                                                                                                                                   
+    padding-right: 1px;
+  }
+}
+
+/* 移动端侧边栏：将导航栏链接（首页/讨论区）移至目录下方 */
+@media (max-width: 719px) {
+  .vp-sidebar {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .vp-sidebar .vp-navbar-items {
+    order: 2;
+  }
+
+  .vp-sidebar .vp-sidebar-items {
+    order: 1;
+  }
 }

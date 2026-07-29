@@ -25,13 +25,29 @@ const shouldShowComments = computed(() => {
   return !excludedPaths.includes(route.path)
 })
 
+// 计算 giscus 使用的讨论 term：英文页面去掉 /en/ 前缀，统一使用中文路径
+// giscus 内部 term 格式为去掉前导 / 和 .html 后缀的路径，如 "introduction/about-me"
+// 这样中英文页面的评论互通，共享同一个 GitHub Discussion
+const giscusTerm = computed(() => {
+  let path = route.path
+  // 英文页面去掉 /en/ 前缀
+  if (path.startsWith('/en/')) {
+    path = path.replace('/en/', '/')
+  }
+  // 去掉前导 / 和 .html 后缀，匹配 giscus 内部的 term 格式
+  if (path.startsWith('/')) path = path.slice(1)
+  if (path.endsWith('.html')) path = path.slice(0, -5)
+  return path
+})
+
 // Giscus 配置
+// 使用 specific mapping + data-term，统一以中文路径作为讨论标识，实现中英文评论互通
 const giscusConfig = {
   repo: 'fenixsoft/dmla',
   repoId: 'R_kgDORvEFhQ',
   category: 'Comments',
   categoryId: 'DIC_kwDORvEFhc4C5_39',
-  mapping: 'pathname',
+  get mapping() { return 'specific' },
   strict: '0',
   reactionsEnabled: '0', // 禁用表情反应
   emitMetadata: '0',
@@ -58,6 +74,7 @@ const loadGiscus = () => {
   giscusScript.setAttribute('data-category', giscusConfig.category)
   giscusScript.setAttribute('data-category-id', giscusConfig.categoryId)
   giscusScript.setAttribute('data-mapping', giscusConfig.mapping)
+  giscusScript.setAttribute('data-term', giscusTerm.value)
   giscusScript.setAttribute('data-strict', giscusConfig.strict)
   giscusScript.setAttribute('data-reactions-enabled', giscusConfig.reactionsEnabled)
   giscusScript.setAttribute('data-emit-metadata', giscusConfig.emitMetadata)
@@ -130,14 +147,14 @@ onMounted(() => {
 })
 
 // 路由变化时更新评论
-watch(() => route.path, (newPath) => {
+watch(() => route.path, () => {
   // 如果还没加载，等待滚动触发
   if (!isLoaded) return
 
   const iframe = giscusContainer.value?.querySelector('iframe.giscus-frame')
   if (iframe) {
     iframe.contentWindow.postMessage(
-      { giscus: { setConfig: { term: newPath } } },
+      { giscus: { setConfig: { term: giscusTerm.value } } },
       'https://giscus.app'
     )
   }
