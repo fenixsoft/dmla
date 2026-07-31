@@ -2,13 +2,14 @@
   <span class="github-button-wrapper">
     <a
       ref="buttonLink"
+      class="no-external-link-icon"
       :href="href"
       :aria-label="ariaLabel"
       :data-icon="dataIcon"
       :data-show-count="dataShowCount"
       :data-text="dataText"
     >
-      <slot>Star</slot>
+      <slot></slot>
     </a>
   </span>
 </template>

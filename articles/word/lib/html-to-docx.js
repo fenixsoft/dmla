@@ -98,7 +98,7 @@ ${htmlContent}
 function postProcessDocx(docxPath) {
   const fixScript = docxPath.replace('.docx', '_fix.py');
   writeFileSync(fixScript, `
-import zipfile, os
+import zipfile, os, re
 from lxml import etree
 
 path = '${docxPath}'
@@ -187,11 +187,15 @@ if 'word/document.xml' in files:
                 if not has_font:
                     rPr.remove(rFonts)
 
-        # Center figure captions and images
+        # Center figure captions, images, and standalone formulas
         texts = [t.text or '' for t in p.iter(f'{{{ns}}}t')]
         full_text = ''.join(texts).strip()
         has_img = p.find(f'.//{{{wp}}}inline') is not None or p.find(f'.//{{{wp}}}anchor') is not None
-        if full_text.startswith('\\u56fe\\uff1a') or full_text.startswith('\\u56fe ') or has_img:
+        mns = 'http://schemas.openxmlformats.org/officeDocument/2006/math'
+        has_math = p.find(f'.//{{{mns}}}oMath') is not None
+        # Pure formula paragraph: math only (plus optional equation number like ①②③)
+        is_pure_formula = has_math and re.match(r'^[①-⑳\s]*$', full_text)
+        if full_text.startswith('\\u56fe\\uff1a') or full_text.startswith('\\u56fe ') or has_img or is_pure_formula:
             jc = pPr.find(f'{{{ns}}}jc')
             if jc is None:
                 jc = etree.SubElement(pPr, f'{{{ns}}}jc')
@@ -307,6 +311,54 @@ if 'word/document.xml' in files:
             rFonts.set(f'{{{ns}}}ascii', 'Courier New')
             rFonts.set(f'{{{ns}}}hAnsi', 'Courier New')
             rFonts.set(f'{{{ns}}}eastAsia', '楷体')
+
+    # === Merge equation numbers into formula paragraphs ===
+    mns = 'http://schemas.openxmlformats.org/officeDocument/2006/math'
+    paras = list(tree.iter(f'{{{ns}}}p'))
+    to_remove = []
+    for i, p in enumerate(paras):
+        if i == 0: continue
+        texts = [t.text or '' for t in p.iter(f'{{{ns}}}t')]
+        full = ''.join(texts).strip()
+        if not re.match(r'^[①-⑳]$', full): continue
+        if p.find(f'.//{{{mns}}}oMath') is not None: continue
+        # This is a standalone equation number paragraph
+        prev = paras[i - 1]
+        if prev.find(f'.//{{{mns}}}oMath') is None: continue
+        # Replace centering with tab-based alignment: center formula, right number
+        prev_pPr = prev.find(f'{{{ns}}}pPr')
+        existing_jc = prev_pPr.find(f'{{{ns}}}jc')
+        if existing_jc is not None:
+            prev_pPr.remove(existing_jc)
+        # Don't set any jc — use tab stops instead
+
+        tabs = etree.SubElement(prev_pPr, f'{{{ns}}}tabs')
+        ctab = etree.SubElement(tabs, f'{{{ns}}}tab')
+        ctab.set(f'{{{ns}}}val', 'center')
+        ctab.set(f'{{{ns}}}pos', '4536')  # half of ~9072 content width
+        rtab = etree.SubElement(tabs, f'{{{ns}}}tab')
+        rtab.set(f'{{{ns}}}val', 'right')
+        rtab.set(f'{{{ns}}}pos', '9072')
+
+        # Insert tab before the first run (pushes formula to center)
+        first_real = prev[0]
+        for child in prev:
+            if child.tag == f'{{{ns}}}r' or child.tag == f'{{{ns}}}oMath':
+                first_real = child
+                break
+        tab_run = etree.Element(f'{{{ns}}}r')
+        etree.SubElement(tab_run, f'{{{ns}}}tab')
+        prev.insert(list(prev).index(first_real), tab_run)
+
+        # Append equation number after a tab
+        eq_run = etree.SubElement(prev, f'{{{ns}}}r')
+        etree.SubElement(eq_run, f'{{{ns}}}tab')
+        eq_t = etree.SubElement(eq_run, f'{{{ns}}}t')
+        eq_t.set('{http://www.w3.org/XML/1998/namespace}space', 'preserve')
+        eq_t.text = full
+        to_remove.append(p)
+    for p in to_remove:
+        p.getparent().remove(p)
 
     files['word/document.xml'] = etree.tostring(tree, xml_declaration=True, encoding='UTF-8', standalone=True)
 

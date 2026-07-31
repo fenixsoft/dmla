@@ -5,7 +5,7 @@ The concept of **Neural Networks** originated from humanity's inquiry into the n
 The development of artificial neural networks is an epic of exploration spanning eighty years. From the establishment of mathematical models in the 1940s, to hardware implementation in the 1950s, and algorithmic breakthroughs in the 1960s, each stage has advanced the dream of machine intelligence. This chapter starts from the structure of biological neurons, introduces the McCulloch-Pitts model, Hebbian learning rule, and the birth of the early perceptron, tracing the origin and evolution of neural network concepts.
 
 ::: tip The Boundary of Intelligence
-Readers interested in the history of artificial intelligence development may refer to the author's popular science book on AI, *[The Boundary of Intelligence](https://book.douban.com/subject/30379536/)* (in Chinese).
+Readers interested in the history of artificial intelligence development may refer to the author's popular science book on AI, [The Boundary of Intelligence](https://book.douban.com/subject/30379536/) (in Chinese).
 :::
 
 ## Inspiration from Biological Neuron Structure

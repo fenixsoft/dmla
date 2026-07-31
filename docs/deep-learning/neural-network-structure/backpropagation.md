@@ -4,7 +4,7 @@
 
 1986 年，杰弗里·辛顿（Geoffrey Hinton）在发表于《Nature》期刊上的论文《[Learning representations by back-propagating errors](https://www.nature.com/articles/323533a0)》中提出了反向传播算法，并应用于多层神经网络的训练。这个算法出现以后，成为神经网络复兴的关键里程碑，正是这一突破，才使得多层神经网络的训练从理论上变得可行，为后来的深度学习革命奠定了基础。
 
-反向传播解决了一个当时被称为"信用分配问题"（Credit Assignment Problem）的难题，当网络输出错误时，如何确定数百甚至数千个参数中哪些应该调整，以及调整多少。反向传播通过计算损失函数对各层参数的梯度，将输出端的误差信号精确地反向传递到每一层、每一个参数，告诉网络谁的贡献大，谁该调整多少。
+反向传播解决了一个当时被称为信用分配问题（Credit Assignment Problem）的难题，当网络输出错误时，如何确定数百甚至数千个参数中哪些应该调整，以及调整多少。反向传播通过计算损失函数对各层参数的梯度，将输出端的误差信号精确地反向传递到每一层、每一个参数，告诉网络谁的贡献大，谁该调整多少。
 
 本章将介绍反向传播的数学基础（链式法则）、计算图视角下的反向传播过程、梯度计算的具体推导，以及计算复杂度分析。本章涉及较多数学推导，是全书难度较高的一章。但理解反向传播是掌握神经网络训练原理的关键，是掌握深度学习的必经之路。
 
@@ -89,11 +89,11 @@ graph RL
    - 损失对偏置 $b$ 的梯度：$\frac{\partial l}{\partial b} = \frac{\partial l}{\partial z} \cdot \frac{\partial z}{\partial b} = \frac{\partial l}{\partial z} \cdot 1 = \frac{\partial l}{\partial z}$
    - 损失对输入 $x$ 的梯度：$\frac{\partial l}{\partial x} = \frac{\partial l}{\partial z} \cdot \frac{\partial z}{\partial x} = \frac{\partial l}{\partial z} \cdot w$，这个梯度要传递给上游，继续反向传播。
 
-整个计算过程就像是在计算图上进行反向溯源，从最终的损失值出发，沿着每条边逆向追踪，根据链式法则将梯度分配到各个参数节点。每个节点只需知道如何计算自己的局部梯度（输出对输入的导数），然后将上游传来的梯度与局部梯度相乘，传递给下游节点。一旦神经元知道了参数（权重 $w$ 和偏置 $b$）的梯度，就有了对参数调整的方向，可以通过梯度下降法更新参数： $w^{new} \leftarrow w - \eta \frac{\partial l}{\partial w}$，$b^{new} \leftarrow b - \eta \frac{\partial l}{\partial b}$。
+整个计算过程就像是在计算图上进行反向溯源，从最终的损失值出发，沿着每条边逆向追踪，根据链式法则将梯度分配到各个参数节点。每个节点只需知道如何计算自己的局部梯度（输出对输入的导数），然后将上游传来的梯度与局部梯度相乘，传递给下游节点。一旦神经元知道了参数（权重 $w$ 和偏置 $b$）的梯度，就有了对参数调整的方向，可以通过梯度下降法更新参数 $w^{new} \leftarrow w - \eta \frac{\partial l}{\partial w}$，$b^{new} \leftarrow b - \eta \frac{\partial l}{\partial b}$。
 
 ## 梯度计算
 
-经过对单个神经元的计算图解析，我们已经对梯度反向传播的过程有初步的了解了。接下来就要进一步深入细节，通过一个选定损失函数和激活函数的例子，推导整个多层神经网络的梯度计算过程。设网络有 $K$ 层，损失函数为[交叉熵损失](../../statistical-learning/linear-models/logistic-regression.md#交叉熵损失)，输出层使用 [Softmax](../../statistical-learning/linear-models/logistic-regression.md#多项逻辑回归) 激活函数，隐藏层使用 [Sigmoid](../../statistical-learning/linear-models/logistic-regression.md#sigmoid-函数) 激活函数，这是分类任务中最常见的配置。为方便后续推导，我们先约定几个符号：
+经过对单个神经元的计算图解析，我们已经对梯度反向传播的过程有初步的了解了。接下来就要进一步深入细节，通过一个选定损失函数和激活函数的例子，推导整个多层神经网络的梯度计算过程。设网络有 $K$ 层，损失函数为[交叉熵损失](../../statistical-learning/linear-models/logistic-regression.md#交叉熵损失)，输出层使用 [Softmax](../../statistical-learning/linear-models/logistic-regression.md#多项逻辑回归) 激活函数，隐藏层使用 [Sigmoid](../../statistical-learning/linear-models/logistic-regression.md#sigmoid-函数) 激活函数，这是分类任务中常见的配置。为方便后续推导，我们先约定几个符号：
 
 - $\mathbf{z}^k = \mathbf{W}^k \mathbf{a}^{k-1} + \mathbf{b}^k$：第 $k$ 层预激活值，即线性变换的结果。
 - $\mathbf{a}^k = \sigma^k(\mathbf{z}^k)$：第 $k$ 层激活值，即经过激活函数后的输出。

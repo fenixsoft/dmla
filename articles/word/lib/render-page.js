@@ -62,29 +62,54 @@ export async function renderPage(articlePath, browser) {
       await page.addScriptTag({ path: KATEX_PATH });
     }
     const formulaStats = await page.evaluate(() => {
-      if (typeof katex === 'undefined') return { error: 'KaTeX not loaded' };
       let displayDone = 0, inlineDone = 0, errors = 0;
+
+      // 块级公式：不使用 display=block（会导致编号换行），改为段落居中
       document.querySelectorAll('.katex-display').forEach(el => {
-        const ann = el.querySelector('annotation[encoding="application/x-tex"]');
-        if (!ann || !ann.textContent.trim()) return;
         try {
-          const mml = katex.renderToString(ann.textContent.trim(), { output: 'mathml', throwOnError: false, displayMode: true });
-          const tmp = document.createElement('div'); tmp.innerHTML = mml;
-          const math = tmp.querySelector('math');
-          if (math) { const p = document.createElement('p'); p.appendChild(math); el.replaceWith(p); displayDone++; }
+          const mathml = el.querySelector('.katex-mathml math');
+          if (!mathml) return;
+          const math = mathml.cloneNode(true);
+          // 不用 display=block — 改为段落级别的居中
+          // 不带 display 属性的 <math> 会被 Pandoc 转为 inline m:oMath
+
+          const eqContainer = el.closest('.equation-numbered');
+          const eqNumEl = eqContainer ? eqContainer.querySelector('.equation-number') : null;
+          const eqNum = eqNumEl ? eqNumEl.textContent.trim() : '';
+
+          if (eqNum) {
+            // 有编号的公式：math + 编号放在同一居中段落
+            const p = document.createElement('p');
+            p.style.textAlign = 'center';
+            p.appendChild(math);
+            const numSpan = document.createElement('span');
+            numSpan.textContent = '  ' + eqNum;
+            p.appendChild(numSpan);
+            eqContainer.replaceWith(p);
+          } else {
+            // 无编号公式：math 放在居中段落
+            const p = document.createElement('p');
+            p.style.textAlign = 'center';
+            p.appendChild(math);
+            el.replaceWith(p);
+          }
+          displayDone++;
         } catch (e) { errors++; }
       });
+
+      // 行内公式：保留原有的 MathML
       document.querySelectorAll('.katex').forEach(el => {
         if (el.closest('.katex-display')) return;
-        const ann = el.querySelector('annotation[encoding="application/x-tex"]');
-        if (!ann || !ann.textContent.trim()) return;
         try {
-          const mml = katex.renderToString(ann.textContent.trim(), { output: 'mathml', throwOnError: false, displayMode: false });
-          const tmp = document.createElement('div'); tmp.innerHTML = mml;
-          const math = tmp.querySelector('math');
-          if (math) { el.replaceWith(math); inlineDone++; }
+          const mathml = el.querySelector('.katex-mathml math');
+          if (mathml) {
+            const math = mathml.cloneNode(true);
+            el.replaceWith(math);
+            inlineDone++;
+          }
         } catch (e) { errors++; }
       });
+
       return { displayDone, inlineDone, errors };
     });
     console.log(`  公式: display=${formulaStats.displayDone} inline=${formulaStats.inlineDone} err=${formulaStats.errors}`);
