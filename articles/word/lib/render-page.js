@@ -250,7 +250,10 @@ function renderMermaidBlocks(articlePath, slug) {
   blocks.forEach((code, i) => {
     const mmdPath = resolve(TMP_DIR, `${slug}-mermaid-${i}.mmd`);
     const pngPath = resolve(TMP_DIR, `${slug}-mermaid-${i}.png`);
-    writeFileSync(mmdPath, code, 'utf-8');
+    // 去除白色文字样式（白底 PNG 上白色文字不可见）
+    // 匹配 ",color:#fff" 或 "color:#fff," 完整子表达式，避免残留逗号
+    const fixedCode = code.replace(/,?\s*color\s*:\s*(#fff+|white)\s*;?/gi, '').replace(/color\s*:\s*(#fff+|white)\s*,?;?/gi, '');
+    writeFileSync(mmdPath, fixedCode, 'utf-8');
     try {
       execFileSync('npx', [
         'mmdc', '-i', mmdPath, '-o', pngPath,
@@ -284,7 +287,7 @@ function extractMermaidBlocks(mdContent) {
   let inBlock = false;
   let blockLines = [];
   for (const line of lines) {
-    if (line.startsWith('```mermaid')) {
+    if (line.trimStart().startsWith('```mermaid')) {
       inBlock = true;
       blockLines = [];
     } else if (inBlock && line.trim() === '```') {

@@ -56,7 +56,13 @@ print(f"Tokenizer: {'已存在' if os.path.exists(tokenizer_json) else '未找�
 
 ## 第一阶段：监督微调数据集
 
-下面代码实现了 SFTDataset，将对话数据转换为模型可训练的格式，主要逻辑是定位 AI 助手回答区间并生成对应的掩码。这段代码会在训练阶段被调用，无需手动运行。
+SFT 语料的格式同样是 JSONL（每行一个 JSON 对象），但与预训练语料不同，每条样本不再包含 `text` 字段，而是包含一个 `conversations` 数组，存储多轮对话的完整记录。`conversations` 中的每条消息包含 `role`（`user`、`assistant` 或 `system`）和 `content`（消息正文）。此外，原始语料中部分样本还包含 `tools` 和 `tool_calls` 字段用于工具调用训练。本实验虽聚焦基础对话对齐，但代码保留了完整的工具调用支持，只需将数据集从 `sft_t2t_tiny.jsonl` 换回 `sft_t2t_mini.jsonl` 即可切换。
+
+监督微调与预训练阶段的目标有本质区别。预训练只需让模型学会预测下一个 token，因此 labels 直接就是 input_ids 右移一位。SFT 则需要选择性学习，用户提问和系统提示部分不应参与损失计算，只有助手回答部分才需要模型去拟合。SFTDataset 首先调用 `pre_processing_chat` 函数，以 20% 的概率在对话开头随机添加一条系统提示词（中英文共 6 种，如"你是一个知识丰富的AI，尽力为用户提供准确的信息。"和"You are a helpful AI assistant."），让模型在训练中接触多样化的角色设定，避免对单一系统提示的过拟合。然后通过 ChatML 模板将整段对话转化为统一格式的文本，每条消息被包裹为 `<|im_start|>role\ncontent<|im_end|>\n`，这是 DeepSeek 系列模型采用的对话格式，Tokenize 后送入 `generate_labels` 方法进行掩码生成。
+
+`generate_labels` 是 SFT 数据集与预训练数据集的关键区别，它扫描整个 token 序列，定位 `<|im_start|>assistant\n` 这个特殊标记序列的位置，将紧接其后的内容（直到对应的 `<|im_end|>` 标记）设为有效标签（保留原始 token ID），其余所有 token（包括用户提问、系统提示、格式控制标记等）对应的标签均设为 -100。PyTorch 的 `CrossEntropyLoss` 默认忽略标签值为 -100 的位置，因此只有助手回答部分的 token 参与损失计算和梯度回传。这种做法让模型学会了"用户说了什么不重要（不需要预测），只需专注于在该回答的位置生成优质回复"的行为模式。
+
+与预训练数据集相同，SFTDataset 直接从 JSONL 文件逐行读取并实时分词，分词操作本身是 CPU 上的查表与字符串匹配，开销极小，不需要 LMDB 缓存等预处理优化手段。因此以下数据集代码会在训练时被调用，无需手动执行。
 
 ```python runnable gpuonly extract-class="SFTDataset, pre_processing_chat"
 import os
@@ -417,7 +423,7 @@ print(f"\n最终模型已保存: {final_path}")
 
 ## 第三阶段：对话推理
 
-SFT 训练完成后，模型学会了遵循对话格式，能够理解用户指令并给出有针对性的回答。与预训练模型只能续写文本不同，SFT 模型能够识别 `<|im_start|>user` 和 `<|im_start|>assistant` 标记，知道自己是 AI 助手，在用户提问后给出恰当的回答。
+SFT 训练完成后，模型学会了对话，它能识别 `<|im_start|>user` 和 `<|im_start|>assistant` 标记构成的对话结构，知道自己是 AI 助手，在用户说完后应该给出回答，而非继续往下续写用户的话。这种行为的转变源于 SFT 数据的格式训练。在第一阶段的数据集构建中，我们用 `<|im_start|>assistant\n` 标记定位助手回答区间，仅对该区域计算损失，这看似只是一个掩码技巧，却在反向传播中传递了一个关键的数学信号：用户说了什么不重要，重要的是在 `<|im_start|>assistant\n` 之后应该如何回应。经过数万条对话样本的梯度累积，模型逐步学会了"接收对话历史 → 生成助手回复"的映射，而不再是无差别的文本续写。
 
 运行下方代码块后，模型将加载到沙箱中。加载完成后，可在下方的对话框中与微调后的模型进行对话。体验结束后，点击 Stop 按钮停止推理进程。
 
