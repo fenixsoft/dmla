@@ -1,9 +1,3 @@
----
-title: "Matrix Basics"
-issue:
-  number: 19
----
-
 # Matrix Basics
 
 Matrices are a natural extension of vectors and the core object of study in linear algebra. If vectors represent individual data points, then matrices represent datasets or transformation rules. This chapter systematically introduces the definition of matrices, their operations, and their geometric meaning -- linear transformations.

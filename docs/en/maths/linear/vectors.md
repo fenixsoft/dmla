@@ -1,3 +1,7 @@
+::: tip Reading Note
+What follows is a gradual discussion of a series of concepts and principles related to vectors, calculus, and probability. The purpose of this "Mathematical Foundations for Machine Learning" section is to help readers **recall** the mathematical foundations they once mastered but have since forgotten. These topics typically span several semesters in university courses, and the author has no shortcut that allows anyone to master them from scratch in a few articles or dozens of minutes. Additionally, wherever later chapters use related mathematical concepts, hyperlinks will navigate back to the corresponding knowledge points — feel free to skip ahead now and return later with concrete application contexts in mind.
+:::
+
 # Vector Basics
 
 When we talk about machine learning, we often focus on complex algorithm models and impressive application scenarios, such as AlphaGo defeating a Go world champion, ChatGPT generating fluent and natural conversations, or autonomous driving cars navigating through busy city streets. We all know this is driven by artificial intelligence. However, if we dig deeper into the essence of AI, the underlying language that supports all of this is mathematics and logic, or more specifically, **Linear Algebra**.
@@ -59,9 +63,6 @@ print(f"Row vector shape: {row_vector.shape}")  # (1, 3)
 col_vector = v.reshape(-1, 1)
 print(f"Column vector shape: {col_vector.shape}")  # (3, 1)
 ```
-::: tip Reading Note
-Next, we will start from the definition of vectors and gradually discuss a series of concepts and principles related to vectors, calculus, and probability. These topics typically take an entire semester or more in university courses, so it is perfectly fine if you cannot understand or memorize everything at once. When these concepts are needed in later chapters, there will be **hyperlink** navigation back to the relevant content, allowing you to revisit them with specific application scenarios in mind.
-:::
 
 ## Vector Space
 

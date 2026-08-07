@@ -97,7 +97,7 @@ Ensemble learning provides a theoretical foundation for why Dropout works. In pr
 
     This is similar in spirit to L2 regularization, but different in approach. L2 limits complexity by penalizing parameter values (making parameters small), while Dropout limits complexity by reducing the number of parameters involved in computation (temporarily making some parameters "disappear"). The two are often used together in practice, complementing each other.
 
-### Injecting Noise for Robustness
+## Injecting Noise for Robustness
 
 Dropout randomly sets neuron outputs to zero, which is equivalent to injecting random noise inside the network. This aligns with the idea of data augmentation, but at a different location: data augmentation injects noise at the input (e.g., image rotation, cropping), while Dropout injects noise inside the network (hidden layer activations).
 
@@ -480,11 +480,7 @@ The effectiveness of Dropout highly depends on correct usage. Using it in the wr
 
 - **Dropout and weight decay**: Dropout and L2 weight decay can be used simultaneously — one constrains the effective structural complexity of the model, and the other constrains the magnitude of model parameters; they complement each other. Empirically, Dropout affects the effectiveness of the weight decay hyperparameter. When using Dropout, the weight decay coefficient $\lambda$ can be appropriately reduced — the higher the Dropout rate $1-p$, the lower the weight decay coefficient $\lambda$ should be.
 
-- **Training tips**: In practice, consider the following empirical tips:
-
-    1. **Dropout rate tuning**: Start with $p=0.5$, observe the gap between training and test losses, and adjust accordingly.
-    2. **Extended training time**: Dropout reduces the effective network complexity, so training convergence may require more epochs.
-    3. **Learning rate adjustment**: Dropout adds noise, so a slightly higher learning rate may be needed.
+- **Training tips**: Several empirical practices are worth noting during actual training. For Dropout rate tuning, start with $p=0.5$ and observe the gap between training and test losses — a large gap indicates serious overfitting, so lower the keep probability; a small gap may indicate over-regularization, so increase it back. Since Dropout reduces effective network complexity, training convergence typically requires more epochs — do not apply the same early stopping criteria used without Dropout but relax the iteration limit appropriately. Similarly, the random noise injected by Dropout adds jitter to the gradient direction, so the learning rate sometimes needs to be slightly higher than the conventional setting to maintain sufficient forward progress above this layer of noise.
 
 ## Summary
 

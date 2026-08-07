@@ -114,7 +114,7 @@ $$\mathbf{W}_{ij} \sim N\left(0, \frac{2}{n_{in}}\right)$$
 
 He initialization's variance formula only considers $n_{in}$, while Xavier considers the harmonic mean of $n_{in} + n_{out}$. This is because He initialization places greater emphasis on forward propagation signal compensation. ReLU's sparsity problem mainly occurs during forward propagation. During backpropagation, gradients only pass through positive-valued neurons, and the signal is also halved in the reverse direction. However, He initialization prioritizes forward propagation signal stability and therefore only compensates for the forward direction. When $n_{in} \approx n_{out}$, He initialization's variance is approximately twice that of Xavier.
 
-## Initialization Method Experiments
+## Initialization Method Practice
 
 Theoretical analysis tells us that Xavier initialization is suitable for Sigmoid/tanh, and He initialization is suitable for ReLU. In this section, let us verify this conclusion through code experiments.
 

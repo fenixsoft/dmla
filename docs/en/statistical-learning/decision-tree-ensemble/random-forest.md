@@ -310,7 +310,6 @@ import numpy as np
 from shared.tree.random_forest_classifier import RandomForestClassifier
 
 # Simulate customer data
-np.random.seed(42)
 n_samples = 500
 
 # Features: age, income, years of education, years of work experience

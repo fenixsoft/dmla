@@ -1,4 +1,4 @@
-# Hands-on Lab: Technical Research Agent Collaboration System
+# Technical Research Agent Collaboration System
 
 In this hands-on lab, we will build an Agent system capable of automatically completing technical research tasks together. Given a research requirement (such as "compare the performance of three sorting algorithms"), the system will autonomously handle information retrieval, code writing, benchmark testing, and report generation. We will start from scratch, first building a simple tool-using Agent, then gradually adding planning, memory, and self-correction capabilities, and finally decomposing the task by domain expertise for collaborative work among multiple Agents. Throughout this process, you will see that each component in the Agent system is introduced not from a pre-designed architecture, but from the practical demands of the task itself.
 

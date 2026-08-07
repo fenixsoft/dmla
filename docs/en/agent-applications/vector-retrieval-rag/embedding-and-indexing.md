@@ -172,6 +172,8 @@ graph LR
     ID2 --> ENC
 ```
 
+*Figure: Original vector encoding process*
+
 The compression effect of PQ can be intuitively calculated. Assuming the original vector occupies $d \times 4$ bytes (FP32 precision), after PQ encoding it requires only $m \times 1$ byte (8 bits per subspace). The compression ratio is $4d/m$. When $d = 768$ and $m = 96$, the compression ratio is 32x, and the storage requirement drops from 3 KB to 96 bytes.
 
 During search, **Asymmetric Distance Computation** (ADC) is used. The query vector remains in its original FP32 precision while only the database vectors are compressed. First, the distance between each subvector of the query and all 256 codewords in the corresponding subspace codebook is precomputed (forming an $m \times 256$ lookup table). Then, for each database vector, the distance is obtained by looking up and summing the distances of the corresponding codewords. The entire process never requires decompressing the PQ encoding back to the original vector; distance computation is a pure integer index operation, which is highly efficient on CPUs.

@@ -927,7 +927,7 @@ The original AlexNet achieved a Top-5 error rate of 15.3% (i.e., Top-5 accuracy 
 
 The accuracy achieved in this experiment is a reasonable expectation given the constraints. To further improve accuracy, consider using a larger dataset, such as the original [ImageNet 1K](https://ieeexplore.ieee.org/document/5206848) (approximately 150 GB) or [Mini ImageNet 100](https://modelscope.cn/datasets/tany0699/mini_imagenet100) (approximately 6.4 GB), which would allow for more data augmentation techniques and more training epochs. Alternatively, consider a network architecture better suited for small images (such as a simplified CNN designed for 64x64 inputs). The goal of this experiment is to understand the integration of classic CNN architectures with modern deep learning frameworks through a complete reproduction of the AlexNet training pipeline. Considering practical feasibility for readers, we did not pursue competition-level accuracy. Interested readers may choose one of the above paths (changing the dataset or changing the network architecture) as an exercise for this section.
 
-## Execution Results
+## Experimental Results
 
 After model inference, 5 images are randomly selected from the validation set for classification prediction and compared against the validation set labels. An example of actual execution output is shown below:
 

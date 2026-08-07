@@ -4,7 +4,7 @@ In [backpropagation](backpropagation.md), we derived the core formula for gradie
 
 This chapter will cover the characteristics of commonly used activation and loss functions, their gradient properties and impact on training, discuss selection strategies, and visually demonstrate the performance differences of different functions through hands-on code experiments.
 
-### Vanishing and Exploding Gradients
+## Vanishing and Exploding Gradients
 
 **Vanishing Gradient** refers to the phenomenon where the gradient decays layer by layer during backpropagation, becoming very close to $0$ by the time it reaches the early layers of the network, causing parameters to barely update. Vanishing gradients have long been a persistent challenge in training deep networks. Imagine the following scenario: you need to transmit a message from layer 10 to layer 1. If the message decays — for example, being compressed by $50\%$ (multiplied by a factor less than 1) with each layer — then after 10 layers, only $0.5^{10} \approx 0.001$ of the message remains, almost completely gone. In the gradient propagation formula $\delta^l = (\mathbf{W}^{l+1})^T \delta^{l+1} \cdot f'(\mathbf{z}^l)$, the activation function's derivative $f'(\mathbf{z}^l)$ is that compression factor, and the error signal $\delta$ is the letter. The farther the error signal travels toward the front, the smaller it becomes — this is the vanishing gradient problem.
 
@@ -423,7 +423,7 @@ $$L_{BCE} = -\frac{1}{m} \sum_{i=1}^{m} [y_i \log \hat{y}_i + (1-y_i) \log(1-\ha
 
 where $y_i \in \{0, 1\}$ is the true label and $\hat{y}_i \in (0, 1)$ is the predicted probability. The term $y_i \log \hat{y}_i$ is active when $y_i = 1$ (positive class): the closer the prediction is to 1, the smaller $-\log \hat{y}_i$ is. The term $(1-y_i) \log(1-\hat{y}_i)$ is active when $y_i = 0$ (negative class): the closer the prediction is to 0, the smaller the loss. The two terms are summed with weights, forming a switch-like mechanism that automatically selects the penalty term corresponding to the correct class. To illustrate with concrete values: when the prediction is correct (e.g., $y=1$, $\hat{y}=0.9$), the loss is approximately $0.105$; when the prediction is wrong (e.g., $y=1$, $\hat{y}=0.1$), the loss is approximately $2.303$. The penalty for a wrong prediction is about 20 times larger, which is exactly the desired behavior of the function: severely penalizing obvious errors and mildly rewarding correct predictions.
 
-Multi-class classification involves multiple classes (e.g., 10 classes for handwritten digit recognition 0-9), outputting multiple probability values (Softmax outputs a probability distribution). In this case, the **Categorical Cross-Entropy Loss** (CE) is typically used:
+Multi-class classification involves multiple classes (e.g., 10 classes for handwritten digit recognition 0-9), outputting multiple probability values (Softmax outputs a probability distribution). In this case, the **Categorical Cross-Entropy Loss** (CCE) is typically used:
 
 $$L_{CE} = -\frac{1}{m} \sum_{i=1}^{m} \sum_{k=1}^{K} y_{ik} \log \hat{y}_{ik}$$
 

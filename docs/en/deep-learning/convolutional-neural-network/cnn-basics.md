@@ -319,6 +319,8 @@ graph RL
     G --> H[Classification<br/>Output]
 ```
 
+*Figure: Complete CNN processing flow*
+
 Within this process, several factors need to be considered, including the choice of kernel size, the progressive increase in the number of channels, and the selection of activation functions. The common decision-making rationale for each is listed below:
 
 - **Kernel size selection**: Common kernel sizes include $3 \times 3$, $5 \times 5$, and $1 \times 1$. Among these, $3 \times 3$ is the most commonly used because it has low computational cost, and two $3 \times 3$ convolutions have the same receptive field as one $5 \times 5$ convolution. A $5 \times 5$ convolution provides a larger receptive field but is relatively more computationally expensive ($5 \times 5 = 25$ compared to $3 \times 3 \times 2 = 18$). The $1 \times 1$ convolution does not change the receptive field and generally serves three purposes: first, channel dimensionality reduction — input $H \times W \times C_{in}$ to output $H \times W \times C_{out}$, reducing the number of channels when $C_{out} < C_{in}$; second, increasing non-linearity — adding an activation function after the $1 \times 1$ convolution enhances the network's nonlinear expressiveness; third, cross-channel information fusion — each output position integrates information from all input channels.
