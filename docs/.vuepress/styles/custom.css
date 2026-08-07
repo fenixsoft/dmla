@@ -37,8 +37,10 @@
     overflow-x: auto !important;
   }
 }
-/* 图注样式 - 只包含 em 的段落居中显示 */
-.theme-default-content p > em:only-child {
+/* 图注样式 - 通过 JS 自动检测并添加 .figure-caption 类后居中显示 */
+/* 使用 class 而非 :only-child 伪类，因为 :only-child 只计算元素节点不计算文本节点，
+   会误匹配正文中的斜体内联元素（如 "In 1962, ... published *Principles* , ..."） */
+.theme-default-content p > em.figure-caption {
   display: block;
   text-align: center;
   color: #71717A;

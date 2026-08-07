@@ -366,7 +366,7 @@ export default {
       '/en/': {
         navbar: [
           { text: 'Home', link: '/en/' },
-          { text: 'Discus', link: '/boards' },
+          { text: 'Discus', link: '/en/boards' },
         ],
 
         sidebar: [
@@ -380,7 +380,7 @@ export default {
             collapsible: false,
             children: [
               { text: 'About the Author', link: '/en/introduction/about-me' },
-              { text: 'About This Document', link: '/en/introduction/about-dmla' },
+              { text: 'About DMLA', link: '/en/introduction/about-dmla' },
             ]
           },
           {
@@ -400,7 +400,7 @@ export default {
                 collapsible: false,
                 children: [
                   { text: 'Limits, Derivatives, and Differentials', link: '/en/maths/calculus/derivative' },
-                  { text: 'Multivariable Functions and Chain Rule', link: '/en/maths/calculus/gradient' },
+                  { text: 'Multivariate Functions and Composite Function Differentiation', link: '/en/maths/calculus/gradient' },
                 ]
               },
               {
@@ -431,7 +431,7 @@ export default {
                 collapsible: false,
                 children: [
                   { text: 'Naive Bayes', link: '/en/statistical-learning/bayesian-methods/naive-bayes' },
-                  { text: 'Bayesian Networks', link: '/en/statistical-learning/bayesian-methods/bayesian-network' },
+                  { text: 'Bayesian Network', link: '/en/statistical-learning/bayesian-methods/bayesian-network' },
                   { text: 'EM Algorithm', link: '/en/statistical-learning/bayesian-methods/em-algorithm' },
                 ]
               },
@@ -439,8 +439,8 @@ export default {
                 text: 'Support Vector Machines',
                 collapsible: false,
                 children: [
-                  { text: 'Support Vector Machines', link: '/en/statistical-learning/support-vector-machines/svm-max-margin' },
-                  { text: 'Kernel Methods', link: '/en/statistical-learning/support-vector-machines/kernel-methods' },
+                  { text: 'Support Vector Machine', link: '/en/statistical-learning/support-vector-machines/svm-max-margin' },
+                  { text: 'Kernel Trick', link: '/en/statistical-learning/support-vector-machines/kernel-methods' },
                 ]
               },
               {
@@ -471,11 +471,11 @@ export default {
                 collapsible: false,
                 children: [
                   { text: 'Fundamentals of Neural Networks', link: '/en/deep-learning/neural-network-structure/idea-origin' },
-                  { text: 'The Linear Perceptron', link: '/en/deep-learning/neural-network-structure/perceptron' },
-                  { text: 'Multilayer Perceptron', link: '/en/deep-learning/neural-network-structure/mlp' },
+                  { text: 'Linear Perceptron', link: '/en/deep-learning/neural-network-structure/perceptron' },
+                  { text: 'Multi-Layer Perceptron', link: '/en/deep-learning/neural-network-structure/mlp' },
                   { text: 'Forward Propagation', link: '/en/deep-learning/neural-network-structure/forward-propagation' },
                   { text: 'Backpropagation', link: '/en/deep-learning/neural-network-structure/backpropagation' },
-                  { text: 'Activation and Loss Functions', link: '/en/deep-learning/neural-network-structure/activation-loss-functions' },
+                  { text: 'Activation Functions and Loss Functions', link: '/en/deep-learning/neural-network-structure/activation-loss-functions' },
                 ]
               },
               {
@@ -499,10 +499,10 @@ export default {
                 text: 'Convolutional Neural Networks',
                 collapsible: false,
                 children: [
-                  { text: 'CNN Fundamentals', link: '/en/deep-learning/convolutional-neural-network/cnn-basics' },
-                  { text: 'AlexNet and the CNN Renaissance', link: '/en/deep-learning/convolutional-neural-network/alexnet' },
+                  { text: 'CNN Basics', link: '/en/deep-learning/convolutional-neural-network/cnn-basics' },
+                  { text: 'AlexNet and the CNN Revival', link: '/en/deep-learning/convolutional-neural-network/alexnet' },
                   { text: 'VGG and GoogLeNet', link: '/en/deep-learning/convolutional-neural-network/vgg-inception' },
-                  { text: 'ResNet', link: '/en/deep-learning/convolutional-neural-network/resnet' },
+                  { text: 'ResNet Residual Network', link: '/en/deep-learning/convolutional-neural-network/resnet' },
                   { text: 'Lab: AlexNet Image Classification', link: '/en/deep-learning/convolutional-neural-network/alexnet-experiment' },
                 ]
               },
@@ -510,8 +510,8 @@ export default {
                 text: 'Generative Models',
                 collapsible: false,
                 children: [
-                  { text: 'Variational Autoencoders', link: '/en/deep-learning/generative-models/vae' },
-                  { text: 'Generative Adversarial Networks', link: '/en/deep-learning/generative-models/gan' },
+                  { text: 'Variational Autoencoder', link: '/en/deep-learning/generative-models/vae' },
+                  { text: 'Generative Adversarial Network', link: '/en/deep-learning/generative-models/gan' },
                   { text: 'Lab: DCGAN Image Generation', link: '/en/deep-learning/generative-models/gan-experiment' },
                 ]
               },
@@ -519,7 +519,7 @@ export default {
                 text: 'Sequence Models',
                 collapsible: false,
                 children: [
-                  { text: 'Word Embeddings and Representation Learning', link: '/en/deep-learning/sequence-models/word-embedding' },
+                  { text: 'Word Embedding and Representation Learning', link: '/en/deep-learning/sequence-models/word-embedding' },
                   { text: 'RNN Fundamentals', link: '/en/deep-learning/sequence-models/rnn-basics' },
                   { text: 'LSTM and GRU Gating Mechanisms', link: '/en/deep-learning/sequence-models/lstm-gru' },
                   { text: 'Seq2Seq Sequence Mapping', link: '/en/deep-learning/sequence-models/seq2seq' },
@@ -557,7 +557,7 @@ export default {
                 text: 'Alignment Training',
                 collapsible: false,
                 children: [
-                  { text: 'RLHF', link: '/en/language-models/alignment/rlhf' },
+                  { text: 'Reinforcement Learning from Human Feedback', link: '/en/language-models/alignment/rlhf' },
                   { text: 'Evolution of Alignment Methods', link: '/en/language-models/alignment/alignment-new-paradigms' },
                   { text: 'Lab: DPO Alignment Training', link: '/en/language-models/alignment/llm-dpo-experiment' },
                 ]
@@ -566,8 +566,8 @@ export default {
                 text: 'Reasoning Capabilities',
                 collapsible: false,
                 children: [
-                  { text: 'Chain-of-Thought and Reasoning Models', link: '/en/language-models/reasoning/chain-of-thought' },
-                  { text: 'Inference Scaling Laws', link: '/en/language-models/reasoning/test-time-compute' },
+                  { text: 'Chain of Thought and Reasoning Models', link: '/en/language-models/reasoning/chain-of-thought' },
+                  { text: 'Test-Time Compute Scaling', link: '/en/language-models/reasoning/test-time-compute' },
                   { text: 'Inference Efficiency Optimization', link: '/en/language-models/reasoning/inference-efficiency' },
                   { text: 'Lab: LLM Inference Optimization', link: '/en/language-models/reasoning/llm-reasoning-experiment' },
                 ]
@@ -576,7 +576,7 @@ export default {
                 text: 'Multimodal Fusion and Safety',
                 collapsible: false,
                 children: [
-                  { text: 'Multimodal Large Models', link: '/en/language-models/frontier/multimodal-llm' },
+                  { text: 'Multimodal Large Language Models', link: '/en/language-models/frontier/multimodal-llm' },
                   { text: 'Model Evaluation and Safety', link: '/en/language-models/frontier/evaluation-safety' },
                   { text: 'Lab: VLM Training', link: '/en/language-models/frontier/vlm-training-experiment' },
                 ]
@@ -602,7 +602,7 @@ export default {
                 collapsible: false,
                 children: [
                   { text: 'Data Versioning', link: '/en/ai-infra-engineering/mlops/data-versioning' },
-                  { text: 'Experiment Tracking and Model Management', link: '/en/ai-infra-engineering/mlops/model-lifecycle' },
+                  { text: 'Experiment Tracking and Model Registry', link: '/en/ai-infra-engineering/mlops/model-lifecycle' },
                   { text: 'Hyperparameter Optimization', link: '/en/ai-infra-engineering/mlops/hyperparameter-optimization' },
                   { text: 'Model Performance Monitoring', link: '/en/ai-infra-engineering/mlops/model-performance-monitoring' },
                   { text: 'Drift Detection', link: '/en/ai-infra-engineering/mlops/drift-detection' },
@@ -618,7 +618,7 @@ export default {
                 text: 'Vector Retrieval and RAG',
                 collapsible: false,
                 children: [
-                  { text: 'Embeddings and Vector Retrieval', link: '/en/agent-applications/vector-retrieval-rag/embedding-and-indexing' },
+                  { text: 'Embedding and Vector Retrieval', link: '/en/agent-applications/vector-retrieval-rag/embedding-and-indexing' },
                   { text: 'Retrieval Quality Evaluation and Optimization', link: '/en/agent-applications/vector-retrieval-rag/retrieval-quality' },
                   { text: 'Retrieval-Augmented Generation', link: '/en/agent-applications/vector-retrieval-rag/retrieval-augmented-generation' },
                   { text: 'Lab: Building a Knowledge Base Q&A System', link: '/en/agent-applications/vector-retrieval-rag/rag-experiment' },
@@ -632,7 +632,7 @@ export default {
                   { text: 'Tool Use', link: '/en/agent-applications/agent-systems/tool-use' },
                   { text: 'Planning and Reasoning', link: '/en/agent-applications/agent-systems/planning-reasoning' },
                   { text: 'Memory Systems', link: '/en/agent-applications/agent-systems/memory-systems' },
-                  { text: 'Collaboration and Communication', link: '/en/agent-applications/agent-systems/agent-collaboration-communication' },
+                  { text: 'Agent Collaboration and Communication', link: '/en/agent-applications/agent-systems/agent-collaboration-communication' },
                   { text: 'Orchestration and Fault Tolerance', link: '/en/agent-applications/agent-systems/orchestration-fault-tolerance' },
                   { text: 'Lab: Research Agent Collaboration System', link: '/en/agent-applications/agent-systems/agent-experiment' },
                 ]
@@ -649,7 +649,7 @@ export default {
                 collapsible: false,
                 children: [
                   { text: 'Data Processing Practice', link: '/en/appendixes/numpy/linear-numpy' },
-                  { text: 'Calculus Practice', link: '/en/appendixes/numpy/calculus-numpy' },
+                  { text: 'Calculus Computation Practice', link: '/en/appendixes/numpy/calculus-numpy' },
                   { text: 'Probability and Statistics Practice', link: '/en/appendixes/numpy/probability-numpy' },
                 ]
               }
