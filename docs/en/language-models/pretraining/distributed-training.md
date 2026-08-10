@@ -14,7 +14,7 @@ During model training, GPU memory must simultaneously hold four categories of da
 
 Adding these up, let $N$ be the number of model parameters. Training requires at least $2N + 2N + 12N = 16N$ bytes of memory to store parameters, gradients, and optimizer states. For a 70B model, substituting $N = 70 \times 10^9$ yields 140 GB for parameters, 140 GB for gradients, and 840 GB for optimizer states, totaling approximately 1120 GB. A single A100 GPU has a maximum of 80 GB of memory, meaning at least 14 A100 GPUs are needed just to store the model-related data. And this does not yet account for the additional memory consumed by activations, intermediate results from the forward pass, various libraries, and fragmentation overhead (see the "Training Memory Estimation" section in [Transformer Model Training Experiment](../architecture-basics/llm-pretrain-experiment.md#phase-3-pretraining)). The figure below shows the memory requirement breakdown for models of different scales under FP16 training, with the orange and red dashed lines representing the A100 40GB and 80GB memory ceilings, respectively.
 
-![Memory requirements for models of different scales](../../../language-models/pretraining/assets/memory-requirements.png)
+![Memory requirements for models of different scales](assets/memory-requirements.png)
 
 *Figure: Memory requirements for models of different scales*
 
@@ -238,7 +238,7 @@ In standard data parallelism, every GPU stores the complete set of model paramet
 
     ZeRO-3 reduces per-GPU memory to $16N/N_{gpu}$. In theory, the more GPUs available, the less memory per GPU. For a 70B model with 64 GPUs, each GPU requires only about 17.5 GB (2.2 GB + 2.2 GB + 13.1 GB), comfortably fitting in a single A100 80GB. The cost is that communication is about 1.5 times that of standard data parallelism, because every layer in both forward and backward passes requires All-Gather for parameters. The figure below shows per-GPU memory comparison between standard DP and ZeRO-1/2/3, with the red dashed line representing the A100 80GB ceiling.
 
-    ![ZeRO optimization memory comparison](../../../language-models/pretraining/assets/zero-memory.png)
+    ![ZeRO optimization memory comparison](assets/zero-memory.png)
 
     *Figure: ZeRO optimization memory comparison*
 
@@ -303,7 +303,7 @@ $$grad = scaled\_grad / S$$
 
 $S$ must be large enough to bring gradients into the FP16 representable range, but not so large that it causes gradient overflow (producing inf). In practice, dynamic loss scaling is used. If gradient overflow is detected, $S$ is halved. If no overflow occurs for several consecutive steps, $S$ is doubled. The figure below compares the gradient distribution before and after scaling (S=1024). The red dashed line represents the FP16 minimum normal value, and scaling significantly reduces the proportion of underflow.
 
-![Loss scaling effect comparison](../../../language-models/pretraining/assets/loss-scaling.png)
+![Loss scaling effect comparison](assets/loss-scaling.png)
 
 *Figure: Loss scaling effect comparison*
 
@@ -317,7 +317,7 @@ Compared to performing loss scaling every backward pass, BF16 offers an entirely
 
 BF16 uses the same 8-bit exponent as FP32, so its representable range is identical (maximum approximately $3.4 \times 10^{38}$), avoiding the gradient underflow problem of FP16. This means BF16 training does not require loss scaling, making the training process simpler and numerically more stable. The figure below compares the representable ranges of FP16, BF16, and FP32. BF16 and FP32 share the same range, at the cost of lower precision (only 7 mantissa bits versus FP16's 10), which may affect certain precision-sensitive computations. Additionally, hardware support for BF16 requires Ampere architecture GPUs and later.
 
-![Floating-point format representation range comparison](../../../language-models/pretraining/assets/float-formats.png)
+![Floating-point format representation range comparison](assets/float-formats.png)
 
 *Figure: Floating-point format representation range comparison*
 
@@ -329,7 +329,7 @@ Even with ZeRO optimization and mixed precision, memory may still be insufficien
 
 - **Gradient Checkpointing** (also known as Activation Recomputation): In standard training, the forward pass saves activations for all layers, which are later used during backpropagation. These activations consume a large amount of memory, especially when the sequence length is long. Gradient checkpointing works by saving activations only for a subset of layers (checkpoints) during the forward pass, and recomputing the activations for the remaining layers during backpropagation.
 
-    ![Gradient checkpointing memory-computation tradeoff](../../../language-models/pretraining/assets/checkpoint-tradeoff.png)
+    ![Gradient checkpointing memory-computation tradeoff](assets/checkpoint-tradeoff.png)
 
     *Figure: Gradient Checkpointing*
 
@@ -363,7 +363,7 @@ $$g_{quantized} = round(g / \Delta) \times \Delta$$
 
 Quantization inevitably introduces errors, but errors at INT8 and above are typically within an acceptable range. Another approach is to keep numerical precision unchanged but reduce the number of gradients transmitted per communication step. This is called sparsification compression. The idea is to only send the gradients with the largest absolute values at each step, ignoring small gradients. Top-K sparsification retains only the K components with the largest absolute values, reducing communication to K/N (where N is the total gradient dimension). To compensate for the information loss from discarded gradients, the unsent gradients are accumulated locally until they enter the top K components and are sent out, preventing permanent information loss. The figure below compares the gradient distributions for the original gradients, Top-10 sparsification (retaining 10%), and INT8 quantization. Sparsification reduces communication by 90%, and quantization reduces it by 75%.
 
-![Gradient compression effect comparison](../../../language-models/pretraining/assets/gradient-compression.png)
+![Gradient compression effect comparison](assets/gradient-compression.png)
 
 *Figure: Gradient compression effect comparison*
 

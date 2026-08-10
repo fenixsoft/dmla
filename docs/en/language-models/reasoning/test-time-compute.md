@@ -14,7 +14,7 @@ $$a(n) = a_0 + (a_{\max} - a_0) \cdot (1 - e^{-kn})$$
 
 The core of the accuracy growth curve is $1 - e^{-kn}$, which indicates that the proportion of remaining improvement utilized tends to saturate as the number of steps increases. The exponential decay model shows that the accuracy improvement from reasoning steps is fast initially and then slows down -- the first few steps are most effective, and the contribution of subsequent steps gradually diminishes. This bears similarity to the "practice effect" in cognitive science. When humans learn a new skill, progress is fastest in the early stages, and as proficiency increases, the marginal benefit of continued practice becomes smaller. For language models, the first few reasoning steps help the model transform implicit knowledge into explicit reasoning, producing the most significant effect. Subsequent steps are more about confirmation and refinement, with increasingly limited improvement.
 
-![Reasoning scaling curves under different problem difficulties](../../../language-models/reasoning/assets/test-time-compute-curve.png)
+![Reasoning scaling curves under different problem difficulties](assets/test-time-compute-curve.png)
 
 *Figure: Reasoning scaling curves under different problem difficulties*
 
@@ -76,7 +76,7 @@ Another approach moves the decision ahead of time to before reasoning even begin
 
 The most flexible approach is **dynamic stopping**. Rather than relying on a predetermined budget, the model dynamically decides whether to stop during the reasoning process in real time. Unlike confidence thresholds, dynamic stopping considers not only whether the quality of the current answer meets the standard, but also whether the expected benefit of continued reasoning justifies the additional computational cost. This requires a dedicated stopping judge that performs, essentially, a cost-benefit analysis at every moment, evaluating whether one more step of reasoning is likely to yield a better result.
 
-![Comparison of three adaptive reasoning strategies](../../../language-models/reasoning/assets/adaptive-compute.png)
+![Comparison of three adaptive reasoning strategies](assets/adaptive-compute.png)
 
 *Figure: Behavioral comparison of three adaptive reasoning strategies on problems of different difficulty*
 
@@ -92,7 +92,7 @@ Best-of-N sampling is the simplest search strategy. Generate N candidate answers
 
 The average optimal quality of Best-of-N improves as N increases, but the growth follows diminishing marginal returns and gradually slows down. When N=1, the answer quality distribution is wide, with both good and bad outcomes possible. When N=100, the distribution is concentrated in the high-quality region, making it nearly impossible to select a poor answer, as shown in the figure below. The cost is that increasing N from 1 to 100 also increases the computational cost by 100 times. Whether this is worthwhile in real-world deployment depends on the value of the task.
 
-![Quality improvement and distribution change of Best-of-N sampling](../../../language-models/reasoning/assets/best-of-n.png)
+![Quality improvement and distribution change of Best-of-N sampling](assets/best-of-n.png)
 
 *Figure: Quality improvement and distribution change of Best-of-N sampling*
 

@@ -352,7 +352,7 @@ where $i$ is the dimension index, ranging $[0, d/2-1]$, and $d$ is the embedding
 
 High-frequency dimensions (small $i$) are sensitive to position differences between adjacent tokens, with each step having a large rotation angle, capable of distinguishing fine-grained differences like "position 1" and "position 2." Low-frequency dimensions (large $i$) have extremely small rotation angles per step, with significant cumulative phase changes only over long distances, making them suitable for capturing global relationships like "100 positions apart." This multi-scale design allows the model to simultaneously possess fine-grained local position perception and stable global position perception. When processing a long sentence like "那只昨天在公园里被主人遗弃的猫看起来很伤心" ("The cat that was abandoned by its owner in the park yesterday looks very sad"), the model needs to know both that "猫" (cat) and "遗弃" (abandoned) are adjacent (local relationship) and that "猫" (cat) and "伤心" (sad) are far apart (global relationship). Multi-scale frequencies precisely meet this requirement.
 
-![RoPE rotary position embedding conceptual diagram](../../../language-models/architecture-basics/assets/rope-concept.png)
+![RoPE rotary position embedding conceptual diagram](assets/rope-concept.png)
 
 *Figure: Left shows the rotation matrix at position $m$ rotating the vector by angle $m\theta$; right shows that after rotating the Query and Key at two positions, their dot product depends only on the relative position difference $(n-m)$*
 

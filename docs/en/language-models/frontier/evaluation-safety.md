@@ -26,7 +26,7 @@ Accurately evaluating model capabilities is actually quite difficult. Programmer
 
 The chart below provides a visual comparison of mainstream large models across four discriminative benchmarks, helping to intuitively understand the differences in capability distribution among different models.
 
-![Benchmark Comparison of Major LLMs](../../../language-models/frontier/assets/benchmark-comparison.png)
+![Benchmark Comparison of Major LLMs](assets/benchmark-comparison.png)
 
 *Figure: Benchmark Comparison of Major LLMs*
 
@@ -70,7 +70,7 @@ To defend effectively, one must first learn to attack. **Red Teaming** is a comm
 
 The chart below compares the success rates of different attack types before and after safety alignment, visually demonstrating the effectiveness of safety training and the remaining weak spots.
 
-![Red Teaming Attack Success Rates](../../../language-models/frontier/assets/red-teaming.png)
+![Red Teaming Attack Success Rates](assets/red-teaming.png)
 
 *Figure: Red Teaming Attack Success Rates*
 

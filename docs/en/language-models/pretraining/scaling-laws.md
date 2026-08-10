@@ -22,7 +22,7 @@ $$L(C) \propto C^{-\alpha_C}$$
 
 The $\alpha$ in each formula is the power-law exponent, which differs across dimensions. The power-law exponent reflects how effectively each dimension compresses the loss, with specific values $\alpha_N \approx 0.076$, $\alpha_D \approx 0.095$, $\alpha_C \approx 0.050$. Taking parameter count as an example, plugging in the formula shows that increasing model parameters by 10 times reduces the loss to $10^{-0.076} \approx 0.84$ of the original (a reduction factor of about $1.19$), and this ratio is fixed. Whether growing from 1M parameters to 10M or from 10B to 100B, the loss reduction factor remains the same. The other two metrics follow the same pattern, as shown in the figure below.
 
-![Kaplan Scaling Laws power-law relationships](../../../language-models/pretraining/assets/kaplan-scaling-laws.png)
+![Kaplan Scaling Laws power-law relationships](assets/kaplan-scaling-laws.png)
 
 *Figure: Three power-law relationship curves of Kaplan Scaling Laws*
 
@@ -52,7 +52,7 @@ $$D_{opt} \propto C^{0.50}$$
 
 This stands in stark contrast to Kaplan's conclusion of $N_{opt} \propto C^{0.73}, D_{opt} \propto C^{0.27}$. Kaplan believed compute should be prioritized on parameters, while Chinchilla argues parameters and data should share the budget equally. The figure below compares the ratio of parameter count to training data across several well-known models. GPT-3's ratio is only 1.7 tokens/parameter, far below the 20 tokens/parameter recommended by Chinchilla. The LLaMA series approaches or even exceeds this optimal ratio.
 
-![Model parameter count vs. training data size](../../../language-models/pretraining/assets/model-data-ratio.png)
+![Model parameter count vs. training data size](assets/model-data-ratio.png)
 
 *Figure: Parameter count vs. training data size comparison for five well-known models*
 
@@ -86,7 +86,7 @@ Beyond inference cost, the over-training strategy also offers advantages in gene
 
 However, over-training is not always better. When the amount of training data far exceeds the Chinchilla optimal ratio, the marginal benefit of performance improvement diminishes. The rate at which the loss function decreases slows down, with each additional 100B tokens yielding progressively smaller loss reductions. This means there is a sweet spot for over-training: exceeding the Chinchilla optimal ratio during training is worthwhile when considering inference costs, but going too far becomes wasteful. The annotated points in the figure below correspond to the Chinchilla optimal ratio (140B tokens), LLaMA-7B (1T tokens), and LLaMA-2 7B (2T tokens). The loss reduction from the Chinchilla optimum to LLaMA-7B is significant, but the reduction from 1T to 2T is notably slower, illustrating the law of diminishing marginal returns.
 
-![Diminishing marginal returns of over-training](../../../language-models/pretraining/assets/overtraining-diminishing.png)
+![Diminishing marginal returns of over-training](assets/overtraining-diminishing.png)
 
 *Figure: Loss vs. training data size for a fixed 7B model*
 
@@ -98,7 +98,7 @@ The goal of post-training is to transform a pre-trained model that possesses kno
 
 Research has found that post-training also exhibits scaling laws, but unlike the power law of pre-training, post-training saturates much earlier. LLaMA-2's practice shows that approximately 100,000 high-quality SFT examples are sufficient to significantly improve capability. The InstructGPT paper also demonstrates that about 50,000 to 100,000 human preference data points are enough to train an effective reward model, with additional data yielding rapidly diminishing marginal returns. This suggests that the scaling law for post-training is closer to logarithmic growth: a small amount of high-quality data early on yields substantial improvement, but it quickly requires exponentially more data to achieve linear gains.
 
-![Saturation effect of post-training scaling](../../../language-models/pretraining/assets/post-training-scaling.png)
+![Saturation effect of post-training scaling](assets/post-training-scaling.png)
 
 *Figure: Performance improvement of SFT and RLHF with increasing alignment data*
 
@@ -112,7 +112,7 @@ The scaling laws discussed so far all occur during the training phase: investing
 
 Test-time scaling means that if the model does not answer well on the first try, let it try multiple times and select the best answer from among them. There are several specific implementation methods. The most straightforward is the Best-of-N sampling strategy, which generates N candidate answers and selects the best one using a reward model or verifier. A more refined approach is self-consistency, where the model generates multiple reasoning paths and determines which path's conclusion is supported by the majority. The most complex is the tree search strategy, which uses [beam search](../../deep-learning/sequence-models/seq2seq.md#beam-search) or [Monte Carlo tree search](../../../appendixes/numpy/probability-numpy.md#蒙特卡洛方法) (MCTS) to plan within the reasoning space, evaluating multiple candidate directions at each step. The self-verification strategy asks the model to check its own reasoning process, going back to correct any contradictions found. The common thread among these methods is spending more compute at inference time to explore more possibilities, thereby increasing the probability of a correct answer. The figure below shows the accuracy growth curves for four strategies -- single generation, Best-of-5, Best-of-10, and tree search -- demonstrating that investing more inference compute yields more accurate answers, though the improvement gradually saturates.
 
-![Test-time scaling](../../../language-models/pretraining/assets/test-time-scaling.png)
+![Test-time scaling](assets/test-time-scaling.png)
 
 *Figure: Accuracy vs. inference compute at test time*
 

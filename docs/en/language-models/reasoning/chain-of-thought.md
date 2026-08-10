@@ -18,7 +18,7 @@ With **Standard Prompting**, the model would directly respond "26 apples." With 
 
 Directly answering is like guessing the answer, while chain-of-thought reasoning is like calculating the answer. For simple problems, both approaches may yield correct results. But when problems become more complex and require multi-step reasoning, chain of thought significantly improves model reasoning accuracy. On the [GSM8K](https://huggingface.co/datasets/openai/gsm8k) mathematical reasoning benchmark, PaLM 540B's accuracy improved from 17.9% to 56.9% using CoT prompting, with similar improvements across other models, and the effect is more pronounced with larger models, as shown in the figure below.
 
-![Improvement in mathematical reasoning with Chain-of-Thought prompting](../../../language-models/reasoning/assets/cot-improvement.png)
+![Improvement in mathematical reasoning with Chain-of-Thought prompting](assets/cot-improvement.png)
 
 *Figure: GSM8K accuracy comparison between Standard Prompting and Chain-of-Thought Prompting across different models*
 
@@ -64,7 +64,7 @@ $$\mathcal{L}_{PRM} = -\sum_{i=1}^{n} \left[ y_i \log \sigma(r_\phi(s_i)) + (1 -
 
 In the formula, the $y_i \log \sigma(r_\phi(s_i))$ term is the loss for correct steps. The Sigmoid function maps the raw score to the $[0, 1]$ interval, yielding the probability of being correct. The higher the probability PRM assigns, the smaller the loss. Similarly, $(1 - y_i) \log (1 - \sigma(r_\phi(s_i)))$ is the loss for incorrect steps: the lower the probability PRM assigns, the smaller the loss. Thus, PRM is essentially a multi-step version of [binary cross-entropy loss](../../statistical-learning/linear-models/logistic-regression.md).
 
-![PRM step scoring vs. ORM comparison](../../../language-models/reasoning/assets/prm-scoring.png)
+![PRM step scoring vs. ORM comparison](assets/prm-scoring.png)
 
 *Figure: PRM step scoring compared with ORM*
 

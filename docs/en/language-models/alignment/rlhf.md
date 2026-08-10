@@ -64,7 +64,7 @@ $$P(y_w \succ y_l | x) = \sigma(r^*(x, y_w) - r^*(x, y_l))$$
 
 where $\sigma(\cdot)$ is the [Sigmoid function](../../statistical-learning/linear-models/logistic-regression.md#sigmoid-function), which converts the reward difference into a probability. If $y_w$ has a much higher reward than $y_l$, the difference is large and positive, and the Sigmoid output approaches 1, indicating that a human would almost certainly choose $y_w$. If the rewards are similar, the difference is close to 0, and the Sigmoid output is near 0.5, indicating a random choice. If $y_w$ actually has a lower reward than $y_l$, the difference is negative, and the Sigmoid output is below 0.5, indicating that humans would more likely choose $y_l$. The figure below shows the relationship between reward difference and preference probability in the Bradley-Terry model: when two responses have equal rewards (difference of 0), the preference probability is 0.5 (random choice); when the chosen response's reward is 2 units higher, the preference probability rises to 88%; when the chosen response's reward is 2 units lower, the preference probability drops to 12%.
 
-![Bradley-Terry model: relationship between reward difference and preference probability](../../../language-models/alignment/assets/bradley-terry.png)
+![Bradley-Terry model: relationship between reward difference and preference probability](assets/bradley-terry.png)
 
 *Figure: Relationship between reward difference and preference probability in the Bradley-Terry model*
 
@@ -164,7 +164,7 @@ The **clipping function** constrains a variable within a specified range, trunca
 
 As shown in the figure below, when A > 0 (good response), the solid green line flattens at r > 1+ε, indicating the policy will not infinitely increase the probability of good responses; when A < 0 (bad response), the solid green line flattens at r < 1-ε, indicating the policy will not infinitely decrease the probability of bad responses. The clipping mechanism effectively limits the magnitude of single-step updates. These four cases can be summarized by one principle: as long as the probability ratio stays within the safe range, the policy can adjust freely. Once the ratio goes out of bounds, regardless of whether the adjustment direction is correct, the gradient is truncated. This conservative adjustment strategy that limits update magnitude is precisely what "Proximal" in PPO embodies.
 
-![PPO clipping mechanism: preventing overly large policy updates](../../../language-models/alignment/assets/ppo-clip.png)
+![PPO clipping mechanism: preventing overly large policy updates](assets/ppo-clip.png)
 
 *Figure: Visualization of the PPO clipping mechanism*
 
