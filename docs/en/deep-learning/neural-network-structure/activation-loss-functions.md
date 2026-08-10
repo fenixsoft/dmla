@@ -36,7 +36,7 @@ The **Hyperbolic Tangent** function (commonly abbreviated as tanh) is an improve
 
 To explain, using a real-life scenario, why zero-centered output functions have an advantage in neural networks: imagine you are adjusting the room temperature with an air conditioner, and the target temperature is $25^\circ C$. But if the air conditioner can only adjust within a range of $30-40^\circ C$ (similar to Sigmoid's always-positive output), the information you can pass to the network during training is always "it's too hot." The network has no way of knowing exactly how much to cool down, and training oscillates like a sawtooth. If the air conditioner's range is $-10^\circ C$ to $50^\circ C$ (similar to tanh's balanced positive and negative output), you can precisely indicate how far the current temperature is from the target, making adjustments much smoother and more efficient.
 
-![Comparison of Sigmoid and tanh functions](../../../deep-learning/neural-network-structure/assets/sigmoid-tanh-comparison.png)
+![Comparison of Sigmoid and tanh functions](assets/sigmoid-tanh-comparison.png)
 
 *Figure: Comparison of Sigmoid and tanh function curves and their derivatives*
 
@@ -116,7 +116,7 @@ $$GELU(z) \approx 0.5z\left(1 + \tanh\left(\sqrt{\frac{2}{\pi}}\left(z + 0.04471
 
 The error of this approximation relative to the exact formula is on the order of $10^{-6}$. PyTorch and other frameworks use this approximate version as the default GELU implementation. For most applications, there is no perceptible difference in practical results between the exact form and the tanh approximation. The left plot below shows a comparison of GELU, Swish, and ReLU curves, while the right plot compares the exact GELU form with the tanh approximation:
 
-![Comparison of GELU, Swish, and ReLU curves](../../../deep-learning/neural-network-structure/assets/gelu-swish-relu-comparison.png)
+![Comparison of GELU, Swish, and ReLU curves](assets/gelu-swish-relu-comparison.png)
 
 *Figure: Left — comparison of GELU, Swish, and ReLU curves; Right — comparison of exact GELU and the tanh approximation*
 

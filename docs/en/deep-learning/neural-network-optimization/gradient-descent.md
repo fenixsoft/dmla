@@ -14,7 +14,7 @@ In the backpropagation section, we derived the [formula for computing gradients]
 
 For the scenario described above, if we want to descend the mountain as quickly as possible, a natural intuition is to go in the steepest downhill direction. Choosing the steepest direction at each step should get us to the valley floor the fastest. This is the central idea of gradient descent. Let $L(\mathbf{W})$ be the loss function, where the parameters $\mathbf{W}$ represent the current position (a point in parameter space). The gradient $\nabla L = \frac{\partial L}{\partial \mathbf{W}}$ is a vector, with each component indicating the rate of change of the loss function in the corresponding parameter direction. The gradient itself points in the direction of the steepest increase in loss (the fastest uphill direction), while its opposite direction $-\nabla L$ points in the direction of the steepest decrease in loss (the fastest downhill direction). A rigorous proof that the opposite direction of the gradient is indeed the direction of steepest descent is given in the [Exercises](#exercises) section. Parameters should be updated along this direction, as shown in the figure below.
 
-![Geometric intuition of gradient descent](../../../deep-learning/neural-network-optimization/assets/gradient-descent-geometric-intuition.png)
+![Geometric intuition of gradient descent](assets/gradient-descent-geometric-intuition.png)
 
 *Figure: Geometric intuition of gradient descent*
 
@@ -98,7 +98,7 @@ Each part of the code has a clear meaning:
 
 SGD has an inherent problem known as "SGD oscillation," where convergence is slow in certain directions, especially when the loss function has significantly different gradients across different parameter directions. The root cause of this problem lies in the shape of the loss function. When the gradients vary greatly across different parameter directions, the parameter update path of SGD oscillates violently. Consider an extreme example: the loss function $L(W_1, W_2) = W_1^2 + 100W_2^2$. This is an elliptical loss surface where $W_1$ varies slowly (coefficient 1) and $W_2$ varies rapidly (coefficient 100). The gradient is $\nabla L = (2W_1, 200W_2)$, with the gradient in the $W_2$ direction being 100 times that of the $W_1$ direction. From the function graph, we can see the difference in surface steepness: along the $W_1$ direction, the surface is gentle; along the $W_2$ direction, the surface is steep; and the contour lines at the bottom are elliptical.
 
-![Elliptical loss surface diagram](../../../deep-learning/neural-network-optimization/assets/elliptical-loss-surface.png)
+![Elliptical loss surface diagram](assets/elliptical-loss-surface.png)
 
 *Figure: 3D visualization of elliptical loss surface $L = W_1^2 + 100W_2^2$*
 
@@ -227,7 +227,7 @@ In practice, momentum is typically 2 to 3 times faster than SGD, and NAG is slig
 
 So far, we have theoretically analyzed the principles and convergence characteristics of SGD, momentum, and NAG. Now, we will intuitively compare the actual performance of the three optimization algorithms through code experiments. The experiment uses an extreme elliptical loss function ($L = W_1^2 + 100W_2^2$), where gradients differ dramatically across directions, clearly demonstrating the differences in convergence behavior among the three algorithms. The setup has the gradient in the $W_2$ direction being 100 times that of the $W_1$ direction, with the starting point chosen at $(10, 10)$, far from the minimum. This configuration makes SGD's oscillation problem extremely evident, facilitating observation of how momentum and NAG provide improvements. The code implements the parameter update logic of the three optimizers and visualizes the parameter paths, loss curves, and oscillation in the $W_2$ direction.
 
-![Convergence comparison of SGD, momentum, and NAG](../../../deep-learning/neural-network-optimization/assets/gradient-descent.png)
+![Convergence comparison of SGD, momentum, and NAG](assets/gradient-descent.png)
 
 *Figure: Convergence comparison of SGD, momentum, and NAG*
 

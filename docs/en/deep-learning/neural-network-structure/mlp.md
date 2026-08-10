@@ -31,7 +31,7 @@ The four sample points of the XOR problem have original coordinates $(0, 0)$, $(
 
 Observing the transformed feature space, the positive class samples $(0.62, 0.38)$ cluster in the middle region, while the negative class samples $(0.38, 0.18)$ and $(0.82, 0.62)$ are located in the lower-left and upper-right, respectively. In this new space, the positive and negative classes can be separated by a diagonal line. The output layer only needs to learn a simple linear combination of weights, such as the decision boundary $h_2 = h_1 - 0.24$, to perfectly distinguish the positive class (satisfying $h_2 < h_1 - 0.24$) from the negative class (satisfying $h_2 > h_1 - 0.24$), as shown in the following figure:
 
-![XOR Problem Feature Space Transformation](../../../deep-learning/neural-network-structure/assets/mlp-xor-space-transformation.png)
+![XOR Problem Feature Space Transformation](assets/mlp-xor-space-transformation.png)
 
 *Figure: Comparison of the XOR problem distribution in the original input space (left) and the hidden layer feature space (right)*
 
@@ -87,7 +87,7 @@ Additionally, the Universal Approximation Theorem only requires the activation f
 
 The following code implements a complete multi-layer perceptron and compares it with a single-layer perceptron on the same nonlinear dataset, intuitively demonstrating the impact of adding hidden layers. The experimental design uses the classic Moon Dataset, where two classes of data points form two overlapping crescent shapes. The curved boundary prevents any straight line from perfectly separating the classes — an ideal test scenario for verifying nonlinear classification capability.
 
-![Code Execution Results](../../../deep-learning/neural-network-structure/assets/moon_dataset_mlp.png)
+![Code Execution Results](assets/moon_dataset_mlp.png)
 
 *Figure: MLP code execution results*
 
