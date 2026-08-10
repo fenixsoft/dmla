@@ -46,7 +46,7 @@ The 9th-degree polynomial example already illustrates the impact of the number o
 
 **Lasso** (Least Absolute Shrinkage and Selection Operator) is also commonly referred to directly as L1 regularization. It is mainly used to constrain the number of model parameters and can drive some parameters to exactly zero. A parameter of zero means the corresponding feature is eliminated, and the model learns only the truly useful features. This automatic feature selection capability is called **sparsity**, which is the core value that distinguishes L1 regularization from other forms. The mathematical expression of Lasso is: $L_{Lasso}(\beta) = L(\beta) + \lambda ||\beta||_1$, where $||\beta||_1 = \sum_{j=1}^{d} |\beta_j|$ is the sum of absolute parameter values, i.e., the L1 norm of the parameters. To clearly explain how L1 regularization achieves sparsity, let us first revisit the shape of the L1 unit ball in [norms](../../maths/linear/vectors.md#norms), as shown in the figure below:
 
-![L1 unit ball image](../../../statistical-learning/linear-models/assets/l1_unitball.png)
+![L1 unit ball image](assets/l1_unitball.png)
 
 *L1 unit ball image*
 
@@ -54,7 +54,7 @@ The absolute value function $|\beta|$ has a "cusp" at $\beta = 0$: the left deri
 
 Consider a concrete example. Suppose the model has only two parameters $\beta_1$ and $\beta_2$. We still set the optimization goal as minimizing the loss function, but add a constraint $|\beta_1| + |\beta_2| \leq 1$. This constraint forms a diamond-shaped region on the plane, with four "corners" located at $(1, 0)$, $(0, 1)$, $(-1, 0)$, and $(0, -1)$, which happen to lie on the coordinate axes.
 
-![Geometric explanation of L1 regularization producing sparse solutions](../../../statistical-learning/linear-models/assets/l1_sparse_geometry.png)
+![Geometric explanation of L1 regularization producing sparse solutions](assets/l1_sparse_geometry.png)
 
 *Geometric explanation of L1 regularization producing sparse solutions: the loss function contour (red ellipse) first touches a corner of the diamond, yielding a sparse solution*
 
@@ -185,7 +185,7 @@ print("Lasso successfully identified the 3 truly useful features!")
 
 Consider the same example used for Lasso: suppose the model has only two parameters $\beta_1$ and $\beta_2$, with the optimization goal still being loss function minimization, but the constraint becomes $\beta_1^2 + \beta_2^2 \leq 1$. This constraint forms a circular region on the plane, whose boundary is smooth and rounded everywhere, with no "corners" or "sharp points." When the contour lines of the loss function expand outward from the center, the point where they first touch the circular boundary typically does not fall on the coordinate axes — both parameters are non-zero. This is why L2 regularization does not produce sparse solutions.
 
-![Geometric explanation of L2 regularization not producing sparse solutions](../../../statistical-learning/linear-models/assets/l2_nonsparse_geometry.png)
+![Geometric explanation of L2 regularization not producing sparse solutions](assets/l2_nonsparse_geometry.png)
 
 *Geometric explanation of L2 regularization: the circular boundary is smooth, and when the contour touches the circle, neither parameter is zero*
 

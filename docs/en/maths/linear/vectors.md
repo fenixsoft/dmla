@@ -228,7 +228,7 @@ Building on the L1 and L2 norms, mathematicians further generalized to the **$L_
 
 The most intuitive way to understand $L_p$ norms from a geometric perspective is to observe the shape of the **Unit Ball**. The unit ball is the set of all vectors satisfying $\|\mathbf{v}\|_p = 1$ -- the boundary of all points that are "exactly at distance 1 from the origin" under a given norm definition. In a 2D plane, the unit ball is actually a closed curve, called the **unit ball boundary**.
 
-![Unit ball shapes for different p-values](../../../maths/linear/assets/unit_balls.png)
+![Unit ball shapes for different p-values](assets/unit_balls.png)
 
 *Figure: Unit ball shapes for different $p$ values. From left to right: $p=0.25, 0.5, 1, 2, 3, 4, 6, \infty$, showing the transition from star → diamond → circle → square*
 

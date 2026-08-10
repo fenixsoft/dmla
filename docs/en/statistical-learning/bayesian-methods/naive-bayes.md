@@ -44,7 +44,7 @@ This assumption is called **Naive** precisely because it deviates significantly 
 
 3. **Bias-variance trade-off**: The naive assumption introduces bias: probability estimates become inaccurate; but it also greatly reduces variance: probability estimates become more stable. In small-sample scenarios, the estimates of high-variance models fluctuate wildly, and the "biased but stable" nature of Naive Bayes becomes an advantage instead. This is like measuring with a rough ruler — while each measurement has errors, the errors are consistent in direction, making the results relatively reliable after repeated measurements.
 
-![Bias-variance trade-off diagram](../../../statistical-learning/bayesian-methods/assets/bias-variance.png)
+![Bias-variance trade-off diagram](assets/bias-variance.png)
 
 *Figure: Bias-variance trade-off: the cost of stability from the naive assumption*
 

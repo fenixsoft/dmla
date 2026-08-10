@@ -20,7 +20,7 @@ Understanding these limitations is not to negate the value of linear regression.
 
 Let's start with a concrete example. Suppose we collected data on 10 houses in a city and plotted area versus price on a 2D coordinate system with $x$-axis as area and $y$-axis as price, as shown below. Based on life experience and the data in the figure, we can intuitively see that the larger the area, the higher the price. The ten data points roughly follow a straight line from low area and low price to high area and high price (this statistical data is simplified and does not account for real marginal effects). When faced with scattered data points in a coordinate system, our intuition is to naturally "draw a line through them." But how does a computer accurately draw this line? How is this line precisely quantified mathematically?
 
-![House price vs area scatter plot](../../../statistical-learning/linear-models/assets/house-price-scatter.png)
+![House price vs area scatter plot](assets/house-price-scatter.png)
 
 *Figure: House price vs area scatter plot*
 
@@ -59,7 +59,7 @@ This formula shows the layered progression of the matrix form:
 
 This matrix form is not only concise and elegant but, more importantly, reveals the geometric essence of OLS: minimizing the length of the residual vector. Placing this problem in geometric space also makes it intuitive. Suppose $X$ has $2$ columns and $n$ rows (1 feature, $n$ samples), then all column vectors of $X$ form a 2D plane — this is the "column space." $y$ is also a vector (1 column, $n$ rows — $n$ actual outcomes, one per sample), which generally does not lie exactly on this plane (otherwise it would mean perfect prediction). Our goal is: find a vector $X\beta$ within the column space that is as close to $y$ as possible. The shortest distance from a point outside a plane to the plane is along the perpendicular direction. In other words, the "projection" of $y$ onto the column space is the closest point. This projected point is $\hat{y} = X\beta$, and the line from $y$ to the projected point is the residual vector $e = y - X\beta$.
 
-![Geometric intuition of OLS: projection](../../../statistical-learning/linear-models/assets/ols-projection.png)
+![Geometric intuition of OLS: projection](assets/ols-projection.png)
 
 *Figure: Geometric intuition of OLS — projection of y onto the column space of X*
 

@@ -4,7 +4,7 @@ Modern data often has very high dimensionality. A $100 \times 100$ grayscale ima
 
 The figure below provides an intuitive comparison of the geometric differences between a 2D unit square and a 3D unit cube. Although both have a "volume" of $1$, the spatial diagonal length increases from $\sqrt{2} \approx 1.41$ in 2D to $\sqrt{3} \approx 1.73$ in 3D. As dimensionality continues to grow, the diagonal length far exceeds the side length, causing data points to concentrate more and more in the corners of the hypercube while fewer data points remain in the central region. This is the geometric essence of the curse of dimensionality.
 
-![Intuitive understanding of the curse of dimensionality: geometric changes from 2D to 3D](../../../statistical-learning/unsupervised-learning/assets/curse_of_dimensionality.png)
+![Intuitive understanding of the curse of dimensionality: geometric changes from 2D to 3D](assets/curse_of_dimensionality.png)
 
 *Figure: Intuitive understanding of the curse of dimensionality: geometric changes from 2D to 3D*
 

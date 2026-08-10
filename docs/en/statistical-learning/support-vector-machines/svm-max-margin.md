@@ -8,7 +8,7 @@ Recall what we learned in the [Logistic Regression](../linear-models/logistic-re
 
 The left panel in the figure below illustrates this dilemma: each dashed line can separate the two classes, but they differ in position. The right panel shows SVM's answer: we should choose the line that is farthest from both classes. On each side of this line, a parallel line passes through the nearest data points, and the region between them is called the **margin**. The core idea of SVM is precisely to maximize this margin, finding a maximum-margin line (hyperplane) that keeps the decision boundary as far as possible from both classes, thereby gaining stronger predictive power for unseen data.
 
-![Comparison of multiple feasible separating lines and the maximum margin separating line](../../../statistical-learning/support-vector-machines/assets/svm-max-margin-overview.png)
+![Comparison of multiple feasible separating lines and the maximum margin separating line](assets/svm-max-margin-overview.png)
 
 *Figure: Left panel shows multiple feasible separating lines, right panel shows the maximum margin separating line chosen by SVM*
 
@@ -28,7 +28,7 @@ $$\text{distance}(x) = \frac{|w^T x + b|}{\|w\|}$$
 
 The reason for taking the absolute value is that $w^T x + b$ is the value obtained by substituting point $x$ into the hyperplane equation, reflecting the point's position relative to the hyperplane. When the value is positive, the point lies on the side pointed to by the normal vector; when negative, it lies on the opposite side. The absolute value $|w^T x + b|$ ensures the distance is always positive, because we care about "how far" rather than "on which side."
 
-![Point-to-hyperplane distance and geometric margin illustration](../../../statistical-learning/support-vector-machines/assets/svm-margin-distance.png)
+![Point-to-hyperplane distance and geometric margin illustration](assets/svm-margin-distance.png)
 
 *Figure: Left panel shows the distance calculation from a point to the hyperplane, right panel shows the relationship between functional margin and geometric margin*
 
@@ -64,7 +64,7 @@ Here another mathematical trick is used: replacing the original $\|w\|$ with $\f
 
 After the optimal separating hyperplane is determined, those sample points that exactly satisfy the constraint with equality (i.e., points where $y_i (w^T x_i + b) = 1$) are called **support vectors**. From a geometric perspective, support vectors are the points closest to the hyperplane, all lying on the margin boundary, as shown in the figure below.
 
-![Support vectors determine the decision boundary](../../../statistical-learning/support-vector-machines/assets/svm-support-vectors.png)
+![Support vectors determine the decision boundary](assets/svm-support-vectors.png)
 
 *Figure: Left panel shows how support vectors (highlighted) determine the decision boundary, right panel shows that non-support vectors can move freely without affecting the boundary*
 
@@ -322,7 +322,7 @@ for sample, pred in zip(new_samples, predictions):
 
 SVM has classic applications in the field of image recognition. Below, we use the handwritten digits dataset provided by SciKit-Learn to demonstrate how SVM distinguishes between the digits $0$ and $1$. This is a typical binary classification problem: images of digit $0$ typically exhibit ring-like features, while images of digit $1$ show elongated vertical strip features. The two classes have distinctly different distribution patterns in pixel space.
 
-![SciKit-Learn handwritten digits dataset](../../../statistical-learning/support-vector-machines/assets/sklearn_digits_dataset.png)
+![SciKit-Learn handwritten digits dataset](assets/sklearn_digits_dataset.png)
 
 *Figure: SciKit-Learn handwritten digits dataset*
 

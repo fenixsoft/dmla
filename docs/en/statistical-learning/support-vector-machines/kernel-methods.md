@@ -8,7 +8,7 @@ The person who truly brought the kernel trick to maturity was Vladimir Vapnik. I
 
 Looking back at the [Maximum Margin Hyperplane](svm-max-margin.md#maximum-margin-hyperplane) we learned in the previous chapter, it is easy to identify an implicit assumption: the data must be linearly separable or approximately linearly separable. When data distribution exhibits complex nonlinear patterns, the assumption of "separating positive and negative classes with a single hyperplane" breaks down. As shown in the figure below, no hyperplane can distinguish between the two classes of data.
 
-![The dilemma of concentric circles data and linear classifiers](../../../statistical-learning/support-vector-machines/assets/kernel-intro-circles.png)
+![The dilemma of concentric circles data and linear classifiers](assets/kernel-intro-circles.png)
 
 *Figure: Concentric circles data distribution (left) and the dilemma of linear classifiers (right). No matter how many dividing lines are tried, the inner and outer circles cannot be completely separated*
 
@@ -20,13 +20,13 @@ Suppose there is a mapping function $\phi: \mathbb{R}^d \rightarrow \mathbb{R}^D
 
 Using a real-life analogy, imagine you scatter a mix of black and white sesame seeds and rice grains on a table. On the tabletop, the sesame seeds and rice grains are intertwined, making it difficult to completely separate them with a stick. But if you put the sesame seeds and rice grains into a bucket of water, the sesame seeds float on the surface while the rice grains sink to the bottom (in this example, the different densities of rice and sesame represent implicit high-dimensional features). Then a piece of paper can easily separate them, as shown in the figure below:
 
-![Kernel Trick: low-dimensional nonlinear to high-dimensional linear separability](../../../statistical-learning/support-vector-machines/assets/kernel-mapping-comparison.png)
+![Kernel Trick: low-dimensional nonlinear to high-dimensional linear separability](assets/kernel-mapping-comparison.png)
 
 *Figure: Nonlinearly separable data in low-dimensional space (left) becomes linearly separable after mapping to high-dimensional space (right). Blue dots represent the negative class, red triangles represent the positive class, and the green plane is the separating hyperplane in high-dimensional space*
 
 Let us consider another concrete numerical example to demonstrate the effect of applying Cover's Theorem for dimensionality expansion. Consider one-dimensional data $x \in \mathbb{R}$, where the negative samples are $x \in \{-2, 2\}$ and the positive samples are $x \in \{-1, 0, 1\}$, as shown in the figure below. In one-dimensional space, no matter which splitting point is chosen, some samples will be misclassified because the positive and negative samples are interleaved, and no "one-size-fits-all" solution exists. However, if we map the data to two-dimensional space using $\phi(x) = (x, x^2)$, the situation changes completely. Observe the right figure: all positive samples (red triangles) fall in the bottom region of the parabola, while negative samples (blue dots) are distributed on both higher sides. A horizontal dividing line $x^2 = 2$ can perfectly separate the two classes. This again demonstrates that seemingly complex nonlinear patterns in the original space may simply be linear patterns in a higher-dimensional space, once we change to a more "spacious" coordinate system for observation.
 
-![One-dimensional data mapped to two-dimensional space](../../../statistical-learning/support-vector-machines/assets/kernel-quadratic-mapping.png)
+![One-dimensional data mapped to two-dimensional space](assets/kernel-quadratic-mapping.png)
 
 *Figure: Positive and negative samples alternating in one-dimensional space (left), separable by a straight line after mapping to two-dimensional space (right)*
 
@@ -92,7 +92,7 @@ An intuitive way to understand the RBF kernel is to observe its distance-decay c
 
 The parameter $\gamma$ controls the radius of influence of each support vector. When $\gamma$ is large, the Gaussian distribution becomes narrow, the influence range of each support vector is limited to nearby regions, and the model tends to tailor the decision boundary to each local data cluster, potentially leading to overfitting. When $\gamma$ is small, the Gaussian distribution becomes wide, the influence range of individual support vectors expands, the decision boundary becomes smoother, model complexity decreases, and underfitting may occur. This "radius-complexity" correspondence is the intuition for tuning the RBF kernel parameter.
 
-![Sphere of influence of RBF kernel support vectors and decision surface formation](../../../statistical-learning/support-vector-machines/assets/rbf_influence_visualization.png)
+![Sphere of influence of RBF kernel support vectors and decision surface formation](assets/rbf_influence_visualization.png)
 
 *Figure: Conceptual illustration of the "sphere of influence" of RBF kernel support vectors*
 

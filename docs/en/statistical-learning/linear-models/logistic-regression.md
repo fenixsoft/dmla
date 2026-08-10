@@ -105,7 +105,7 @@ $$\nabla_\beta L = 2(\hat{p} - y) \cdot \hat{p}(1-\hat{p}) \cdot X$$
 
 This formula reveals the paradox of squared loss: when the model's prediction is close to the correct boundary ($\hat{p}$ close to 0 or 1), the factor $\hat{p}(1-\hat{p})$ approaches 0, and the gradient tends to vanish. In other words, the more "confidently correct" the model's judgment, the weaker the learning motivation. Consider an extreme scenario: the true label is 1, but the current predicted probability is $\hat{p} = 0.01$ (an extremely large error). The gradient would then be $2(0.01-1) \times 0.01(1-0.01) \approx -0.02$, an extremely weak learning signal. The model has made a serious error, yet due to the "squeezing effect" of Sigmoid, it can barely learn from its mistake. This contradicts the learning logic of classification tasks: the more wrong the prediction, the stronger the learning motivation should be, not weaker.
 
-![Convex vs non-convex function graph](../../../statistical-learning/linear-models/assets/convex-vs-nonconvex-3d.png)
+![Convex vs non-convex function graph](assets/convex-vs-nonconvex-3d.png)
 
 *Figure: Convex vs non-convex function graph*
 

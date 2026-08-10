@@ -198,13 +198,13 @@ In practical problems, what is usually more actionable is **variance**, which me
 
 In mathematical statistics, bias and variance are both measures of the magnitude and sources of error (a third source of error is noise). Using a shooting competition as an analogy for the effects of bias and variance on results: suppose a shooter aiming at a 10-point target only hits 7 points. The gap of 3 points is the difference between the expected outcome and the actual target -- that is, the error. This error could occur because the shooter did not aim well in the first place, deliberately aiming at 7 points, or because the shooter did aim at the center of the 10-point target, but their hand was not steady enough, and the shot landed at 7 points. In this case, "aiming poorly but having a steady hand" corresponds to error composed of high bias and low variance, while "aiming well but having an unsteady hand" corresponds to error composed of low bias and high variance. The impact of bias and variance on results in this example can be intuitively seen in the following figure.
 
-![Intuitive understanding of bias and variance](../../../maths/probability/assets/bias_and_variance.png)
+![Intuitive understanding of bias and variance](assets/bias_and_variance.png)
 
 *Figure: Intuitive understanding of bias and variance*
 
 The following code provides an intuitive demonstration of the meaning of variance by comparing two normal distributions. Both distributions have the same expectation (0) but different variances (1 and 4, respectively). The code generates two sets of sample data, compares their distribution patterns using histograms, and visualizes the mathematical definition of variance: it is the average of the squared deviations.
 
-![Variance visualization](../../../maths/probability/assets/Variance.png)
+![Variance visualization](assets/Variance.png)
 
 *Figure: Variance visualization*
 
@@ -325,7 +325,7 @@ $$f(x) = \frac{1}{\sqrt{2\pi\sigma^2}} \exp\left(-\frac{(x-\mu)^2}{2\sigma^2}\ri
 
 where $\mu$ is the mean (determining the center position of the curve) and $\sigma$ is the standard deviation (determining the width of the curve). It is denoted as $X \sim N(\mu, \sigma^2)$. This formula may look complex at first glance, but its structure is actually quite clear. The coefficient $\frac{1}{\sqrt{2\pi\sigma^2}}$ is a constant that ensures the total area under the curve equals 1 (the normalization property of probability). The core part is the exponential term $\exp\left(-\frac{(x-\mu)^2}{2\sigma^2}\right)$, which determines the "bell" shape of the curve. The numerator $(x-\mu)^2$ in the exponential term measures the deviation of $x$ from the mean $\mu$: when $x = \mu$, the deviation is zero, the exponential term takes its maximum value of 1, and the probability density is highest; as $x$ moves away from $\mu$, $(x-\mu)^2$ increases, and the negative exponent causes the probability density to decrease rapidly. The denominator $2\sigma^2$ in the exponential term controls the rate of this decrease: the larger $\sigma$ is, the larger the denominator, the slower the decrease, and the flatter and wider the curve; the smaller $\sigma$ is, the faster the decrease, and the taller and narrower the curve. This is like a mountain peak: the mean $\mu$ is the position of the summit, and the standard deviation $\sigma$ is the steepness of the slope.
 
-![PDF of the normal distribution](../../../maths/probability/assets/PDF.png)
+![PDF of the normal distribution](assets/PDF.png)
 
 *Figure: Probability density function of the normal distribution*
 

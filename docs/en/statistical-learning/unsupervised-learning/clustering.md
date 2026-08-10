@@ -4,7 +4,7 @@ All the statistical learning methods covered earlier have clear objectives, such
 
 However, in the real world, a vast amount of data comes without labels. We may have purchase records of thousands of customers without knowing which groups they belong to; massive gene expression data without knowing which genes work together; complex social network relationships without knowing the hidden community structures. These problems are like asking students to discover patterns on their own from an exam with no answer key. This is precisely what **Unsupervised Learning** aims to solve.
 
-![Clustering process diagram: discovering natural groupings from unlabeled data](../../../statistical-learning/unsupervised-learning/assets/clustering_process.png)
+![Clustering process diagram: discovering natural groupings from unlabeled data](assets/clustering_process.png)
 
 *Figure: Clustering process diagram: discovering natural groupings from unlabeled data*
 
