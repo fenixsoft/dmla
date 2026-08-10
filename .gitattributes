@@ -1,0 +1,14 @@
+# 统一仓库内文本文件的换行符为 LF，消除 Windows 上
+# core.autocrlf 导致的 "LF will be replaced by CRLF" 警告。
+* text=auto eol=lf
+
+# 二进制资源不参与换行符归一化，避免损坏
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.eot binary
