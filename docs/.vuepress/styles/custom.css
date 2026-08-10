@@ -32,14 +32,16 @@ html {
 .katex {
   max-width: 100%;
 }
-/* Mermaid 图表 - 防止超出页面宽度，移动端横向滚动 */
+/* Mermaid 图表 - 防止超出页面宽度，过宽时出现横向滚动条 */
+/* overflow-y: hidden 必须同时设置，因为 overflow-x 非 visible 时 CSS 规范要求 overflow-y 变为 auto */
 .mermaid {
   max-width: 100% !important;
+  overflow-x: auto;
+  overflow-y: hidden;
 }
-@media (max-width: 959px) {
-  .mermaid {
-    overflow-x: auto !important;
-  }
+/* 覆盖 mermaid 库默认的 max-width:100%，允许宽图以自然宽度显示并触发横向滚动 */
+.mermaid svg {
+  max-width: none;
 }
 /* 图注样式 - 通过 JS 自动检测并添加 .figure-caption 类后居中显示 */
 /* 使用 class 而非 :only-child 伪类，因为 :only-child 只计算元素节点不计算文本节点，

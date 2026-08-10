@@ -166,15 +166,24 @@ const equationStylesContent = `
 // 样式元素引用（在 onMounted 中创建）
 let equationStyles = null
 
+// 检测当前页面语言
+// 英文页面路径以 /en/ 开头，其余为中文
+const getLang = () => {
+  return window.location.pathname.startsWith('/en/') ? 'en' : 'zh'
+}
+
 // 创建公式预览提示框
 let previewElement = null
 
 const createPreviewElement = () => {
   if (previewElement) return previewElement
 
+  const lang = getLang()
+  const headerText = lang === 'en' ? 'Formula Preview' : '公式预览'
+
   previewElement = document.createElement('div')
   previewElement.className = 'equation-preview'
-  previewElement.innerHTML = '<div class="equation-preview-header">公式预览</div><div class="equation-preview-content"></div>'
+  previewElement.innerHTML = `<div class="equation-preview-header">${headerText}</div><div class="equation-preview-content"></div>`
   document.body.appendChild(previewElement)
   return previewElement
 }
@@ -204,7 +213,9 @@ const showEquationPreview = (refElement, label) => {
   // 更新标题显示公式编号（圆圈数字）
   const number = equationElement.dataset.equationNumber
   const circleNum = parseInt(number) <= 50 ? toCircleNumber(parseInt(number)) : number
-  preview.querySelector('.equation-preview-header').textContent = `公式 ${circleNum}`
+  const lang = getLang()
+  const prefix = lang === 'en' ? 'Formula' : '公式'
+  preview.querySelector('.equation-preview-header').textContent = `${prefix} ${circleNum}`
 
   // 计算位置
   const rect = refElement.getBoundingClientRect()

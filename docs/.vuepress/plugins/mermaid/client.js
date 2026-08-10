@@ -140,10 +140,11 @@ async function renderMermaid() {
             fo.setAttribute('height', '26')
           }
 
-          // 如果有尺寸修饰符，调整容器大小以避免裁剪
+          // 如果有尺寸修饰符，按比例缩放 SVG 尺寸
+          // 直接设置 SVG 宽高（viewBox 自动处理内容缩放），不使用 transform
+          // 这样布局尺寸和视觉尺寸一致，CSS overflow-x:auto 才能正确检测溢出
           const sizeClass = sizeClasses.find(cls => cls.startsWith('mermaid-'))
           if (sizeClass) {
-            // 获取缩放比例
             const scales = {
               'mermaid-small': 0.85,
               'mermaid-compact': 0.75,
@@ -151,26 +152,14 @@ async function renderMermaid() {
             }
             const scale = scales[sizeClass] || 1
 
-            // 获取 SVG 的原始尺寸
             const viewBox = svg.getAttribute('viewBox')
             if (viewBox) {
               const parts = viewBox.split(' ')
               const width = parseFloat(parts[2])
               const height = parseFloat(parts[3])
 
-              // 设置容器宽高为缩放后的尺寸
-              div.style.width = `${width * scale}px`
-              div.style.height = `${height * scale}px`
-              div.style.overflow = 'hidden'
-              div.style.display = 'inline-block'
-              div.style.textAlign = 'left'
-
-              // SVG 使用 transform scale
-              svg.style.transform = `scale(${scale})`
-              svg.style.transformOrigin = 'top left'
-              // SVG 保持原始尺寸
-              svg.style.width = `${width}px`
-              svg.style.height = `${height}px`
+              svg.style.width = `${width * scale}px`
+              svg.style.height = `${height * scale}px`
             }
           }
         }
