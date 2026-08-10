@@ -65,7 +65,7 @@ export default defineClientConfig({
     onMounted(applyFigureCaptionStyles)
     router.afterEach(applyFigureCaptionStyles)
   },
-  enhance({ app }) {
+  enhance({ app, router }) {
     // 手动注册 HomeHero 组件，确保 VuePress 上下文正确传递
     // 避免 registerComponentsPlugin 自动注册导致的 HMR 上下文问题
     app.component('HomeHero', HomeHero)
@@ -73,5 +73,44 @@ export default defineClientConfig({
 
     // 注入 sidebar 配置到全局属性
     app.provide('sidebarConfig', sidebarConfig)
+
+    // 内部带锚点的跨页链接改为整页跳转（URL 直转），复用 SSR 原生锚点定位。
+    // 背景：点击内部跨页锚点链接时，Vue Router 的 SPA 跳转在目标页渲染完成前
+    // 无法确定锚点位置，经常“只换 URL 不滚动”；而直接在地址栏输入带锚点 URL、
+    // 或像外部链接那样整页跳转，SSR 返回的静态 HTML 已包含锚点，浏览器原生即可
+    // 正确定位。这里在捕获阶段拦截这类点击，阻止 client 路由并改为整页跳转。
+    // 范围：仅跨页 + 带锚点 + 同源内部链接；同页锚点（TOC）仍走默认 client 滚动，
+    // 保持 SPA 流畅；非锚点内部链接与真正的外部链接均不受影响。
+    const onInternalHashLinkClick = (e) => {
+      if (e.defaultPrevented || e.button !== 0) return
+      if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return
+      const target = e.target
+      if (!(target instanceof Element)) return
+      const link = target.closest('a')
+      if (!link) return
+      if (link.target === '_blank' || link.hasAttribute('download')) return
+      const rawHref = link.getAttribute('href')
+      if (!rawHref) return
+      let url
+      try {
+        url = new URL(link.href, window.location.href)
+      } catch (_) {
+        return
+      }
+      // 仅处理同源内部链接
+      if (url.origin !== window.location.origin) return
+      // 无锚点：交给 Vue Router 正常做 SPA 跳转
+      if (!url.hash) return
+      // 同页锚点：交回默认滚动，不做整页刷新
+      if (
+        url.pathname === window.location.pathname &&
+        url.search === window.location.search
+      )
+        return
+      // 跨页带锚点：阻止 client 路由，直接整页跳转，由 SSR 原生定位锚点
+      e.preventDefault()
+      window.location.href = link.href
+    }
+    document.addEventListener('click', onInternalHashLinkClick, true)
   }
 })
