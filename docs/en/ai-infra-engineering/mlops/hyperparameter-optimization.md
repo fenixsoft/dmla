@@ -388,7 +388,7 @@ print(f"  Absolute improvement:            {tpe_score - rs_score:.4f}")
 
 The cumulative best curve on the left shows that after the initialization phase (first 10 random samples), TPE search is significantly more efficient than random search — its historical best value rises faster, demonstrating that leveraging historical information does indeed guide the search direction. The scatter distribution on the right shows that TPE's later sampling points are more concentrated in high-score regions rather than uniformly scattered across the entire space — this is precisely the effect of the \(l(x)/g(x)\) ratio focusing sampling on promising parameter regions.
 
-![Running results](../../../ai-infra-engineering/mlops/assets/rs-tpe.png)
+![Running results](assets/rs-tpe.png)
 
 *Figure: Running results*
 

@@ -48,7 +48,7 @@ The fluctuations of model performance metrics along the time axis are driven by 
 
     Common empirical thresholds for PSI are: PSI < 0.1 indicates the distribution is essentially stable, 0.1 ≤ PSI < 0.25 indicates moderate drift, and PSI ≥ 0.25 indicates significant drift. It is important to note that these thresholds are empirical — different business scenarios and feature types should calibrate their own thresholds based on historical data. The figure below shows a visualization example of the PSI calculation process. The left chart compares the proportions of the reference and current distributions across bins, and the right chart shows the contribution of each bin to the final PSI value. The red dashed line marks the threshold of 0.1 (slight drift).
 
-    ![PSI Calculation Process](../../../ai-infra-engineering/mlops/assets/psi-calculation.png)
+    ![PSI Calculation Process](assets/psi-calculation.png)
 
     *Figure: PSI calculation process*
 
@@ -58,7 +58,7 @@ The fluctuations of model performance metrics along the time axis are driven by 
 
     The larger the KS statistic, the less likely the two distributions come from the same population. Compared to PSI, the KS test can be used directly within a hypothesis testing framework, answering questions such as whether the current distribution is significantly different from the baseline distribution at a significance level of $\alpha = 0.01$. This allows alert decisions to be based on statistical confidence rather than merely on fixed thresholds. The KS test is suitable for continuous features, does not require the data to follow any particular distribution, and is sensitive to shape changes, location shifts, and scale changes in the distribution. The figure below shows a comparison of two empirical distribution functions in a KS test. The blue curve is the CDF of the reference distribution, the orange curve is the CDF of the current distribution, and the black dashed line marks the position of their greatest difference — the KS statistic.
 
-    ![KS Test Visualization](../../../ai-infra-engineering/mlops/assets/ks-test-visualization.png)
+    ![KS Test Visualization](assets/ks-test-visualization.png)
 
     *Figure: KS test visualization*
 

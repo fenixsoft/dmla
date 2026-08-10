@@ -26,7 +26,7 @@ For a specific computation task, how do you determine whether the bottleneck lie
 
 In 2009, computer scientist Samuel Williams and colleagues at the University of California, Berkeley proposed the Roofline model in their paper "[Roofline: An Insightful Visual Performance Model for Multicore Architectures](https://dl.acm.org/doi/10.1145/1498765.1498785)", using a simple curve to intuitively display the relationship between hardware performance ceilings and arithmetic intensity. This model plots arithmetic intensity on the x-axis and attainable performance (FLOPS) on the y-axis, drawing the hardware's performance ceiling curve. The curve has two segments: the rising left segment represents the bandwidth-bound region, where performance increases linearly with arithmetic intensity (performance = bandwidth x arithmetic intensity). The flat right segment represents the compute-bound region, where performance reaches the peak compute throughput and no longer increases. The intersection of the two segments is called the **ridge point**, whose arithmetic intensity equals peak compute / peak bandwidth—the critical value at which both compute and bandwidth are fully utilized. When arithmetic intensity is below the ridge point, compute is underutilized because data cannot be supplied fast enough, and performance is limited by bandwidth. When above the ridge point, bandwidth is underutilized because compute is insufficient, and performance is limited by compute.
 
-![Roofline Model: Prefill and Decode Performance Bottlenecks on A100](../../../ai-infra-engineering/model-serving/assets/roofline-model.png)
+![Roofline Model: Prefill and Decode Performance Bottlenecks on A100](assets/roofline-model.png)
 
 *Figure: Roofline model of the A100*
 
