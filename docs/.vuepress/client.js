@@ -121,6 +121,8 @@ export default defineClientConfig({
       e.preventDefault()
       window.location.href = link.href
     }
-    document.addEventListener('click', onInternalHashLinkClick, true)
+    if (typeof document !== 'undefined') {
+      document.addEventListener('click', onInternalHashLinkClick, true)
+    }
   }
 })
