@@ -418,7 +418,7 @@ $$L_{Huber} = \begin{cases} \frac{1}{2}(y - \hat{y})^2 & |y - \hat{y}| \leq \del
 
 $$H(P, Q) = -\sum_x P(x) \log Q(x)$$
 
-其中 $P$ 是真实分布，$Q$ 是预测分布。当 $P = Q$（预测完全正确），交叉熵等于熵 $H(P)$ 达到最小值。预测越偏离真实分布，交叉熵越大。在机器学习中，真实分布 $P$ 由训练数据给定（通常是 [One-Hot 编码](../sequence-models/word-embedding.md#one-hot-编码的局限)），预测分布 $Q$ 由模型输出（Softmax 或 Sigmoid），训练目标就是最小化交叉熵，使预测分布逼近真实分布。
+其中 $P$ 是真实分布，$Q$ 是预测分布。当 $P = Q$（预测完全正确），交叉熵等于熵 $H(P)$ 达到最小值。预测越偏离真实分布，交叉熵越大。在机器学习中，真实分布 $P$ 由训练数据给定（通常是 [One-Hot 编码](../sequence-models/word-embedding.md#one-hot-编码与词袋模型)），预测分布 $Q$ 由模型输出（Softmax 或 Sigmoid），训练目标就是最小化交叉熵，使预测分布逼近真实分布。
 
 二分类问题只有两个类别（如是否为垃圾邮件），输出一个概率值 $\hat{y} \in (0,1)$（通常由 Sigmoid 输出）。这种情况下通常采用**二分类交叉熵损失**（Binary Cross-Entropy Loss，简称 BCE）：
 

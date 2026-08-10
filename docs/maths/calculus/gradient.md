@@ -34,7 +34,7 @@ $$\nabla f = \left(\frac{\partial f}{\partial x_1}, \frac{\partial f}{\partial x
 
 $$D_{\mathbf{u}} f = \nabla f \cdot \mathbf{u}$$
 
-这个公式（在学习[链式法则](#链式法则)后可以证明它与前面的定义是等价的）揭示了梯度一个极其重要的几何性质：**梯度指向函数值增长最快的方向**。回想一下 [内积的定义与几何性质](../linear/vectors.md#内积与投影)，设 $\theta$ 为梯度 $\nabla f$ 与方向向量 $\mathbf{u}$ 之间的夹角，则有 $D_{\mathbf{u}} f = \|\nabla f\| \|\mathbf{u}\| \cos\theta $，又由于 $\|\mathbf{u}\| = 1$，因此 $D_{\mathbf{u}} f = \|\nabla f\| \cos\theta$。因为 $\cos\theta$ 在 $\theta = 0$ 时取得最大值 1，所以当方向向量 $\mathbf{u}$ 与梯度 $\nabla f$ **同向**时，方向导数达到最大值 $\|\nabla f\|$。换句话说，梯度方向就是让函数值增长最快的方向。
+这个公式（在学习[链式法则](#复合函数与链式法则)后可以证明它与前面的定义是等价的）揭示了梯度一个极其重要的几何性质：**梯度指向函数值增长最快的方向**。回想一下 [内积的定义与几何性质](../linear/vectors.md#内积与投影)，设 $\theta$ 为梯度 $\nabla f$ 与方向向量 $\mathbf{u}$ 之间的夹角，则有 $D_{\mathbf{u}} f = \|\nabla f\| \|\mathbf{u}\| \cos\theta $，又由于 $\|\mathbf{u}\| = 1$，因此 $D_{\mathbf{u}} f = \|\nabla f\| \cos\theta$。因为 $\cos\theta$ 在 $\theta = 0$ 时取得最大值 1，所以当方向向量 $\mathbf{u}$ 与梯度 $\nabla f$ **同向**时，方向导数达到最大值 $\|\nabla f\|$。换句话说，梯度方向就是让函数值增长最快的方向。
 
 举个具体例子，考虑函数 $f(x, y) = x^2 + y^2$，这像一个碗状曲面（或倒过来的山丘），如下图所示。在点 $(1, 0.5)$ 处的梯度 $\nabla f = (2x, 2y) = (2, 1)$，梯度大小 $||\nabla f|| = \sqrt{2^2 + 1^2} = \sqrt{5} \approx 2.24$
 

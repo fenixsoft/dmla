@@ -160,11 +160,11 @@ The core components of the model are:
 
 | Component | Choice |
 |-----------|--------|
-| Normalization | [RMSNorm](architecture-evolution.md#rmsnorm) replacing [LayerNorm](./transformer-architecture.md#layer-normalization) |
+| Normalization | [RMSNorm](architecture-evolution.md#layer-normalization) replacing [LayerNorm](./transformer-architecture.md#layer-normalization) |
 | Positional Encoding | [RoPE (Rotary Position Embedding)](./transformer-architecture.md#rope-rotary-position-embedding) (with [YaRN extension](./architecture-evolution.md#yarn-position-encoding)) |
 | Attention KV Cache Strategy | [GQA (Grouped Query Attention)](./architecture-evolution.md#gqa-grouped-query-attention) replacing [MHA (Multi-Head Attention)](./architecture-evolution.md#mha-multi-head-attention) |
 | Attention Efficiency Strategy | Prefer [Flash Attention](./architecture-evolution.md#flash-attention) (depending on hardware support) |
-| Activation Function | [SwiGLU](./architecture-evolution.md#swiglu) replacing [ReLU](../../deep-learning/neural-network-structure/activation-loss-functions.md#relu-and-its-variants) |
+| Activation Function | [SwiGLU](./architecture-evolution.md#activation-functions) replacing [ReLU](../../deep-learning/neural-network-structure/activation-loss-functions.md#relu-and-its-variants) |
 | Tokenizer | [BPE Tokenizer](language-model-tokenization.md#bpe) |
 | Optimizer | [AdamW Adaptive Optimizer](../../deep-learning/neural-network-optimization/adaptive-optimizers.md#adamw) |
 

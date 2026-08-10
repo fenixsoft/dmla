@@ -415,7 +415,7 @@ Regression problems predict numeric values; classification problems predict cate
 
 $$H(P, Q) = -\sum_x P(x) \log Q(x)$$
 
-where $P$ is the true distribution and $Q$ is the predicted distribution. When $P = Q$ (perfect prediction), the cross-entropy equals the entropy $H(P)$ and reaches its minimum; the more the prediction deviates from the true distribution, the larger the cross-entropy. In machine learning, the true distribution $P$ is given by the training data (typically as a [One-Hot encoding](../sequence-models/word-embedding.md#limitations-of-one-hot-encoding)), and the predicted distribution $Q$ is output by the model (via Softmax or Sigmoid). The training objective is to minimize the cross-entropy, making the predicted distribution approach the true distribution.
+where $P$ is the true distribution and $Q$ is the predicted distribution. When $P = Q$ (perfect prediction), the cross-entropy equals the entropy $H(P)$ and reaches its minimum; the more the prediction deviates from the true distribution, the larger the cross-entropy. In machine learning, the true distribution $P$ is given by the training data (typically as a [One-Hot encoding](../sequence-models/word-embedding.md#one-hot-encoding-and-bag-of-words)), and the predicted distribution $Q$ is output by the model (via Softmax or Sigmoid). The training objective is to minimize the cross-entropy, making the predicted distribution approach the true distribution.
 
 Binary classification involves only two classes (e.g., "is it spam or not"), outputting a single probability value $\hat{y} \in (0,1)$ (typically from a Sigmoid output). In this case, we use the **Binary Cross-Entropy Loss** (BCE):
 

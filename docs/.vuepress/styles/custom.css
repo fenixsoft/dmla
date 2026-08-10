@@ -1,4 +1,8 @@
 ﻿/* IdeaSpaces 自定义样式 */
+/* 禁用 scroll-padding-top，让锚点跳转时标题贴顶 */
+html {
+  scroll-padding-top: 0 !important;
+}
 :root {
   --c-brand: #2563EB;
   --c-brand-light: #EFF6FF;

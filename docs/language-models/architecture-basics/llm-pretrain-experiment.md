@@ -160,11 +160,11 @@ class PretrainDataset(Dataset):
 
 | 组件 | 选择 |
 |------|------|
-| 归一化层 | [RMSNorm](architecture-evolution.md#rmsnorm) 替代 [LayerNorm](transformer-architecture.md#层归一化) |
+| 归一化层 | [RMSNorm](architecture-evolution.md#层归一化) 替代 [LayerNorm](transformer-architecture.md#层归一化) |
 | 位置编码 | [RoPE 旋转位置编码](./transformer-architecture.md#rope-旋转位置编码)（使用 [YaRN 扩展](./architecture-evolution.md#yarn-位置编码)） |
 | 注意力 KV 缓存策略 | [GQA 分组查询注意力](./architecture-evolution.md#gqa-分组查询注意力) 代替 [MHA 多头注意力](./architecture-evolution.md#mha-多头注意力) |
 | 注意力 效率策略 | 优先使用[Flash Attention](./architecture-evolution.md#flash-attention)（取决于硬件支持） |
-| 激活函数 | [SwiGLU 激活函数](./architecture-evolution.md#swiglu) 代替 [ReLU 激活函数](../../deep-learning/neural-network-structure/activation-loss-functions.md#relu-及其变体) |
+| 激活函数 | [SwiGLU 激活函数](./architecture-evolution.md#激活函数) 代替 [ReLU 激活函数](../../deep-learning/neural-network-structure/activation-loss-functions.md#relu-及其变体) |
 | 分词器 | [BPE 分词器](language-model-tokenization.md#bpe) |
 | 优化器 | [AdamW 自适应优化器](../../deep-learning/neural-network-optimization/adaptive-optimizers.md#adamw) |
 

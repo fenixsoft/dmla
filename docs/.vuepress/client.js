@@ -101,12 +101,22 @@ export default defineClientConfig({
       if (url.origin !== window.location.origin) return
       // 无锚点：交给 Vue Router 正常做 SPA 跳转
       if (!url.hash) return
-      // 同页锚点：交回默认滚动，不做整页刷新
+      // 同页锚点：显式控制滚动，避免各浏览器对含非 ASCII 字符的哈希处理不一致
+      // 导致的原生锚点定位失效。不考虑 URL hash 更新（由 active-header-links 插件管理）
       if (
         url.pathname === window.location.pathname &&
         url.search === window.location.search
-      )
+      ) {
+        e.preventDefault()
+        const targetId = decodeURIComponent((url.hash || '').slice(1))
+        if (targetId) {
+          const targetEl = document.getElementById(targetId)
+          if (targetEl) {
+            targetEl.scrollIntoView({ behavior: 'auto' })
+          }
+        }
         return
+      }
       // 跨页带锚点：阻止 client 路由，直接整页跳转，由 SSR 原生定位锚点
       e.preventDefault()
       window.location.href = link.href
