@@ -4,7 +4,7 @@
 
 2020 年 1 月，物理学家贾里德·卡普兰（Jared Kaplan）在 OpenAI 期间与达里奥·阿莫代伊（Dario Amodei，后来创立 Anthropic）等人合作发表了论文《[Scaling Laws for Neural Language Models](https://arxiv.org/abs/2001.08361)》。他们发现语言模型的测试损失与模型参数量、训练数据量、计算量之间存在幂律关系，把规模翻 10 倍，损失就降低一个固定倍数。这就是后来被称为 Kaplan Scaling Laws 的发现，它让大语言模型的训练从多投钱总会好一点的经验判断，变成了可预测的工程问题。
 
-两年后，DeepMind 的乔丹·霍夫曼（Jordan Hoffmann）等人在论文《[Training Compute-Optimal Large Language Models](https://arxiv.org/abs/2203.15556)》中推翻了卡普兰的结论。他们训练了超过 400 个模型后发现，模型参数和训练数据应该同步增长，而不是像卡普兰所说的参数比数据更重要。为验证这一点，他们训练了一个叫 Chinchilla 的 70 亿参数模型，用 1.4 万亿 token 数据训练，在相同计算预算下击败了参数量四倍于自己的 Gopher。这个发现解释了 GPT-3 等早期模型为何训练不充分，也揭示了 LLaMA 小模型配大数据策略背后的数学原理。
+两年后，DeepMind 的乔丹·霍夫曼（Jordan Hoffmann）等人在论文《[Training Compute-Optimal Large Language Models](https://arxiv.org/abs/2203.15556)》中推翻了卡普兰的结论。他们训练了超过 400 个模型后发现，模型参数和训练数据应该同步增长，而不是像卡普兰所说的参数比数据更重要。为验证这一点，他们训练了一个叫 Chinchilla 的 700 亿参数模型，用 1.4 万亿 token 数据训练，在相同计算预算下击败了参数量四倍于自己的 Gopher。这个发现解释了 GPT-3 等早期模型为何训练不充分，也揭示了 LLaMA 小模型配大数据策略背后的数学原理。
 
 ## Kaplan 缩放定律
 

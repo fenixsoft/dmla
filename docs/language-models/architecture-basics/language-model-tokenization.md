@@ -137,7 +137,7 @@ $$\mathcal{L} = \sum_{\mathbf{w} \in \mathcal{D}} \sum_{t=1}^{T} \log P(w_t | w_
 
 ### BPE
 
-**字节对编码**（Byte Pair Encoding，BPE）最初是一种数据压缩算法，由美国软件工程师菲利普·盖奇（Philip Gage）在 1994 年发表于文章《[A New Algorithm for Data Compression](https://dl.acm.org/doi/10.5555/177910.177914)》中。盖奇的原始思路是设计一种算法找出文本中出现最频繁的相邻字节对，用一个不在原文中出现的字节来替换它，重复这一过程就能逐步压缩文本。2015 年，英国爱丁堡大学的菲利普·森里奇（Philipp Sennrich）在论文《[Neural Machine Translation of Rare Words with Subword Units](https://arxiv.org/abs/1508.07909)》中将 BPE 改造为子词分词算法，将压缩文本的目标更换为构建子词词表，让机器翻译模型能够通过组合有限的子词来表示任意文本，解决了长期困扰 NLP 的未登录词问题。
+**字节对编码**（Byte Pair Encoding，BPE）最初是一种数据压缩算法，由美国软件工程师菲利普·盖奇（Philip Gage）在 1994 年发表于文章《[A New Algorithm for Data Compression](https://dl.acm.org/doi/10.5555/177910.177914)》中。盖奇的原始思路是设计一种算法找出文本中出现最频繁的相邻字节对，用一个不在原文中出现的字节来替换它，重复这一过程就能逐步压缩文本。2015 年，英国爱丁堡大学的里科·森里奇（Rico Sennrich）在论文《[Neural Machine Translation of Rare Words with Subword Units](https://arxiv.org/abs/1508.07909)》中将 BPE 改造为子词分词算法，将压缩文本的目标更换为构建子词词表，让机器翻译模型能够通过组合有限的子词来表示任意文本，解决了长期困扰 NLP 的未登录词问题。
 
 BPE 算法的假设是语言中的符号组合并非均匀分布的，某些字符对经常一起出现，如英文的 "th"、"er"、"in"，某些子串反复构成词的词根词缀，如 "ing"、"tion"、"ment"。如果把这些高频组合当作整体来处理，既能缩短序列长度，又能让词表保持适中的规模。BPE 正是利用了这种分布的不均匀性，通过数据驱动的方式自动发现值得合并的符号对。从压缩到分词，差别只在于压缩算法关心的是替换后文本是否变短了，而分词算法关心的是合并后词表能否覆盖新词。两者完全可以共享同一套迭代合并机制，只是评价标准不同而已。
 

@@ -687,7 +687,7 @@ progress.complete(message="量化精度对比评测完成")
 
 ::: info 真正的量化加速
 
-要实现量化后的推理加速，需要使用支持低精度矩阵乘法的推理引擎，如 llama.cpp（GGUF 格式，CPU/GPU 混合推理）、vLLM（AWQ/GPTQ 格式，GPU 推理）或 TensorRT-LLM（INT8/INT8 Tensor Core 算子）。这些引擎在 kernel 层面直接执行 INT8 或 INT4 的矩阵乘法，无需反量化步骤，才能真正将量化的显存节省转化为速度提升。
+要实现量化后的推理加速，需要使用支持低精度矩阵乘法的推理引擎，如 llama.cpp（GGUF 格式，CPU/GPU 混合推理）、vLLM（AWQ/GPTQ 格式，GPU 推理）或 TensorRT-LLM（INT4/INT8 Tensor Core 算子）。这些引擎在 kernel 层面直接执行 INT8 或 INT4 的矩阵乘法，无需反量化步骤，才能真正将量化的显存节省转化为速度提升。
 
 :::
 

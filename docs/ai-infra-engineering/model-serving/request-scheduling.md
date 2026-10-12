@@ -100,7 +100,7 @@ MLFQ 需要考虑队列级数、各级时间片大小和优先级提升策略。
 
 新请求到达但显存不足、高优先级请求需要立即执行、GPU 利用率过低需要重新组织批量等情况都可能触发抢占与驱逐。抢占是将被抢占请求的 KV Cache 从 GPU 显存拷贝到 CPU 内存，释放 GPU 显存。恢复时再从 CPU 拷贝回 GPU。前面提到的 DeepSeek V4 的案例中甚至允许 Swep 到 SSD 磁盘上。这种策略的优点是恢复速度快，PCIe 4.0 x16 约 32 GB/s，PCIe 5.0 x16 约 64 GB/s，一个 1 GB 的 KV Cache 拷贝约需 20ms。缺点是需要 CPU 内存空间，且拷贝过程中占用 PCIe 总线带宽，可能影响其他请求的数据传输。驱逐是直接丢弃被驱逐请求的 KV Cache，恢复时重新执行 Prefill。这种策略的优点是不需要额外的 CPU 内存，实现简单。缺点是恢复成本高，Prefill 的计算量远大于抢占策略中 Swap 操作的拷贝量。一个输入长度为 2000 tokens 的请求，Prefill 可能需要 500ms，而 Swap 同样大小的 KV Cache 只需约 20ms。
 
-选择哪种策略取决于被抢占请求的 KV Cache 大小与输入长度的比值。KV Cache 大而输入短时，抢占更划算（拷贝成本低于重计算成本）；KV Cache 小而输入长时，直接驱逐更划算（重计算成本低于拷贝成本）。具体来说，设 KV Cache 大小为 $M_{\text{KV}}$，输入长度为 $n_{\text{input}}$，Prefill 速度为 $S_{\text{prefill}}$（token/s），PCIe 带宽为 $B_{\text{PCIe}}$（GB/s），则抢占的恢复时间为 $M_{\text{KV}} / B_{\text{PCIe}}$，驱逐的恢复时间为 $(n_{\text{input}} + n_{\text{generated}}) / S_{\text{prefill}}$。当 $M_{\text{KV}} / B_{\text{PCIe}} < n_{\text{input}} / S_{\text{prefill}}$ 时，抢占更优，反之驱逐更优。
+选择哪种策略取决于被抢占请求的 KV Cache 大小与输入长度的比值。KV Cache 大而输入短时，抢占更划算（拷贝成本低于重计算成本）；KV Cache 小而输入长时，直接驱逐更划算（重计算成本低于拷贝成本）。具体来说，设 KV Cache 大小为 $M_{\text{KV}}$，输入长度为 $n_{\text{input}}$，已生成部分长度为 $n_{\text{generated}}$，Prefill 速度为 $S_{\text{prefill}}$（token/s），PCIe 带宽为 $B_{\text{PCIe}}$（GB/s），则抢占的恢复时间为 $M_{\text{KV}} / B_{\text{PCIe}}$，驱逐的恢复时间为 $(n_{\text{input}} + n_{\text{generated}}) / S_{\text{prefill}}$（已生成 token 的 KV Cache 一并被丢弃，重计算需覆盖两者）。当 $M_{\text{KV}} / B_{\text{PCIe}} < (n_{\text{input}} + n_{\text{generated}}) / S_{\text{prefill}}$ 时，抢占更优，反之驱逐更优。
 
 [连续批处理](#连续批处理)的 Iteration-Level 调度为抢占驱逐策略提供了大量的执行点。每个 Decode 步结束后，调度器可以检查是否需要抢占或驱逐，而不会中断正在执行的 Decode 步。这种只在步间切换的设计，避免了抢占驱逐操作对正在进行的计算造成干扰。
 

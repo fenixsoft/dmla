@@ -153,7 +153,7 @@ LoRA（Low-Rank Adaptation）是 2021 年由微软研究院在论文《[LoRA: Lo
 
 $$\Delta W = BA$$
 
-其中 $B \in \mathbb{R}^{d \times r}$，$A \in \mathbb{R}^{r \times k}$，且 $r \ll \min(d, k)$。这两个小矩阵就是 LoRA 要学习的全部参数。将大矩阵分解为小矩阵乘积思路我们并不陌生，它在降维的 [SVD 分解](../../statistical-learning/unsupervised-learning/dimensionality-reduction.md#奇异值分解)中出过，在 Transformer 的 [TPA 张量积注意力](../architecture-basics/architecture-evolution.md#tpa-张量积注意力)时也出现过。
+其中 $B \in \mathbb{R}^{d \times r}$，$A \in \mathbb{R}^{r \times k}$，且 $r \ll \min(d, k)$。这两个小矩阵就是 LoRA 要学习的全部参数。将大矩阵分解为小矩阵乘积的思路我们并不陌生，它在降维的 [SVD 分解](../../statistical-learning/unsupervised-learning/dimensionality-reduction.md#奇异值分解)中出过，在 Transformer 的 [TPA 张量积注意力](../architecture-basics/architecture-evolution.md#tpa-张量积注意力)中也出现过。
 
 LoRA 微调的前向传播的计算过程是原始路径 $h = W_0 x$ 和 LoRA 旁路 $h' = BAx$ 相加，得到最终输出 $h + h'$。训练时，$W_0$ 完全冻结，只有 $A$ 和 $B$ 的参数被更新，如下图所示。
 
